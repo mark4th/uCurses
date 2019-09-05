@@ -1,3 +1,5 @@
+#pragma once
+
 // uCurses.h
 // -----------------------------------------------------------------------
 
@@ -83,13 +85,13 @@ extern uint64_t params[MAX_PARAM];
 
 // -----------------------------------------------------------------------
 
-void c2$(uint8_t c1);
+void c2w(uint8_t c1);
 void _format(uint16_t i);
 void uCurses_init(void);
 void set_attribs(void);
-void _send$(void *unused);
+void _send_stdout(void *unused);
 
-extern fp_t send$;
+extern fp_t send_stdout;
 
 // -----------------------------------------------------------------------
 // from utils.c

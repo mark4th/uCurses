@@ -9,6 +9,7 @@
 
 #include "h/uCurses.h"
 #include "h/tui.h"
+#include "h/uCurses_types.h"
 
 // -----------------------------------------------------------------------
 
@@ -24,7 +25,7 @@ uint16_t bix;                // max of 64k of compiled escape sequences
 uint8_t fsp;                // stack pointer for ...
 uint64_t fstack[5];         // format string stack
 
-uint8_t *f$;                // pointer to next character of format string
+uint8_t *f_str;                // pointer to next character of format string
 uint8_t digits;             // number of digits for %d (2 or 3)
 
 uint64_t params[MAX_PARAM]; // format string parametesr
@@ -34,14 +35,14 @@ uint64_t AtoZ[26];
 
 uint8_t compile = 0;        // set to 1 to compile up to 64K of escapes
 
-fp_t send$;                 // write all format strings to 
+fp_t send_stdout;                 // write all format strings to
 
 // -----------------------------------------------------------------------
 
 // -----------------------------------------------------------------------
 // write all compiled format strings to stdout
 
-void _send$(void *unused)
+void _send_stdout(void *unused)
 {
   write(1, &buffer[0], bix);
   bix = 0;
@@ -60,8 +61,8 @@ void print_format(uint8_t *p)
 {
   while(*p)
   {
-    (*p < 0x20) 
-      ? printf(" %02x ", *p) 
+    (*p < 0x20)
+      ? printf(" %02x ", *p)
       : printf("%c", *p);
     p++;
   }
@@ -115,12 +116,14 @@ static uint64_t fs_pop(void)
   }
   // methinks this might could be an internal error
   // abort "uCurses format string stck underflow"
+  // TODO look at at above comment
+  return 0;
 }
 
 // -----------------------------------------------------------------------
 // write one character of escape sequence out to compilation buffer
 
-void c2$(uint8_t c1)
+void c2w(uint8_t c1)
 {
   buffer[bix++] = c1;
   buffer[bix] = '\0';
@@ -133,9 +136,9 @@ void c2$(uint8_t c1)
 // -----------------------------------------------------------------------
 // output a '%' character
 
-static inline void _percent(void) 
-{ 
-  c2$('%'); 
+static inline void _percent(void)
+{
+  c2w('%');
 }
 
 // -----------------------------------------------------------------------
@@ -145,7 +148,7 @@ static inline void _and(void)
 {
   uint64_t n1, n2;
 
-  n1 = fs_pop(); 
+  n1 = fs_pop();
   n2 = fs_pop();
 
   fs_push(n1 & n2);
@@ -164,7 +167,7 @@ static inline void _or(void)
 }
 
 // -----------------------------------------------------------------------
-
+#ifdef DAS_NEVER_DEFINED
 static inline void _bang(void)
 {
   uint64_t n1;
@@ -174,9 +177,11 @@ static inline void _bang(void)
 
   fs_push(n1);
 }
+#endif // DAS_NEVER_DEFINED
 
 // -----------------------------------------------------------------------
 
+#ifdef DAS_NEVER_DEFINED
 static inline void _tilde(void)
 {
   uint64_t n1;
@@ -185,6 +190,7 @@ static inline void _tilde(void)
 
   fs_push(~n1);
 }
+#endif // DAS_NEVER_DEFINED
 
 // -----------------------------------------------------------------------
 
@@ -307,9 +313,9 @@ static inline void _tick(void)
 {
   uint8_t c1;
 
-  c1 = *f$++;
-  c2$(c1);
-  f$++;
+  c1 = *f_str++;
+  c2w(c1);
+  f_str++;
 }
 
 // -----------------------------------------------------------------------
@@ -323,6 +329,7 @@ static inline void _i(void)
 
 // -----------------------------------------------------------------------
 
+#ifdef DAS_NEVER_DEFINED
 static inline void _s(void)
 {
   uint8_t *s;
@@ -330,23 +337,25 @@ static inline void _s(void)
 
   s = (uint8_t *)fs_pop();
 
-  while(c1 = *s++)
+  while((c1 = *s++))
   {
     c2$(c1);
   }
 }
+#endif // DAS_NEVER_DEFINED
 
 // -----------------------------------------------------------------------
 
+#ifdef DAS_NEVER_DEFINED
 static inline void _l(void)
 {
   uint8_t *s;
 
   s = (uint8_t *)fs_pop();
 
-  fs_push(strlen(s));
+  fs_push(strlen(cstr(s)));
 }
-
+#endif //DAS_NEVER_DEFINED
 // -----------------------------------------------------------------------
 
 static uint64_t *q_atoz(void)
@@ -354,7 +363,7 @@ static uint64_t *q_atoz(void)
   uint64_t *p;
   uint8_t c1;
 
-  c1 = *f$++;
+  c1 = *f_str++;
 
   p = ((c1 >= 'a') && (c1 <= 'z'))
     ? &atoz[c1 - 'a']
@@ -394,14 +403,14 @@ static inline void _brace(void)
 
   n1 = 0;
 
-  while ('}' != *f$)
+  while ('}' != *f_str)
   {
-     c1 = *f$++;
+     c1 = *f_str++;
      n1 *= 10;
      n1 += (c1 - '0');
   }
 
-  f$++;
+  f_str++;
   fs_push(n1);
 }
 
@@ -410,7 +419,7 @@ static inline void _brace(void)
 
 static inline void to_cmd(void)
 {
-  while('%' != *f$++)
+  while('%' != *f_str++)
     ;
 }
 
@@ -432,7 +441,7 @@ static inline void _t(void)
     for(;;)
     {
       to_cmd();             // scan format string for next % char
-      c1 = *f$++;      
+      c1 = *f_str++;
 
       if('?' == c1)         // if we are nesting if's count depth
       {
@@ -460,13 +469,13 @@ static inline void _t(void)
 static inline void _e(void)
 {
   uint8_t c1;
-  uint8_t nest;
+  uint8_t nest=0;
 
   for(;;)
   {
     to_cmd();
 
-    c1 = *f$++;
+    c1 = *f_str++;
 
     if('?' == c1)
     {
@@ -495,11 +504,11 @@ static inline void _d(void)
   p = &s[0];
 
   n1 = fs_pop();
-  n2 = snprintf(s, 4, "%ld", n1);
-  
+  n2 = snprintf((str)s, 4, "%ld", n1);
+
   s[n2]='\0';
 
-  strncat(&buffer[0], s, n2);
+  strncat((str)&buffer[0], (str)s, n2);
   bix += n2;
 }
 
@@ -510,7 +519,7 @@ static inline void _c(void)
   uint64_t c1;
 
   c1 = fs_pop();
-  c2$(c1);
+  c2w(c1);
 }
 
 // -----------------------------------------------------------------------
@@ -519,7 +528,7 @@ static inline void _p(void)
 {
   uint8_t c1;
 
-  c1 = *f$++;
+  c1 = *f_str++;
   c1 &= 0x0f;
   c1--;
   c1 = params[c1];
@@ -529,15 +538,15 @@ static inline void _p(void)
 // -----------------------------------------------------------------------
 
 static uint8_t next_c(void)
-{ 
+{
   uint8_t c1;
 
-  c1 = *f$++;
+  c1 = *f_str++;
 
   if(('2' == c1) || ('3' == c1))
   {
-    digits = (*f$++ & 0x0f);
-    c1 = *f$++;
+    digits = (*f_str++ & 0x0f);
+    c1 = *f_str++;
   }
   return c1;
 }
@@ -552,30 +561,30 @@ static inline void command(void)
 
   switch(c1)
   {
-    case '%': _percent();  break;  
+    case '%': _percent();  break;
     case 'p': _p();        break;
-    case 'd': _d();        break;  
+    case 'd': _d();        break;
     case 'c': _c();        break;
-    case 'i': _i();        break;  
+    case 'i': _i();        break;
     case 'A': // technically this is wrong
-    case '&': _and();      break;  
+    case '&': _and();      break;
     case 'O': // so is this :)
-    case '|': _or();       break;  
+    case '|': _or();       break;
     case '^': _caret();    break;
-    case '+': _plus();     break;  
+    case '+': _plus();     break;
     case '-': _minus();    break;
-    case '*': _star();     break;  
+    case '*': _star();     break;
     case '/': _slash();    break;
-    case 'm': _m();        break;  
+    case 'm': _m();        break;
     case '=': _equals();   break;
-    case '>': _greater();  break;  
+    case '>': _greater();  break;
     case '<': _less();     break;
-    case 0x27: _tick();    break;  
+    case 0x27: _tick();    break;
     case '{': _brace();    break;
-    case 'P': _P();        break;  
+    case 'P': _P();        break;
     case 'g': _g();        break;
-    case 't': _t();        break;  
-    case 'e': _e();        break;  
+    case 't': _t();        break;
+    case 'e': _e();        break;
     case '?':
     case ';':              break;
   }
@@ -585,7 +594,7 @@ static inline void command(void)
 
 void _format(uint16_t i)
 {
-  uint32_t n;
+  //uint32_t n; DAS NOT USED
   uint8_t c1;
 
   i = ti_strings[i];
@@ -596,19 +605,19 @@ void _format(uint16_t i)
     return;
   }
 
-  f$ = &ti_table[i];
+  f_str = &ti_table[i];
 
-  while(c1 = *f$++)
+  while((c1 = *f_str++))
   {
-    ('%' == c1) 
-      ? command() 
-      : c2$(c1);
+    ('%' == c1)
+      ? command()
+      : c2w(c1);
   }
 
-  // we either post the compiled escape sequence now or we stack up 
+  // we either post the compiled escape sequence now or we stack up
   // up to 64k of them in buffer[] and output them all later
 
-  (send$)(NULL);            // this might be a do nothng
+  (send_stdout)(NULL);            // this might be a do nothng
 }
 
 // =======================================================================

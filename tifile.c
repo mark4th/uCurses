@@ -1,14 +1,14 @@
 // tifle.c   - uCurses terminfo file loading
 // -----------------------------------------------------------------------
 
-#include <sys/mman.h>
-#include <inttypes.h>
-#include <unistd.h>
-#include <sys/stat.h>
 #include <fcntl.h>
-#include <string.h>
-#include <stdlib.h>
+#include <inttypes.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #include "h/uCurses.h"
 #include "h/uCurses_types.h"

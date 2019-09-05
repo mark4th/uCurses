@@ -4,8 +4,8 @@
 #include <inttypes.h>
 #include <stdio.h>
 
-#include "h/uCurses.h"
 #include "h/color.h"
+#include "h/uCurses.h"
 
 // -----------------------------------------------------------------------
 

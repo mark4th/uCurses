@@ -2,13 +2,12 @@
 // -----------------------------------------------------------------------
 
 #include <inttypes.h>
+#include <stdio.h>
 #include <string.h>
-#include <stdio.h>
 #include <unistd.h>
-#include <stdio.h>
 
-#include "h/uCurses.h"
 #include "h/tui.h"
+#include "h/uCurses.h"
 #include "h/uCurses_types.h"
 
 // -----------------------------------------------------------------------

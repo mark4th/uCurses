@@ -1,14 +1,14 @@
 // screen.c   - uCurses text user interface screen handling
 // -----------------------------------------------------------------------
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <inttypes.h>
 #include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
 
-#include "h/uCurses.h"
-#include "h/tui.h"
 #include "h/list.h"
+#include "h/tui.h"
+#include "h/uCurses.h"
 
 // -----------------------------------------------------------------------
 

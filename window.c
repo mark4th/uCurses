@@ -1,13 +1,13 @@
 // window.c
 // -----------------------------------------------------------------------
 
+#include <inttypes.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
-#include <inttypes.h>
 
-#include "h/tui.h"
 #include "h/color.h"
+#include "h/tui.h"
 
 // -----------------------------------------------------------------------
 

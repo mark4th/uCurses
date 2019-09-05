@@ -23,6 +23,8 @@ typedef struct
   list_t *parent;
 } node_t;
 
+typedef node_t* node_t_ptr;
+
 // -----------------------------------------------------------------------
 
 void list_remove(list_t *l1, void *data);

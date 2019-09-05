@@ -4,6 +4,7 @@
 #include <stdlib.h>
 
 #include "h/list.h"
+#include "h/uCurses_types.h"
 
 // -----------------------------------------------------------------------
 // insert n2 into list after node n1
@@ -16,12 +17,11 @@ static void node_insert(node_t *n1, node_t *n2)
   l = (list_t *) n1->parent;
   n1->parent = l;
 
-  t = n1-> next;
+  t = (node_t_ptr)(n1-> next);
 
   n2->next = t;
   if(NULL == t)
   {
-    
     l->tail = n2;
   }
   else
@@ -42,8 +42,8 @@ static void node_remove(node_t *n1)
 
   l = n1->parent;
 
-  t1 = n1->prev;
-  t2 = n1->next;
+  t1 = (node_t_ptr)(n1->prev);
+  t2 = (node_t_ptr)(n1->next);
 
   if(l->head == n1) { l->head = t2; }
   if(l->tail == n1) { l->tail = t1; }
@@ -67,7 +67,7 @@ void list_remove(list_t *l1, void *data)
 
   while(NULL != n1)
   {
-    if(n1->payload = data)
+    if((n1->payload = data))
     {
       node_remove(n1);
       break;
@@ -75,6 +75,7 @@ void list_remove(list_t *l1, void *data)
   }
   if(NULL == n1)
   {
+		// TODO FIXME
     // silently ignore?
   }
 }
@@ -101,7 +102,7 @@ bool list_append(list_t *l, void *data)
   }
   else
   {
-    node_insert(l->tail, n1);
+    node_insert((node_t_ptr)(l->tail), n1);
     l->tail = n1;
   }
 

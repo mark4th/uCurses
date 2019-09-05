@@ -5,7 +5,7 @@
 #include "h/uCurses.h"
 #include "h/color.h"
 
-void main(void)
+int main(void)
 {
   uCurses_init();      printf("\r\n\r\n");
 
@@ -27,4 +27,6 @@ void main(void)
   set_acs();           printf("qwertyuiopasdfghjklzxcvbnm\r\n");
   clr_acs();
   set_norm();
+
+  return 0;
 }

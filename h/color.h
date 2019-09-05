@@ -14,18 +14,19 @@ typedef enum
 typedef enum
 {
   TI_STANDOUT, TI_UNDERLINE, TI_REVERSE, TI_BLINK,
-  TI_DIM, TI_BOLD, TI_BLANK, TI_PROT, TI_ACS
+	TI_DIM, TI_BOLD, TI_BLANK, TI_PROT, TI_ACS,
+
+  STANDOUT  = (1 << TI_STANDOUT),
+  UNDERLINE = (1 << TI_UNDERLINE),
+  REVERSE   = (1 << TI_REVERSE),
+  BOLD      = (1 << TI_BOLD),
+  BLINK     = (1 << TI_BLINK),
+  DIM       = (1 << TI_DIM),
+  ACS       = (1 << TI_ACS),
 } ti_attrib_t;
 
 // -----------------------------------------------------------------------
 
-#define STANDOUT  (1 << TI_STANDOUT)
-#define UNDERLINE (1 << TI_UNDERLINE)
-#define REVERSE   (1 << TI_REVERSE)
-#define BOLD      (1 << TI_BOLD)
-#define BLINK     (1 << TI_BLINK)
-#define DIM       (1 << TI_DIM)
-#define ACS       (1 << TI_ACS)
 
 // -----------------------------------------------------------------------
 

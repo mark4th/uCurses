@@ -37,3 +37,4 @@ clean:
 
 reformat:
 	clang-format -i *.c h/*.h
+	@for i in *.c h/*.h; do grep -q ' $$' $$i && (echo $$i had trailing whitespace; sed 's/ *$$//' -i $$i) || true; done

@@ -40,7 +40,7 @@ uint32_t win_blank(window_t *w)
 uint32_t win_size(window_t *win)
 {
   uint16_t bpl;
-  
+
   bpl = win_bpl(win);
 
   return(win->height * bpl);

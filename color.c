@@ -52,7 +52,7 @@ void set_bg(uint8_t c)
 
 static void _set_acs(void)
 {
-  if(acs_flag ^ acs_old) 
+  if(acs_flag ^ acs_old)
   {
     acs_flag ? ti_smacs() : ti_rmacs();
     acs_old  = acs_flag;
@@ -62,7 +62,7 @@ static void _set_acs(void)
 // -----------------------------------------------------------------------
 
 void set_attribs(void)
-{ 
+{
   uint8_t a, f, b;
 
   a = ((attr ^ old_attr) >> 8);
@@ -71,7 +71,7 @@ void set_attribs(void)
     old_attr = attr;
     // these 3 dont have an rmxxx
     if((a & BLINK) || (a & DIM) | (a & BOLD))
-    { 
+    {
       ti_sgr0();
     }
 
@@ -98,7 +98,7 @@ void set_attribs(void)
 
 static void set_attr(ti_attrib_t a)
 {
-  attr |= (a << 8); 
+  attr |= (a << 8);
   set_attribs();
 }
 
@@ -106,7 +106,7 @@ static void set_attr(ti_attrib_t a)
 
 static void clr_attr(ti_attrib_t a)
 {
-  attr &= ~(a << 8); 
+  attr &= ~(a << 8);
   set_attribs();
 }
 

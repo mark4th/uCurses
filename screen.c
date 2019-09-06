@@ -77,7 +77,7 @@ bool alloc_screen(screen_t *scr)
   uint32_t s;
 
   s = scr_size(scr);        // allocate 2 buffers at once
-  p = (uint32_t *)malloc(s * CELL * 2); 
+  p = (uint32_t *)malloc(s * CELL * 2);
 
   if(NULL == p)
   {
@@ -218,14 +218,14 @@ void _draw_screen(screen_t *s)
     a = p1[ix] >> 8;        // does char need updating?
     if(a != (p2[ix] >> 8))  // are buffer1 and buffer2 different
     {
-      attr = a;             // yes, output escape sequences for 
+      attr = a;             // yes, output escape sequences for
       set_attribs();        // selected attributes / colors
 
       // output all other chars from this index on with same attribs
 
       jx = ix;
 
-      while(jx != size)     
+      while(jx != size)
       {
         if((a == (p1[jx] >> 8)) && (a != (p2[jx] >> 8)))
         {

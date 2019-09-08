@@ -82,7 +82,7 @@ void cuf1(void)
   }
   else
   {
-  	 cx++;
+     cx++;
   }
   cup(cx, cy);
 }

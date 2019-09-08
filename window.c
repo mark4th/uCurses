@@ -1,22 +1,39 @@
 // window.c
 // -----------------------------------------------------------------------
 
+#include <inttypes.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
-#include <inttypes.h>
 #include <string.h>
 
-#include "h/tui.h"
 #include "h/color.h"
+#include "h/tui.h"
 
 // -----------------------------------------------------------------------
 
-void win_pop(window_t *win)
+uint32_t win_attrs(window_t *win, uint8_t c)
 {
-  screen_t *scr;
+  uint32_t a;
 
-  scr = win_scr_get(win);
+  a = win_attrs_get(win) & 0xffff00;
+
+  return a | c;
+}
+
+// -----------------------------------------------------------------------
+
+uint32_t win_blank(window_t *w)
+{
+  uint32_t blank;
+}
+
+// -----------------------------------------------------------------------
+// detach then reattach window. pops window to front
+
+uint32_t win_pop(window_t *win)
+{
+  screen_t *scr = win_scr_get(win);
 
   win_detach(win);
   win_attach(scr, win);

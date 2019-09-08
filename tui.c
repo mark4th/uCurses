@@ -1,9 +1,9 @@
 // tui.c   - uCurses text user interface
 // -----------------------------------------------------------------------
 
-#include "h/uCurses.h"
 #include "h/tui.h"
 #include "h/color.h"
+#include "h/uCurses.h"
 
 // -----------------------------------------------------------------------
 

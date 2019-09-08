@@ -1,19 +1,20 @@
 // screen.c   - uCurses text user interface screen handling
 // -----------------------------------------------------------------------
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <inttypes.h>
 #include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
 
-#include "h/uCurses.h"
-#include "h/tui.h"
 #include "h/list.h"
+#include "h/tui.h"
+#include "h/uCurses.h"
 
 // -----------------------------------------------------------------------
 
 fp_t draw_window;           // usually void _draw_window(window_t *w1)
 
+extern fp_t send_str;
 extern uint16_t attr;
 
 // -----------------------------------------------------------------------
@@ -47,16 +48,12 @@ bool alloc_screen(screen_t *scr)
 {
   uint32_t *p;
   uint32_t size;
-
   bool result = false;
 
-  // allocate 2 buffers at once
+  size = scr_size(scr);     // allocate 2 buffers at once
+  p = (uint32_t *)malloc(size * CELL * 2);
 
-  size = scr_size(scr);
-
-  p = (uint32_t *)malloc(size * sizeof(uint32_t) * 2);
-
-  if(NULL != p)
+  if(NULL == p)
   {
     scr_b1_set(scr, p);
     scr_b2_set(scr, p + size * sizeof(uint32_t));
@@ -180,7 +177,7 @@ void _draw_screen(screen_t *scr)
   attr_save = attr;
   size = scr_size(scr);
 
-  send$ = &noop;
+  send_str = &noop;
   draw_windows(scr);
 
   for(ix = 0; ix < size; ix++)
@@ -209,10 +206,8 @@ void _draw_screen(screen_t *scr)
   }
   attr = attr_save;
   set_attribs();
-  send$ = &_send$;          // initialize function pointers
-  _send$(NULL);
+  send_str = &_send_str;       // initialize function pointers
+  _send_str(NULL);
 }
-
-// -----------------------------------------------------------------------
 
 // =======================================================================

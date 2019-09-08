@@ -11,9 +11,9 @@
 
 uint8_t fg;                   // current fg color
 uint8_t bg;                   // current bg color
-uint16_t attr;                // current attribs and fg/bg
+uint32_t attr;                // current attribs and fg/bg
 
-static uint16_t old_attr;
+static uint32_t old_attr;
 static uint8_t acs_flag = 0;  // 1 = alt charset selected
 static uint8_t acs_old  = 0;  // old acs flag (sense changes)
 
@@ -30,7 +30,7 @@ void set_fg(uint8_t c)
 {
   c &= 0x0f;                // ensure color is sane
   fg = c;                   // save current fg color
-  attr &= 0xfff0;           // set fg in master attribute value
+  attr &= 0xfffff0;         // set fg in master attribute value
   attr |= c;
   params[0] = c;            // pass parameter directly to setaf
   ti_setaf();
@@ -42,7 +42,7 @@ void set_bg(uint8_t c)
 {
   c &= 0x0f;                // ensure color is sane
   bg = c;                   // save current bg color
-  attr &= 0xff0f;           // set bg in master attribute value
+  attr &= 0xffff0f;         // set bg in master attribute value
   attr |= (c << 4);
   params[0] = c;            // pass parameter directly to setab
   ti_setab();
@@ -52,7 +52,7 @@ void set_bg(uint8_t c)
 
 static void _set_acs(void)
 {
-  if(acs_flag ^ acs_old) 
+  if(acs_flag ^ acs_old)
   {
     acs_flag ? ti_smacs() : ti_rmacs();
     acs_old  = acs_flag;
@@ -62,16 +62,18 @@ static void _set_acs(void)
 // -----------------------------------------------------------------------
 
 void set_attribs(void)
-{ 
+{
   uint8_t a, f, b;
 
   a = ((attr ^ old_attr) >> 8);
+
   if(0 != a)
   {
     old_attr = attr;
+
     // these 3 dont have an rmxxx
     if((a & BLINK) || (a & DIM) | (a & BOLD))
-    { 
+    {
       ti_sgr0();
     }
 
@@ -82,6 +84,7 @@ void set_attribs(void)
     if(f != fg)    { set_fg(fg); }
 
     a = attr >> 8;
+
     (a & STANDOUT)  ? ti_smso()  : ti_rmso();
     (a & UNDERLINE) ? ti_smul()  : ti_rmul();
     (a & REVERSE)   ? ti_rev()   : ti_rum();
@@ -98,7 +101,7 @@ void set_attribs(void)
 
 static void set_attr(ti_attrib_t a)
 {
-  attr |= (a << 8); 
+  attr |= (a << 8);
   set_attribs();
 }
 
@@ -106,7 +109,7 @@ static void set_attr(ti_attrib_t a)
 
 static void clr_attr(ti_attrib_t a)
 {
-  attr &= ~(a << 8); 
+  attr &= ~(a << 8);
   set_attribs();
 }
 

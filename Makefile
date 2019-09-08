@@ -2,11 +2,13 @@
 ##  Configuration
 
 CC     = gcc
+
 OBJS   = $(addprefix $(O)/, \
-          main.o parse.o tifile.o color.o list.o \
-         util.o )
+   main.o util.o tui.o parse.o tifile.o color.o list.o \
+   window.o screen.o border.o )
+
 HDRS   = $(addprefix $(H)/, color.h tui.h uCurses.h list.h)
-CFLAGS = -O0 -fomit-frame-pointer -pipe -march=native -g3 -c
+CFLAGS = -Os -fomit-frame-pointer -pipe -march=native -g3 -c
 
 O = o
 H = h
@@ -14,7 +16,7 @@ H = h
 ## -----------------------------------------------------------------------
 
 o/%.o: %.c
-	$(CC) $(CFLAGS) -o $@ $< 
+	$(CC) $(CFLAGS) -o $@ $<
 
 u: $(OBJS)
 	$(CC) -o u $(OBJS)
@@ -26,7 +28,7 @@ $(O):
 	mkdir $(O)
 
 clean:
-	rm o/*.o
-	rm u
+	@rm o/*.o
+	@rm u
 
 ## =======================================================================

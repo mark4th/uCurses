@@ -5,135 +5,36 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <inttypes.h>
+#include <string.h>
 
 #include "h/tui.h"
 #include "h/color.h"
 
 // -----------------------------------------------------------------------
 
-uint16_t win_bpl(window_t *win)
+void win_pop(window_t *win)
 {
-  return(win->width * CELL);
+  screen_t *scr;
+
+  scr = win_scr_get(win);
+
+  win_detach(win);
+  win_attach(scr, win);
 }
 
 // -----------------------------------------------------------------------
 
-uint32_t win_attrs(window_t *w uint8_t c)
-{
-  uint32_t a;
-
-  a  = w->attr << 16;
-  a |= w>colors << 8;
-
-  return a | c;
-}
-
-// -----------------------------------------------------------------------
-
-uint32_t win_blank(window_t *w)
-{
-  uint32_t blank;
-}
-
-// -----------------------------------------------------------------------
-
-uint32_t win_size(window_t *win)
-{
-  uint16_t bpl;
-  
-  bpl = win_bpl(win);
-
-  return(win->height * bpl);
-}
-
-// -----------------------------------------------------------------------
-
-uint32_t *win_line(window_t *win, uint16_t line)
-{
-  uint16_t bpl;
-
-  bpl = win_bpl(win);
-
-  return((win->buffer) + (line * bpl));
-}
-
-// -----------------------------------------------------------------------
-
-void win_pos(window_t *win, uint16_t x, uint16_t y)
-{
-  win->x = x;
-  win->y = y;
-}
-
-// -----------------------------------------------------------------------
-
-void win_at(window_t *win, uint16_t x, uint16_t y)
-{
-  win->cx = x;
-  win->cy = y;
-}
-
-// -----------------------------------------------------------------------
-
-void win_fg(window_t *win, uint8_t fg)
-{
-  uint8_t color;
-  color = win->colors;
-  color &= 0x0f;
-  color |= fg;
-  win->colors = color;
-}
-
-// -----------------------------------------------------------------------
-
-void win_bg(window_t *win, uint8_t bg)
-{
-  uint8_t color;
-
-  color = win-> colors;
-  color &= 0x0f;
-  color |= (bg << 4);
-  win->colors = color;
-}
-
-// -----------------------------------------------------------------------
-
-void win_setAttr(window_t *win, uint8_t attr)
-{
-  win->attr |= attr;
-}
-
-// -----------------------------------------------------------------------
-
-void win_clrAttr(window_t *win, uint8_t attr)
-{
-  win->attr &= ~attr;
-}
-
-// -----------------------------------------------------------------------
-
-void win_pop(window_t *w)
-{
-  screen_t *s;
-
-  s = w->screen;
-
-  win_detach(w);
-  win_attach(s, w);
-}
-
-// -----------------------------------------------------------------------
-
-bool alloc_win(window_t *w)
+bool alloc_win(window_t *win)
 {
   uint16_t size;
   uint8_t *p;
 
-  size = win_size(w);
+  size = win_size(win);
   p = malloc(size);
+
   if(NULL != p)
   {
-    w->buffer = (uint32_t *)p;
+    win_buff_set(win, (uint32_t *)p);
     return true;
   }
   return false;
@@ -141,86 +42,73 @@ bool alloc_win(window_t *w)
 
 // -----------------------------------------------------------------------
 
-bool open_window(window_t *w,uint16_t width, uint16_t height)
+bool open_window(window_t *win, uint16_t width, uint16_t height)
 {
   bool f;
 
-  w->width = width;
-  w->height = height;
-  w->colors = WHITE;
-  w->attr = 0;
-  w->flags = 0;
+  win_width_set(win, width);
+  win_height_set(win,height);
+  win_attrs_set(win, WHITE);   // black bg, white fg, no attribs
+  win_flags_set(win, 0);
 
-  f = alloc_win(w);
+  f = alloc_win(win);
 
   return f;
 }
 
 // -----------------------------------------------------------------------
 
-void close_win(window_t *w)
+void close_win(window_t *win)
 {
-  if(NULL != w->screen)
+  if(NULL != win_scr_get(win))
   {
-    win_detach(w);
+    win_detach(win);
   }
-  free(w->buffer);
+  free(win->buffer);
 }
 
 // -----------------------------------------------------------------------
 // returns xx yy cc where xx = attribs, yy = colors and cc = char
 
-static uint32_t make_char(window_t *w, uint8_t c)
+static uint32_t make_char(window_t *win, uint8_t c)
 {
-  uint32_t n1;
-
-  n1 |= c;
-  n1 |= (w->attr  << 16);
-  n1 |= (w->colors << 8);
-
-  return n1;
+  return (win_attrs_get(win) | (c << 8));
 }
 
 // -----------------------------------------------------------------------
 
-static uint32_t make_border_char(window_t *w, uint8_t c)
+static uint32_t make_border_char(window_t *win, uint8_t c)
 {
-  uint32_t n1;
-
-  n1 |= c;
-  n1 |= (w->battr << 16);
-  n1 |= (w->bcolors << 8);
-
-  return n1;
+  return (win_battrs_get(win) | (c << 8));
 }
 
 // -----------------------------------------------------------------------
 
-static uint32_t get_blank(window_t *w)
+static uint16_t get_blank(window_t *win)
 {
-  uint8_t c1;
+  uint16_t c1;
 
-  c1 = (0 != (w->flags & filled))
-    ? w->blank : 0x20;
+  c1 = (0 != (win_flags_get(win) & WIN_FILLED))
+    ? win_blank_get(win) : 0x20;
 }
 
 // -----------------------------------------------------------------------
 
-void scroll_up(window_t *w)
+void scroll_up(window_t *win)
 {
   uint16_t i;
   uint32_t *src;
   uint32_t *dst;
 
-  for(i = 0; i < w->height - 1; i++)
+  for(i = 0; i < win_height_get(win) - 1; i++)
   {
-    dst = win_line(i);
-    src = win_line(i + 1);
-    memcpy(dst, src, win_bpl(w));
+    dst = to_win_line(win, i);
+    src = to_win_line(win, i + 1);
+    memcpy(dst, src, win_bpl(win));
   }
-  for(i = 0; i < w->width; i++)
+  for(i = 0; i < win_width_get(win); i++)
   {
-
+    // blank last line here
   }
 }
 

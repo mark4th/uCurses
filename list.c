@@ -21,7 +21,7 @@ static void node_insert(node_t *n1, node_t *n2)
   n2->next = t;
   if(NULL == t)
   {
-    
+
     l->tail = n2;
   }
   else
@@ -70,6 +70,7 @@ void list_remove(list_t *l1, void *data)
     if(n1->payload = data)
     {
       node_remove(n1);
+      free(n1);
       break;
     }
   }

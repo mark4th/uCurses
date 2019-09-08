@@ -34,7 +34,7 @@ uint64_t AtoZ[26];
 
 uint8_t compile = 0;        // set to 1 to compile up to 64K of escapes
 
-fp_t send$;                 // write all format strings to 
+fp_t send$;                 // write all format strings to
 
 // -----------------------------------------------------------------------
 
@@ -43,6 +43,7 @@ fp_t send$;                 // write all format strings to
 
 void _send$(void *unused)
 {
+  buffer[bix] = '\0';
   write(1, &buffer[0], bix);
   bix = 0;
 }
@@ -60,8 +61,8 @@ void print_format(uint8_t *p)
 {
   while(*p)
   {
-    (*p < 0x20) 
-      ? printf(" %02x ", *p) 
+    (*p < 0x20)
+      ? printf(" %02x ", *p)
       : printf("%c", *p);
     p++;
   }
@@ -71,7 +72,7 @@ void print_format(uint8_t *p)
 // -----------------------------------------------------------------------
 // translate charcter to alt charset
 
-uint8_t t_acsc(uint8_t c1)
+uint8_t to_acsc(uint8_t c1)
 {
   uint16_t offset;
   uint8_t *t;
@@ -120,10 +121,9 @@ static uint64_t fs_pop(void)
 // -----------------------------------------------------------------------
 // write one character of escape sequence out to compilation buffer
 
-void c2$(uint8_t c1)
+void c_emit(uint8_t c1)
 {
   buffer[bix++] = c1;
-  buffer[bix] = '\0';
 }
 
 // -----------------------------------------------------------------------
@@ -133,9 +133,9 @@ void c2$(uint8_t c1)
 // -----------------------------------------------------------------------
 // output a '%' character
 
-static inline void _percent(void) 
-{ 
-  c2$('%'); 
+static inline void _percent(void)
+{
+  c_emit('%');
 }
 
 // -----------------------------------------------------------------------
@@ -145,7 +145,7 @@ static inline void _and(void)
 {
   uint64_t n1, n2;
 
-  n1 = fs_pop(); 
+  n1 = fs_pop();
   n2 = fs_pop();
 
   fs_push(n1 & n2);
@@ -308,7 +308,7 @@ static inline void _tick(void)
   uint8_t c1;
 
   c1 = *f$++;
-  c2$(c1);
+  c_emit(c1);
   f$++;
 }
 
@@ -332,7 +332,7 @@ static inline void _s(void)
 
   while(c1 = *s++)
   {
-    c2$(c1);
+    c_emit(c1);
   }
 }
 
@@ -432,7 +432,7 @@ static inline void _t(void)
     for(;;)
     {
       to_cmd();             // scan format string for next % char
-      c1 = *f$++;      
+      c1 = *f$++;
 
       if('?' == c1)         // if we are nesting if's count depth
       {
@@ -496,7 +496,7 @@ static inline void _d(void)
 
   n1 = fs_pop();
   n2 = snprintf(s, 4, "%ld", n1);
-  
+
   s[n2]='\0';
 
   strncat(&buffer[0], s, n2);
@@ -510,7 +510,7 @@ static inline void _c(void)
   uint64_t c1;
 
   c1 = fs_pop();
-  c2$(c1);
+  c_emit(c1);
 }
 
 // -----------------------------------------------------------------------
@@ -529,7 +529,7 @@ static inline void _p(void)
 // -----------------------------------------------------------------------
 
 static uint8_t next_c(void)
-{ 
+{
   uint8_t c1;
 
   c1 = *f$++;
@@ -552,30 +552,30 @@ static inline void command(void)
 
   switch(c1)
   {
-    case '%': _percent();  break;  
+    case '%': _percent();  break;
     case 'p': _p();        break;
-    case 'd': _d();        break;  
+    case 'd': _d();        break;
     case 'c': _c();        break;
-    case 'i': _i();        break;  
+    case 'i': _i();        break;
     case 'A': // technically this is wrong
-    case '&': _and();      break;  
+    case '&': _and();      break;
     case 'O': // so is this :)
-    case '|': _or();       break;  
+    case '|': _or();       break;
     case '^': _caret();    break;
-    case '+': _plus();     break;  
+    case '+': _plus();     break;
     case '-': _minus();    break;
-    case '*': _star();     break;  
+    case '*': _star();     break;
     case '/': _slash();    break;
-    case 'm': _m();        break;  
+    case 'm': _m();        break;
     case '=': _equals();   break;
-    case '>': _greater();  break;  
+    case '>': _greater();  break;
     case '<': _less();     break;
-    case 0x27: _tick();    break;  
+    case 0x27: _tick();    break;
     case '{': _brace();    break;
-    case 'P': _P();        break;  
+    case 'P': _P();        break;
     case 'g': _g();        break;
-    case 't': _t();        break;  
-    case 'e': _e();        break;  
+    case 't': _t();        break;
+    case 'e': _e();        break;
     case '?':
     case ';':              break;
   }
@@ -600,12 +600,12 @@ void _format(uint16_t i)
 
   while(c1 = *f$++)
   {
-    ('%' == c1) 
-      ? command() 
-      : c2$(c1);
+    ('%' == c1)
+      ? command()
+      : c_emit(c1);
   }
 
-  // we either post the compiled escape sequence now or we stack up 
+  // we either post the compiled escape sequence now or we stack up
   // up to 64k of them in buffer[] and output them all later
 
   (send$)(NULL);            // this might be a do nothng

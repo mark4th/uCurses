@@ -4,11 +4,12 @@
 CC = $(shell [ "$$CC" == "" ] && echo -n "gcc" || echo $$CC)
 
 OBJS   = $(addprefix $(O)/, \
-          main.o parse.o tifile.o color.o list.o \
-         util.o )
+   main.o util.o tui.o parse.o tifile.o color.o list.o \
+   window.o screen.o border.o )
+
 HDRS   = $(addprefix $(H)/, color.h tui.h uCurses.h list.h)
 
-CFLAGS0 = -O0 -fomit-frame-pointer -pipe -march=native -g3 -c
+CFLAGS0 = -Os -fomit-frame-pointer -pipe -march=native -g3 -c
 
 CFLAGS = $(shell [ "$$CFLAGS" == "" ] && echo -n "${CFLAGS0}" || echo $$CFLAGS )
 

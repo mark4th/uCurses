@@ -4,7 +4,6 @@
 #include <stdlib.h>
 
 #include "h/list.h"
-#include "h/uCurses_types.h"
 
 // -----------------------------------------------------------------------
 // insert n2 into list after node n1

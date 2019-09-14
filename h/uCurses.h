@@ -85,6 +85,44 @@ extern uint64_t params[MAX_PARAM];
 #define ti_setaf()   _format(718 >> 1)
 #define ti_setab()   _format(720 >> 1)
 
+#define ti_kbs()     _format(110 >> 1)  // key backspace
+#define ti_kdch1()   _format(118 >> 1)  // delete character key
+#define ti_kcud1()   _format(122 >> 1)  // cursor down key
+#define ti_kf1()     _format(132 >> 1)  // f1 key
+#define ti_kf10()    _format(134 >> 1)  // f10 key
+#define ti_kf2()     _format(136 >> 1)  // f2 key
+#define ti_kf3()     _format(138 >> 1)  // f3 key
+#define ti_kf4()     _format(140 >> 1)  // f4 key
+#define ti_kf5()     _format(142 >> 1)  // f5 key
+#define ti_kf6()     _format(144 >> 1)  // f6 key
+#define ti_kf7()     _format(146 >> 1)  // f7 key
+#define ti_kf8()     _format(148 >> 1)  // f8 key
+#define ti_kf9()     _format(150 >> 1)  // f9 key
+#define ti_khome()   _format(152 >> 1)  // home key
+#define ti_kich1()   _format(154 >> 1)  // insert character key
+#define ti_kcub1()   _format(158 >> 1)  // cursor left key
+#define ti_knp()     _format(162 >> 1)  // next page key
+#define ti_kpp()     _format(164 >> 1)  // previous page key
+#define ti_kcuf1()   _format(166 >> 1)  // cursor right key
+#define ti_kcuu1()   _format(174 >> 1)  // cursor up key
+#define ti_rmkx()    _format(176 >> 1)  // leave keyboard transmit mode
+#define ti_smkx()    _format(178 >> 1)  // enter keyboard transmit mode
+#define ti_kcbt()    _format(296 >> 1)  // backtab key
+#define ti_kend()    _format(328 >> 1)  // key end
+#define ti_kent()    _format(330 >> 1)  // key enter
+#define ti_kDC()     _format(382 >> 1)  // shifted delete character key
+#define ti_kEND()    _format(388 >> 1)  // shifted end key
+#define ti_kHOM()    _format(398 >> 1)  // shifted home key
+#define ti_kIC()     _format(400 >> 1)  // shifted insert character key
+#define ti_kLFT()    _format(402 >> 1)  // shifted cursor left
+#define ti_kNXT()    _format(408 >> 1)  // shifted next key
+#define ti_kPRV()    _format(412 >> 1)  // shifted previous key
+#define ti_kRIT()    _format(420 >> 1)  // shifted cursor right
+#define ti_kf11()    _format(432 >> 1)  // f11 function key
+#define ti_kf12()    _format(434 >> 1)  // f12 function key
+
+#define ti_kmous()   _format(710 >> 1)  // mouse event has occurred
+
 // -----------------------------------------------------------------------
 
 void c_emit(uint8_t c1);
@@ -93,7 +131,7 @@ void uCurses_init(void);
 void set_attribs(void);
 void _send_str(void *unused);
 
-extern fp_t send_str;
+extern fp_t *send_str;
 
 // -----------------------------------------------------------------------
 // from utils.c

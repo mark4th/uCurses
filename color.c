@@ -9,11 +9,10 @@
 
 // -----------------------------------------------------------------------
 
-uint8_t fg;                   // current fg color
-uint8_t bg;                   // current bg color
-uint32_t attr;                // current attribs and fg/bg
+uint16_t attr;                // current attribs and fg/bg
 
-static uint32_t old_attr;
+static uint16_t old_attr;
+// TODO: bit flags
 static uint8_t acs_flag = 0;  // 1 = alt charset selected
 static uint8_t acs_old  = 0;  // old acs flag (sense changes)
 
@@ -26,11 +25,15 @@ static void noop(void){;}
 
 // -----------------------------------------------------------------------
 
+uint8_t fg(void) { return attr & 0x0f; }
+uint8_t bg(void) { return (attr & 0xf0) >> 4; }
+
+// -----------------------------------------------------------------------
+
 void set_fg(uint8_t c)
 {
   c &= 0x0f;                // ensure color is sane
-  fg = c;                   // save current fg color
-  attr &= 0xfffff0;         // set fg in master attribute value
+  attr &= 0xfffffff0;       // set fg in master attribute value
   attr |= c;
   params[0] = c;            // pass parameter directly to setaf
   ti_setaf();
@@ -41,8 +44,7 @@ void set_fg(uint8_t c)
 void set_bg(uint8_t c)
 {
   c &= 0x0f;                // ensure color is sane
-  bg = c;                   // save current bg color
-  attr &= 0xffff0f;         // set bg in master attribute value
+  attr &= 0xffffff0f;       // set bg in master attribute value
   attr |= (c << 4);
   params[0] = c;            // pass parameter directly to setab
   ti_setab();
@@ -63,9 +65,10 @@ static void _set_acs(void)
 
 void set_attribs(void)
 {
-  uint8_t a, f, b;
+  uint16_t a;
+  uint8_t f, b;
 
-  a = ((attr ^ old_attr) >> 8);
+  a = ((attr ^ old_attr) >> 16);
 
   if(0 != a)
   {
@@ -80,10 +83,10 @@ void set_attribs(void)
     f = attr & 0x0f;
     b = (attr >> 4) & 0x0f;
 
-    if(b != bg)    { set_bg(bg); }
-    if(f != fg)    { set_fg(fg); }
+    if(b != bg())    { set_bg(b); }
+    if(f != fg())    { set_fg(f); }
 
-    a = attr >> 8;
+    a = attr >> 16;
 
     (a & STANDOUT)  ? ti_smso()  : ti_rmso();
     (a & UNDERLINE) ? ti_smul()  : ti_rmul();
@@ -101,7 +104,7 @@ void set_attribs(void)
 
 static void set_attr(ti_attrib_t a)
 {
-  attr |= (a << 8);
+  attr |= (a << 16);
   set_attribs();
 }
 
@@ -109,7 +112,7 @@ static void set_attr(ti_attrib_t a)
 
 static void clr_attr(ti_attrib_t a)
 {
-  attr &= ~(a << 8);
+  attr &= ~(a << 16);
   set_attribs();
 }
 
@@ -143,10 +146,9 @@ void clr_dim(void)   { clr_attr(DIM);       }
 
 void set_norm(void)
 {
-  fg = default_fg;
-  bg = default_bg;
-  ti_rmacs();
-  attr = 0;
+  acs_flag = 0;
+  attr = (default_bg << 4) | default_fg;
+
   set_attribs();
 }
 

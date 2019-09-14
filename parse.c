@@ -8,12 +8,24 @@
 
 #include "h/tui.h"
 #include "h/uCurses.h"
-#include "h/uCurses_types.h"
 
 // -----------------------------------------------------------------------
 
-uint8_t *buffer;            // format string compilation output buffer
-uint16_t bix;                // max of 64k of compiled escape sequences
+typedef void (*opt_t)(void);
+typedef struct
+{
+  uint8_t option;
+  opt_t vector;
+} switch_t;
+
+// -----------------------------------------------------------------------
+
+static void noop(void){;}
+
+// -----------------------------------------------------------------------
+
+uint8_t *str_buff;           // format string compilation output buffer
+uint16_t nb;                // max of 64k of compiled escape sequences
 
 uint8_t fsp;                // stack pointer for ...
 uint64_t fstack[5];         // format string stack
@@ -28,7 +40,7 @@ uint64_t AtoZ[26];
 
 uint8_t compile = 0;        // set to 1 to compile up to 64K of escapes
 
-fp_t send_str;              // write all format strings to
+fp_t *send_str;             // write all format strings to
 
 // -----------------------------------------------------------------------
 // addresses within memory mapped terminfo file
@@ -43,17 +55,17 @@ void _send_str(void *unused)
 {
   int n;
 
-  buffer[bix] = '\0';
+  str_buff[nb] = '\0';
 
  // TODO: hard coded out file is wrong
- n =  write(1, &buffer[0], bix);
+ n =  write(1, &str_buff[0], nb);
 
  if(n < 0)
  {
    // TODO: log warning?
  }
 
-  bix = 0;
+  nb = 0;
 }
 
 // -----------------------------------------------------------------------
@@ -127,7 +139,7 @@ static uint64_t fs_pop(void)
 
 void c_emit(uint8_t c1)
 {
-  buffer[bix++] = c1;
+  str_buff[nb++] = c1;
 }
 
 // -----------------------------------------------------------------------
@@ -137,7 +149,7 @@ void c_emit(uint8_t c1)
 // -----------------------------------------------------------------------
 // output a '%' character
 
-static inline void _percent(void)
+static void _percent(void)
 {
   c_emit('%');
 }
@@ -145,7 +157,7 @@ static inline void _percent(void)
 // -----------------------------------------------------------------------
 // logical and of two format string stack items
 
-static inline void _and(void)
+static void _and(void)
 {
   uint64_t n1, n2;
 
@@ -157,7 +169,7 @@ static inline void _and(void)
 
 // -----------------------------------------------------------------------
 
-static inline void _or(void)
+static void _or(void)
 {
   uint64_t n1, n2;
 
@@ -169,9 +181,7 @@ static inline void _or(void)
 
 // -----------------------------------------------------------------------
 
-#ifdef DAS_NEVER_DEFINED
-TODO: add to switch statement below
-static inline void _bang(void)
+static void _bang(void)
 {
   uint64_t n1;
 
@@ -180,13 +190,10 @@ static inline void _bang(void)
 
   fs_push(n1);
 }
-#endif // DAS_NEVER_DEFINED
 
 // -----------------------------------------------------------------------
 
-#ifdef DAS_NEVER_DEFINED
-TODO: add to switch statement below
-static inline void _tilde(void)
+static void _tilde(void)
 {
   uint64_t n1;
 
@@ -194,11 +201,10 @@ static inline void _tilde(void)
 
   fs_push(~n1);
 }
-#endif // DAS_NEVER_DEFINED
 
 // -----------------------------------------------------------------------
 
-static inline void _caret(void)
+static void _caret(void)
 {
   uint64_t n1, n2;
 
@@ -210,7 +216,7 @@ static inline void _caret(void)
 
 // -----------------------------------------------------------------------
 
-static inline void _plus(void)
+static void _plus(void)
 {
   uint64_t n1, n2;
 
@@ -222,7 +228,7 @@ static inline void _plus(void)
 
 // -----------------------------------------------------------------------
 
-static inline void _minus(void)
+static void _minus(void)
 {
   uint64_t n1, n2;
 
@@ -234,7 +240,7 @@ static inline void _minus(void)
 
 // -----------------------------------------------------------------------
 
-static inline void _star(void)
+static void _star(void)
 {
   uint64_t n1, n2;
 
@@ -246,7 +252,7 @@ static inline void _star(void)
 
 // -----------------------------------------------------------------------
 
-static inline void _slash(void)
+static void _slash(void)
 {
   uint64_t n1, n2;
 
@@ -258,7 +264,7 @@ static inline void _slash(void)
 
 // -----------------------------------------------------------------------
 
-static inline void _m(void)
+static void _m(void)
 {
   uint64_t n1, n2;
 
@@ -270,7 +276,7 @@ static inline void _m(void)
 
 // -----------------------------------------------------------------------
 
-static inline void _equals(void)
+static void _equals(void)
 {
   uint64_t n1, n2;
 
@@ -284,7 +290,7 @@ static inline void _equals(void)
 
 // -----------------------------------------------------------------------
 
-static inline void _greater(void)
+static void _greater(void)
 {
   uint64_t n1, n2;
 
@@ -298,7 +304,7 @@ static inline void _greater(void)
 
 // -----------------------------------------------------------------------
 
-static inline void _less(void)
+static void _less(void)
 {
   uint64_t n1, n2;
 
@@ -313,7 +319,7 @@ static inline void _less(void)
 // -----------------------------------------------------------------------
 // compile ascii char 'x'
 
-static inline void _tick(void)
+static void _tick(void)
 {
   uint8_t c1;
 
@@ -325,7 +331,7 @@ static inline void _tick(void)
 // -----------------------------------------------------------------------
 // increment first two parameters for ansi terminals
 
-static inline void _i(void)
+static void _i(void)
 {
   params[0]++;
   params[1]++;
@@ -333,9 +339,7 @@ static inline void _i(void)
 
 // -----------------------------------------------------------------------
 
-#ifdef DAS_NEVER_DEFINED
-TODO: add to switch statement below
-static inline void _s(void)
+static void _s(void)
 {
   uint8_t *s;
   uint8_t c1;
@@ -347,21 +351,17 @@ static inline void _s(void)
     c_emit(c1);
   }
 }
-#endif // DAS_NEVER_DEFINED
 
 // -----------------------------------------------------------------------
 
-#ifdef DAS_NEVER_DEFINED
-TODO: add to switch statement below
-static inline void _l(void)
+static void _l(void)
 {
   uint8_t *s;
 
   s = (uint8_t *)fs_pop();
 
-  fs_push(strlen(cstr(s)));
+  fs_push(strlen((const char *)s));
 }
-#endif //DAS_NEVER_DEFINED
 
 // -----------------------------------------------------------------------
 
@@ -381,7 +381,7 @@ static uint64_t *q_atoz(void)
 
 // -----------------------------------------------------------------------
 
-static inline void _P(void)
+static void _P(void)
 {
   uint64_t *s;
 
@@ -392,7 +392,7 @@ static inline void _P(void)
 
 // -----------------------------------------------------------------------
 
-static inline void _g(void)
+static void _g(void)
 {
   uint64_t *s;
 
@@ -403,7 +403,7 @@ static inline void _g(void)
 
 // -----------------------------------------------------------------------
 
-static inline void _brace(void)
+static void _brace(void)
 {
   uint64_t n1;
   uint8_t c1;
@@ -424,7 +424,7 @@ static inline void _brace(void)
 // -----------------------------------------------------------------------
 // skip forward in format string to nextg % command
 
-static inline void to_cmd(void)
+static void to_cmd(void)
 {
   while('%' != *f_str++)
     ;
@@ -433,7 +433,7 @@ static inline void to_cmd(void)
 // -----------------------------------------------------------------------
 // too much if/and/but loop nesting
 
-static inline void _t(void)
+static void _t(void)
 {
   uint64_t f1;
   uint8_t c1;
@@ -473,7 +473,7 @@ static inline void _t(void)
 
 // -----------------------------------------------------------------------
 
-static inline void _e(void)
+static void _e(void)
 {
   uint8_t c1;
   uint8_t nest=0;
@@ -501,7 +501,7 @@ static inline void _e(void)
 
 // -----------------------------------------------------------------------
 
-static inline void _d(void)
+static void _d(void)
 {
   uint64_t n1, n2;
 
@@ -511,17 +511,28 @@ static inline void _d(void)
   p = &s[0];
 
   n1 = fs_pop();
-  n2 = snprintf((str)s, 4, "%ld", n1);
+
+  switch(digits)
+  {
+    case 2:
+      n2 = snprintf((char *)s, 2, "%ld", n1);
+      break;
+    case 3:
+      n2 = snprintf((char *)s, 3, "%ld", n1);
+      break;
+    default :
+      n2 = snprintf((char *)s, 4, "%ld", n1);
+  }
 
   s[n2]='\0';
 
-  strncat((str)&buffer[0], (str)s, n2);
-  bix += n2;
+  strncat((char *)&str_buff[0], (char *)s, n2);
+  nb += n2;
 }
 
 // -----------------------------------------------------------------------
 
-static inline void _c(void)
+static void _c(void)
 {
   uint64_t c1;
 
@@ -531,7 +542,7 @@ static inline void _c(void)
 
 // -----------------------------------------------------------------------
 
-static inline void _p(void)
+static void _p(void)
 {
   uint8_t c1;
 
@@ -552,48 +563,47 @@ static uint8_t next_c(void)
 
   if(('2' == c1) || ('3' == c1))
   {
-    digits = (*f_str++ & 0x0f);
+    digits = (c1 & 0x0f);
+    // this should be a d
     c1 = *f_str++;
   }
   return c1;
 }
 
 // -----------------------------------------------------------------------
+// terminfo format string % codes
 
-static inline void command(void)
+const switch_t p_codes[] =
+{
+  { '%', &_percent }, { 'p', &_p },     { 'd', &_d },     { 'c', &_c },
+  { 'i', &_i },       { 's', &_s },     { 'l', &_l },     { 'A', &_and },
+  { '&', &_and },     { 'O', &_or },    { '|', &_or },    { '!', &_bang },
+  { '~', &_tilde },   { '^', &_caret }, { '+', &_plus },  { '-', &_minus },
+  { '*', &_star },    { '/', &_slash }, { 'm', &_m },     { '=', &_equals },
+  { '>', &_greater }, { '<', &_less },  { 0x27, &_tick }, { '{', &_brace },
+  { 'P', &_P },       { 'g', &_g },     { 't', &_t },     { 'e', &_e },
+  { '?', &noop },     { ';', &noop },
+};
+
+// -----------------------------------------------------------------------
+
+static void command(void)
 {
   uint8_t c1;
+  const switch_t *s = &p_codes[0];
+
+  int n = sizeof(p_codes) / sizeof(p_codes[0]);
 
   c1 = next_c();
 
-  switch(c1)
+  while(n--)
   {
-    case '%': _percent();  break;
-    case 'p': _p();        break;
-    case 'd': _d();        break;
-    case 'c': _c();        break;
-    case 'i': _i();        break;
-    case 'A': // technically this is wrong
-    case '&': _and();      break;
-    case 'O': // so is this :)
-    case '|': _or();       break;
-    case '^': _caret();    break;
-    case '+': _plus();     break;
-    case '-': _minus();    break;
-    case '*': _star();     break;
-    case '/': _slash();    break;
-    case 'm': _m();        break;
-    case '=': _equals();   break;
-    case '>': _greater();  break;
-    case '<': _less();     break;
-    case 0x27: _tick();    break;
-    case '{': _brace();    break;
-    case 'P': _P();        break;
-    case 'g': _g();        break;
-    case 't': _t();        break;
-    case 'e': _e();        break;
-    case '?':
-    case ';':              break;
+    if(c1 == s->option)
+    {
+      (s->vector)();
+      break;
+    }
+    s++;
   }
 }
 
@@ -621,9 +631,9 @@ void _format(uint16_t i)
   }
 
   // we either post the compiled escape sequence now or we stack up
-  // up to 64k of them in buffer[] and output them all later
+  // up to 64k of them in str_buff[] and output them all later
 
-  (send_str)(NULL);         // this might be a do nothng
+  (*send_str)(0);         // this might be a do nothng
 }
 
 // =======================================================================

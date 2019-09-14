@@ -7,6 +7,7 @@
 
 // -----------------------------------------------------------------------
 
+  fp_t draw_window;           // usually void draw_win(window_t *w1)
   fp_t draw_screen;
   fp_t draw_borders;
   fp_t draw_menus;
@@ -481,21 +482,21 @@ void win_unlock(window_t *win)
 
 bool win_is_boxed(window_t *win)
 {
-  return (0 != win_flags_get(win) & WIN_BOXED);
+  return (0 != (win_flags_get(win) & WIN_BOXED));
 }
 
 // -----------------------------------------------------------------------
 
 bool win_is_locked(window_t *win)
 {
-  return (0 != win_flags_get(win) & WIN_LOCKED);
+  return (0 != (win_flags_get(win) & WIN_LOCKED));
 }
 
 // -----------------------------------------------------------------------
 
 bool win_is_filled(window_t *win)
 {
-  return (0 != win_flags_get(win) & WIN_FILLED);
+  return (0 != (win_flags_get(win) & WIN_FILLED));
 }
 
 // =======================================================================

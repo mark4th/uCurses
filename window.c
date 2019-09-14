@@ -22,16 +22,9 @@ uint32_t win_attrs(window_t *win, uint8_t c)
 }
 
 // -----------------------------------------------------------------------
-
-uint32_t win_blank(window_t *w)
-{
-  uint32_t blank;
-}
-
-// -----------------------------------------------------------------------
 // detach then reattach window. pops window to front
 
-uint32_t win_pop(window_t *win)
+void win_pop(window_t *win)
 {
   screen_t *scr = win_scr_get(win);
 
@@ -85,28 +78,22 @@ void close_win(window_t *win)
 }
 
 // -----------------------------------------------------------------------
-// returns xx yy cc where xx = attribs, yy = colors and cc = char
 
-static uint32_t make_char(window_t *win, uint8_t c)
-{
-  return (win_attrs_get(win) | (c << 8));
-}
-
-// -----------------------------------------------------------------------
-
-static uint32_t make_border_char(window_t *win, uint8_t c)
+KEEP static uint32_t make_border_char(window_t *win, uint8_t c)
 {
   return (win_battrs_get(win) | (c << 8));
 }
 
 // -----------------------------------------------------------------------
 
-static uint16_t get_blank(window_t *win)
+KEEP static uint16_t get_blank(window_t *win)
 {
   uint16_t c1;
 
   c1 = (0 != (win_flags_get(win) & WIN_FILLED))
     ? win_blank_get(win) : 0x20;
+
+  return c1;
 }
 
 // -----------------------------------------------------------------------

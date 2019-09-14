@@ -5,7 +5,7 @@
 
 // -----------------------------------------------------------------------
 
-static inline uint32_t b_at(screen_t *scr, uint16_t x, uint16_t y)
+KEEP static inline uint32_t b_at(screen_t *scr, uint16_t x, uint16_t y)
 {
   return (scr_width_get(scr) * y) + x;
 }
@@ -13,7 +13,7 @@ static inline uint32_t b_at(screen_t *scr, uint16_t x, uint16_t y)
 // -----------------------------------------------------------------------
 // write one character and attribes into border
 
-static void bemit(window_t *win, uint16_t c, uint32_t index)
+KEEP static void bemit(window_t *win, uint16_t c, uint32_t index)
 {
 
 }

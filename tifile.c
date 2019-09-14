@@ -11,12 +11,10 @@
 #include <unistd.h>
 
 #include "h/uCurses.h"
-#include "h/uCurses_types.h"
 
 // -----------------------------------------------------------------------
 
-extern uint8_t *buffer;
-extern fp_t send_str;
+extern uint8_t *str_buff;
 
 // -----------------------------------------------------------------------
 
@@ -54,28 +52,28 @@ static void map_tifile(void)
   uint8_t ti_file[128];
   struct stat st;
 
-  term = (cu8_ptr)getenv("TERM");
+  term = (uint8_t *)getenv("TERM");
   if(NULL == term)
   {
     printf("No TERM variable set\r\n");
     exit(0);
   }
 
-  strcpy((str)&ti_file[0], "/usr/share/terminfo/x/");
+  strcpy((char *)&ti_file[0], "/usr/share/terminfo/x/");
   ti_file[20] = term[0];
-  strncat((str)&ti_file[0], (cstr)term, 128-21);  // magic numbers ftw
+  strncat((char *)&ti_file[0], (char *)term, 128-21);  // magic numbers ftw
 
-  stat((cstr)ti_file, &st);
+  stat((char *)ti_file, &st);
   ti_size = st.st_size;
 
-  fd = open((cstr)ti_file, O_RDONLY, 0);
+  fd = open((char *)ti_file, O_RDONLY, 0);
   if(-1 == fd)
   {
     printf("No Terminfo File for %s\r\n", term);
     exit(1);
   }
 
-  ti_map = (u8_ptr)mmap(NULL, ti_size, PROT_READ, MAP_PRIVATE, fd, 0);
+  ti_map = (uint8_t *)mmap(NULL, ti_size, PROT_READ, MAP_PRIVATE, fd, 0);
   if(MAP_FAILED == ti_map)
   {
     printf("Unable to map Terminfo File\r\n");
@@ -144,11 +142,12 @@ void uCurses_init(void)
   map_tifile();             // memory map correct terminfo file
   q_valid();                // verify its magic is correct
 
-  send_str = &_send_str;    // initialize function pointers
+  send_str = (fp_t *)&_send_str;    // initialize function pointers
 
-  buffer = (u8_ptr)malloc(65535);   // allocate 64k for compiled escape sequences
+  // allocate 64k for compiled escape sequences
+  str_buff = (uint8_t *)malloc(65535);
 
-  if(NULL == buffer)        // if we can!
+  if(NULL == str_buff)      // if we can!
   {
     printf("uCurses: insufficient ram for buffers\r\n");
     exit(0);

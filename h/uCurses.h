@@ -9,7 +9,7 @@
 
 // -----------------------------------------------------------------------
 
-#define MAX_PARAM 40
+#define MAX_PARAM 9
 
 // -----------------------------------------------------------------------
 
@@ -18,6 +18,17 @@ typedef void (*fp_t)(void *x);
 // -----------------------------------------------------------------------
 
 extern uint64_t params[MAX_PARAM];
+
+// -----------------------------------------------------------------------
+
+void uCurses_init(void);
+void _format(uint16_t i);
+void do_flush(void *unused);
+void do_parse_format(void);
+void utf8_emit(uint32_t code);
+void set_attribs(void);
+
+extern fp_t flush;
 
 // -----------------------------------------------------------------------
 
@@ -122,35 +133,5 @@ extern uint64_t params[MAX_PARAM];
 #define ti_kf12()    _format(434 >> 1)  // f12 function key
 
 #define ti_kmous()   _format(710 >> 1)  // mouse event has occurred
-
-// -----------------------------------------------------------------------
-
-void c_emit(uint8_t c1);
-void _format(uint16_t i);
-void uCurses_init(void);
-void set_attribs(void);
-void _send_str(void *unused);
-
-extern fp_t *send_str;
-
-// -----------------------------------------------------------------------
-// from utils.c
-
-void clear(void);
-void hpa(uint16_t x);
-void cup(uint16_t x, uint16_t y);
-void cud1(void);
-void home(void);
-void cub1(void);
-void cuf1(void);
-void cuu1(void);
-void dch1(void);
-void cud(uint16_t n1);
-void ich(void);
-void cub(uint16_t n1);
-void cuf(uint16_t n1);
-void cuu(uint16_t n1);
-void vpa(uint16_t n1);
-void cr(void);
 
 // =======================================================================

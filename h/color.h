@@ -1,53 +1,76 @@
 // color.h
 // -----------------------------------------------------------------------
 
-  #pragma once
+    #pragma once
 
 // -----------------------------------------------------------------------
 
 typedef enum
 {
-  BLACK, RED, GREEN, YELLOW,
-  BLUE, MAGENTA, CYAN, WHITE,
+    BLACK, RED, GREEN, BROWN,
+    BLUE, MAGENTA, CYAN, WHITE,
+    GRAY, LT_RED, LT_GREEN, YELLOW,
+    LT_BLUE, LT_MAGENTA, LT_CYAN, LT_WHITE
 } ti_color_t;
 
 // -----------------------------------------------------------------------
 
 typedef enum
 {
-  TI_STANDOUT, TI_UNDERLINE, TI_REVERSE, TI_BLINK,
-  TI_DIM, TI_BOLD, TI_BLANK, TI_PROT, TI_ACS,
+    TI_UNDERLINE,  TI_REVERSE,   TI_BOLD,     TI_BLINK,
+    TI_FG_RGB,     TI_BG_RGB,    TI_FG_GRAY,  TI_BG_GRAY,
 
-  STANDOUT  = (1 << TI_STANDOUT),
-  UNDERLINE = (1 << TI_UNDERLINE),
-  REVERSE   = (1 << TI_REVERSE),
-  BOLD      = (1 << TI_BOLD),
-  BLINK     = (1 << TI_BLINK),
-  DIM       = (1 << TI_DIM),
-  ACS       = (1 << TI_ACS),
+    UNDERLINE = (1 << TI_UNDERLINE),
+    REVERSE   = (1 << TI_REVERSE),
+    BOLD      = (1 << TI_BOLD),
+    BLINK     = (1 << TI_BLINK),
+
+    FG_RGB    = (1 << TI_FG_RGB),
+    BG_RGB    = (1 << TI_BG_RGB),
+    FG_GRAY   = (1 << TI_FG_GRAY),
+    BG_GRAY   = (1 << TI_BG_GRAY),
 } ti_attrib_t;
 
 // -----------------------------------------------------------------------
+// indicies into attributes array
 
-void set_so(void);          // set standout
-void set_ul(void);          // set underline
-void set_rev(void);         // set reverse video
-void set_bold(void);        // set bold
-void set_blink(void);       // set blinking (sometimes)
-void set_dim(void);
-void set_acs(void);
+enum
+{
+    ATTR,                   // attribute flags
+    FG_R,                   // rgb fg red
+    FG_G,                   // rgb fg green
+    FG_B,                   // rgb fg blue
+    BG_R,                   // rgb bg red
+    FG,    BG_G = 5,        // foreground or rgb bg green
+    BG,    BG_B = 6,        // background or rgb bg blue
+    UNUSED
+};
 
-void clr_so(void);          // clear ...
+// -----------------------------------------------------------------------
+
+void set_ul(void);
+void set_rev(void);
+void set_bold(void);
+void set_blink(void);
+
 void clr_ul(void);
 void clr_rev(void);
 void clr_bold(void);
 void clr_blink(void);
-void clr_dim(void);
-void clr_acs(void);
 
-void set_norm(void);        // clear all atrributes etc
+void set_gray_fg(uint8_t c);
+void set_gray_bg(uint8_t c);
+void clr_gray_fg(uint8_t c);
+void clr_gray_bg(uint8_t c);
 
-void set_bg(uint8_t c);     // set background/foreground colors
+void set_rgb_fg(uint8_t r, uint8_t g, uint8_t b);
+void clr_rgb_fg(uint8_t c);
+void set_rgb_bg(uint8_t r, uint8_t g, uint8_t b);
+void clr_rgb_bg(uint8_t c);
+
 void set_fg(uint8_t c);
+void set_bg(uint8_t c);
+
+void set_norm(void);
 
 // =======================================================================

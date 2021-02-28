@@ -2,9 +2,9 @@
 // -----------------------------------------------------------------------
 
 #include <poll.h>
-#include <unistd.h>
 #include <stdint.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "h/uCurses.h"
 
@@ -22,8 +22,8 @@ typedef uint8_t key_reader(void);
 
 // -----------------------------------------------------------------------
 
-  key_reader *_keys;     // pointer to func to test if keys available
-  key_reader *_key;      // pointer to func to read keys
+    key_reader *_keys;      // pointer to func to test if keys available
+    key_reader *_key;       // pointer to func to read keys
 
 // -----------------------------------------------------------------------
 // key sequence input buffer
@@ -35,30 +35,30 @@ static uint16_t num_k;
 
 static struct pollfd pfd =
 {
-  0,        // stdin
-  POLLIN,   // want to know when data is available
-  0
+    0,                      // stdin
+    POLLIN,                 // want to know when data is available
+    0
 };
 
 // -----------------------------------------------------------------------
 
 uint8_t keys(void)  { return _keys(); }
-uint8_t key(void)   { return _key(); }
+uint8_t key(void)   { return _key();  }
 
 // -----------------------------------------------------------------------
 // returns 0 = no keys available, 1 = keys available
 
 uint8_t test_keys(void)
 {
-  uint8_t x = poll(&pfd, 1, 0);
+    uint8_t x = poll(&pfd, 1, 0);
 
-  if(0xff == x)
-  {
-    x = 0;
-    // TODO: log warning
-  }
+    if(0xff == x)
+    {
+        x = 0;
+        // TODO: log warning
+    }
 
-  return x;
+    return x;
 }
 
 // -----------------------------------------------------------------------
@@ -66,16 +66,16 @@ uint8_t test_keys(void)
 
 uint8_t read_key(void)
 {
-  uint8_t buffer;
-  ssize_t n;
+    uint8_t buffer;
+    ssize_t n;
 
-  do
-  {
-    n = read(1, &buffer, 1);
-    // todo this might be bad :)
-  } while(-1 == n);
+    do
+    {
+        n = read(1, &buffer, 1);
+        // todo this might be bad :)
+    } while(-1 == n);
 
-  return buffer;
+    return buffer;
 }
 
 // -----------------------------------------------------------------------
@@ -83,12 +83,12 @@ uint8_t read_key(void)
 
 void read_keys(void)
 {
-  num_k = 0;
+    num_k = 0;
 
-  do
-  {
-     keybuff[num_k++] = read_key();
-  } while( 0 != test_keys());
+    do
+    {
+         keybuff[num_k++] = read_key();
+    } while( 0 != test_keys());
 }
 
 // -----------------------------------------------------------------------
@@ -96,8 +96,8 @@ void read_keys(void)
 
 void ent(void)
 {
-  str_buff[0] = 0x0a;
-  nb = 1;
+    str_buff[0] = 0x0a;
+    nb = 1;
 }
 
 // -----------------------------------------------------------------------
@@ -105,8 +105,8 @@ void ent(void)
 
 void kbs(void)
 {
-  str_buff[0] = 0x7f;
-  nb = 1;
+    str_buff[0] = 0x7f;
+    nb = 1;
 }
 
 // -----------------------------------------------------------------------
@@ -156,10 +156,10 @@ void kf12(void)  { ti_kf12();  }
 
 void (*k_table[24])() =
 {
-  ent,   kcuu1, kcud1, kcub1, kcuf1, kbs,
-  kdch1, kich1, khome, kend,  knp,   kpp,
-  kf1,   kf2,   kf3,   kf4,   kf5,   kf6,
-  kf7,   kf8,   kf9,   kf10,  kf11,  kf12
+    ent,   kcuu1, kcud1, kcub1, kcuf1, kbs,
+    kdch1, kich1, khome, kend,  knp,   kpp,
+    kf1,   kf2,   kf3,   kf4,   kf5,   kf6,
+    kf7,   kf8,   kf9,   kf10,  kf11,  kf12
 };
 
 // -----------------------------------------------------------------------
@@ -169,27 +169,28 @@ void (*k_table[24])() =
 
 uint16_t match_key(void)
 {
-  int i;
+    int i;
 
-  for(i = 0; i < 24; i++)
-  {
-    nb = 0;                 // number chars in escape sequence buffer
-
-    (*(*k_table[i]))();     // compile escape sequence for ith entry
-
-    // the above k_table() call compiled an escape sequence into the
-    // str_buff[] array.  compare it with the sequence in the
-    // keyboard input buffer which is the escape sequence or a single
-    // character of the key that was pressed
-
-    if(num_k == nb)
+    for(i = 0; i < 24; i++)
     {
-      if(0 == strcmp((const char *)&keybuff, (const char *)&str_buff))
+      nb = 0;               // number chars in escape sequence buffer
+
+      (*(*k_table[i]))();   // compile escape sequence for ith entry
+
+      // the above k_table() call compiled an escape sequence into the
+      // str_buff[] array.  compare it with the sequence in the
+      // keyboard input buffer which is the escape sequence or a single
+      // character of the key that was pressed
+
+      if(num_k == nb)
       {
-        return i;            // sequences match.
+          if(0 == strcmp((const char *)&keybuff, (const char *)&str_buff))
+          {
+              return i;     // sequences match.
+          }
       }
-    }
   }
+
   return -1;
 }
 
@@ -198,8 +199,8 @@ uint16_t match_key(void)
 
 void k_ent(void)
 {
-  keybuff[0] = 0x0a;
-  num_k = 1;
+    keybuff[0] = 0x0a;
+    num_k = 1;
 }
 
 // -----------------------------------------------------------------------
@@ -207,37 +208,40 @@ void k_ent(void)
 
 void k_bs(void)
 {
-  keybuff[0] = 8;
-  num_k = 1;
+    keybuff[0] = 8;
+    num_k = 1;
 }
 
 // -----------------------------------------------------------------------
 // pointers to default handlers for each key press
 
-key_handler *_key_ent   = k_ent;
-key_handler *_key_up    = noop;
-key_handler *_key_down  = noop;
-key_handler *_key_left  = noop;
-key_handler *_key_right = noop;
-key_handler *_key_bs    = k_bs;
-key_handler *_key_del   = noop;
-key_handler *_key_ins   = noop;
-key_handler *_key_home  = noop;
-key_handler *_key_end   = noop;
-key_handler *_key_np    = noop;
-key_handler *_key_pp    = noop;
-key_handler *_key_f1    = noop;
-key_handler *_key_f2    = noop;
-key_handler *_key_f3    = noop;
-key_handler *_key_f4    = noop;
-key_handler *_key_f5    = noop;
-key_handler *_key_f6    = noop;
-key_handler *_key_f7    = noop;
-key_handler *_key_f8    = noop;
-key_handler *_key_f9    = noop;
-key_handler *_key_f10   = noop;
-key_handler *_key_f11   = noop;
-key_handler *_key_f12   = noop;
+    // you can directly modify these
+    // you should not directly modify these :)
+
+    key_handler *_key_ent   = k_ent;
+    key_handler *_key_up    = noop;
+    key_handler *_key_down  = noop;
+    key_handler *_key_left  = noop;
+    key_handler *_key_right = noop;
+    key_handler *_key_bs    = k_bs;
+    key_handler *_key_del   = noop;
+    key_handler *_key_ins   = noop;
+    key_handler *_key_home  = noop;
+    key_handler *_key_end   = noop;
+    key_handler *_key_np    = noop;
+    key_handler *_key_pp    = noop;
+    key_handler *_key_f1    = noop;
+    key_handler *_key_f2    = noop;
+    key_handler *_key_f3    = noop;
+    key_handler *_key_f4    = noop;
+    key_handler *_key_f5    = noop;
+    key_handler *_key_f6    = noop;
+    key_handler *_key_f7    = noop;
+    key_handler *_key_f8    = noop;
+    key_handler *_key_f9    = noop;
+    key_handler *_key_f10   = noop;
+    key_handler *_key_f11   = noop;
+    key_handler *_key_f12   = noop;
 
 // -----------------------------------------------------------------------
 // the system indirectly calls the function pointers pointed to by the
@@ -246,10 +250,12 @@ key_handler *_key_f12   = noop;
 
 static key_handler **key_actions[24] =
 {
-  &_key_ent, &_key_up,  &_key_down, &_key_left, &_key_right, &_key_bs,
-  &_key_del, &_key_ins, &_key_home, &_key_end,  &_key_np,    &_key_pp,
-  &_key_f1,  &_key_f2,  &_key_f3,   &_key_f4,   &_key_f5,    &_key_f6,
-  &_key_f7,  &_key_f8,  &_key_f9,   &_key_f10,  &_key_f11,   &_key_f12
+    &_key_ent,    &_key_up,   &_key_down,  &_key_left,
+    &_key_right,  &_key_bs,   &_key_del,   &_key_ins,
+    &_key_home,   &_key_end,  &_key_np,    &_key_pp,
+    &_key_f1,     &_key_f2,   &_key_f3,    &_key_f4,
+    &_key_f5,     &_key_f6,   &_key_f7,    &_key_f8,
+    &_key_f9,     &_key_f10,  &_key_f11,   &_key_f12
 };
 
 // -----------------------------------------------------------------------
@@ -263,34 +269,22 @@ static key_handler **(*key_action)[24] = &key_actions;
 
 uint8_t new_key(void)
 {
-  uint16_t c;
+    uint16_t c;
 
-  do
-  {
-    read_keys();                // read key or sequence into keyboard buff
-
-    c = match_key();            // compare input with all handled escapes
-
-    if(0xffff != c)             // if escape sequence is one we handle
+    do
     {
-      nb = 0;                   // ensure there are no keys in the buffer
-      (*(*key_action)[c])();    // execute handler for that keypress
-    }
-  } while (1 != num_k);
+        read_keys();        // read key or sequence into keyboard buff
+
+        c = match_key();    // compare input with all handled escapes
+
+        if(0xffff != c)     // if escape sequence is one we handle
+        {
+            nb = 0;         // ensure there are no keys in the buffer
+            (*(*key_action)[c])();
+        }
+    } while (1 != num_k);
 
   return keybuff[0];
 }
-
-// -----------------------------------------------------------------------
-// -----------------------------------------------------------------------
-// -----------------------------------------------------------------------
-// -----------------------------------------------------------------------
-// -----------------------------------------------------------------------
-// -----------------------------------------------------------------------
-// -----------------------------------------------------------------------
-// -----------------------------------------------------------------------
-// -----------------------------------------------------------------------
-
-
 
 // =======================================================================

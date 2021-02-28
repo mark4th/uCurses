@@ -4,8 +4,8 @@
 CC     = clang
 
 OBJS   = $(addprefix $(O)/, \
-   main.o util.o tui.o parse.o tifile.o color.o list.o \
-   window.o screen.o border.o keys.o windisp.o scrdisp.o)
+   main.o util.o parse.o tifile.o color.o list.o \
+   window.o screen.o border.o keys.o utf8.o)
 
 HDRS   = $(addprefix $(H)/, color.h tui.h uCurses.h list.h)
 

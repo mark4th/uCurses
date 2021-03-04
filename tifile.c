@@ -82,9 +82,8 @@ static void map_tifile(void)
         exit(1);
     }
 
-    printf("Successfully maped Terminfo FIle\r\n");
-
-    printf(" - %s\r\n", ti_file);
+//    printf("Successfully maped Terminfo FIle\r\n");
+//    printf(" - %s\r\n", ti_file);
 
     close(fd);
 }
@@ -142,9 +141,6 @@ void uCurses_init(void)
 {
     map_tifile();           // memory map correct terminfo file
     q_valid();              // verify its magic is correct
-
-    // initialize function pointers
-    flush = (fp_t)&do_flush;
 
     // allocate 64k for compiled escape sequences
     str_buff = (uint8_t *)malloc(65535);

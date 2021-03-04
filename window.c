@@ -10,19 +10,26 @@
 #include "h/color.h"
 #include "h/tui.h"
 
+extern uint8_t default_bg;
+extern uint8_t default_fg;
+
 // -----------------------------------------------------------------------
 
-#define win_line_addr(win, line) &win->buffer[win->width * line];
+cell_t *win_line_addr(window_t *win, uint16_t line)
+{
+    uint16_t index = (win->width) * line;
+    return &win->buffer[index];
+}
 
 // -----------------------------------------------------------------------
 // allocate buffer for window contents
 
 static bool win_alloc(window_t *win)
 {
-    void *p;
+    cell_t *p;
 
-    uint32_t size = ((win->width + win->height) * sizeof(cell_t));
-    p = malloc(size);
+    uint32_t size = win->width * win->height * sizeof(cell_t);
+    p = (cell_t *)malloc(size);
 
     if(NULL != p)
     {
@@ -30,6 +37,49 @@ static bool win_alloc(window_t *win)
         return true;
     }
     return false;
+}
+
+// -----------------------------------------------------------------------
+
+void win_close(window_t *win)
+{
+    if(0 != win)
+    {
+        if(0 != win->buffer)
+        {
+            free(win->buffer);
+        }
+        free(win);
+    }
+}
+
+// -----------------------------------------------------------------------
+
+window_t *win_open(uint16_t width, uint16_t height)
+{
+    window_t *win = (window_t *)malloc(sizeof(window_t));
+
+    if(0 != win)
+    {
+        memset(win, 0, sizeof(window_t));
+        win->height  = height;
+        win->width   = width;
+
+        // win_alloc() uses width/height to determine how much
+        // space needs to be malloc'd
+        if(0 == win_alloc(win))
+        {
+            free(win);
+            win = NULL;
+        }
+        else
+        {
+            win->attrs[FG] = default_fg;
+            win->attrs[BG] = default_bg;
+            win->blank   = 0x20;
+        }
+    }
+    return win;
 }
 
 // -----------------------------------------------------------------------
@@ -43,21 +93,10 @@ void win_pop(window_t *win)
 }
 
 // -----------------------------------------------------------------------
-
-void win_open(uint16_t width, uint16_t height, window_t *win)
-{
-    memset(win, 0, sizeof(window_t));
-    win->height  = height;
-    win->width   = width;
-    memset(win->attrs, 0, sizeof(win->attrs));
-    win->attrs[FG] = WHITE;
-    win->attrs[BG] = BLACK;
-    win->blank   = 0x20;
-    win_alloc(win);
-}
-
-// -----------------------------------------------------------------------
 // set new x/y position of window within parent screen
+
+// look ma!   movable, overlapping windows with text scrolling in any of
+// eight directions!!!
 
 bool win_move(window_t *win, uint16_t x, uint16_t y)
 {
@@ -97,7 +136,7 @@ bool win_move(window_t *win, uint16_t x, uint16_t y)
 
 // -----------------------------------------------------------------------
 
-void win_set_attr(window_t *win, ti_attrib_t attr)
+static void win_set_attr(window_t *win, ti_attrib_t attr)
 {
     win->attrs[ATTR] |= attr;
 
@@ -107,24 +146,6 @@ void win_set_attr(window_t *win, ti_attrib_t attr)
     if(FG_GRAY == attr)  { win->attrs[ATTR] &= ~FG_RGB;  }
     if(BG_GRAY == attr)  { win->attrs[ATTR] &= ~BG_RGB;  }
 }
-
-// -----------------------------------------------------------------------
-
-#define win_clr_attr(win, attr) win->attrs[ATTR] &= ~attr
-
-// -----------------------------------------------------------------------
-
-#define win_set_ul(win)    win_set_attr(win, UNDERLINE)
-#define win_set_rev(win)   win_set_attr(win, REVERSE)
-#define win_set_bold(win)  win_set_attr(win, BOLD)
-#define win_set_blink(win) win_set_attr(win, BLINK)
-
-// -----------------------------------------------------------------------
-
-#define win_clr_ul(win)    win_clr_attr(win, UNDERLINE)
-#define win_clr_rev(win)   win_clr_attr(win, REVERSE)
-#define win_clr_bold(win)  win_clr_attr(win, BOLD)
-#define win_clr_blink(win) win_clr_attr(win, BLINK)
 
 // -----------------------------------------------------------------------
 
@@ -182,35 +203,39 @@ void win_set_bg(window_t *win, uint8_t color)
 
 // -----------------------------------------------------------------------
 
-#define win_set_boxed(win)   win->flags |= WIN_BOXED
-#define win_set_locked(win)  win->flags |= WIN_LOCKED
-#define win_set_filled(win)  win->flags |= WIN_FILLED
-
-#define win_clr_boxed(win)   win->flags &= ~WIN_BOXED
-#define win_clr_locked(win)  win->flags &= ~WIN_LOCKED
-#define win_clr_filled(win)  win->flags &= ~WIN_FILLED
-
-// -----------------------------------------------------------------------
-
-void win_erase_line(window_t *win, uint16_t line)
+static void win_erase_line(window_t *win, uint16_t line)
 {
     uint16_t i;
 
     cell_t cell;
     cell_t *p = win_line_addr(win, line);
 
-    memcpy(cell.attrs, win->attrs, sizeof(cell.attrs));
+    memcpy(cell.attrs, win->attrs, 8);
     cell.code = win->blank;
 
     for(i = 0; i < win->width; i++)
     {
-        p[i] = cell;
+        *p++ = cell;
     }
 }
 
 // -----------------------------------------------------------------------
 
-void win_copy_line(window_t *win, uint16_t src, uint16_t dst)
+void win_clear(window_t *win)
+{
+    uint16_t i;
+
+    for(i = 0; i != win->height; i++)
+    {
+        win_erase_line(win, i);
+    }
+    win->cx = 0;
+    win->cy = 0;
+}
+
+// -----------------------------------------------------------------------
+
+static void win_copy_line(window_t *win, uint16_t src, uint16_t dst)
 {
    cell_t *s = win_line_addr(win, src);
    cell_t *d = win_line_addr(win, dst);
@@ -238,14 +263,9 @@ void win_scroll_dn(window_t *win)
 {
     uint16_t i;
 
-    cell_t *d;
-    cell_t *s;
-
-    for(i = win->height -1; i != 0; i--)
+    for(i = win->height -1; i != 1; i--)
     {
-        s = d = win_line_addr(win, i);
-        s++;
-        memcpy(d, s, (win->width - 1) * sizeof(cell_t));
+        win_copy_line(win, i - 1, i);
     }
 
     win_erase_line(win, 0);
@@ -325,7 +345,7 @@ void win_crsr_dn(window_t *win)
     {
         win->cy++;
     }
-    else
+    else if(0 == (win->attrs[ATTR] & WIN_LOCKED))
     {
         win_scroll_up(win);
     }
@@ -374,7 +394,7 @@ void win_cr(window_t *win)
 
 // -----------------------------------------------------------------------
 
-void do_win_emit(window_t *win, wchar_t c)
+void do_win_emit(window_t *win, uint32_t c)
 {
     cell_t cell;
 
@@ -392,7 +412,7 @@ void do_win_emit(window_t *win, wchar_t c)
 // add a tab width to structure and move cursor to next tab stop?
 // p.s. i hate tabs
 
-void win_emit(window_t *win, wchar_t c)
+void win_emit(window_t *win, uint32_t c)
 {
     switch(c)
     {
@@ -404,39 +424,29 @@ void win_emit(window_t *win, wchar_t c)
 }
 
 // -----------------------------------------------------------------------
-
-void win_clear(window_t *win)
-{
-    uint16_t i;
-    for(i = 0; i < win->height - 1; i++)
-    {
-        win_erase_line(win, i);
-    }
-    win->cx = 0;
-    win->cy = 0;
-}
-
-// -----------------------------------------------------------------------
-// draw specified window line into its parent screen buffer 1
-
-static void win_draw_row(window_t *win, uint16_t line)
-{
-    screen_t *scr = win->screen;
-    cell_t *dst = &scr->buffer1[0];
-    cell_t *src = win_line_addr(win, line);
-    dst += win->cx;
-    memcpy(dst, src, (win->width - 1) * sizeof(cell_t));
-}
-
-// -----------------------------------------------------------------------
+// draw window into its parent screen with borders if it has them
 
 void win_draw(window_t *win)
 {
     uint16_t i;
+    cell_t *src, *dst;
 
-    for(i = 0; i < win->height - 1; i++)
+    screen_t *scr = win->screen;
+
+    // borders must be drawn first
+    if(win->flags & WIN_BOXED)
     {
-        win_draw_row(win, i);
+        win_draw_borders(win);
+    }
+
+    dst = &scr->buffer1[(win->yco * scr->width) + win->xco];
+    src = win->buffer;
+
+    for(i = 0; i < win->height; i++)
+    {
+        memcpy(dst, src, win->width * sizeof(cell_t));
+        dst += scr->width;
+        src += win->width;
     }
 }
 

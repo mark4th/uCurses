@@ -1,7 +1,7 @@
 // list.h   -- uCurses linked lists
 // -----------------------------------------------------------------------
 
-  #pragma once
+    #pragma once
 
 // -----------------------------------------------------------------------
 
@@ -31,5 +31,6 @@ typedef struct
 
 void list_remove_node(list_t *l1, void *payload);
 bool list_append_node(list_t *l, void *payload);
+void *list_pop(list_t *list);
 
 // =======================================================================

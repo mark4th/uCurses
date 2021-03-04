@@ -60,13 +60,9 @@ void clr_blink(void);
 
 void set_gray_fg(uint8_t c);
 void set_gray_bg(uint8_t c);
-void clr_gray_fg(uint8_t c);
-void clr_gray_bg(uint8_t c);
 
 void set_rgb_fg(uint8_t r, uint8_t g, uint8_t b);
-void clr_rgb_fg(uint8_t c);
 void set_rgb_bg(uint8_t r, uint8_t g, uint8_t b);
-void clr_rgb_bg(uint8_t c);
 
 void set_fg(uint8_t c);
 void set_bg(uint8_t c);

@@ -3,61 +3,62 @@
 
 #include <inttypes.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <sys/ioctl.h>
+#include <termios.h>
+#include <unistd.h>
 
 #include "h/color.h"
+#include "h/tui.h"
 #include "h/uCurses.h"
 #include "h/util.h"
 
 // -----------------------------------------------------------------------
 
+struct termios term_save;
+struct termios term;
+
+// -----------------------------------------------------------------------
+
+void restore_term(void)
+{
+    tcsetattr(STDIN_FILENO, TCSANOW, &term_save);
+}
+
+// -----------------------------------------------------------------------
+
 int main(void)
 {
-    uint16_t i, j, k;
-    setbuf(stdout, NULL);
+    struct winsize w;
+    screen_t *scr;
+    window_t *win1;
+
     uCurses_init();
-    printf("\r\n\r\n");
 
-    for(i = 0; i < 20; i++)
-    {
-        set_gray_fg(i);
-        printf("XXXXX\r\n");
-    }
+    atexit(restore_term);
+    tcgetattr(STDIN_FILENO, &term_save);
+    term = term_save;
+    term.c_lflag &= ~(ECHO | ICANON);
+    tcsetattr(STDIN_FILENO, TCSANOW, &term);
 
-    curoff();
+    ioctl(0, TIOCGWINSZ, &w);
 
-    for(i = 0; i < 255; i += 32)
-    {
-        for(j = 0; j < 255; j += 32)
-        {
-            for(k = 0; k < 255; k += 32)
-            {
-                set_rgb_fg(i, j, k);
-                printf("X");
-            }
-        }
-    }
-    printf("\r\n");
-    curon();
-    set_fg(WHITE);
-    printf("This is normal text\r\n");
-    set_fg(BLUE);
-    printf("This is blue text\r\n");
-    set_fg(WHITE);
-    set_bold();
-    printf("This is bold text\r\n");
-    set_fg(BLUE);
-    printf("This is bold blue text\r\n");
-    set_fg(WHITE);
-    clr_bold();
-    set_rev();
-    printf("This is reverse text\r\n");
-    clr_rev();
-    set_ul();
-    printf("This is underlined text\r\n");
-    clr_ul();
-    set_norm();
-    set_fg(WHITE);
+    scr = scr_open(w.ws_col, w.ws_row);
+    scr_add_backdrop(scr);
 
+    win1 = win_open(30, 10);
+    win1->xco = 2;
+    win1->yco = 2;
+    win1->attrs[ATTR] |= WIN_BOXED;
+    win1->
+    win1->bdr_attrs[ATTR] = FG_GRAY | BG_GRAY | BOLD;
+    win1->bdr_attrs[FG] = 3;
+    win1->bdr_attrs[BG] = 0;
+
+    scr_win_attach(scr, win1);
+
+    scr_do_draw_screen(scr);
+    cup(10, 0);
     return 0;
 }
 

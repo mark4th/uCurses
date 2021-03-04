@@ -11,11 +11,13 @@
 // -----------------------------------------------------------------------
 
 uint8_t attrs[8];
-static uint8_t old_attrs[8];
+uint8_t old_attrs[8];  // to test for changes
 
-extern uint8_t *f_str;
+// terminfo format string pointer within the string section
+extern const uint8_t *f_str;
 
 // -----------------------------------------------------------------------
+// users can change their default fg and bg (make black on white? ICK!!)
 
 uint8_t default_bg = BLACK;
 uint8_t default_fg = WHITE;
@@ -25,40 +27,38 @@ uint8_t default_fg = WHITE;
 
 static void do_set_fg(void)
 {
-    uint8_t gray_seq[] =
-    {
-        0x1b, '[', '3', '8', ';', '5', ';',
-       '%', 'p', '1', '%', '3', 'd', 'm', 0,
-    };
+    // terminfo format strings for setting gray scales or RGB colors
+    // these are not supported by any current terminfo files that I
+    // know of and may not be supported by all terminal types
 
-    uint8_t rgb_seq[] =
-    {
-       0x1b, '[', '3', '8', ';', '2', ';',
-       '%', 'p', '1', '%', 'd', ';',
-       '%', 'p', '2', '%', 'd', ';',
-       '%', 'p', '3', '%', 'd', 'm', 0
-    };
+    const uint8_t gray_seq[] = "\x1b[38;5;%p1%3dm";
+    const uint8_t rgb_seq[]  = "\x1b[38;2;%p1%3d;%p2%3d;%p3%3dm";
 
-    // for normal colors and gray scales
+    // the params array is how we pass parameters to the terminfo
+    // parsing functions for each format string.  this converts the
+    // given format string into an escape sequence for the terminal
+
     params[0] = attrs[FG];
 
-    // are we setting a rgb foreground?
     if(attrs[ATTR] & FG_RGB)
     {
         params[0] = attrs[FG_R];
         params[1] = attrs[FG_G];
         params[2] = attrs[FG_B];
+        // there is no format string for this within the terminfo
+        // string section
         f_str = &rgb_seq[0];
         do_parse_format();
     }
-    // are we setting a gray scale foreground?
     else if(attrs[ATTR] & FG_GRAY)
     {
+        // gray scales are specified as values from 0 to 20 but
+        // the escape seaueces use values from 232 to 255
         params[0] += 232;
         f_str = &gray_seq[0];
         do_parse_format();
     }
-    // normal fg color
+    // oridinay, every day, run of the mill. ho-hum foreground color
     else
     {
         ti_setaf();
@@ -70,20 +70,17 @@ static void do_set_fg(void)
 
 static void do_set_bg(void)
 {
-    uint8_t gray_seq[] =
-    {
-       0x1b, '[', '4', '8', ';', '5', ';',
-       '%', 'p', '1', '%', 'd', 'm', 0
-    };
-    uint8_t rgb_seq[] =
-    {
-       0x1b, '[', '4', '8', ';', '2', ';',
-       '%', 'p', '1', '%', 'd', ';',
-       '%', 'p', '2', '%', 'd', ';',
-       '%', 'p', '3', '%', 'd', 'm', 0
-    };
+    // terminfo format strings for setting gray scales or RGB colors
+    // these are not supported by any current terminfo files that I
+    // know of and may not be supported by all terminal types
 
-    // for normal colors and gray scales
+    const uint8_t gray_seq[] = "\x1b[48;5;%p1%3dm";
+    const uint8_t rgb_seq[]  = "\x1b[48;2;%p1%3d;%p2%3d;%p3%3dm";
+
+    // the params array is how we pass parameters to the terminfo
+    // parsing functions for each format string.  this converts the
+    // given format string into an escape sequence for the terminal
+
     params[0] = attrs[BG];
 
     // are we setting a rgb background?
@@ -92,16 +89,21 @@ static void do_set_bg(void)
         params[0] = attrs[BG_R];
         params[1] = attrs[BG_G];
         params[2] = attrs[BG_B];
+        // there is no format string for this within the terminfo
+        // string section
         f_str = &rgb_seq[0];
         do_parse_format();
     }
     // are we setting a gray scale foreground?
     else if(attrs[ATTR] & BG_GRAY)
     {
+        // gray scales are specified as values from 0 to 20 but
+        // the escape seaueces use values from 232 to 255
         params[0] += 232;
         f_str = &gray_seq[0];
         do_parse_format();
     }
+    // oridinay, every day, run of the mill. ho-hum background color
     else
     {
         ti_setab();
@@ -109,43 +111,31 @@ static void do_set_bg(void)
 }
 
 // -----------------------------------------------------------------------
+// apply varius attribute changes
 
-static void fix_bbr(void)
-{
-    ti_sgr0();
-
-    if(attrs[ATTR] & BLINK)    { ti_blink(); }
-    if(attrs[ATTR] & BOLD)     { ti_bold();  }
-    if(attrs[ATTR] & REVERSE)   { ti_rev();  }
-
-    // ti_sgr0() removed this
-
-    if(attrs[ATTR] & UNDERLINE) { ti_smul(); }
-}
-
-// -----------------------------------------------------------------------
-
-static void fix_ul(uint8_t changes)
-{
-    // if underline changed
-    if(changes & UNDERLINE)
-    {
-        (attrs[ATTR] & UNDERLINE) ? ti_smul() : ti_rmul();
-    }
-}
-
-// -----------------------------------------------------------------------
-
-void set_attribs(void)
+void apply_attribs(void)
 {
     uint8_t changes;
 
     changes = attrs[ATTR] ^ old_attrs[ATTR];
+
     if(0 != changes)
     {
-        ((changes & BLINK) || (changes & BOLD) || (changes & REVERSE))
-            ? fix_bbr()
-            : fix_ul(changes);
+        if((changes & BLINK) || (changes & BOLD) || (changes & REVERSE))
+        {
+            ti_sgr0();
+
+            if(attrs[ATTR] & BLINK)    { ti_blink(); }
+            if(attrs[ATTR] & BOLD)     { ti_bold();  }
+            if(attrs[ATTR] & REVERSE)  { ti_rev();  }
+        }
+        // if underline changed we need to set if.  if it was not changed
+        // we might need to restore it because of the above sgr0
+        if((changes & UNDERLINE) ||
+           (!(changes & UNDERLINE) && (attrs[ATTR] & UNDERLINE)))
+        {
+            (attrs[ATTR] & UNDERLINE) ? ti_smul() : ti_rmul();
+        }
     }
 
     if((attrs[BG]   != old_attrs[BG]) ||
@@ -175,13 +165,13 @@ static void set_attr(ti_attrib_t attr)
 {
     attrs[ATTR] |= attr;
 
-    // gray scales and rgb are mutually exclusive
+    // gray scale and rgb color settngs are mutually exclusive
     if(FG_RGB == attr)   { attrs[ATTR] &= ~FG_GRAY; }
     if(BG_RGB == attr)   { attrs[ATTR] &= ~BG_GRAY; }
     if(FG_GRAY == attr)  { attrs[ATTR] &= ~FG_RGB;  }
     if(BG_GRAY == attr)  { attrs[ATTR] &= ~BG_RGB;  }
 
-    set_attribs();
+    apply_attribs();
 }
 
 // -----------------------------------------------------------------------
@@ -189,7 +179,7 @@ static void set_attr(ti_attrib_t attr)
 static void clr_attr(ti_attrib_t attr)
 {
     attrs[ATTR] &= ~attr;
-    set_attribs();
+    apply_attribs();
 }
 
 // -----------------------------------------------------------------------
@@ -281,7 +271,7 @@ void set_norm(void)
     attrs[BG] = default_bg;
 
     attrs[ATTR] = 0;
-    set_attribs();
+    apply_attribs();
 }
 
 // =======================================================================

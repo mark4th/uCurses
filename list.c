@@ -6,7 +6,7 @@
 #include "h/list.h"
 
 // -----------------------------------------------------------------------
-// insert n2 into list after node n1
+// insert node n2 into list after node n1
 
 static void node_insert(node_t *n1, node_t *n2)
 {
@@ -16,7 +16,7 @@ static void node_insert(node_t *n1, node_t *n2)
     l = (list_t *) n1->parent;
     n2->parent = l;
 
-    t = (node_t *)(n1-> next);
+    t = (node_t *)(n1->next);
 
     n2->next = t;
     if(NULL == t)
@@ -29,8 +29,6 @@ static void node_insert(node_t *n1, node_t *n2)
     }
     n1->next = n2;
     n2->prev = n1;
-
-    // l->count++ is done below;
 }
 
 // -----------------------------------------------------------------------
@@ -109,6 +107,23 @@ bool list_append_node(list_t *l, void *payload)
     l->count++;
 
     return true;
+}
+
+// -----------------------------------------------------------------------
+// remove tail item from list returning its payload
+
+void *list_pop(list_t *list)
+{
+    void *result = NULL;
+    node_t *n;
+    if(0 != list->count)
+    {
+        n = list->tail;
+        list->tail = n->prev;
+        list->count--;
+        result = n->payload;
+    }
+    return result;
 }
 
 // =======================================================================

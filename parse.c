@@ -1,4 +1,4 @@
-// parse.c  - uCurses format string parsing                 (c) 2019 MIMIV
+// parse.c  - uCurses terminfo format string parsing
 // -----------------------------------------------------------------------
 
 #include <inttypes.h>
@@ -29,20 +29,21 @@ static void noop(void){;}
 uint8_t *str_buff;          // format string compilation output buffer
 uint16_t nb;                // max of 64k of compiled escape sequences
 
-uint8_t fsp;                // stack pointer for ...
-uint64_t fstack[5];         // format string stack
+static uint8_t fsp;         // stack pointer for ...
+static uint64_t fstack[5];  // format string stack
 
-uint8_t *f_str;             // pointer to next character of format string
-uint8_t digits;             // number of digits for %d (2 or 3)
+const uint8_t *f_str;       // pointer to next character of format string
+static uint8_t digits;      // number of digits for %d (2 or 3)
 
 uint64_t params[MAX_PARAM]; // format string parametesr
 
-uint64_t atoz[26];          // named format string variables
-uint64_t AtoZ[26];
+static uint64_t atoz[26];   // named format string variables
+static uint64_t AtoZ[26];
 
-uint8_t compile = 0;        // set to 1 to compile up to 64K of escapes
+// -----------------------------------------------------------------------
+// output individual escape sequences or stack up up to 64k worth?
 
-fp_t flush;                // write all compiled escape sequences
+bool delay_flush = false;
 
 // -----------------------------------------------------------------------
 // addresses within memory mapped terminfo file
@@ -51,26 +52,42 @@ extern uint8_t *ti_table;   // array of offsets within following
 extern uint16_t *ti_strings;
 
 // -----------------------------------------------------------------------
+// debug
 
-void dump_buff(void)
-{
-    int i = 0;
+// void dump_buff(void)
+// {
+//     int i = 0;
 
-    for(i = 0; i != nb; i++)
-    {
-        if(0 == (i & 7))
-        {
-            printf("\r\n");
-        }
-        printf(" %02x ", str_buff[i]);
-    }
-    printf("\r\n");
-}
+//     for(i = 0; i != nb; i++)
+//     {
+//         if(0 == (i & 7))
+//         {
+//             printf("\r\n");
+//         }
+//         printf(" %02x ", str_buff[i]);
+//     }
+//     printf("\r\n");
+// }
 
 // -----------------------------------------------------------------------
-// write all compiled format strings to stdout
+// debug
 
-void do_flush(void *unused)
+// void print_format(uint8_t *p)
+// {
+//     while(*p)
+//     {
+//         (*p < 0x20)
+//           ? printf(" %02x ", *p)
+//           : printf("%c", *p);
+//         p++;
+//     }
+//     printf("\r\n");
+// }
+
+// -----------------------------------------------------------------------
+// unconditionally flush the compiled escape seqyences to the display
+
+static void do_flush(void)
 {
     uint32_t n;
 
@@ -85,22 +102,22 @@ void do_flush(void *unused)
 }
 
 // -----------------------------------------------------------------------
-// debug
+// conditionally flush all compiled escape sequences to the display
 
-void print_format(uint8_t *p)
+void flush(void)
 {
-    while(*p)
+    // do not fulsh the escape sequences if we are compiling
+    // up to 64k of them
+    if(!delay_flush)
     {
-        (*p < 0x20)
-          ? printf(" %02x ", *p)
-          : printf("%c", *p);
-        p++;
+        do_flush();
     }
-    printf("\r\n");
 }
 
 // -----------------------------------------------------------------------
 // push item onto format string stack (terminfo is RPN!!)
+
+// the terminfo parser uses rpn !!!
 
 static void fs_push(uint64_t n)
 {
@@ -131,13 +148,13 @@ static uint64_t fs_pop(void)
 // -----------------------------------------------------------------------
 // write one character of escape sequence out to compilation buffer
 
-void c_emit(uint8_t c1)
+static void c_emit(uint8_t c1)
 {
     str_buff[nb++] = c1;
 
     if(0xfffe == nb)
     {
-        do_flush(0);
+        do_flush();
     }
 }
 
@@ -442,7 +459,7 @@ static void _brace(void)
 }
 
 // -----------------------------------------------------------------------
-// skip forward in format string to nextg % command
+// skip forward in format string to next % command
 
 static void to_cmd(void)
 {
@@ -619,6 +636,7 @@ static void command(void)
 {
     uint8_t c1;
     int n = PCOUNT;
+
     const switch_t *s = &p_codes[0];
 
     c1 = next_c();
@@ -627,11 +645,25 @@ static void command(void)
     {
        s++; n--;
     }
-    (s->vector)();
+    // the only way this could fail here is if the terminfo fornat string
+    // has been corrupted or if terminfo format strings have been extended
+    // some time in the future.
+    if(c1 == s->option)
+    {
+        (s->vector)();
+    }
+    else
+    {
+        // snafu!
+    }
 }
 
 // -----------------------------------------------------------------------
 // parse format string pointed to by f_str
+
+// this function is called directly when ever we implement a hard coded
+// format string such as for gray scales and rgb colors. otherwise it
+// would be static
 
 void do_parse_format(void)
 {
@@ -644,12 +676,12 @@ void do_parse_format(void)
           : c_emit(c1);
     }
 
-    (flush)(NULL);         // this might be a do nothng
+    flush();         // this might be a do nothng
 }
 
 // -----------------------------------------------------------------------
 
-void _format(uint16_t i)
+void format(uint16_t i)
 {
     i = ti_strings[i];
 

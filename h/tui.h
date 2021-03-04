@@ -1,13 +1,20 @@
 // tui.h
 // -----------------------------------------------------------------------
 
-#pragma once
+    #pragma once
 
 // -----------------------------------------------------------------------
 
 #include <inttypes.h>
 
+#include "color.h"
 #include "list.h"
+
+// -----------------------------------------------------------------------
+// utf-8 codepoint for 'blank' char used in screen backdrop windows
+
+    #define SOLID  0x2592
+    #define SHADOW 0x2591
 
 // -----------------------------------------------------------------------
 // structure of each cell of a window / screen
@@ -15,17 +22,28 @@
 typedef struct
 {
     uint8_t attrs[8];       // bold, blink, underline, gray scale, rgb
-    uint32_t code;           // utf-8 codepoint
+    uint32_t code;          // utf-8 codepoint
 } cell_t;
+
+// -----------------------------------------------------------------------
+// window flags
+
+typedef enum
+{
+    WIN_BOXED      = 1,     // has a border
+    WIN_LOCKED     = 2,     // scroll locked
+    WIN_FILLED     = 4      // backfilled with SOLID character
+} win_flags_t;
 
 // -----------------------------------------------------------------------
 
 typedef struct
 {
-    list_t *windows;        // linked list of windows
-    list_t *menus;          // todo
+    list_t windows;         // linked list of windows
+    list_t menus;           // todo
     cell_t *buffer1;        // screen buffer 1 and 2
     cell_t *buffer2;
+    void *backdrop;         // really a window_t *
     uint16_t width;         // screen dimensions
     uint16_t height;
     uint16_t cx;            // cursor corrdinates within screen
@@ -34,21 +52,12 @@ typedef struct
 
 // -----------------------------------------------------------------------
 
-typedef enum
-{
-    WIN_BOXED      = 1,     // has a border
-    WIN_LOCKED     = 2,     // scroll locked
-    WIN_FILLED     = 4      // checkerboard char filled
-} win_flags_t;
-
-// -----------------------------------------------------------------------
-
 typedef struct
 {
-    win_flags_t flags;
     node_t      *links;
     cell_t      *buffer;
     screen_t    *screen;
+    win_flags_t flags;
     uint32_t    blank;      // window fill character for backdrop windows
     uint16_t    width;      // window dimensions
     uint16_t    height;
@@ -58,16 +67,67 @@ typedef struct
     uint16_t    cy;
     uint8_t     attrs[8];      // bold blink underline, gray scale, rgb etc
     uint8_t     old_attrs[8];  // previous state..
-    uint8_t     b_attrs[8];    // likewise for the windows border if it has
-    uint8_t     b_old_attrs[8];
+    uint8_t     bdr_attrs[8];  // likewise for the windows border if it has
 } window_t;
+
+// -----------------------------------------------------------------------
+
+#define win_clr_attr(win, attr) win->attrs[ATTR] &= ~attr
+#define win_set_ul(win)    win_set_attr(win, UNDERLINE)
+#define win_set_rev(win)   win_set_attr(win, REVERSE)
+#define win_set_bold(win)  win_set_attr(win, BOLD)
+#define win_set_blink(win) win_set_attr(win, BLINK)
+#define win_clr_ul(win)    win_clr_attr(win, UNDERLINE)
+#define win_clr_rev(win)   win_clr_attr(win, REVERSE)
+#define win_clr_bold(win)  win_clr_attr(win, BOLD)
+#define win_clr_blink(win) win_clr_attr(win, BLINK)
+
+// -----------------------------------------------------------------------
+
+#define win_set_boxed(win)   win->flags |= WIN_BOXED
+#define win_set_locked(win)  win->flags |= WIN_LOCKED
+#define win_set_filled(win)  win->flags |= WIN_FILLED
+
+#define win_clr_boxed(win)   win->flags &= ~WIN_BOXED
+#define win_clr_locked(win)  win->flags &= ~WIN_LOCKED
+#define win_clr_filled(win)  win->flags &= ~WIN_FILLED
+
+// -----------------------------------------------------------------------
+
+void win_pop(window_t *win);
+void win_close(window_t *win);
+window_t *win_open(uint16_t width, uint16_t height);
+bool win_move(window_t *win, uint16_t x, uint16_t y);
+void win_set_gray_fg(window_t *win, uint8_t c);
+void win_set_gray_bg(window_t *win, uint8_t c);
+void win_set_rgb_fg(window_t *win, uint8_t r, uint8_t g, uint8_t b);
+void win_set_rgb_bg(window_t *win, uint8_t r, uint8_t g, uint8_t b);
+void win_set_fg(window_t *win, uint8_t color);
+void win_set_bg(window_t *win, uint8_t color);
+void win_scroll_up(window_t *win);
+void win_scroll_dn(window_t *win);
+void win_scroll_lt(window_t *win);
+void win_scroll_rt(window_t *win);
+bool win_cup(window_t *win, uint16_t x, uint16_t y);
+void win_crsr_up(window_t *win);
+void win_crsr_dn(window_t *win);
+void win_crsr_lt(window_t *win);
+void win_crsr_rt(window_t *win);
+void win_cr(window_t *win);
+void do_win_emit(window_t *win, uint32_t c);
+void win_emit(window_t *win, uint32_t c);
+void win_clear(window_t *win);
+void win_draw(window_t *win);
+void win_draw_borders(window_t *win);
 
 // -----------------------------------------------------------------------
 
 void scr_win_attach(screen_t *scr, window_t *win);
 void scr_win_detach(window_t *win);
-
-void win_draw(window_t *win);
-
+screen_t *scr_open(uint16_t width, uint16_t height);
+void scr_close(screen_t *scr);
+void scr_cup(screen_t *scr, uint16_t x, uint16_t y);
+void scr_do_draw_screen(screen_t *scr);
+void scr_add_backdrop(screen_t *scr);
 
 // =======================================================================

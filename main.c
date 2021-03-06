@@ -21,12 +21,11 @@ struct termios term;
 
 // -----------------------------------------------------------------------
 
-void clock_sleep(uint32_t clocks)
+void clock_sleep(uint32_t when)
 {
     clock_t time = clock();
 
-    // looping till required time is not achieved
-    while (clock() < time + clocks)
+    while (clock() < time + when)
         ;
 }
 
@@ -46,28 +45,25 @@ uint8_t test_keys(void);
 uint16_t first = 0;
 
 // -----------------------------------------------------------------------
+// switch which window is on top and which is behind
 
 static void flip_flop(window_t *win1, window_t *win2)
 {
-    if(0 == first)
-    {
-        win_pop(win2);
-        first = 1;
-    }
-    else
-    {
-        win_pop(win1);
-        first = 0;
-    }
+    (0 == first)
+        ? win_pop(win2)
+        : win_pop(win1);
+
+    first ^= 1;
 }
 
 // -----------------------------------------------------------------------
+// rotates two windows around the screen in opposite directions
+// can this even be done wtih ncurses?
 
 void run_demo(screen_t *scr, window_t *win1, window_t *win2)
 {
     uint16_t x1 = 2, y1 = 2;
     uint16_t x2 = X_END(win2), y2 = Y_END(win2);
-
 
     for(;;)
     {
@@ -194,9 +190,11 @@ int main(void)
     set_bg(BLACK);
     read(STDIN_FILENO, &c, 1);
     clear();
+    curon();
     cup(10, 0);
     printf("bye!\n");
     return 0;
 }
+
 
 // =======================================================================

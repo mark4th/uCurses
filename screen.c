@@ -47,10 +47,6 @@ static bool scr_alloc(screen_t *scr)
 
 // -----------------------------------------------------------------------
 
-// should i verify the user is not attempting to open a new screen
-// over the top of an existing screens scr structure?
-// this would be a memory leak
-
 screen_t *scr_open(uint16_t width, uint16_t height)
 {
     screen_t *scr = (screen_t *)malloc(sizeof(screen_t));
@@ -127,7 +123,7 @@ static void scr_draw_windows(screen_t *scr)
 {
     node_t *n = scr->windows.head;
 
-    while(n)
+    while(NULL != n)
     {
        win_draw(n->payload);
        n = n->next;
@@ -271,9 +267,9 @@ void scr_add_backdrop(screen_t *scr)
         win_set_gray_fg(win, 12);
 
         win->bdr_attrs[ATTR] = FG_GRAY | BG_GRAY | BOLD;
-        win->bdr_attrs[FG] = 3;
+        win->bdr_attrs[FG] = 13;
         win->bdr_attrs[BG] = 0;
-
+        win->bdr_type = BDR_DOUBLE;
         win_clear(win);
 
         scr->backdrop = win;

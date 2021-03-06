@@ -8,6 +8,57 @@
 #include "h/tui.h"
 
 // -----------------------------------------------------------------------
+
+static border_t bdr_single[] =
+{
+    0x250f,                 // ┏        ┏━━━━━━━┓
+    0x2513,                 //  ┓       ┃       ┃
+    0x2517,                 // ┗        ┗━━━━━━━┛
+    0x251b,                 //  ┛
+    0x2501,                 // ━
+    0x2503,                 //  ┃
+    0x2523,                 // ┣
+    0x252b,                 //  ┫
+    0x2533,                 // ┳
+    0x253b,                 //  ┻
+    0x254b,                 // ╋
+};
+
+// -----------------------------------------------------------------------
+
+static border_t bdr_double[] =
+{
+    0x2554,                 // ╔       ╔═══════╗
+    0x2557,                 //  ╗      ║       ║
+    0x255a,                 // ╚       ╚═══════╝
+    0x255d,                 //  ╝
+    0x2550,                 // ═
+    0x2551,                 //  ║
+    0x2560,                 // ╠
+    0x2563,                 //  ╣
+    0x2566,                 // ╦
+    0x2569,                 //  ╩
+    0x256c,                 // ╬
+};
+
+// -----------------------------------------------------------------------
+
+static border_t bdr_curved[] =
+{
+    0x256d,                 // ╭       ╭━━━━━━━╮
+    0x256e,                 //  ╮      ┃       ┃
+    0x2570,                 // ╰       ╰━━━━━━━╯
+    0x256f,                 //  ╯
+    0x2500,                 // ━
+    0x2502,                 //  ┃
+    0x2523,                 // ┣
+    0x252b,                 //  ┫
+    0x2533,                 // ┳
+    0x253b,                 //  ┻
+    0x254b,                 // ╋
+};
+
+// -----------------------------------------------------------------------
 // draw border character directly into screen buffer 1
 
 static void draw_char(window_t *win, uint16_t cx,
@@ -59,6 +110,20 @@ void win_draw_borders(window_t *win)
     uint16_t width, height;
     uint16_t cy;
 
+    border_t *b;
+
+    switch(win->bdr_type)
+    {
+        case 0:
+            b = &bdr_single[0];
+            break;
+        case 1:
+            b = &bdr_double[0];
+            break;
+        case 2:
+            b = &bdr_curved[0];
+            break;
+    }
     height = win->height;
     width  = win->width;
 
@@ -71,26 +136,26 @@ void win_draw_borders(window_t *win)
     // i may offer the choice of using either a single or double line border
 
     draw_top_bottom(win,
-        bdr_singles[BDR_TOP_LEFT],
-        bdr_singles[BDR_HORIZONTAL],
-        bdr_singles[BDR_TOP_RIGHT], cy++);
+        b[BDR_TOP_LEFT],
+        b[BDR_HORIZONTAL],
+        b[BDR_TOP_RIGHT], cy++);
 
     // draw all rows between the top and bottom row
 
     while(0 != height)
     {
         draw_mid_row(win,
-            bdr_singles[BDR_VERTICAL],
-            bdr_singles[BDR_VERTICAL], cy++);
+            b[BDR_VERTICAL],
+            b[BDR_VERTICAL], cy++);
         height--;
     }
 
     // draw bottom row of the border
 
     draw_top_bottom(win,
-        bdr_singles[BDR_BOTTOM_LEFT],
-        bdr_singles[BDR_HORIZONTAL],
-        bdr_singles[BDR_BOTTOM_RIGHT], cy);
+        b[BDR_BOTTOM_LEFT],
+        b[BDR_HORIZONTAL],
+        b[BDR_BOTTOM_RIGHT], cy);
 }
 
 // =======================================================================

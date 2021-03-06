@@ -77,6 +77,7 @@ window_t *win_open(uint16_t width, uint16_t height)
             win->attrs[FG] = default_fg;
             win->attrs[BG] = default_bg;
             win->blank   = 0x20;
+            win_clear(win);
         }
     }
     return win;
@@ -95,10 +96,10 @@ void win_pop(window_t *win)
 // -----------------------------------------------------------------------
 // set new x/y position of window within parent screen
 
-// look ma!   movable, overlapping windows with text scrolling in any of
+// look ma!   moveable, overlapping windows with text scrolling in any of
 // eight directions!!!
 
-bool win_move(window_t *win, uint16_t x, uint16_t y)
+bool win_set_pos(window_t *win, uint16_t x, uint16_t y)
 {
     uint16_t scr_width, scr_height;
     uint16_t win_width, win_height;

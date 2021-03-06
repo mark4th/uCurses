@@ -127,7 +127,7 @@ void apply_attribs(void)
 
             if(attrs[ATTR] & BLINK)    { ti_blink(); }
             if(attrs[ATTR] & BOLD)     { ti_bold();  }
-            if(attrs[ATTR] & REVERSE)  { ti_rev();  }
+            if(attrs[ATTR] & REVERSE)  { ti_rev();   }
         }
         // if underline changed we need to set if.  if it was not changed
         // we might need to restore it because of the above sgr0

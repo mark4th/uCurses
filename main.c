@@ -39,65 +39,92 @@ void restore_term(void)
 
 // -----------------------------------------------------------------------
 
-#define X_END (scr->width  - win1->width  - 2)
-#define Y_END (scr->height - win1->height - 2)
+#define X_END(win) (scr->width  - win->width  - 2)
+#define Y_END(win) (scr->height - win->height - 2)
 
 uint8_t test_keys(void);
+uint16_t first = 0;
 
-void run_demo(screen_t *scr, window_t *win1)
+// -----------------------------------------------------------------------
+
+static void flip_flop(window_t *win1, window_t *win2)
 {
-    uint16_t x = 2, y = 2;
+    if(0 == first)
+    {
+        win_pop(win2);
+        first = 1;
+    }
+    else
+    {
+        win_pop(win1);
+        first = 0;
+    }
+}
+
+// -----------------------------------------------------------------------
+
+void run_demo(screen_t *scr, window_t *win1, window_t *win2)
+{
+    uint16_t x1 = 2, y1 = 2;
+    uint16_t x2 = X_END(win2), y2 = Y_END(win2);
+
 
     for(;;)
     {
-        while (x != X_END)
+        while (x1 != X_END(win1))
         {
             if(0 != test_keys())
             {
                 return;
             }
-            x++;
-            win_set_pos(win1, x, y);
+            x1++;  x2--;
+            win_set_pos(win1, x1, y1);
+            win_set_pos(win2, x2, y2);
             scr_do_draw_screen(scr);
             clock_sleep(15000);
         };
 
-        while(y != Y_END)
+        while(y1 != Y_END(win1))
         {
             if(0 != test_keys())
             {
                 return;
             }
-            y++;
-            win_set_pos(win1, x, y);
+            y1++; y2--;
+            win_set_pos(win1, x1, y1);
+            win_set_pos(win2, x2, y2);
             scr_do_draw_screen(scr);
             clock_sleep(15000);
         };
 
-        while(x != 2)
+        flip_flop(win1, win2);
+
+        while(x1 != 2)
         {
             if(0 != test_keys())
             {
                 return;
             }
-            x--;
-            win_set_pos(win1, x, y);
+            x1--; x2++;
+            win_set_pos(win1, x1, y1);
+            win_set_pos(win2, x2, y2);
             scr_do_draw_screen(scr);
             clock_sleep(15000);
         };
 
-        while(y != 2)
+        while(y1 != 2)
         {
             if(0 != test_keys())
             {
                 return;
             }
-            y--;
-            win_set_pos(win1, x, y);
+            y1--; y2++;
+            win_set_pos(win1, x1, y1);
+            win_set_pos(win2, x2, y2);
             scr_do_draw_screen(scr);
             clock_sleep(15000);
         };
-
+        flip_flop(win1, win2);
     }
 }
 
@@ -111,9 +138,8 @@ int main(void)
 // return 0;
     struct winsize w;
     screen_t *scr;
-    window_t *win1;
+    window_t *win1, *win2;
     uint8_t c;
-
 
     uCurses_init();
 
@@ -129,27 +155,41 @@ int main(void)
     scr = scr_open(w.ws_col, w.ws_row);
     scr_add_backdrop(scr);
 
-    win1 = win_open(30, 10);
+    win1 = win_open(30, 15);
+    win2 = win_open(30, 15);
     win1->xco = 2;
     win1->yco = 2;
+    win2->xco = X_END(win2);
+    win2->yco = Y_END(win2);
 
     win_set_fg(win1, WHITE);
     win_set_bg(win1, BLUE);
+    win_set_fg(win2, GREEN);
+    win_set_bg(win2, MAGENTA);
 
     win1->flags |= WIN_BOXED;
+    win2->flags |= WIN_BOXED;
 
     win1->bdr_attrs[ATTR] = BG_GRAY;
     win1->bdr_attrs[FG]   = 10;
     win1->bdr_attrs[BG]   = 6;
     win1->bdr_type        = BDR_SINGLE;
 
-    win_clear(win1);
-    scr_win_attach(scr, win1);
+    win2->bdr_attrs[ATTR] = BG_GRAY;
+    win2->bdr_attrs[FG]   = 10;
+    win2->bdr_attrs[BG]   = 6;
+    win2->bdr_type        = BDR_SINGLE;
 
+    win_clear(win1);
+    win_clear(win2);
+
+    scr_win_attach(scr, win1);
+    scr_win_attach(scr, win2);
     scr_do_draw_screen(scr);
     cup(20, 0);
 
-    run_demo(scr, win1);
+    run_demo(scr, win1, win2);
+
     set_fg(WHITE);
     set_bg(BLACK);
     read(STDIN_FILENO, &c, 1);

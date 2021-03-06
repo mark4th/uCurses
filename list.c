@@ -73,6 +73,7 @@ void list_remove_node(list_t *l1, void *payload)
             free(n1);
             return;
         }
+        n1 = n1->next;
     }
     // no node with specified payload was found.  do what here?
     // silently ignore? log it? abort mission?

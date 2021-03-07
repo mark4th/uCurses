@@ -15,7 +15,7 @@ extern uint8_t default_fg;
 
 // -----------------------------------------------------------------------
 
-cell_t *win_line_addr(window_t *win, uint16_t line)
+static cell_t *win_line_addr(window_t *win, uint16_t line)
 {
     uint16_t index = (win->width) * line;
     return &win->buffer[index];
@@ -28,8 +28,8 @@ static bool win_alloc(window_t *win)
 {
     cell_t *p;
 
-    uint32_t size = win->width * win->height * sizeof(cell_t);
-    p = (cell_t *)malloc(size);
+    uint32_t size = win->width * win->height * sizeof(*p);
+    p = malloc(size);
 
     if(NULL != p)
     {
@@ -57,7 +57,7 @@ void win_close(window_t *win)
 
 window_t *win_open(uint16_t width, uint16_t height)
 {
-    window_t *win = (window_t *)malloc(sizeof(window_t));
+    window_t *win = malloc(sizeof(*win));
 
     if(0 != win)
     {
@@ -317,15 +317,33 @@ void win_scroll_rt(window_t *win)
 // -----------------------------------------------------------------------
 // set cursor position within window
 
-bool win_cup(window_t *win, uint16_t x, uint16_t y)
+void win_cup(window_t *win, uint16_t x, uint16_t y)
 {
     if((x < win->width) && (y < win->height))
     {
         win->cx = x;
         win->cy = y;
-        return true;
     }
-    return false;
+}
+
+// -----------------------------------------------------------------------
+
+void win_set_cx(window_t *win, uint16_t x)
+{
+    if(x < win->width)
+    {
+        win->cx = x;
+    }
+}
+
+// -----------------------------------------------------------------------
+
+void win_set_cy(window_t *win, uint16_t y)
+{
+    if(y < win->height)
+    {
+        win->cy = y;
+    }
 }
 
 // -----------------------------------------------------------------------
@@ -395,32 +413,26 @@ void win_cr(window_t *win)
 
 // -----------------------------------------------------------------------
 
-void do_win_emit(window_t *win, uint32_t c)
-{
-    cell_t cell;
-
-    memcpy(cell.attrs, win->attrs, sizeof(cell.attrs));
-    cell.code = c;
-
-    cell_t *p = win_line_addr(win, win->cy);
-    p[win->cx] = cell;
-    win_crsr_rt(win);
-}
-
-// -----------------------------------------------------------------------
-
 // should i add tab output processing to windows?
 // add a tab width to structure and move cursor to next tab stop?
 // p.s. i hate tabs
 
 void win_emit(window_t *win, uint32_t c)
 {
+    cell_t cell;
+    cell_t *p;
+
     switch(c)
     {
         case     0x0d: win_cr(win);   break;
-        case     0x0a:                break;
+        case     0x0a: win_cr(win);   break;
         case     0x09:                break;
-        default: do_win_emit(win, c); break;
+        default:
+            memcpy(cell.attrs, win->attrs, sizeof(cell.attrs));
+            cell.code = c;
+            p = win_line_addr(win, win->cy);
+            p[win->cx] = cell;
+            win_crsr_rt(win);
     }
 }
 

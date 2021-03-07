@@ -7,6 +7,8 @@
 
 #include <inttypes.h>
 
+#include "tui.h"
+
 // -----------------------------------------------------------------------
 
 #define MAX_PARAM 9
@@ -24,8 +26,12 @@ extern uint64_t params[MAX_PARAM];
 void uCurses_init(void);
 void format(uint16_t i);
 void do_parse_format(void);
-void utf8_emit(uint32_t code);
+void utf8_emit(uint32_t cp);
+uint8_t utf8_decode(uint32_t *cp, char *s);
 void apply_attribs(void);
+
+void win_printf(window_t *win, char* format, ...);
+void win_puts(window_t *win, char *s);
 
 // -----------------------------------------------------------------------
 //      +--- terminfo name

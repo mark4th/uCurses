@@ -5,12 +5,12 @@ CC     = clang
 
 OBJS   = $(addprefix $(O)/, \
    main.o util.o parse.o tifile.o color.o list.o \
-   window.o screen.o border.o keys.o utf8.o)
+   window.o screen.o border.o win_printf.o keys.o utf8.o)
 
 HDRS   = $(addprefix $(H)/, \
   border.h color.h list.h tui.h uCurses.h util.h)
 
-CFLAGS = -O0 -fno-inline -pedantic -Wall -Werror \
+CFLAGS = -Os -fno-inline -pedantic -Wall -Werror \
   -std=c17 -pipe -march=native -g3 -xc -c
 
 O = o

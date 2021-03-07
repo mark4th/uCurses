@@ -1,11 +1,14 @@
 // screen.c   - uCurses text user interface screen handling
 // -----------------------------------------------------------------------
 
+#define _XOPEN_SOURCE
 #include <inttypes.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <wchar.h>
+#include <stdlib.h>
 
 #include "h/list.h"
 #include "h/tui.h"
@@ -25,17 +28,16 @@ static bool scr_alloc(screen_t *scr)
 {
     cell_t *p1, *p2;
 
-    uint32_t size = ((scr->width * scr->height) * sizeof(cell_t));
+    uint32_t size = ((scr->width * scr->height) * sizeof(*p1));
 
     // allocate buffers 1 and 2 for screen
-    p1 = (cell_t *)malloc(size);
-    p2 = (cell_t *)malloc(size);
+    p1 = malloc(size);
+    p2 = malloc(size);
 
     if((NULL == p1) || (NULL == p2))
     {
-        if(p1) { free(p1); }
-        if(p2) { free(p2); }
-
+        free(p1);
+        free(p2);
         return false;
     }
 
@@ -49,7 +51,7 @@ static bool scr_alloc(screen_t *scr)
 
 screen_t *scr_open(uint16_t width, uint16_t height)
 {
-    screen_t *scr = (screen_t *)malloc(sizeof(screen_t));
+    screen_t *scr = malloc(sizeof(*scr));
 
     if(NULL != scr)
     {
@@ -176,21 +178,17 @@ static void scr_emit(screen_t *scr, uint16_t index)
 
     *p2 = *p1;               // mark cell as no longer needing update
 
-    // c is so crippled it cant return both the quotient and the
-    // remainder from one single division operation so we avoid
-    // doing two divisions by doing one division and one multiplication
-    // instead - which is still dumb.
-
     // convert index to coordinates
     y = index / scr->width;
-    x = index - (y * scr->width);
+    x = index % scr->width;
 
     // this only sets x or y if they are not already correct
     scr_cup(scr, x, y);
 
     // output the utf-8 codepoint to the terminal
     utf8_emit(p1->code);
-    scr->cx++;
+    scr->cx += wcwidth(p1->code);
+    // scr->cx++;
 
     if(scr->cx == scr->width)
     {

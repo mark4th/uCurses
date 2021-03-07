@@ -42,43 +42,45 @@ void utf8_emit(uint32_t cp)
 
 // --------------------------------------------------------------------------
 
-uint8_t utf8_decode(uint32_t *cp, uint8_t *s)
+uint8_t utf8_decode(uint32_t *cp, char *s)
 {
-    if (s[0] < 0x80)
+    if ((uint8_t)s[0] < 0x80)
     {
         *cp = *s;
         return 1;
     }
 
-    if ((s[0] >= 0xb0) && (s[0] < 0xe0))
+    if (((uint8_t)s[0] >= 0xb0) && ((uint8_t)s[0] < 0xe0))
     {
-        *cp = ((s[0] & 0x1f) << 6) | (s[1] & 0x3f);
+        *cp = (((uint8_t)s[0] & 0x1f) << 6) | ((uint8_t)s[1] & 0x3f);
         return 2;
     }
 
-    if ((s[0] >= 0xe0) && (s[0] < 0xf0))
+    if (((uint8_t)s[0] >= 0xe0) && ((uint8_t)s[0] < 0xf0))
     {
-        *cp = ((s[0] & 0xf) << 12) | ((s[1] & 0x3f) << 6) |
-               (s[2] & 0x3f);
+        *cp = (((uint8_t)s[0] & 0xf) << 12) | (((uint8_t)s[1] & 0x3f) << 6) |
+               ((uint8_t)s[2] & 0x3f);
         return 3;
     }
 
     if (!(s[0] & 0x8))
     {
-        *cp = ((s[0] & 0x7) << 18) | ((s[1] & 0x3f) << 12) |
-              ((s[2] & 0x3f) << 6) | (s[3] & 0x3f);
+        *cp = (((uint8_t)s[0] & 0x7) << 18) | (((uint8_t)s[1] & 0x3f) << 12) |
+              (((uint8_t)s[2] & 0x3f) << 6) | ((uint8_t)s[3] & 0x3f);
         return 4;
     }
 
     return -1;
 }
 
+// --------------------------------------------------------------------------
+
 #include <stdio.h>
 void test(void)
 {
     uint32_t cp;
-    uint8_t utf8_str[] = "俪俨俩俪俭修俯";
-    uint8_t *p = &utf8_str[0];
+    char utf8_str[] = "俪俨俩俪俭修俯";
+    char *p = &utf8_str[0];
     uint8_t n;
 
     while(0 != *p)

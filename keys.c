@@ -8,8 +8,8 @@
 
 #include "h/uCurses.h"
 
-extern uint8_t *str_buff;
-extern uint16_t nb;
+extern uint8_t *esc_buff;
+extern uint16_t num_esc;
 
 // -----------------------------------------------------------------------
 
@@ -96,8 +96,8 @@ void read_keys(void)
 
 void ent(void)
 {
-    str_buff[0] = 0x0a;
-    nb = 1;
+    esc_buff[0] = 0x0a;
+    num_esc = 1;
 }
 
 // -----------------------------------------------------------------------
@@ -105,13 +105,13 @@ void ent(void)
 
 void kbs(void)
 {
-    str_buff[0] = 0x7f;
-    nb = 1;
+    esc_buff[0] = 0x7f;
+    num_esc = 1;
 }
 
 // -----------------------------------------------------------------------
 
-// each of these puts a key sequence in the str_buff terminfo escape
+// each of these puts a key sequence in the esc_buff terminfo escape
 // sequence buffer which is usually used to compile output data.
 // these allow us to determine which key was pressed by comparing the
 // actual sequence that was input with the data returned by each of these
@@ -173,18 +173,18 @@ uint16_t match_key(void)
 
     for(i = 0; i < 24; i++)
     {
-      nb = 0;               // number chars in escape sequence buffer
+      num_esc = 0;          // number chars in escape sequence buffer
 
       (*(*k_table[i]))();   // compile escape sequence for ith entry
 
       // the above k_table() call compiled an escape sequence into the
-      // str_buff[] array.  compare it with the sequence in the
+      // esc_buff[] array.  compare it with the sequence in the
       // keyboard input buffer which is the escape sequence or a single
       // character of the key that was pressed
 
-      if(num_k == nb)
+      if(num_k == num_esc)
       {
-          if(0 == strcmp((const char *)&keybuff, (const char *)&str_buff))
+          if(0 == strcmp((const char *)&keybuff, (const char *)&esc_buff))
           {
               return i;     // sequences match.
           }
@@ -279,7 +279,7 @@ uint8_t new_key(void)
 
         if(0xffff != c)     // if escape sequence is one we handle
         {
-            nb = 0;         // ensure there are no keys in the buffer
+            num_esc = 0;    // ensure there are no keys in the buffer
             (*(*key_action)[c])();
         }
     } while (1 != num_k);

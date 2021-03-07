@@ -166,10 +166,10 @@ static void set_attr(ti_attrib_t attr)
     attrs[ATTR] |= attr;
 
     // gray scale and rgb color settngs are mutually exclusive
-    if(FG_RGB == attr)   { attrs[ATTR] &= ~FG_GRAY; }
-    if(BG_RGB == attr)   { attrs[ATTR] &= ~BG_GRAY; }
-    if(FG_GRAY == attr)  { attrs[ATTR] &= ~FG_RGB;  }
-    if(BG_GRAY == attr)  { attrs[ATTR] &= ~BG_RGB;  }
+    if(FG_RGB  & attr)  { attrs[ATTR] &= ~FG_GRAY; }
+    if(BG_RGB  & attr)  { attrs[ATTR] &= ~BG_GRAY; }
+    if(FG_GRAY & attr)  { attrs[ATTR] &= ~FG_RGB;  }
+    if(BG_GRAY & attr)  { attrs[ATTR] &= ~BG_RGB;  }
 
     apply_attribs();
 }

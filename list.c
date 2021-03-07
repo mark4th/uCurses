@@ -81,14 +81,14 @@ void list_remove_node(list_t *l1, void *payload)
 
 // -----------------------------------------------------------------------
 
-bool list_append_node(list_t *l, void *payload)
+uint16_t list_append_node(list_t *l, void *payload)
 {
     node_t *n1;
 
     n1 = (node_t *) calloc(1, sizeof(node_t));
     if(NULL == n1)
     {
-        return false;
+        return -1;
     }
 
     n1->payload = payload;
@@ -107,7 +107,7 @@ bool list_append_node(list_t *l, void *payload)
 
     l->count++;
 
-    return true;
+    return 0;
 }
 
 // -----------------------------------------------------------------------

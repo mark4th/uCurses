@@ -99,7 +99,7 @@ typedef struct
 void win_pop(window_t *win);
 void win_close(window_t *win);
 window_t *win_open(uint16_t width, uint16_t height);
-bool win_set_pos(window_t *win, uint16_t x, uint16_t y);
+uint16_t win_set_pos(window_t *win, uint16_t x, uint16_t y);
 void win_set_gray_fg(window_t *win, uint8_t c);
 void win_set_gray_bg(window_t *win, uint8_t c);
 void win_set_rgb_fg(window_t *win, uint8_t r, uint8_t g, uint8_t b);

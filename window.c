@@ -2,7 +2,6 @@
 // -----------------------------------------------------------------------
 
 #include <inttypes.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -25,8 +24,9 @@ static cell_t *win_line_addr(window_t *win, uint16_t line)
 // -----------------------------------------------------------------------
 // allocate buffer for window contents
 
-static bool win_alloc(window_t *win)
+static uint16_t win_alloc(window_t *win)
 {
+    uint16_t rv = -1;   // assume failure
     cell_t *p;
 
     p = calloc((win->width * win->height), sizeof(cell_t));
@@ -34,9 +34,9 @@ static bool win_alloc(window_t *win)
     if(NULL != p)
     {
         win->buffer = p;
-        return true;
+        rv = 0;
     }
-    return false;
+    return rv;
 }
 
 // -----------------------------------------------------------------------
@@ -68,15 +68,15 @@ window_t *win_open(uint16_t width, uint16_t height)
         // space needs to be malloc'd
         if(0 == win_alloc(win))
         {
-            free(win);
-            win = NULL;
-        }
-        else
-        {
             win->attrs[FG] = default_fg;
             win->attrs[BG] = default_bg;
             win->blank   = 0x20;
             win_clear(win);
+        }
+        else
+        {
+            free(win);
+            win = NULL;
         }
     }
     return win;
@@ -98,11 +98,12 @@ void win_pop(window_t *win)
 // look ma!   moveable, overlapping windows with text scrolling in any of
 // eight directions!!!
 
-bool win_set_pos(window_t *win, uint16_t x, uint16_t y)
+uint16_t win_set_pos(window_t *win, uint16_t x, uint16_t y)
 {
     uint16_t scr_width, scr_height;
     uint16_t win_width, win_height;
     uint16_t win_x, win_y;
+    uint16_t rv = -1;
 
     screen_t *scr = win->screen;
 
@@ -128,10 +129,10 @@ bool win_set_pos(window_t *win, uint16_t x, uint16_t y)
         win->xco = x;
         win->yco = y;
 
-        return true;
+        rv = 0;
     }
 
-    return false;
+    return rv;
 }
 
 // -----------------------------------------------------------------------

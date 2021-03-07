@@ -2,7 +2,6 @@
 // -----------------------------------------------------------------------
 
 #include <inttypes.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -18,10 +17,11 @@ screen_t *current_screen;
 
 extern uint8_t attrs[8];
 extern uint8_t old_attrs[8];
+extern uint16_t delay_flush;
 
 // -----------------------------------------------------------------------
 
-static bool scr_alloc(screen_t *scr)
+static uint16_t scr_alloc(screen_t *scr)
 {
     cell_t *p1, *p2;
 
@@ -33,13 +33,13 @@ static bool scr_alloc(screen_t *scr)
     {
         free(p1);
         free(p2);
-        return false;
+        return -1;
     }
 
     scr->buffer1 = p1;
     scr->buffer2 = p2;
 
-    return true;
+    return 0;
 }
 
 // -----------------------------------------------------------------------
@@ -53,7 +53,7 @@ screen_t *scr_open(uint16_t width, uint16_t height)
         scr->width  = width;
         scr->height = height;
 
-        if(false == scr_alloc(scr))
+        if(0 != scr_alloc(scr))
         {
             free(scr);
             scr = NULL;
@@ -68,7 +68,10 @@ screen_t *scr_open(uint16_t width, uint16_t height)
 void scr_win_attach(screen_t *scr, window_t *win)
 {
     win->screen = scr;
-    list_append_node(&scr->windows, win);
+    if(0 != list_append_node(&scr->windows, win))
+    {
+        // log error here?
+    }
 }
 
 // -----------------------------------------------------------------------
@@ -150,12 +153,17 @@ void scr_cup(screen_t *scr, uint16_t x, uint16_t y)
 
 // -----------------------------------------------------------------------
 
-static bool scr_is_modified(screen_t *scr, uint16_t index)
+static uint16_t scr_is_modified(screen_t *scr, uint16_t index)
 {
     cell_t *p1 = &scr->buffer1[index];
     cell_t *p2 = &scr->buffer2[index];
 
-    return((memcmp(&p1->attrs, &p2->attrs, 8)) || (p1->code != p2->code));
+    // if attrs of this cell in buffer1 are different from the addrs
+    // in buffer 2 or if the characters in those cells are different
+    // then this cell needs updating
+    return(
+        (memcmp(&p1->attrs, &p2->attrs, 8)) ||
+        (p1->code != p2->code));
 }
 
 // -----------------------------------------------------------------------
@@ -213,12 +221,11 @@ static void update(screen_t *scr, uint16_t index, uint16_t end)
 
 // -----------------------------------------------------------------------
 
-extern bool delay_flush;
 void scr_do_draw_screen(screen_t *scr)
 {
     uint16_t index = 0;
     uint16_t end = scr->width * scr->height;
-//delay_flush = true;
+// delay_flush = true;
     memset(&old_attrs[0], 0, 8);
 
     win_draw((window_t *)scr->backdrop);
@@ -230,15 +237,15 @@ void scr_do_draw_screen(screen_t *scr)
     {
         // if char at index is modified then output everey char in the
         // screen that shares its attributes.
-        if(scr_is_modified(scr, index))
+        if(0 != scr_is_modified(scr, index))
         {
             update(scr, index, end);
         }
         index++;
     } while(index != end);
 
-//delay_flush = false;
-//flush();
+// delay_flush = false;
+// flush();
 }
 
 // -----------------------------------------------------------------------

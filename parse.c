@@ -21,13 +21,15 @@ typedef struct
 } switch_t;
 
 // -----------------------------------------------------------------------
+// for format string % commands that dont actually need to do anything
 
 static void noop(void){;}
 
 // -----------------------------------------------------------------------
 
-uint8_t *str_buff;          // format string compilation output buffer
-uint32_t nb;                // max of 64k of compiled escape sequences
+uint8_t *esc_buff;          // format string compilation output buffer
+uint32_t num_esc;           // max of 64k of compiled escape seq bytes
+uint64_t params[MAX_PARAM]; // format string parametesr
 
 static uint8_t fsp;         // stack pointer for ...
 static uint64_t fstack[5];  // format string stack
@@ -35,15 +37,13 @@ static uint64_t fstack[5];  // format string stack
 const uint8_t *f_str;       // pointer to next character of format string
 static uint8_t digits;      // number of digits for %d (2 or 3)
 
-uint64_t params[MAX_PARAM]; // format string parametesr
-
 static uint64_t atoz[26];   // named format string variables
 static uint64_t AtoZ[26];
 
 // -----------------------------------------------------------------------
 // output individual escape sequences or stack up up to 64k worth?
 
-bool delay_flush = false;
+uint16_t delay_flush = 0;
 
 // -----------------------------------------------------------------------
 // addresses within memory mapped terminfo file
@@ -58,13 +58,13 @@ extern uint16_t *ti_strings;
 // {
 //     int i = 0;
 
-//     for(i = 0; i != nb; i++)
+//     for(i = 0; i != num_esc; i++)
 //     {
 //         if(0 == (i & 7))
 //         {
 //             printf("\r\n");
 //         }
-//         printf(" %02x ", str_buff[i]);
+//         printf(" %02x ", esc_buff[i]);
 //     }
 //     printf("\r\n");
 // }
@@ -91,9 +91,9 @@ static void do_flush(void)
 {
     uint32_t n;
 
-    n =  write(1, &str_buff[0], nb);
-    memset(&str_buff[0], 0, nb);
-    nb = 0;
+    n =  write(1, &esc_buff[0], num_esc);
+    memset(&esc_buff[0], 0, num_esc);
+    num_esc = 0;
 
     if(n < 0)
     {
@@ -150,9 +150,9 @@ static uint64_t fs_pop(void)
 
 static void c_emit(uint8_t c1)
 {
-    str_buff[nb++] = c1;
+    esc_buff[num_esc++] = c1;
 
-    if(0xffff == nb)
+    if(0xffff == num_esc)
     {
         do_flush();
     }
@@ -565,8 +565,8 @@ static void _d(void)
             n2 = snprintf((char *)s, 5, "%ld", n1);
     }
 
-    strncat((char *)&str_buff[0], (char *)s, n2);
-    nb += n2;
+    strncat((char *)&esc_buff[0], (char *)s, n2);
+    num_esc += n2;
 }
 
 // -----------------------------------------------------------------------

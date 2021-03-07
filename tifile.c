@@ -14,7 +14,7 @@
 
 // -----------------------------------------------------------------------
 
-extern uint8_t *str_buff;
+extern uint8_t *esc_buff;
 
 // -----------------------------------------------------------------------
 
@@ -143,12 +143,11 @@ void uCurses_init(void)
     q_valid();              // verify its magic is correct
 
     // allocate 64k for compiled escape sequences
-    str_buff = (uint8_t *)malloc(65535);
-
-    if(NULL == str_buff)    // if we can!
+    esc_buff = (uint8_t *)calloc(1, 65535);
+    if(NULL == esc_buff)
     {
         printf("uCurses: insufficient ram for buffers\r\n");
-        exit(0);
+        exit(1);
     }
     init_info();
 }

@@ -1,1 +1,7 @@
+minute text user interface that allows for multiple, overlapping, moving 
+windows and for every character to be displayed in either a normal color,
+a gray scale (0 = black to 20 = bright white) or a full 24 bit RGB color.
+The above color schemes functionality is entirely dependent on your terminal
+supporing them :)
+
 not ready for prime time but maybe you can still run ./u after a make :)

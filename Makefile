@@ -11,7 +11,7 @@ HDRS   = $(addprefix $(H)/, \
   border.h color.h list.h tui.h uCurses.h util.h)
 
 CFLAGS = -Os -fno-inline -pedantic -Wall -Werror \
-  -std=c17 -pipe -march=native -g3 -xc -c
+  -std=gnu17 -pipe -march=native -g3 -xc -c
 
 O = o
 H = h
@@ -34,9 +34,5 @@ $(O):
 clean:
 	@rm o/*.o
 	@rm u
-
-reformat:
-	clang-format -i *.c h/*.h
-	@for i in *.c h/*.h; do grep -q ' $$' $$i && (echo $$i had trailing whitespace; sed 's/ *$$//' -i $$i) || true; done
 
 ## =======================================================================

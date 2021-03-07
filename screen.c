@@ -1,14 +1,11 @@
 // screen.c   - uCurses text user interface screen handling
 // -----------------------------------------------------------------------
 
-#define _XOPEN_SOURCE
 #include <inttypes.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <wchar.h>
-#include <stdlib.h>
 
 #include "h/list.h"
 #include "h/tui.h"
@@ -166,7 +163,6 @@ static bool scr_is_modified(screen_t *scr, uint16_t index)
 static void scr_emit(screen_t *scr, uint16_t index)
 {
     uint16_t x, y;
-
     cell_t *p1, *p2;
 
     p1 = &scr->buffer1[index];
@@ -183,8 +179,7 @@ static void scr_emit(screen_t *scr, uint16_t index)
 
     // output the utf-8 codepoint to the terminal
     utf8_emit(p1->code);
-    scr->cx += wcwidth(p1->code);
-    // scr->cx++;
+    scr->cx++;
 
     if(scr->cx == scr->width)
     {
@@ -218,11 +213,12 @@ static void update(screen_t *scr, uint16_t index, uint16_t end)
 
 // -----------------------------------------------------------------------
 
+extern bool delay_flush;
 void scr_do_draw_screen(screen_t *scr)
 {
     uint16_t index = 0;
     uint16_t end = scr->width * scr->height;
-
+//delay_flush = true;
     memset(&old_attrs[0], 0, 8);
 
     win_draw((window_t *)scr->backdrop);
@@ -240,6 +236,9 @@ void scr_do_draw_screen(screen_t *scr)
         }
         index++;
     } while(index != end);
+
+//delay_flush = false;
+//flush();
 }
 
 // -----------------------------------------------------------------------

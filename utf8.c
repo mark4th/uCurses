@@ -1,25 +1,36 @@
 // utf8.c
 // --------------------------------------------------------------------------
 
+#define _XOPEN_SOURCE
 #include <inttypes.h>
 #include <unistd.h>
+#include <wchar.h>
 
 // --------------------------------------------------------------------------
 
-void utf8_emit(uint32_t cp)
-{
-    uint8_t len;
-    uint8_t str[4];
+uint8_t len;
+uint8_t str[4];
 
+#include <string.h>
+#include <byteswap.h>
+
+int utf8_encode(uint32_t cp)
+{
+    wchar_t c;
     if (cp < 0x80)
     {
         str[0] = cp;
+        str[1] = 0;
+        str[2] = 0;
+        str[3] = 0;
         len = 1;
     }
     else if (cp < 0x0800)
     {
         str[0] = 0xc0 | (cp >> 6);
         str[1] = 0x80 | (cp & 0x3f);
+        str[2] = 0;
+        str[3] = 0;
         len = 2;
     }
     else if (cp < 0x10000)
@@ -27,6 +38,7 @@ void utf8_emit(uint32_t cp)
         str[0] = 0xe0 | (cp >> 12);
         str[1] = 0x80 | ((cp >> 6) & 0x3f);
         str[2] = 0x80 | (cp & 0x3f);
+        str[3] = 0;
         len = 3;
     }
     else
@@ -37,7 +49,21 @@ void utf8_emit(uint32_t cp)
         str[3] = 0x80 | (cp & 0x3f);
         len = 4;
     }
-    write(1, &str[0], len);
+    memcpy(&c, str, 4);
+
+    return wcwidth(c);
+}
+
+
+// --------------------------------------------------------------------------
+
+void utf8_emit(uint32_t cp)
+{
+    if(cp != 0xaaaaaaaa)
+    {
+        utf8_encode(cp);
+        write(1, &str[0], len);
+    }
 }
 
 // --------------------------------------------------------------------------

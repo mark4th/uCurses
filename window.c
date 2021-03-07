@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "h/uCurses.h"
 #include "h/color.h"
 #include "h/tui.h"
 
@@ -64,7 +65,7 @@ window_t *win_open(uint16_t width, uint16_t height)
         win->width   = width;
 
         // win_alloc() uses width/height to determine how much
-        // space needs to be allocated
+        // space needs to be malloc'd
         if(0 == win_alloc(win))
         {
             free(win);
@@ -419,6 +420,7 @@ void win_emit(window_t *win, uint32_t c)
 {
     cell_t cell;
     cell_t *p;
+    uint32_t width;
 
     switch(c)
     {
@@ -431,6 +433,17 @@ void win_emit(window_t *win, uint32_t c)
             p = win_line_addr(win, win->cy);
             p[win->cx] = cell;
             win_crsr_rt(win);
+            // need to mark the next cell as used by this character too
+            // if this character is double width.  when this is all
+            // written to the console later the cell_t's after any wide
+            // character are skipped
+            width = utf8_encode(c);
+            if(1 != width)
+            {
+                cell.code = 0xaaaaaaaa;
+                p[win->cx] = cell;
+                win_crsr_rt(win);
+            }
     }
 }
 

@@ -27,7 +27,7 @@ static void noop(void){;}
 // -----------------------------------------------------------------------
 
 uint8_t *str_buff;          // format string compilation output buffer
-uint16_t nb;                // max of 64k of compiled escape sequences
+uint32_t nb;                // max of 64k of compiled escape sequences
 
 static uint8_t fsp;         // stack pointer for ...
 static uint64_t fstack[5];  // format string stack
@@ -108,7 +108,7 @@ void flush(void)
 {
     // do not fulsh the escape sequences if we are compiling
     // up to 64k of them
-    if(!delay_flush)
+    if(0 == delay_flush)
     {
         do_flush();
     }
@@ -152,7 +152,7 @@ static void c_emit(uint8_t c1)
 {
     str_buff[nb++] = c1;
 
-    if(0xfffe == nb)
+    if(0xffff == nb)
     {
         do_flush();
     }

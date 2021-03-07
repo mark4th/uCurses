@@ -21,7 +21,6 @@ void win_puts(window_t *win, char *p)
         win_emit(win, codepoint);
         p += skip;
     }
-    win_emit(win, '*');
 }
 
 // -----------------------------------------------------------------------

@@ -13,7 +13,7 @@
 #include "h/tui.h"
 #include "h/uCurses.h"
 #include "h/util.h"
-
+#include<locale.h>
 // -----------------------------------------------------------------------
 
 struct termios term_save;
@@ -178,7 +178,7 @@ int main(void)
     window_t *win1, *win2;
 
     uCurses_init();
-
+    setlocale(LC_ALL, "C.UTF-8");
     curoff();
     atexit(restore_term);
     tcgetattr(STDIN_FILENO, &term_save);
@@ -221,15 +221,18 @@ int main(void)
 
     scr_win_attach(scr, win1);
     scr_win_attach(scr, win2);
-    scr_do_draw_screen(scr);
+
     cup(20, 0);
 
     char str2[] = "中文鍵盤中文键盘";
 
     win_printf(win1, "This is a test\r%fcI hope it works!", 9);
     win_puts(win2, str2);
+    scr_do_draw_screen(scr);
 
     run_demo(scr, win1, win2);
+//    while((0 == test_keys()))
+//        ;
 
     set_fg(WHITE);
     set_bg(BLACK);

@@ -44,26 +44,31 @@ void utf8_emit(uint32_t cp)
 
 uint8_t utf8_decode(uint32_t *cp, char *s)
 {
+    // 0xxxxxxx
     if ((uint8_t)s[0] < 0x80)
     {
         *cp = *s;
         return 1;
     }
 
-    if (((uint8_t)s[0] >= 0xb0) && ((uint8_t)s[0] < 0xe0))
+     // 110xxxxx  10xxxxxx
+    if (((uint8_t)s[0] >= 0xc0) && ((uint8_t)s[0] < 0xe0))
     {
+        // TODO: if(0x80 == s[1] & 0xc0) { yay }
         *cp = (((uint8_t)s[0] & 0x1f) << 6) | ((uint8_t)s[1] & 0x3f);
         return 2;
     }
 
+    // 1110xxxx 10xxxxxx 10xxxxxx
     if (((uint8_t)s[0] >= 0xe0) && ((uint8_t)s[0] < 0xf0))
     {
-        *cp = (((uint8_t)s[0] & 0xf) << 12) | (((uint8_t)s[1] & 0x3f) << 6) |
+        *cp = (((uint8_t)s[0] & 0x1f) << 12) | (((uint8_t)s[1] & 0x3f) << 6) |
                ((uint8_t)s[2] & 0x3f);
         return 3;
     }
 
-    if (!(s[0] & 0x8))
+    // 11110xxx 10xxxxx 10xxxxx 10xxxxx
+    if ((uint8_t)s[0] > 0xef)
     {
         *cp = (((uint8_t)s[0] & 0x7) << 18) | (((uint8_t)s[1] & 0x3f) << 12) |
               (((uint8_t)s[2] & 0x3f) << 6) | ((uint8_t)s[3] & 0x3f);
@@ -75,22 +80,22 @@ uint8_t utf8_decode(uint32_t *cp, char *s)
 
 // --------------------------------------------------------------------------
 
-#include <stdio.h>
-void test(void)
-{
-    uint32_t cp;
-    char utf8_str[] = "俪俨俩俪俭修俯";
-    char *p = &utf8_str[0];
-    uint8_t n;
+// #include <stdio.h>
+// void test(void)
+// {
+//     uint32_t cp;
+//     char utf8_str[] = "俪俨俩俪俭修俯";
+//     char *p = &utf8_str[0];
+//     uint8_t n;
 
-    while(0 != *p)
-    {
-       n = utf8_decode(&cp, p);
-       printf(" %x ", cp);
-       utf8_emit(cp);
-       p += n;
-    }
-    printf("\n");
-}
+//     while(0 != *p)
+//     {
+//        n = utf8_decode(&cp, p);
+//        printf(" %x ", cp);
+//        utf8_emit(cp);
+//        p += n;
+//     }
+//     printf("\n");
+// }
 
 // ==========================================================================

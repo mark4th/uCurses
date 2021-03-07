@@ -8,7 +8,7 @@
 #include <termios.h>
 #include <unistd.h>
 #include <time.h>
-
+#include <errno.h>
 #include "h/color.h"
 #include "h/tui.h"
 #include "h/uCurses.h"
@@ -21,12 +21,23 @@ struct termios term;
 
 // -----------------------------------------------------------------------
 
+#define SLEEP 10000000
 void clock_sleep(uint32_t when)
 {
-    clock_t time = clock();
+    struct timespec tv;
+    struct timespec remain;
+    uint32_t rv;
 
-    while (clock() < time + when)
-        ;
+    do
+    {
+        tv.tv_sec  = 0;
+        tv.tv_nsec = when;
+        rv = clock_nanosleep(CLOCK_MONOTONIC, 0, &tv, &remain);
+        if(EINTR == rv)
+        {
+            tv = remain;
+        }
+    } while(0 != rv);
 }
 
 // -----------------------------------------------------------------------
@@ -89,7 +100,7 @@ void run_demo(screen_t *scr, window_t *win1, window_t *win2)
             win_set_pos(win1, x1, y1);
             win_set_pos(win2, x2, y2);
             scr_do_draw_screen(scr);
-            clock_sleep(15000);
+            clock_sleep(SLEEP);
         };
 
         while(y1 != Y_END(win1))
@@ -108,7 +119,7 @@ void run_demo(screen_t *scr, window_t *win1, window_t *win2)
             win_set_pos(win1, x1, y1);
             win_set_pos(win2, x2, y2);
             scr_do_draw_screen(scr);
-            clock_sleep(15000);
+            clock_sleep(SLEEP);
         };
 
         flip_flop(win1, win2);
@@ -129,7 +140,7 @@ void run_demo(screen_t *scr, window_t *win1, window_t *win2)
             win_set_pos(win1, x1, y1);
             win_set_pos(win2, x2, y2);
             scr_do_draw_screen(scr);
-            clock_sleep(15000);
+            clock_sleep(SLEEP);
         };
 
         while(y1 != 2)
@@ -148,7 +159,7 @@ void run_demo(screen_t *scr, window_t *win1, window_t *win2)
             win_set_pos(win1, x1, y1);
             win_set_pos(win2, x2, y2);
             scr_do_draw_screen(scr);
-            clock_sleep(15000);
+            clock_sleep(SLEEP);
         };
         flip_flop(win1, win2);
     }
@@ -201,8 +212,8 @@ int main(void)
     win1->bdr_type        = BDR_SINGLE;
 
     win2->bdr_attrs[ATTR] = BG_GRAY;
-    win2->bdr_attrs[FG]   = 10;
-    win2->bdr_attrs[BG]   = 15;
+    win2->bdr_attrs[FG]   = 11;
+    win2->bdr_attrs[BG]   = 6;
     win2->bdr_type        = BDR_SINGLE;
 
     win_clear(win1);
@@ -215,14 +226,13 @@ int main(void)
 
     char str2[] = "中文鍵盤中文键盘";
 
-    win_printf(win1, "This is a test\r%fcI hope it works!", 2);
+    win_printf(win1, "This is a test\r%fcI hope it works!", 9);
     win_puts(win2, str2);
 
     run_demo(scr, win1, win2);
 
     set_fg(WHITE);
     set_bg(BLACK);
-
 
     clear();
     curon();

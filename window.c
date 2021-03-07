@@ -28,8 +28,7 @@ static bool win_alloc(window_t *win)
 {
     cell_t *p;
 
-    uint32_t size = win->width * win->height * sizeof(*p);
-    p = malloc(size);
+    p = calloc((win->width * win->height), sizeof(cell_t));
 
     if(NULL != p)
     {
@@ -57,16 +56,15 @@ void win_close(window_t *win)
 
 window_t *win_open(uint16_t width, uint16_t height)
 {
-    window_t *win = malloc(sizeof(*win));
+    window_t *win = calloc(1, sizeof(*win));
 
     if(0 != win)
     {
-        memset(win, 0, sizeof(window_t));
         win->height  = height;
         win->width   = width;
 
         // win_alloc() uses width/height to determine how much
-        // space needs to be malloc'd
+        // space needs to be allocated
         if(0 == win_alloc(win))
         {
             free(win);

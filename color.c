@@ -111,7 +111,7 @@ static void do_set_bg(void)
 }
 
 // -----------------------------------------------------------------------
-// apply varius attribute changes
+// apply various attribute changes
 
 void apply_attribs(void)
 {

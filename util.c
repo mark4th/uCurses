@@ -76,8 +76,8 @@ void cub1(void)
 {
     if(0 != cx)
     {
-      cx--;
-      ti_cub1();
+        cx--;
+        ti_cub1();
     }
 }
 

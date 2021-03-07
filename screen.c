@@ -28,11 +28,9 @@ static bool scr_alloc(screen_t *scr)
 {
     cell_t *p1, *p2;
 
-    uint32_t size = ((scr->width * scr->height) * sizeof(*p1));
-
     // allocate buffers 1 and 2 for screen
-    p1 = malloc(size);
-    p2 = malloc(size);
+    p1 = calloc((scr->width * scr->height), sizeof(*p1));
+    p2 = calloc((scr->width * scr->height), sizeof(*p1));
 
     if((NULL == p1) || (NULL == p2))
     {
@@ -51,12 +49,10 @@ static bool scr_alloc(screen_t *scr)
 
 screen_t *scr_open(uint16_t width, uint16_t height)
 {
-    screen_t *scr = malloc(sizeof(*scr));
+    screen_t *scr = calloc(sizeof(*scr), sizeof(*scr));
 
     if(NULL != scr)
     {
-        memset(scr, 0, sizeof(screen_t));
-
         scr->width  = width;
         scr->height = height;
 
@@ -113,7 +109,7 @@ void scr_close(screen_t *scr)
     }
     while(0 != scr->windows.count)
     {
-         window_t *win = (window_t *)list_pop(&scr->windows);
+         window_t *win = list_pop(&scr->windows);
          win_close(win);
     }
     free(scr);

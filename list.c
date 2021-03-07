@@ -85,7 +85,7 @@ bool list_append_node(list_t *l, void *payload)
 {
     node_t *n1;
 
-    n1 = (node_t *) malloc(sizeof(node_t));
+    n1 = (node_t *) calloc(1, sizeof(node_t));
     if(NULL == n1)
     {
         return false;

@@ -21,7 +21,7 @@ void win_puts(window_t *win, char *p)
         win_emit(win, codepoint);
         p += skip;
     }
-    win_emit(win, 'X');
+    win_emit(win, '*');
 }
 
 // -----------------------------------------------------------------------
@@ -56,9 +56,9 @@ void win_printf(window_t *win, char* format, ...)
         switch(*p)
         {
             case 'r':
-                r = va_arg(arg, uint32_t) % 0x100;
-                g = va_arg(arg, uint32_t) % 0x100;
-                b = va_arg(arg, uint32_t) % 0x100;
+                r = va_arg(arg, int) % 0x100;
+                g = va_arg(arg, int) % 0x100;
+                b = va_arg(arg, int) % 0x100;
 
                 switch(p[1])
                 {
@@ -79,7 +79,7 @@ void win_printf(window_t *win, char* format, ...)
                 break;
 
             case 'f':
-                f = va_arg(arg, uint32_t);
+                f = va_arg(arg, int);
 
                 switch(p[1])
                 {
@@ -97,7 +97,7 @@ void win_printf(window_t *win, char* format, ...)
                 break;
 
             case 'b':
-                b = va_arg(arg, uint32_t);
+                b = va_arg(arg, int);
 
                 switch(p[1])
                 {
@@ -115,45 +115,45 @@ void win_printf(window_t *win, char* format, ...)
                 break;
 
             case '@':    // set cursor X/Y
-                x = va_arg(arg, uint32_t);
-                y = va_arg(arg, uint32_t);
+                x = va_arg(arg, int);
+                y = va_arg(arg, int);
 
                 win_cup(win, x, y);
                 break;
 
             case 'x':
-                x = va_arg(arg, uint32_t);
+                x = va_arg(arg, int);
                 win_set_cx(win, x);
                 break;
 
             case 'y':
-                y = va_arg(arg, uint32_t);
+                y = va_arg(arg, int);
                 win_set_cy(win, y);
                 break;
 
             case '^':
-                y = va_arg(arg, uint32_t);
+                y = va_arg(arg, int);
                 while(0 != y)
                 {
                     win_scroll_up(win);
                 }
                 break;
             case 'v':
-                y = va_arg(arg, uint32_t);
+                y = va_arg(arg, int);
                 while(0 != y)
                 {
                     win_scroll_dn(win);
                 }
                 break;
             case '<':
-                x = va_arg(arg, uint32_t);
+                x = va_arg(arg, int);
                 while(0 != x)
                 {
                     win_scroll_lt(win);
                 }
                 break;
             case '>':
-                x = va_arg(arg, uint32_t);
+                x = va_arg(arg, int);
                 while(0 != x)
                 {
                     win_scroll_rt(win);

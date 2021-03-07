@@ -85,7 +85,7 @@ extern uint16_t *ti_strings;
 // }
 
 // -----------------------------------------------------------------------
-// unconditionally flush the compiled escape seqyences to the display
+// unconditionally flush the compiled escape sequences to the display
 
 static void do_flush(void)
 {

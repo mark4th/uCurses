@@ -116,6 +116,33 @@ void scr_close(screen_t *scr)
 }
 
 // -----------------------------------------------------------------------
+// draw window into its parent screen with borders if it has them
+
+static void scr_draw_win(window_t *win)
+{
+    uint16_t i;
+    cell_t *src, *dst;
+
+    screen_t *scr = win->screen;
+
+    // borders must be drawn first
+    if(win->flags & WIN_BOXED)
+    {
+        win_draw_borders(win);
+    }
+
+    dst = &scr->buffer1[(win->yco * scr->width) + win->xco];
+    src = win->buffer;
+
+    for(i = 0; i < win->height; i++)
+    {
+        memcpy(dst, src, win->width * sizeof(cell_t));
+        dst += scr->width;
+        src += win->width;
+    }
+}
+
+// -----------------------------------------------------------------------
 
 static void scr_draw_windows(screen_t *scr)
 {
@@ -123,7 +150,7 @@ static void scr_draw_windows(screen_t *scr)
 
     while(NULL != n)
     {
-       win_draw(n->payload);
+       scr_draw_win(n->payload);
        n = n->next;
     }
 }
@@ -197,6 +224,34 @@ static void scr_emit(screen_t *scr, uint16_t index)
 }
 
 // -----------------------------------------------------------------------
+// add a backdrop window to the screen
+
+void scr_add_backdrop(screen_t *scr)
+{
+    window_t *win = win_open(scr->width  - 2, scr->height - 2);
+
+    if(NULL != win)
+    {
+        win->xco    = 1;
+        win->yco    = 1;
+
+        win->flags  = WIN_BOXED | WIN_LOCKED;
+        win->blank  = SOLID;
+        win->screen = scr;
+
+        win_set_gray_fg(win, 12);
+
+        win->bdr_attrs[ATTR] = FG_GRAY | BG_GRAY | BOLD;
+        win->bdr_attrs[FG] = 13;
+        win->bdr_attrs[BG] = 0;
+        win->bdr_type = BDR_DOUBLE;
+        win_clear(win);
+
+        scr->backdrop = win;
+    }
+}
+
+// -----------------------------------------------------------------------
 
 static uint32_t update(screen_t *scr, uint16_t index, uint16_t end)
 {
@@ -239,7 +294,7 @@ void scr_do_draw_screen(screen_t *scr)
 
     memset(&old_attrs[0], 0, 8);
 
-    win_draw((window_t *)scr->backdrop);
+    scr_draw_win((window_t *)scr->backdrop);
     scr_draw_windows(scr);
 
     scr->cx = scr->cy = -1;
@@ -258,34 +313,6 @@ void scr_do_draw_screen(screen_t *scr)
 
 //    delay_flush = 0;
 //    flush();
-}
-
-// -----------------------------------------------------------------------
-// add a backdrop window to the screen
-
-void scr_add_backdrop(screen_t *scr)
-{
-    window_t *win = win_open(scr->width  - 2, scr->height - 2);
-
-    if(NULL != win)
-    {
-        win->xco    = 1;
-        win->yco    = 1;
-
-        win->flags  = WIN_BOXED | WIN_LOCKED;
-        win->blank  = SOLID;
-        win->screen = scr;
-
-        win_set_gray_fg(win, 12);
-
-        win->bdr_attrs[ATTR] = FG_GRAY | BG_GRAY | BOLD;
-        win->bdr_attrs[FG] = 13;
-        win->bdr_attrs[BG] = 0;
-        win->bdr_type = BDR_DOUBLE;
-        win_clear(win);
-
-        scr->backdrop = win;
-    }
 }
 
 // =======================================================================

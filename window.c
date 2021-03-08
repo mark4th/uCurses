@@ -448,31 +448,4 @@ void win_emit(window_t *win, uint32_t c)
     }
 }
 
-// -----------------------------------------------------------------------
-// draw window into its parent screen with borders if it has them
-
-void win_draw(window_t *win)
-{
-    uint16_t i;
-    cell_t *src, *dst;
-
-    screen_t *scr = win->screen;
-
-    // borders must be drawn first
-    if(win->flags & WIN_BOXED)
-    {
-        win_draw_borders(win);
-    }
-
-    dst = &scr->buffer1[(win->yco * scr->width) + win->xco];
-    src = win->buffer;
-
-    for(i = 0; i < win->height; i++)
-    {
-        memcpy(dst, src, win->width * sizeof(cell_t));
-        dst += scr->width;
-        src += win->width;
-    }
-}
-
 // =======================================================================

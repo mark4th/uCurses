@@ -120,7 +120,6 @@ void win_crsr_rt(window_t *win);
 void win_cr(window_t *win);
 void win_emit(window_t *win, uint32_t c);
 void win_clear(window_t *win);
-void win_draw(window_t *win);
 void win_draw_borders(window_t *win);
 
 // -----------------------------------------------------------------------

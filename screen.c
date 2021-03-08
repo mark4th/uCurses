@@ -27,7 +27,7 @@ static uint16_t scr_alloc(screen_t *scr)
 
     // allocate buffers 1 and 2 for screen
     p1 = calloc((scr->width * scr->height), sizeof(*p1));
-    p2 = calloc((scr->width * scr->height), sizeof(*p1));
+    p2 = calloc((scr->width * scr->height), sizeof(*p2));
 
     if((NULL == p1) || (NULL == p2))
     {
@@ -46,7 +46,7 @@ static uint16_t scr_alloc(screen_t *scr)
 
 screen_t *scr_open(uint16_t width, uint16_t height)
 {
-    screen_t *scr = calloc(sizeof(*scr), sizeof(*scr));
+    screen_t *scr = calloc(1, sizeof(*scr));
 
     if(NULL != scr)
     {
@@ -198,9 +198,10 @@ static void scr_emit(screen_t *scr, uint16_t index)
 
 // -----------------------------------------------------------------------
 
-static void update(screen_t *scr, uint16_t index, uint16_t end)
+static uint32_t update(screen_t *scr, uint16_t index, uint16_t end)
 {
     cell_t *p1;
+    int indx = 0;
 
     p1 = &scr->buffer1[index];
 
@@ -214,18 +215,28 @@ static void update(screen_t *scr, uint16_t index, uint16_t end)
         {
             scr_emit(scr, index);
         }
+        else
+        {
+            if(0 == indx)
+            {
+                indx = index;
+            }
+        }
         index++;
         p1++;
     } while (index != end);
+    return indx;
 }
 
 // -----------------------------------------------------------------------
 
 void scr_do_draw_screen(screen_t *scr)
 {
-    uint16_t index = 0;
+    uint16_t index = 0, indx;
     uint16_t end = scr->width * scr->height;
-// delay_flush = true;
+
+//    delay_flush = -1;
+
     memset(&old_attrs[0], 0, 8);
 
     win_draw((window_t *)scr->backdrop);
@@ -239,13 +250,14 @@ void scr_do_draw_screen(screen_t *scr)
         // screen that shares its attributes.
         if(0 != scr_is_modified(scr, index))
         {
-            update(scr, index, end);
+            indx = update(scr, index, end);
+            if(indx != 0) { index = indx - 1; }
         }
         index++;
     } while(index != end);
 
-// delay_flush = false;
-// flush();
+//    delay_flush = 0;
+//    flush();
 }
 
 // -----------------------------------------------------------------------

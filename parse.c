@@ -92,12 +92,14 @@ static void do_flush(void)
     uint32_t n;
 
     n =  write(1, &esc_buff[0], num_esc);
-    memset(&esc_buff[0], 0, num_esc);
-    num_esc = 0;
-
-    if(n < 0)
+    if(n > 0)
     {
-        // TODO: log warning?
+        memset(&esc_buff[0], 0, num_esc);
+        num_esc = 0;
+    }
+    else
+    {
+        // log warning? try again?
     }
 }
 
@@ -135,14 +137,7 @@ static void fs_push(uint64_t n)
 
 static uint64_t fs_pop(void)
 {
-    if(0 != fsp)
-    {
-        fsp--;
-        return fstack[fsp];
-    }
-    // methinks this might could be an internal error
-    // abort "uCurses format string stck underflow"
-    return 0;
+    return (0 != fsp) ? fstack[--fsp] : 0;
 }
 
 // -----------------------------------------------------------------------

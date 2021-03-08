@@ -45,6 +45,7 @@ void clock_sleep(uint32_t when)
 void restore_term(void)
 {
     tcsetattr(STDIN_FILENO, TCSANOW, &term_save);
+    curon();
 }
 
 // -----------------------------------------------------------------------
@@ -200,8 +201,8 @@ int main(void)
 
     win_set_fg(win1, WHITE);
     win_set_bg(win1, BLUE);
-    win_set_fg(win2, GREEN);
-    win_set_bg(win2, MAGENTA);
+    win_set_fg(win2, LT_CYAN);
+    win_set_bg(win2, GRAY);
 
     win1->flags |= WIN_BOXED;
     win2->flags |= WIN_BOXED;
@@ -238,7 +239,6 @@ int main(void)
     set_bg(BLACK);
 
     clear();
-    curon();
     cup(10, 0);
     printf("bye!\n");
     return 0;

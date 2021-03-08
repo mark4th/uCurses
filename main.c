@@ -8,14 +8,12 @@
 #include <termios.h>
 #include <unistd.h>
 #include <time.h>
-#include<locale.h>
-
 #include <errno.h>
 #include "h/color.h"
 #include "h/tui.h"
 #include "h/uCurses.h"
 #include "h/util.h"
-
+#include<locale.h>
 // -----------------------------------------------------------------------
 
 struct termios term_save;
@@ -76,8 +74,8 @@ static void flip_flop(window_t *win1, window_t *win2)
 
 void run_demo(screen_t *scr, window_t *win1, window_t *win2)
 {
-//    uint8_t c;
-//    uint8_t pause = 0;
+    uint8_t c;
+    uint8_t pause = 0;
     uint16_t x1 = 2, y1 = 2;
     uint16_t x2 = X_END(win2), y2 = Y_END(win2);
 
@@ -91,6 +89,18 @@ void run_demo(screen_t *scr, window_t *win1, window_t *win2)
 
     for(;;)
     {
+        if(0 != test_keys())
+        {
+            read(STDIN_FILENO, &c, 1);
+            if(c == ' ')
+            {
+                pause ^= 1;
+                continue;
+            }
+            return;
+        }
+if(pause == 0)
+{
         win_set_pos(win1, x1, y1);
         win_set_pos(win2, x2, y2);
         scr_do_draw_screen(scr);
@@ -120,6 +130,7 @@ void run_demo(screen_t *scr, window_t *win1, window_t *win2)
         }
 
         clock_sleep(SLEEP);
+}
     }
 }
 

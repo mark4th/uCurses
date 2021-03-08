@@ -39,69 +39,56 @@ void win_puts(window_t *win, char *s);
 //      +--- terminfo name
 //      |                    +--terminfo strings section offset to
 //      v                    v  to format string
-#define ti_bell()    format(  2 >> 1)
+
+#define ti_bell()    format(  2 >> 1)  // NOOOOO!
 #define ti_cr()      format(  4 >> 1)
-#define ti_csr()     format(  6 >> 1)
-#define ti_clear()   format( 10 >> 1)
-#define ti_el()      format( 12 >> 1)
-#define ti_ed()      format( 14 >> 1)
-#define ti_hpa()     format( 16 >> 1)
-#define ti_cup()     format( 20 >> 1)
-#define ti_cud1()    format( 22 >> 1)
-#define ti_home()    format( 24 >> 1)
-#define ti_civis()   format( 26 >> 1)
-#define ti_cub1()    format( 28 >> 1)
-#define ti_cnorm()   format( 32 >> 1)
-#define ti_cuf1()    format( 34 >> 1)
-#define ti_ll()      format( 36 >> 1)
-#define ti_cuu1()    format( 38 >> 1)
-#define ti_cvvis()   format( 40 >> 1)
-#define ti_dch1()    format( 42 >> 1)
-#define ti_dl1()     format( 44 >> 1)
-#define ti_smacs()   format( 50 >> 1)
-#define ti_blink()   format( 52 >> 1)
-#define ti_bold()    format( 54 >> 1)
-#define ti_smcup()   format( 56 >> 1)
-#define ti_dim()     format( 60 >> 1)
-#define ti_smir()    format( 62 >> 1)
-#define ti_rev()     format( 68 >> 1)
-#define ti_smso()    format( 70 >> 1)
-#define ti_smul()    format( 72 >> 1)
-#define ti_ech()     format( 74 >> 1)
-#define ti_rmacs()   format( 76 >> 1)
-#define ti_sgr0()    format( 78 >> 1)
-#define ti_rmcup()   format( 80 >> 1)
-#define ti_rmir()    format( 84 >> 1)
-#define ti_rmso()    format( 86 >> 1)
-#define ti_rmul()    format( 88 >> 1)
-#define ti_is1()     format( 96 >> 1)
-#define ti_is2()     format( 98 >> 1)
-#define ti_is3()     format(100 >> 1)
-#define ti_ich1()    format(104 >> 1)
-#define ti_il1()     format(106 >> 1)
-#define ti_dch()     format(210 >> 1)
-#define ti_cud()     format(214 >> 1)
-#define ti_ich()     format(216 >> 1)
-#define ti_indn()    format(218 >> 1)
-#define ti_cub()     format(222 >> 1)
-#define ti_cuf()     format(224 >> 1)
-#define ti_rin()     format(226 >> 1)
-#define ti_cuu()     format(228 >> 1)
-#define ti_rc()      format(252 >> 1)
-#define ti_vpa()     format(254 >> 1)
-#define ti_sc()      format(256 >> 1)
-#define ti_ind()     format(258 >> 1)
-#define ti_ri()      format(260 >> 1)
-#define ti_sgr()     format(262 >> 1)
-#define ti_hts()     format(264 >> 1)
-#define ti_ht()      format(268 >> 1)
-#define ti_enacs()   format(310 >> 1)
-#define ti_el1()     format(538 >> 1)
-#define ti_op()      format(594 >> 1)
-#define ti_rum()     format(654 >> 1)
-#define ti_scs()     format(678 >> 1)
-#define ti_setaf()   format(718 >> 1)
-#define ti_setab()   format(720 >> 1)
+#define ti_csr()     format(  6 >> 1)  // change scroll region
+#define ti_clear()   format( 10 >> 1)  // clear screen
+#define ti_el()      format( 12 >> 1)  // erase line
+#define ti_ed()      format( 14 >> 1)  // clear to end of screen
+#define ti_hpa()     format( 16 >> 1)  // set cursor horizontal position
+#define ti_cup()     format( 20 >> 1)  // set cursor horizontal / vertical
+#define ti_cud1()    format( 22 >> 1)  // move cursor down 1 line
+#define ti_home()    format( 24 >> 1)  // move cursor to home location
+#define ti_civis()   format( 26 >> 1)  // make cursor invisible
+#define ti_cub1()    format( 28 >> 1)  // move cursor back one on line
+#define ti_cnorm()   format( 32 >> 1)  // make cursor visible
+#define ti_cuf1()    format( 34 >> 1)  // move cursor forward on line
+#define ti_ll()      format( 36 >> 1)  // move cursor to lower left
+#define ti_cuu1()    format( 38 >> 1)  // move cursor up one line
+#define ti_cvvis()   format( 40 >> 1)  // make cursor very visible?
+#define ti_dch1()    format( 42 >> 1)  // delete character
+#define ti_dl1()     format( 44 >> 1)  // delete line
+#define ti_blink()   format( 52 >> 1)  // NOOOOO !
+#define ti_bold()    format( 54 >> 1)  // turn on bold mode
+#define ti_smir()    format( 62 >> 1)  // set mode insert
+#define ti_rev()     format( 68 >> 1)  // turn on reverse video
+#define ti_smul()    format( 72 >> 1)  // turn on underline
+#define ti_ech()     format( 74 >> 1)  // erase chars
+#define ti_sgr0()    format( 78 >> 1)  // blow away all attribs
+#define ti_rmir()    format( 84 >> 1)  // exit insert mode
+#define ti_rmul()    format( 88 >> 1)  // disable underline mode
+#define ti_ich1()    format(104 >> 1)  // insert character
+#define ti_il1()     format(106 >> 1)  // insert line
+#define ti_dch()     format(210 >> 1)  // delete 1 character
+#define ti_cud()     format(214 >> 1)  // move cursor down one
+#define ti_ich()     format(216 >> 1)  // insert character
+#define ti_indn()    format(218 >> 1)  // scroll forward lines
+#define ti_cub()     format(222 >> 1)  // move cursor back
+#define ti_cuf()     format(224 >> 1)  // move cursor forward
+#define ti_rin()     format(226 >> 1)  // scroll back lines
+#define ti_cuu()     format(228 >> 1)  // cursor up lines
+#define ti_rc()      format(252 >> 1)  // restore cursor location
+#define ti_vpa()     format(254 >> 1)  // vertical position absolute
+#define ti_sc()      format(256 >> 1)  // save cursor location
+#define ti_ind()     format(258 >> 1)  // scroll up
+#define ti_ri()      format(260 >> 1)  // scroll down
+#define ti_sgr()     format(262 >> 1)  // set graphics rendering
+#define ti_ht()      format(268 >> 1)  // tab to next 8 space stop
+#define ti_el1()     format(538 >> 1)  // clear to beginning of line
+#define ti_rum()     format(654 >> 1)  // end reverse character motion
+#define ti_setaf()   format(718 >> 1)  // set fg using ansi
+#define ti_setab()   format(720 >> 1)  // set bg using ansi
 
 #define ti_kbs()     format(110 >> 1)  // key backspace
 #define ti_kdch1()   format(118 >> 1)  // delete character key

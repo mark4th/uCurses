@@ -185,7 +185,7 @@ static uint16_t scr_is_modified(screen_t *scr, uint16_t index)
     cell_t *p1 = &scr->buffer1[index];
     cell_t *p2 = &scr->buffer2[index];
 
-    // if attrs of this cell in buffer1 are different from the addrs
+    // if attrs of this cell in buffer1 are different from the attrs
     // in buffer 2 or if the characters in those cells are different
     // then this cell needs updating
     return(

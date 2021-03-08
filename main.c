@@ -8,12 +8,14 @@
 #include <termios.h>
 #include <unistd.h>
 #include <time.h>
+#include<locale.h>
+
 #include <errno.h>
 #include "h/color.h"
 #include "h/tui.h"
 #include "h/uCurses.h"
 #include "h/util.h"
-#include<locale.h>
+
 // -----------------------------------------------------------------------
 
 struct termios term_save;
@@ -74,95 +76,50 @@ static void flip_flop(window_t *win1, window_t *win2)
 
 void run_demo(screen_t *scr, window_t *win1, window_t *win2)
 {
-    uint8_t c;
-    uint8_t pause = 0;
+//    uint8_t c;
+//    uint8_t pause = 0;
     uint16_t x1 = 2, y1 = 2;
     uint16_t x2 = X_END(win2), y2 = Y_END(win2);
 
+    uint16_t x1i, x2i;
+    uint16_t y1i, y2i;
+
+    x1i = 1;
+    x2i = -1;
+
+    y1i = y2i = 0;
+
     for(;;)
     {
-        if((1 == pause) && (0 == test_keys()))
+        win_set_pos(win1, x1, y1);
+        win_set_pos(win2, x2, y2);
+        scr_do_draw_screen(scr);
+
+        x1 += x1i;    y1 += y1i;
+        x2 += x2i;    y2 += y2i;
+
+        if(y1i == 0)
         {
-            continue;
+            if((x1 == X_END(win1)) || (x1 == 2))
+            {
+                flip_flop(win1, win2);
+                y1i = x1i;    x1i = 0;
+                y2i = x2i;    x2i = 0;
+                continue;
+            }
         }
-        while (x1 != X_END(win1))
-        {
-            if(0 != test_keys())
-            {
-                read(STDIN_FILENO, &c, 1);
-                if(c == ' ')
-                {
-                    pause ^= 1;
-                    continue;
-                }
-                return;
-            }
-            x1++;  x2--;
-            win_set_pos(win1, x1, y1);
-            win_set_pos(win2, x2, y2);
-            scr_do_draw_screen(scr);
-            clock_sleep(SLEEP);
-        };
 
-        while(y1 != Y_END(win1))
+        if(x1i == 0)
         {
-            if(0 != test_keys())
+            if((y1 == Y_END(win1)) || (y1 == 2))
             {
-                read(STDIN_FILENO, &c, 1);
-                if(c == ' ')
-                {
-                    pause ^= 1;
-                    continue;
-                }
-                return;
+                x1i = -y1i;    y1i = 0;
+                x2i = -y2i;
+                y2i = 0;
             }
-            y1++; y2--;
-            win_set_pos(win1, x1, y1);
-            win_set_pos(win2, x2, y2);
-            scr_do_draw_screen(scr);
-            clock_sleep(SLEEP);
-        };
+        }
 
-        flip_flop(win1, win2);
-
-        while(x1 != 2)
-        {
-            if(0 != test_keys())
-            {
-                read(STDIN_FILENO, &c, 1);
-                if(c == ' ')
-                {
-                    pause ^= 1;
-                    continue;
-                }
-                return;
-            }
-            x1--; x2++;
-            win_set_pos(win1, x1, y1);
-            win_set_pos(win2, x2, y2);
-            scr_do_draw_screen(scr);
-            clock_sleep(SLEEP);
-        };
-
-        while(y1 != 2)
-        {
-            if(0 != test_keys())
-            {
-                read(STDIN_FILENO, &c, 1);
-                if(c == ' ')
-                {
-                    pause ^= 1;
-                    continue;
-                }
-                return;
-            }
-            y1--; y2++;
-            win_set_pos(win1, x1, y1);
-            win_set_pos(win2, x2, y2);
-            scr_do_draw_screen(scr);
-            clock_sleep(SLEEP);
-        };
-        flip_flop(win1, win2);
+        clock_sleep(SLEEP);
     }
 }
 

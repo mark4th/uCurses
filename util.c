@@ -15,11 +15,15 @@ uint16_t height;
 extern uint64_t params[MAX_PARAM];
 
 // -----------------------------------------------------------------------
+// turn cursor off
 
 void curoff(void)
 {
-    ti_civis();
+    ti_civis();             // what you cant read this ?
 }
+
+// -----------------------------------------------------------------------
+// turn cursor on
 
 void curon(void)
 {
@@ -40,12 +44,12 @@ void clear(void)
 
 void hpa(uint16_t x)
 {
-    params[0] = cx = x;
+    params[0] = cx = x;     // horizontal position absolute
     ti_hpa();
 }
 
 // -----------------------------------------------------------------------
-// set cursor position in console
+// set cursor x/y position in console
 
 void cup(uint16_t x, uint16_t y)
 {
@@ -55,6 +59,7 @@ void cup(uint16_t x, uint16_t y)
 }
 
 // -----------------------------------------------------------------------
+// cursor down
 
 void cud1(void)
 {
@@ -63,6 +68,7 @@ void cud1(void)
 }
 
 // -----------------------------------------------------------------------
+// cursor to home location
 
 void home(void)
 {
@@ -71,6 +77,7 @@ void home(void)
 }
 
 // -----------------------------------------------------------------------
+// cursor back one on line
 
 void cub1(void)
 {
@@ -82,6 +89,7 @@ void cub1(void)
 }
 
 // -----------------------------------------------------------------------
+// cursor forward one on line
 
 void cuf1(void)
 {
@@ -101,6 +109,7 @@ void cuf1(void)
 }
 
 // -----------------------------------------------------------------------
+// cursor up one line
 
 void cuu1(void)
 {
@@ -112,6 +121,7 @@ void cuu1(void)
 }
 
 // -----------------------------------------------------------------------
+// delete one character on line
 
 void dch1(void)
 {
@@ -123,6 +133,7 @@ void dch1(void)
 }
 
 // -----------------------------------------------------------------------
+// cursor down multiple lines (this can be done better)
 
 void cud(uint16_t n1)
 {
@@ -134,6 +145,7 @@ void cud(uint16_t n1)
 }
 
 // -----------------------------------------------------------------------
+// insert space on line
 
 void ich(void)
 {
@@ -142,6 +154,7 @@ void ich(void)
 }
 
 // -----------------------------------------------------------------------
+// cursor back multiple (this can be done better)
 
 void cub(uint16_t n1)
 {
@@ -153,6 +166,7 @@ void cub(uint16_t n1)
 }
 
 // -----------------------------------------------------------------------
+// cursor forward (this can be done better)
 
 void cuf(uint16_t n1)
 {
@@ -175,6 +189,7 @@ void cuu(uint16_t n1)
 }
 
 // -----------------------------------------------------------------------
+// vertical position absolute
 
 void vpa(uint16_t y1)
 {
@@ -183,6 +198,7 @@ void vpa(uint16_t y1)
 }
 
 // -----------------------------------------------------------------------
+// look ma, not using the ti_cr() define!
 
 void cr(void)
 {
@@ -195,6 +211,7 @@ void cr(void)
 }
 
 // -----------------------------------------------------------------------
+// enable cursor keys
 
 void smkx(void) { ti_smkx(); }
 void rmkx(void) { ti_rmkx(); }

@@ -9,11 +9,13 @@
 #include <unistd.h>
 #include <time.h>
 #include <errno.h>
+#include <locale.h>
+
 #include "h/color.h"
 #include "h/tui.h"
 #include "h/uCurses.h"
 #include "h/util.h"
-#include<locale.h>
+
 // -----------------------------------------------------------------------
 
 struct termios term_save;
@@ -54,7 +56,7 @@ void restore_term(void)
 #define Y_END(win) (scr->height - win->height - 2)
 
 uint8_t test_keys(void);
-uint16_t first = 0;
+uint16_t first = 1;
 
 // -----------------------------------------------------------------------
 // switch which window is on top and which is behind
@@ -89,7 +91,7 @@ void run_demo(screen_t *scr, window_t *win1, window_t *win2)
 
     for(;;)
     {
-        if(0 != test_keys())
+        if(test_keys() != 0)
         {
             read(STDIN_FILENO, &c, 1);
             if(c == ' ')
@@ -99,38 +101,39 @@ void run_demo(screen_t *scr, window_t *win1, window_t *win2)
             }
             return;
         }
-if(pause == 0)
-{
-        win_set_pos(win1, x1, y1);
-        win_set_pos(win2, x2, y2);
-        scr_do_draw_screen(scr);
 
-        x1 += x1i;    y1 += y1i;
-        x2 += x2i;    y2 += y2i;
-
-        if(y1i == 0)
+        if(pause == 0)
         {
-            if((x1 == X_END(win1)) || (x1 == 2))
-            {
-                flip_flop(win1, win2);
-                y1i = x1i;    x1i = 0;
-                y2i = x2i;    x2i = 0;
-                continue;
-            }
-        }
+            win_set_pos(win1, x1, y1);
+            win_set_pos(win2, x2, y2);
+            scr_do_draw_screen(scr);
 
-        if(x1i == 0)
-        {
-            if((y1 == Y_END(win1)) || (y1 == 2))
-            {
-                x1i = -y1i;    y1i = 0;
-                x2i = -y2i;
-                y2i = 0;
-            }
-        }
+            x1 += x1i;    y1 += y1i;
+            x2 += x2i;    y2 += y2i;
 
+            if(y1i == 0)
+            {
+                if((x1 == X_END(win1)) || (x1 == 2))
+                {
+                    flip_flop(win1, win2);
+                    y1i = x1i;    x1i = 0;
+                    y2i = x2i;    x2i = 0;
+                    continue;
+                }
+            }
+
+            if(x1i == 0)
+            {
+                if((y1 == Y_END(win1)) || (y1 == 2))
+                {
+                    x1i = -y1i;    y1i = 0;
+                    x2i = -y2i;
+                    y2i = 0;
+                }
+            }
+
+        }
         clock_sleep(SLEEP);
-}
     }
 }
 
@@ -200,8 +203,6 @@ int main(void)
     scr_do_draw_screen(scr);
 
     run_demo(scr, win1, win2);
-//    while((0 == test_keys()))
-//        ;
 
     set_fg(WHITE);
     set_bg(BLACK);

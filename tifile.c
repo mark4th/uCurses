@@ -53,7 +53,7 @@ static void map_tifile(void)
     struct stat st;
 
     term = (uint8_t *)getenv("TERM");
-    if(NULL == term)
+    if(term == NULL)
     {
         printf("No TERM variable set\r\n");
         exit(0);
@@ -68,14 +68,14 @@ static void map_tifile(void)
     ti_size = st.st_size;
 
     fd = open((char *)ti_file, O_RDONLY, 0);
-    if(-1 == fd)
+    if(fd == -1)
     {
         printf("No Terminfo File for %s\r\n", term);
         exit(1);
     }
 
     ti_map = (uint8_t *)mmap(NULL, ti_size, PROT_READ, MAP_PRIVATE, fd, 0);
-    if(MAP_FAILED == ti_map)
+    if(ti_map == MAP_FAILED)
     {
         printf("Unable to map Terminfo File\r\n");
         printf(" - %s\r\n", ti_file);
@@ -129,9 +129,9 @@ void q_valid(void)
 
     magic = ((ti_hdr_t *)ti_map)->ti_magic;
 
-    if((0x011a == magic) || (0x021e == magic))
+    if((magic == 0x011a) || (magic == 0x021e))
     {
-        wide = (0x021e == magic) ? 2 : 1;
+        wide = (magic == 0x021e) ? 2 : 1;
     }
 }
 
@@ -145,7 +145,7 @@ void uCurses_init(void)
     // allocate 64k for compiled escape sequences
     esc_buff = calloc(1, 65535);
 
-    if(NULL == esc_buff)
+    if(esc_buff == NULL)
     {
         printf("uCurses: insufficient ram for buffers\r\n");
         exit(1);

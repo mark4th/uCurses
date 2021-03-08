@@ -52,7 +52,7 @@ uint8_t test_keys(void)
 {
     uint8_t x = poll(&pfd, 1, 0);
 
-    if(0xff == x)
+    if(x == 0xff)
     {
         x = 0;
         // TODO: log warning
@@ -184,7 +184,7 @@ uint16_t match_key(void)
 
       if(num_k == num_esc)
       {
-          if(0 == strcmp((const char *)&keybuff, (const char *)&esc_buff))
+          if(strcmp((const char *)&keybuff, (const char *)&esc_buff) == 0)
           {
               return i;     // sequences match.
           }
@@ -277,7 +277,7 @@ uint8_t new_key(void)
 
         c = match_key();    // compare input with all handled escapes
 
-        if(0xffff != c)     // if escape sequence is one we handle
+        if(c != 0xffff)     // if escape sequence is one we handle
         {
             num_esc = 0;    // ensure there are no keys in the buffer
             (*(*key_action)[c])();

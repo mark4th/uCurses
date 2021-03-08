@@ -60,7 +60,7 @@ extern uint16_t *ti_strings;
 
 //     for(i = 0; i != num_esc; i++)
 //     {
-//         if(0 == (i & 7))
+//         if((i & 7) == 0)
 //         {
 //             printf("\r\n");
 //         }
@@ -110,7 +110,7 @@ void flush(void)
 {
     // do not fulsh the escape sequences if we are compiling
     // up to 64k of them
-    if(0 == delay_flush)
+    if(delay_flush == 0)
     {
         do_flush();
     }
@@ -123,7 +123,7 @@ void flush(void)
 
 static void fs_push(uint64_t n)
 {
-    if(5 != fsp)
+    if(fsp != 5)
     {
         fstack[fsp++] = n;
         return;
@@ -143,11 +143,11 @@ static uint64_t fs_pop(void)
 // -----------------------------------------------------------------------
 // write one character of escape sequence out to compilation buffer
 
-static void c_emit(uint8_t c1)
+void c_emit(uint8_t c1)
 {
     esc_buff[num_esc++] = c1;
 
-    if(0xffff == num_esc)
+    if(num_esc == 0xffff)
     {
         do_flush();
     }
@@ -475,7 +475,7 @@ static void _t(void)        // too much if/and/but loops
 
     f1 = fs_pop();          // if this is non 0 we dont do anything
 
-    if(0 == f1)             // if it is 0 we skip past then part
+    if(f1 == 0)             // if it is 0 we skip past then part
     {
         for(;;)
         {
@@ -484,13 +484,13 @@ static void _t(void)        // too much if/and/but loops
             c1 = *f_str++;
 
             // if we are nesting if's count depth
-            if('?' == c1)
+            if(c1 == '?')
             {
                 nest++;
             }
 
             // if we are at the else or endif....
-            if(('e' == c1) || (';' == c1))
+            if((c1 == 'e') || (c1 == ';'))
             {
                 if(0 == nest)  // break out of loop if at else or endif
                 {              // and we have scanned past all nested %?
@@ -498,7 +498,7 @@ static void _t(void)        // too much if/and/but loops
                 }
                 // we are within a nested %? -
                 // must scan t0 %; before we break
-                else if(';' == c1)
+                else if(c1 == ';')
                 {
                     nest--;
                 }
@@ -521,14 +521,14 @@ static void _e(void)
 
         c1 = *f_str++;
 
-        if('?' == c1)
+        if(c1 == '?')
         {
             nest++;
         }
 
-        if(';' == c1)
+        if(c1 == ';')
         {
-            if(0 == nest)
+            if(nest == 0)
             {
                 break;
             }
@@ -597,7 +597,7 @@ static uint8_t next_c(void)
 
     c1 = *f_str++;
 
-    if(('2' == c1) || ('3' == c1))
+    if((c1 == '2') || (c1 == '3'))
     {
         digits = (c1 & 0x0f);
         // this should be a d
@@ -666,7 +666,7 @@ void do_parse_format(void)
 
     while((c1 = *f_str++))
     {
-        ('%' == c1)
+        (c1 == '%')
           ? command()
           : c_emit(c1);
     }
@@ -681,7 +681,7 @@ void format(uint16_t i)
     i = ti_strings[i];
 
     // it is not an error for a format string to be blank
-    if(0xffff == i)
+    if(i == 0xffff)
     {
         return;
     }

@@ -81,7 +81,7 @@ void home(void)
 
 void cub1(void)
 {
-    if(0 != cx)
+    if(cx != 0)
     {
         cx--;
         ti_cub1();
@@ -113,7 +113,7 @@ void cuf1(void)
 
 void cuu1(void)
 {
-    if(0 != cy)
+    if(cy != 0)
     {
         cy--;
     }
@@ -125,7 +125,7 @@ void cuu1(void)
 
 void dch1(void)
 {
-    if(0 != cx)
+    if(cx != 0)
     {
         cx--;
         ti_dch();

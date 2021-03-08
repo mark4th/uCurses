@@ -19,7 +19,7 @@ static void node_insert(node_t *n1, node_t *n2)
     t = (node_t *)(n1->next);
 
     n2->next = t;
-    if(NULL == t)
+    if(t == NULL)
     {
         l->tail = n2;
     }
@@ -47,8 +47,8 @@ static void node_remove(node_t *n1)
     if(l->head == n1) { l->head = t2; }
     if(l->tail == n1) { l->tail = t1; }
 
-    if(NULL != t1) { t1->next = t2; }
-    if(NULL != t2) { t2->prev = t1; }
+    if(t1 != NULL) { t1->next = t2; }
+    if(t2 != NULL) { t2->prev = t1; }
 
     n1->next = n1->prev = NULL;
     n1->parent = NULL;
@@ -86,14 +86,14 @@ uint16_t list_append_node(list_t *l, void *payload)
     node_t *n1;
 
     n1 = (node_t *) calloc(1, sizeof(node_t));
-    if(NULL == n1)
+    if(n1 == NULL)
     {
         return -1;
     }
 
     n1->payload = payload;
 
-    if(NULL == l->head)
+    if(l->head == NULL)
     {
         l->head = l->tail = n1;
         n1->next = n1->prev = NULL;
@@ -117,7 +117,8 @@ void *list_pop(list_t *list)
 {
     void *result = NULL;
     node_t *n;
-    if(0 != list->count)
+
+    if(list->count != 0)
     {
         n = list->tail;
         list->tail = n->prev;

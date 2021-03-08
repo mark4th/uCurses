@@ -2,9 +2,12 @@
 // --------------------------------------------------------------------------
 
 #define _XOPEN_SOURCE
+
 #include <inttypes.h>
 #include <unistd.h>
 #include <wchar.h>
+
+#include "h/uCurses.h"
 
 // --------------------------------------------------------------------------
 
@@ -57,12 +60,19 @@ int utf8_encode(uint32_t cp)
 
 // --------------------------------------------------------------------------
 
+void c_emit(uint8_t c1);
+
 void utf8_emit(uint32_t cp)
 {
-    if(cp != 0xaaaaaaaa)
+    uint8_t i;
+
+    if(cp != DEADCODE)
     {
         utf8_encode(cp);
-        write(1, &str[0], len);
+        for(i = 0; i < len; i++)
+        {
+            c_emit(str[i]);
+        }
     }
 }
 

@@ -31,7 +31,7 @@ static uint16_t win_alloc(window_t *win)
 
     p = calloc((win->width * win->height), sizeof(cell_t));
 
-    if(NULL != p)
+    if(p != NULL)
     {
         win->buffer = p;
         rv = 0;
@@ -43,9 +43,9 @@ static uint16_t win_alloc(window_t *win)
 
 void win_close(window_t *win)
 {
-    if(0 != win)
+    if(win != 0)
     {
-        if(0 != win->buffer)
+        if(win->buffer != 0)
         {
             free(win->buffer);
         }
@@ -59,14 +59,14 @@ window_t *win_open(uint16_t width, uint16_t height)
 {
     window_t *win = calloc(1, sizeof(*win));
 
-    if(0 != win)
+    if(win != 0)
     {
         win->height  = height;
         win->width   = width;
 
         // win_alloc() uses width/height to determine how much
         // space needs to be malloc'd
-        if(0 == win_alloc(win))
+        if(win_alloc(win) == 0)
         {
             win->attrs[FG] = default_fg;
             win->attrs[BG] = default_bg;
@@ -142,10 +142,10 @@ static void win_set_attr(window_t *win, ti_attrib_t attr)
     win->attrs[ATTR] |= attr;
 
     // gray scales and rgb are mutually exclusive
-    if(FG_RGB == attr)   { win->attrs[ATTR] &= ~FG_GRAY; }
-    if(BG_RGB == attr)   { win->attrs[ATTR] &= ~BG_GRAY; }
-    if(FG_GRAY == attr)  { win->attrs[ATTR] &= ~FG_RGB;  }
-    if(BG_GRAY == attr)  { win->attrs[ATTR] &= ~BG_RGB;  }
+    if(attr == FG_RGB)   { win->attrs[ATTR] &= ~FG_GRAY; }
+    if(attr == BG_RGB)   { win->attrs[ATTR] &= ~BG_GRAY; }
+    if(attr == FG_GRAY)  { win->attrs[ATTR] &= ~FG_RGB;  }
+    if(attr == BG_GRAY)  { win->attrs[ATTR] &= ~BG_RGB;  }
 }
 
 // -----------------------------------------------------------------------
@@ -350,7 +350,7 @@ void win_set_cy(window_t *win, uint16_t y)
 
 void win_crsr_up(window_t *win)
 {
-    if(0 != win->cy)
+    if(win->cy != 0)
     {
         win->cy--;
     }
@@ -364,7 +364,7 @@ void win_crsr_dn(window_t *win)
     {
         win->cy++;
     }
-    else if(0 == (win->attrs[ATTR] & WIN_LOCKED))
+    else if((win->attrs[ATTR] & WIN_LOCKED) == 0)
     {
         win_scroll_up(win);
     }
@@ -374,13 +374,13 @@ void win_crsr_dn(window_t *win)
 
 void win_crsr_lt(window_t *win)
 {
-    if(0 == win->cx)
+    if(win->cx == 0)
     {
         win->cx--;
     }
     else
     {
-        if(0 != win->cy)
+        if(win->cy != 0)
         {
             win->cy--;
             win->cx = win->width;
@@ -439,9 +439,9 @@ void win_emit(window_t *win, uint32_t c)
             // written to the console later the cell_t's after any wide
             // character are skipped
             width = utf8_encode(c);
-            if(1 != width)
+            if(width != 1)
             {
-                cell.code = 0xaaaaaaaa;
+                cell.code = DEADCODE;
                 p[win->cx] = cell;
                 win_crsr_rt(win);
             }

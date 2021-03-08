@@ -29,7 +29,7 @@ static uint16_t scr_alloc(screen_t *scr)
     p1 = calloc((scr->width * scr->height), sizeof(*p1));
     p2 = calloc((scr->width * scr->height), sizeof(*p2));
 
-    if((NULL == p1) || (NULL == p2))
+    if((p1 == NULL) || (p2 == NULL))
     {
         free(p1);
         free(p2);
@@ -48,12 +48,12 @@ screen_t *scr_open(uint16_t width, uint16_t height)
 {
     screen_t *scr = calloc(1, sizeof(*scr));
 
-    if(NULL != scr)
+    if(scr != NULL)
     {
         scr->width  = width;
         scr->height = height;
 
-        if(0 != scr_alloc(scr))
+        if(scr_alloc(scr) != 0)
         {
             free(scr);
             scr = NULL;
@@ -68,7 +68,7 @@ screen_t *scr_open(uint16_t width, uint16_t height)
 void scr_win_attach(screen_t *scr, window_t *win)
 {
     win->screen = scr;
-    if(0 != list_append_node(&scr->windows, win))
+    if(list_append_node(&scr->windows, win) != 0)
     {
         // log error here?
     }
@@ -81,7 +81,7 @@ void scr_win_detach(window_t *win)
 {
     screen_t *scr = win->screen;
 
-    if(NULL != scr)
+    if(scr != NULL)
     {
         list_remove_node(&scr->windows, win);
         win->screen = NULL;
@@ -92,22 +92,22 @@ void scr_win_detach(window_t *win)
 
 void scr_close(screen_t *scr)
 {
-    if(0 != scr->buffer1)
+    if(scr->buffer1 != 0)
     {
         free(scr->buffer1);
         scr->buffer1 = 0;
     }
-    if(0 != scr->buffer2)
+    if(scr->buffer2 != 0)
     {
         free(scr->buffer2);
         scr->buffer2 = 0;
     }
-    if(0 != scr->backdrop)
+    if(scr->backdrop != 0)
     {
         win_close(scr->backdrop);
         free(scr->backdrop);
     }
-    while(0 != scr->windows.count)
+    while(scr->windows.count != 0)
     {
          window_t *win = list_pop(&scr->windows);
          win_close(win);
@@ -148,7 +148,7 @@ static void scr_draw_windows(screen_t *scr)
 {
     node_t *n = scr->windows.head;
 
-    while(NULL != n)
+    while(n != NULL)
     {
        scr_draw_win(n->payload);
        n = n->next;
@@ -214,6 +214,7 @@ static void scr_emit(screen_t *scr, uint16_t index)
 
     // output the utf-8 codepoint to the terminal
     utf8_emit(p1->code);
+
     scr->cx++;
 
     if(scr->cx == scr->width)
@@ -230,7 +231,7 @@ void scr_add_backdrop(screen_t *scr)
 {
     window_t *win = win_open(scr->width  - 2, scr->height - 2);
 
-    if(NULL != win)
+    if(win != NULL)
     {
         win->xco    = 1;
         win->yco    = 1;
@@ -266,7 +267,7 @@ static uint32_t update(screen_t *scr, uint16_t index, uint16_t end)
     p1 = &scr->buffer1[index];
     do
     {
-        if(0 == memcmp(&attrs[0], &p1->attrs, 8))
+        if(memcmp(&attrs[0], &p1->attrs, 8) == 0)
         {
             scr_emit(scr, index);
         }
@@ -290,7 +291,7 @@ void scr_do_draw_screen(screen_t *scr)
     uint16_t index = 0, indx;
     uint16_t end = scr->width * scr->height;
 
-//    delay_flush = -1;
+    delay_flush = -1;
 
     memset(&old_attrs[0], 0, 8);
 
@@ -303,7 +304,7 @@ void scr_do_draw_screen(screen_t *scr)
     {
         // if char at index is modified then output everey char in the
         // screen that shares its attributes.
-        if(0 != scr_is_modified(scr, index))
+        if(scr_is_modified(scr, index) != 0)
         {
             indx = update(scr, index, end);
             if(indx != 0) { index = indx - 1; }
@@ -311,8 +312,8 @@ void scr_do_draw_screen(screen_t *scr)
         index++;
     } while(index != end);
 
-//    delay_flush = 0;
-//    flush();
+    delay_flush = 0;
+    flush();
 }
 
 // =======================================================================

@@ -119,7 +119,7 @@ void apply_attribs(void)
 
     changes = attrs[ATTR] ^ old_attrs[ATTR];
 
-    if(0 != changes)
+    if(changes != 0)
     {
         if((changes & BLINK) || (changes & BOLD) || (changes & REVERSE))
         {

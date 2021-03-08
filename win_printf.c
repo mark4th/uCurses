@@ -45,10 +45,10 @@ void win_printf(window_t *win, char* format, ...)
             skip = utf8_decode(&codepoint, p);
             win_emit(win, codepoint);
             p += skip;
-            if('\0' == *p) { break; }
+            if(*p == '\0') { break; }
         }
 
-        if('\0' == *p) { break; }
+        if(*p == '\0') { break; }
 
         p++;
 

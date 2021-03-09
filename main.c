@@ -35,11 +35,8 @@ void clock_sleep(uint32_t when)
         tv.tv_sec  = 0;
         tv.tv_nsec = when;
         rv = clock_nanosleep(CLOCK_MONOTONIC, 0, &tv, &remain);
-        if(EINTR == rv)
-        {
-            tv = remain;
-        }
-    } while(0 != rv);
+        tv = remain;
+    } while(EINTR == rv);
 }
 
 // -----------------------------------------------------------------------
@@ -127,8 +124,7 @@ void run_demo(screen_t *scr, window_t *win1, window_t *win2)
                 if((y1 == Y_END(win1)) || (y1 == 2))
                 {
                     x1i = -y1i;    y1i = 0;
-                    x2i = -y2i;
-                    y2i = 0;
+                    x2i = -y2i;    y2i = 0;
                 }
             }
 
@@ -139,7 +135,7 @@ void run_demo(screen_t *scr, window_t *win1, window_t *win2)
 
 // -----------------------------------------------------------------------
 
-void test(void);
+// void test(void);
 
 int main(void)
 {

@@ -31,6 +31,7 @@ int utf8_encode(uint32_t cp);
 uint8_t utf8_decode(uint32_t *cp, char *s);
 void apply_attribs(void);
 void flush(void);
+void c_emit(uint8_t c1);
 
 void win_printf(window_t *win, char* format, ...);
 void win_puts(window_t *win, char *s);

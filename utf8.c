@@ -3,6 +3,7 @@
 
 #define _XOPEN_SOURCE
 
+#include <string.h>
 #include <inttypes.h>
 #include <unistd.h>
 #include <wchar.h>
@@ -14,26 +15,21 @@
 uint8_t len;
 uint8_t str[4];
 
-#include <string.h>
-#include <byteswap.h>
+// --------------------------------------------------------------------------
 
 int utf8_encode(uint32_t cp)
 {
     wchar_t c;
+
     if (cp < 0x80)
     {
         str[0] = cp;
-        str[1] = 0;
-        str[2] = 0;
-        str[3] = 0;
         len = 1;
     }
     else if (cp < 0x0800)
     {
         str[0] = 0xc0 | (cp >> 6);
         str[1] = 0x80 | (cp & 0x3f);
-        str[2] = 0;
-        str[3] = 0;
         len = 2;
     }
     else if (cp < 0x10000)
@@ -41,7 +37,6 @@ int utf8_encode(uint32_t cp)
         str[0] = 0xe0 | (cp >> 12);
         str[1] = 0x80 | ((cp >> 6) & 0x3f);
         str[2] = 0x80 | (cp & 0x3f);
-        str[3] = 0;
         len = 3;
     }
     else
@@ -54,13 +49,15 @@ int utf8_encode(uint32_t cp)
     }
     memcpy(&c, str, 4);
 
+    // the following is tribal knowledge.  when these characters are written
+    // into a window the windows curor x is incremented by 1 spot/ if nowever
+    // the character we are going to write is wide we need to bump the
+    // windows curosr by two slots and mark the following cell in the window
+    // as being dead (0xDEADC0DE)
     return wcwidth(c);
 }
 
-
 // --------------------------------------------------------------------------
-
-void c_emit(uint8_t c1);
 
 void utf8_emit(uint32_t cp)
 {
@@ -69,8 +66,11 @@ void utf8_emit(uint32_t cp)
     if(cp != DEADCODE)
     {
         utf8_encode(cp);
+
         for(i = 0; i < len; i++)
         {
+            // append utf8 character onto end of terminfo escape seauence
+            // buffer to be blasted out to the console later
             c_emit(str[i]);
         }
     }

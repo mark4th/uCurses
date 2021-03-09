@@ -82,9 +82,6 @@ static void map_tifile(void)
         exit(1);
     }
 
-//    printf("Successfully maped Terminfo FIle\r\n");
-//    printf(" - %s\r\n", ti_file);
-
     close(fd);
 }
 

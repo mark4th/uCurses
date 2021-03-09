@@ -92,24 +92,18 @@ void scr_win_detach(window_t *win)
 
 void scr_close(screen_t *scr)
 {
-    if(scr->buffer1 != 0)
-    {
-        free(scr->buffer1);
-        scr->buffer1 = 0;
-    }
-    if(scr->buffer2 != 0)
-    {
-        free(scr->buffer2);
-        scr->buffer2 = 0;
-    }
-    if(scr->backdrop != 0)
-    {
-        win_close(scr->backdrop);
-        free(scr->backdrop);
-    }
+    window_t *win;
+
+    free(scr->buffer1);
+    free(scr->buffer2);
+    scr->buffer1 = 0;
+    scr->buffer2 = 0;
+    win_close(scr->backdrop);
+    free(scr->backdrop);
+
     while(scr->windows.count != 0)
     {
-         window_t *win = list_pop(&scr->windows);
+         win = list_pop(&scr->windows);
          win_close(win);
     }
     free(scr);

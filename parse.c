@@ -92,12 +92,8 @@ static void do_flush(void)
     uint32_t n;
 
     n =  write(1, &esc_buff[0], num_esc);
-    if(n > 0)
-    {
-        memset(&esc_buff[0], 0, num_esc);
-        num_esc = 0;
-    }
-    else
+    num_esc = 0;
+    if(n < 0)
     {
         // log warning? try again?
     }
@@ -117,9 +113,27 @@ void flush(void)
 }
 
 // -----------------------------------------------------------------------
-// push item onto format string stack (terminfo is RPN!!)
+// write one character of escape sequence out to compilation buffer
 
-// the terminfo parser uses rpn !!!
+void c_emit(uint8_t c1)
+{
+    esc_buff[num_esc++] = c1;
+
+    // this following line of code should not be needed but things get
+    // reall messy if i dont do it.  WHY?
+    // previously I as memsetting the entire used esc_buff to 0 in
+    // do_flush but this seems preferable to me
+
+    esc_buff[num_esc] = '\0';
+
+    if(num_esc == 0xffff)
+    {
+        do_flush();
+    }
+}
+
+// -----------------------------------------------------------------------
+// push item onto format string stack (terminfo is RPN!!)
 
 static void fs_push(uint64_t n)
 {
@@ -138,19 +152,6 @@ static void fs_push(uint64_t n)
 static uint64_t fs_pop(void)
 {
     return (0 != fsp) ? fstack[--fsp] : 0;
-}
-
-// -----------------------------------------------------------------------
-// write one character of escape sequence out to compilation buffer
-
-void c_emit(uint8_t c1)
-{
-    esc_buff[num_esc++] = c1;
-
-    if(num_esc == 0xffff)
-    {
-        do_flush();
-    }
 }
 
 // -----------------------------------------------------------------------
@@ -465,7 +466,7 @@ static void to_cmd(void)
 // -----------------------------------------------------------------------
 // format = &t
 
-static void _t(void)        // too much if/and/but loops
+static void _t(void)        // too much if/and/but loop nesting
 {
     uint64_t f1;
     uint8_t c1;

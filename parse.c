@@ -121,7 +121,7 @@ void c_emit(uint8_t c1)
 
     // this following line of code should not be needed but things get
     // reall messy if i dont do it.  WHY?
-    // previously I as memsetting the entire used esc_buff to 0 in
+    // previously I was memsetting the entire used esc_buff to 0 in
     // do_flush but this seems preferable to me
 
     esc_buff[num_esc] = '\0';

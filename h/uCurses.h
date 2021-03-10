@@ -21,14 +21,24 @@ typedef void (*fp_t)(void *x);
 
 extern uint64_t params[MAX_PARAM];
 
+// --------------------------------------------------------------------------
+
+typedef struct
+{
+    uint8_t len;
+    uint8_t str[4];
+    int width;
+} utf8_encode_t;
+
 // -----------------------------------------------------------------------
 
 void uCurses_init(void);
 void format(uint16_t i);
 void do_parse_format(void);
 void utf8_emit(uint32_t cp);
-int utf8_encode(uint32_t cp);
+utf8_encode_t *utf8_encode(uint32_t cp);
 uint8_t utf8_decode(uint32_t *cp, char *s);
+uint16_t utf8_strlen(char *s);
 void apply_attribs(void);
 void flush(void);
 void c_emit(uint8_t c1);

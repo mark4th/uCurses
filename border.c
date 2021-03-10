@@ -67,7 +67,7 @@ static void draw_char(window_t *win, uint16_t cx,
     screen_t *scr = win->screen;
     cell_t *p1 = &scr->buffer1[(cy * scr->width) + cx];
 
-    memcpy(&p1->attrs, &win->bdr_attrs, 8);
+    *(uint64_t *)&p1->attrs = *(uint64_t *)&win->bdr_attrs;
 
     p1->code = code;
 }

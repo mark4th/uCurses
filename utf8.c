@@ -12,49 +12,50 @@
 
 // --------------------------------------------------------------------------
 
-uint8_t len;
-uint8_t str[4];
-
-// --------------------------------------------------------------------------
-
-int utf8_encode(uint32_t cp)
+utf8_encode_t *utf8_encode(uint32_t cp)
 {
-    wchar_t c;
+    wchar_t c = '\0';
+    static utf8_encode_t encoded;
+
+    *(uint32_t *)&encoded.str[0] = 0;
 
     if (cp < 0x80)
     {
-        str[0] = cp;
-        len = 1;
+        encoded.str[0] = cp;
+        encoded.len = 1;
     }
     else if (cp < 0x0800)
     {
-        str[0] = 0xc0 | (cp >> 6);
-        str[1] = 0x80 | (cp & 0x3f);
-        len = 2;
+        encoded.str[0] = 0xc0 | (cp >> 6);
+        encoded.str[1] = 0x80 | (cp & 0x3f);
+        encoded.len = 2;
     }
     else if (cp < 0x10000)
     {
-        str[0] = 0xe0 | (cp >> 12);
-        str[1] = 0x80 | ((cp >> 6) & 0x3f);
-        str[2] = 0x80 | (cp & 0x3f);
-        len = 3;
+        encoded.str[0] = 0xe0 | (cp >> 12);
+        encoded.str[1] = 0x80 | ((cp >> 6) & 0x3f);
+        encoded.str[2] = 0x80 | (cp & 0x3f);
+        encoded.len = 3;
     }
     else
     {
-        str[0] = 0xf0 | (cp >> 18);
-        str[1] = 0x80 | ((cp >> 12) & 0x3f);
-        str[2] = 0x80 | ((cp >> 6) & 0x3f);
-        str[3] = 0x80 | (cp & 0x3f);
-        len = 4;
+        encoded.str[0] = 0xf0 | (cp >> 18);
+        encoded.str[1] = 0x80 | ((cp >> 12) & 0x3f);
+        encoded.str[2] = 0x80 | ((cp >> 6) & 0x3f);
+        encoded.str[3] = 0x80 | (cp & 0x3f);
+        encoded.len = 4;
     }
-    memcpy(&c, str, 4);
+    memcpy(&c, &encoded.str[0], encoded.len);
+//    c = *(uint8_t *)&encoded.str[0];
 
     // the following is tribal knowledge.  when these characters are written
     // into a window the windows curor x is incremented by 1 spot/ if nowever
     // the character we are going to write is wide we need to bump the
     // windows curosr by two slots and mark the following cell in the window
     // as being dead (0xDEADC0DE)
-    return wcwidth(c);
+    encoded.width = wcwidth(c);
+
+    return &encoded;
 }
 
 // --------------------------------------------------------------------------
@@ -62,16 +63,17 @@ int utf8_encode(uint32_t cp)
 void utf8_emit(uint32_t cp)
 {
     uint8_t i;
+    utf8_encode_t *encoded;
 
     if(cp != DEADCODE)
     {
-        utf8_encode(cp);
+        encoded = utf8_encode(cp);
 
-        for(i = 0; i < len; i++)
+        for(i = 0; i < encoded->len; i++)
         {
             // append utf8 character onto end of terminfo escape seauence
             // buffer to be blasted out to the console later
-            c_emit(str[i]);
+            c_emit(encoded->str[i]);
         }
     }
 }
@@ -112,6 +114,21 @@ uint8_t utf8_decode(uint32_t *cp, char *s)
     }
 
     return -1;
+}
+
+// --------------------------------------------------------------------------
+
+uint16_t utf8_strlen(char *s)
+{
+    utf8_encode_t *encode;
+    uint16_t len = 0;
+
+    while(*s != '\0')
+    {
+        encode = utf8_encode(*s++);
+        len += (encode->width != 1) ? 2 : 1;
+    }
+    return len;
 }
 
 // --------------------------------------------------------------------------

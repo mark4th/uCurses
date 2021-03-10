@@ -211,7 +211,7 @@ static void win_erase_line(window_t *win, uint16_t line)
     cell_t cell;
     cell_t *p = win_line_addr(win, line);
 
-    memcpy(cell.attrs, win->attrs, 8);
+    *(uint64_t *)&cell.attrs = *(uint64_t *)win->attrs;
     cell.code = win->blank;
 
     for(i = 0; i < win->width; i++)
@@ -221,6 +221,7 @@ static void win_erase_line(window_t *win, uint16_t line)
 }
 
 // -----------------------------------------------------------------------
+// clear entire window
 
 void win_clear(window_t *win)
 {
@@ -281,7 +282,8 @@ void win_scroll_lt(window_t *win)
     cell_t *d;
     cell_t cell;
 
-    memcpy(cell.attrs, win->attrs, sizeof(cell.attrs));
+    *(uint64_t *)&cell.attrs = *(uint64_t *)&win->attrs;
+
     cell.code = win->blank;
 
     for(i = 0; i < win->width; i++)
@@ -302,7 +304,7 @@ void win_scroll_rt(window_t *win)
     cell_t *d;
     cell_t cell;
 
-    memcpy(cell.attrs, win->attrs, sizeof(cell.attrs));
+    *(uint64_t *)&cell.attrs = *(uint64_t *)&win->attrs;
     cell.code = win->blank;
 
     for(i = win->width -1; i != 0; i--)
@@ -421,7 +423,7 @@ void win_emit(window_t *win, uint32_t c)
 {
     cell_t cell;
     cell_t *p;
-    uint32_t width;
+    utf8_encode_t *encoded;
 
     switch(c)
     {
@@ -429,22 +431,40 @@ void win_emit(window_t *win, uint32_t c)
         case     0x0a: win_cr(win);   break;
         case     0x09:                break;
         default:
-            memcpy(cell.attrs, win->attrs, sizeof(cell.attrs));
+            if(win->cx == win->width)
+            {
+                win_cr(win);
+            }
+            *(uint64_t *)&cell.attrs = *(uint64_t *)&win->attrs;
             cell.code = c;
             p = win_line_addr(win, win->cy);
             p[win->cx] = cell;
             win_crsr_rt(win);
+
             // need to mark the next cell as used by this character too
             // if this character is double width.  when this is all
             // written to the console later the cell_t's after any wide
             // character are skipped
-            width = utf8_encode(c);
-            if(width != 1)
+
+            encoded = utf8_encode(c);
+
+            if(encoded->width != 1)
             {
                 cell.code = DEADCODE;
                 p[win->cx] = cell;
                 win_crsr_rt(win);
             }
+    }
+}
+
+// -----------------------------------------------------------------------
+// erase to end of line
+
+void win_el(window_t *win)
+{
+    while(win->cx != 0)
+    {
+        win_emit(win, ' ');
     }
 }
 

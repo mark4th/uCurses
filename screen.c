@@ -182,8 +182,9 @@ static uint16_t scr_is_modified(screen_t *scr, uint16_t index)
     // if attrs of this cell in buffer1 are different from the attrs
     // in buffer 2 or if the characters in those cells are different
     // then this cell needs updating
+
     return(
-        (memcmp(&p1->attrs, &p2->attrs, 8)) ||
+        *(uint64_t *)&p1->attrs != *(uint64_t *)p2->attrs ||
         (p1->code != p2->code));
 }
 
@@ -255,7 +256,7 @@ static uint32_t update(screen_t *scr, uint16_t index, uint16_t end)
 
     p1 = &scr->buffer1[index];
 
-    memcpy(&attrs[0], &p1->attrs[0], 8);
+    *(uint64_t *)&attrs[0] = *(uint64_t *)&p1->attrs[0];
     apply_attribs();
 
     p1 = &scr->buffer1[index];

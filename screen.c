@@ -276,6 +276,7 @@ static uint32_t update(screen_t *scr, uint16_t index, uint16_t end)
         index++;
         p1++;
     } while (index != end);
+
     return indx;
 }
 

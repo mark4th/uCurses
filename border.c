@@ -75,10 +75,6 @@ static void draw_char(window_t *win, uint16_t cx,
 // -----------------------------------------------------------------------
 // draw one entire row of a border.
 
-// this fills the window content with the blank character for rows that
-// are not the top or bottom rows.  this is why drawing of a border must
-// happen before drawing of a windows contents
-
 static void draw_top_bottom(window_t *win, uint32_t c1,
     uint32_t c2, uint32_t c3, uint16_t cy)
 {
@@ -96,7 +92,8 @@ static void draw_top_bottom(window_t *win, uint32_t c1,
 
 // -----------------------------------------------------------------------
 
-static void draw_mid_row(window_t *win, uint32_t c1, uint32_t c3, uint16_t cy)
+static void draw_mid_row(window_t *win,
+      uint32_t c1, uint32_t c3, uint16_t cy)
 {
     draw_char(win, win->xco - 1 , cy, c1);
     draw_char(win, win->xco + win->width , cy, c3);

@@ -17,7 +17,6 @@ screen_t *current_screen;
 
 extern uint8_t attrs[8];
 extern uint8_t old_attrs[8];
-extern uint16_t delay_flush;
 
 // -----------------------------------------------------------------------
 
@@ -287,8 +286,6 @@ void scr_do_draw_screen(screen_t *scr)
     uint16_t index = 0, indx;
     uint16_t end = scr->width * scr->height;
 
-    delay_flush = -1;
-
     memset(&old_attrs[0], 0, 8);
 
     scr_draw_win((window_t *)scr->backdrop);
@@ -308,7 +305,6 @@ void scr_do_draw_screen(screen_t *scr)
         index++;
     } while(index != end);
 
-    delay_flush = 0;
     flush();
 }
 

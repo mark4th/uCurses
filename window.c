@@ -117,7 +117,7 @@ uint16_t win_set_pos(window_t *win, uint16_t x, uint16_t y)
     // if window is boxed account for border
     if(win->flags & WIN_BOXED)
     {
-        win_width += 2;
+        win_width  += 2;
         win_height += 2;
         win_x--;
         win_y--;
@@ -437,8 +437,10 @@ void win_emit(window_t *win, uint32_t c)
             }
             *(uint64_t *)&cell.attrs = *(uint64_t *)&win->attrs;
             cell.code = c;
+
             p = win_line_addr(win, win->cy);
             p[win->cx] = cell;
+
             win_crsr_rt(win);
 
             // need to mark the next cell as used by this character too

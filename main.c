@@ -26,7 +26,7 @@ struct termios term;
 
 // -----------------------------------------------------------------------
 
-char sintab[] =
+uint8_t sintab[] =
 {
   0x80, 0x83, 0x86, 0x89, 0x8C, 0x90, 0x93, 0x96,
   0x99, 0x9C, 0x9F, 0xA2, 0xA5, 0xA8, 0xAB, 0xAE,
@@ -64,6 +64,7 @@ char sintab[] =
   0x4F, 0x52, 0x55, 0x58, 0x5B, 0x5E, 0x61, 0x64,
   0x67, 0x6A, 0x6D, 0x70, 0x74, 0x77, 0x7A, 0x7D
 };
+
 // -----------------------------------------------------------------------
 
 char lorem[69][14] =
@@ -107,7 +108,9 @@ void print_lorem(window_t *win)
     uint8_t len;
     i = (i == 69) ? 0 : i;
 
-    len = utf8_strlen(&lorem[i][0]);
+    // how many character cells will this string use.
+    // this account for double width characters
+    len = utf8_width(&lorem[i][0]);
 
     if((len + win->cx) >= win->width)
     {
@@ -132,7 +135,7 @@ static void print_chinese(window_t *win)
     static uint8_t gray = 0;
 
     win_set_gray_fg(win, gray);
-    win_set_gray_bg(win, 21 - gray);
+    win_set_gray_bg(win, abs(20 - (gray + 10)));
 
     gray += inc;
     if((gray == 20) || (gray == 0x0))
@@ -167,6 +170,7 @@ void restore_term(void)
 {
     tcsetattr(STDIN_FILENO, TCSANOW, &term_save);
     curon();
+    flush();
 }
 
 // -----------------------------------------------------------------------
@@ -213,13 +217,19 @@ void run_demo(screen_t *scr, window_t *win1, window_t *win2)
         // check for key presses. space pauses anything else quits
         if(test_keys() != 0)
         {
-            read(STDIN_FILENO, &c, 1);
+            if(read(STDIN_FILENO, &c, 1) == -1)
+            {
+                continue;
+            }
             if(c == ' ')
             {
                 pause ^= 1;
                 continue;
             }
-            return;
+            if(c == 0x0a)
+            {
+                return;
+            }
         }
 
         if(pause == 0)        // if not paused...
@@ -293,7 +303,6 @@ int main(void)
     uCurses_init();
     setlocale(LC_ALL, "C.UTF-8");
     curoff();
-    atexit(restore_term);
     tcgetattr(STDIN_FILENO, &term_save);
     term = term_save;
     term.c_lflag &= ~(ECHO | ICANON);
@@ -324,6 +333,8 @@ int main(void)
     win1->bdr_attrs[BG]   = 6;
     win1->bdr_type        = BDR_SINGLE;
 
+    win1->bdr_attrs[FG]   = 5;
+
     win2->bdr_attrs[ATTR] = BG_GRAY;
     win2->bdr_attrs[FG]   = 11;
     win2->bdr_attrs[BG]   = 6;
@@ -346,6 +357,7 @@ int main(void)
 
     clear();
     cup(10, 0);
+    restore_term();
     printf("bye!\n");
     return 0;
 }

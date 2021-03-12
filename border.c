@@ -104,25 +104,21 @@ static void draw_mid_row(window_t *win,
 
 void win_draw_borders(window_t *win)
 {
-    uint16_t width, height;
+    uint16_t height;
     uint16_t cy;
+
+    border_t *borders[] =
+    {
+        &bdr_single[0],
+        &bdr_double[0],
+        &bdr_curved[0]
+    };
 
     border_t *b;
 
-    switch(win->bdr_type)
-    {
-        case 0:
-            b = &bdr_single[0];
-            break;
-        case 1:
-            b = &bdr_double[0];
-            break;
-        case 2:
-            b = &bdr_curved[0];
-            break;
-    }
+    b = borders[win->bdr_type];
+
     height = win->height;
-    width  = win->width;
 
     // a windows position is not allowed to put its border outside the bounds
     // of its parent screen

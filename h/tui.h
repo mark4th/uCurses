@@ -41,7 +41,7 @@ typedef enum
 typedef struct
 {
     list_t windows;         // linked list of windows
-    list_t menus;           // todo
+//    menu_bar_t *menu_bar;
     cell_t *buffer1;        // screen buffer 1 and 2
     cell_t *buffer2;
     void *backdrop;         // really a window_t *

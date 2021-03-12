@@ -46,7 +46,6 @@ utf8_encode_t *utf8_encode(uint32_t cp)
         encoded.len = 4;
     }
     memcpy(&c, &encoded.str[0], encoded.len);
-//    c = *(uint8_t *)&encoded.str[0];
 
     // the following is tribal knowledge.  when these characters are written
     // into a window the windows curor x is incremented by 1 spot/ if nowever
@@ -117,6 +116,27 @@ uint8_t utf8_decode(uint32_t *cp, char *s)
 }
 
 // --------------------------------------------------------------------------
+// gets number of character cells the string will use. this accounts for
+// characters such as chinese characters which take up two cells worth of
+// space in the console when displayed
+
+uint16_t utf8_width(char *s)
+{
+    utf8_encode_t *encode;
+    uint16_t width = 0;
+
+    while(*s != '\0')
+    {
+        encode = utf8_encode(*s);
+        s += encode->len;
+        width += (encode->width != 1) ? 2 : 1;
+    }
+    return width;
+}
+
+// --------------------------------------------------------------------------
+// calcuate the string length of a utf8 string.  characters in utf8 strings
+// can be 1, 2, 3 or 4 bytes long
 
 uint16_t utf8_strlen(char *s)
 {
@@ -125,30 +145,11 @@ uint16_t utf8_strlen(char *s)
 
     while(*s != '\0')
     {
-        encode = utf8_encode(*s++);
-        len += (encode->width != 1) ? 2 : 1;
+        encode = utf8_encode(*s);
+        s += encode->len;
+        len++;
     }
     return len;
 }
-
-// --------------------------------------------------------------------------
-
-// #include <stdio.h>
-// void test(void)
-// {
-//     uint32_t cp;
-//     char utf8_str[] = "俪俨俩俪俭修俯";
-//     char *p = &utf8_str[0];
-//     uint8_t n;
-
-//     while(0 != *p)
-//     {
-//        n = utf8_decode(&cp, p);
-//        printf(" %x ", cp);
-//        utf8_emit(cp);
-//        p += n;
-//     }
-//     printf("\n");
-// }
 
 // ==========================================================================

@@ -10,7 +10,7 @@ OBJS   = $(addprefix $(O)/, \
 HDRS   = $(addprefix $(H)/, \
   border.h color.h list.h tui.h uCurses.h util.h)
 
-CFLAGS = -Os -fno-inline -pedantic -Wall -Werror \
+CFLAGS = -Os -fno-inline -fPIE -pedantic -Wall -Werror \
   -std=gnu17 -pipe -march=native -g3 -xc -c
 
 O = o
@@ -35,5 +35,11 @@ clean:
 	rm -f o/*.o
 	rm -f u
 	rm -f *~
+
+## -----------------------------------------------------------------------
+
+analyze:
+	make clean
+	scan-build make
 
 ## =======================================================================

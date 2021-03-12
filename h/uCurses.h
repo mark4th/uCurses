@@ -38,6 +38,7 @@ void do_parse_format(void);
 void utf8_emit(uint32_t cp);
 utf8_encode_t *utf8_encode(uint32_t cp);
 uint8_t utf8_decode(uint32_t *cp, char *s);
+uint16_t utf8_width(char *s);
 uint16_t utf8_strlen(char *s);
 void apply_attribs(void);
 void flush(void);

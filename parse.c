@@ -41,11 +41,6 @@ static uint64_t atoz[26];   // named format string variables
 static uint64_t AtoZ[26];
 
 // -----------------------------------------------------------------------
-// output individual escape sequences or stack up up to 64k worth?
-
-uint16_t delay_flush = 0;
-
-// -----------------------------------------------------------------------
 // addresses within memory mapped terminfo file
 
 extern uint8_t *ti_table;   // array of offsets within following
@@ -85,9 +80,8 @@ extern uint16_t *ti_strings;
 // }
 
 // -----------------------------------------------------------------------
-// unconditionally flush the compiled escape sequences to the display
 
-static void do_flush(void)
+void flush(void)
 {
     uint32_t n;
 
@@ -96,19 +90,6 @@ static void do_flush(void)
     if(n < 0)
     {
         // log warning? try again?
-    }
-}
-
-// -----------------------------------------------------------------------
-// conditionally flush all compiled escape sequences to the display
-
-void flush(void)
-{
-    // do not fulsh the escape sequences if we are compiling
-    // up to 64k of them
-    if(delay_flush == 0)
-    {
-        do_flush();
     }
 }
 
@@ -128,7 +109,7 @@ void c_emit(uint8_t c1)
 
     if(num_esc == 0xffff)
     {
-        do_flush();
+        flush();
     }
 }
 
@@ -151,7 +132,9 @@ static void fs_push(uint64_t n)
 
 static uint64_t fs_pop(void)
 {
-    return (0 != fsp) ? fstack[--fsp] : 0;
+    return (0 != fsp)
+        ? fstack[--fsp] :
+        0;                  // also an internal error?
 }
 
 // -----------------------------------------------------------------------
@@ -278,8 +261,14 @@ static void _slash(void)
 
     n1 = fs_pop();
     n2 = fs_pop();
-
-    fs_push(n2 / n1);
+    if(n1 != 0)
+    {
+        fs_push(n2 / n1);
+    }
+    else
+    {
+        fs_push(0);
+    }
 }
 
 // -----------------------------------------------------------------------
@@ -291,8 +280,14 @@ static void _mod(void)
 
     n1 = fs_pop();
     n2 = fs_pop();
-
-    fs_push(n2 % n1);
+    if(n1 != 0)
+    {
+        fs_push(n2 % n1);
+    }
+    else
+    {
+        fs_push(0);
+    }
 }
 
 // -----------------------------------------------------------------------
@@ -370,10 +365,12 @@ static void _s(void)
     uint8_t c1;
 
     s = (uint8_t *)fs_pop();
-
-    while((c1 = *s++))
+    if(s != NULL)
     {
-        c_emit(c1);
+        while((c1 = *s++))
+        {
+            c_emit(c1);
+        }
     }
 }
 
@@ -382,11 +379,14 @@ static void _s(void)
 
 static void _l(void)
 {
-    uint8_t *s;
+    char *s;
 
-    s = (uint8_t *)fs_pop();
+    s = (char *)fs_pop();
 
-    fs_push(strlen((const char *)s));
+    if(s != NULL)
+    {
+        fs_push(utf8_strlen(s));
+    }
 }
 
 // -----------------------------------------------------------------------
@@ -671,8 +671,6 @@ void do_parse_format(void)
           ? command()
           : c_emit(c1);
     }
-
-    flush();         // this might be a do nothng
 }
 
 // -----------------------------------------------------------------------

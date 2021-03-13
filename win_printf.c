@@ -26,6 +26,16 @@ void win_puts(window_t *win, char *p)
 // -----------------------------------------------------------------------
 // window string writing and window attribute control
 
+// this is not intended to be used as a printf the way you think of it.
+// this does no parsing of %d or %i or %c or %s or any other normal
+// printf format specifier.  if you need those parsed you must use
+// sprintf and build your string up there.  this printf allows you to
+// set gray scale colors, rgb colors, x/y coordinates within a window
+// or to directly move the cursor up/down/left/right relative to its
+// current position and to scroll that window up/down/left/right
+
+// NOTE: some of the format specifiers require more than one parameter
+
 void win_printf(window_t *win, char* format, ...)
 {
     char *p;

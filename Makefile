@@ -10,8 +10,9 @@ OBJS   = $(addprefix $(O)/, \
 HDRS   = $(addprefix $(H)/, \
   border.h color.h list.h tui.h uCurses.h util.h)
 
-CFLAGS = -Os -fno-inline -fPIE -pedantic -Wall -Werror \
-  -std=gnu17 -pipe -march=native -g3 -xc -c
+CFLAGS = -Os -fno-inline -fPIC -fPIE -fdelete-null-pointer-checks \
+  -pedantic -Wall -Werror -std=gnu17 -pipe -march=native \
+  -g3 -xc -c
 
 O = o
 H = h
@@ -23,12 +24,13 @@ o/%.o: %.c
 
 u: $(OBJS)
 	$(CC) -o u $(OBJS)
-#	strip -R .comment u
 
 $(OBJS): $(HDRS) | $O
 
 $(O):
 	mkdir $(O)
+
+## -----------------------------------------------------------------------
 
 .PHONY: clean
 clean:
@@ -38,7 +40,12 @@ clean:
 
 ## -----------------------------------------------------------------------
 
-analyze:
+strip: u
+	strip -R .comment u
+
+## -----------------------------------------------------------------------
+
+scan:
 	make clean
 	scan-build make
 

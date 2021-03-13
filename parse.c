@@ -390,9 +390,9 @@ static void _l(void)
 }
 
 // -----------------------------------------------------------------------
-// return value of named parameter
+// return address of named variable
 
-static uint64_t *q_atoz(void)
+static uint64_t *get_var_addr(void)
 {
     uint64_t *p;
     uint8_t c1;
@@ -416,7 +416,7 @@ static void _P(void)
 {
     uint64_t *s;
 
-    s = q_atoz();
+    s = get_var_addr();
 
     *s = fs_pop();
 }
@@ -428,7 +428,7 @@ static void _g(void)
 {
     uint64_t *s;
 
-    s = q_atoz();
+    s = get_var_addr();
 
     fs_push(*s);
 }
@@ -464,7 +464,7 @@ static void to_cmd(void)
 }
 
 // -----------------------------------------------------------------------
-// format = &t
+// format = %t
 
 static void _t(void)        // too much if/and/but loop nesting
 {
@@ -668,8 +668,8 @@ void do_parse_format(void)
     while((c1 = *f_str++))
     {
         (c1 == '%')
-          ? command()
-          : c_emit(c1);
+            ? command()
+            : c_emit(c1);
     }
 }
 

@@ -261,7 +261,7 @@ static uint32_t update(screen_t *scr, uint16_t index, uint16_t end)
     p1 = &scr->buffer1[index];
     do
     {
-        if(memcmp(&attrs[0], &p1->attrs, 8) == 0)
+        if(*(uint64_t *)&attrs[0] == *(uint64_t *)&p1->attrs)
         {
             scr_emit(scr, index);
         }
@@ -300,7 +300,11 @@ void scr_do_draw_screen(screen_t *scr)
         if(scr_is_modified(scr, index) != 0)
         {
             indx = update(scr, index, end);
-            if(indx != 0) { index = indx - 1; }
+            if(indx != 0)
+            {
+                index = indx;
+                continue;
+            }
         }
         index++;
     } while(index != end);

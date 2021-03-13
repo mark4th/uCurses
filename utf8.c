@@ -48,10 +48,11 @@ utf8_encode_t *utf8_encode(uint32_t cp)
     memcpy(&c, &encoded.str[0], encoded.len);
 
     // the following is tribal knowledge.  when these characters are written
-    // into a window the windows curor x is incremented by 1 spot/ if nowever
+    // into a window the windows curor x is incremented by 1 spot. if nowever
     // the character we are going to write is wide we need to bump the
     // windows curosr by two slots and mark the following cell in the window
     // as being dead (0xDEADC0DE)
+
     encoded.width = wcwidth(c);
 
     return &encoded;
@@ -63,6 +64,10 @@ void utf8_emit(uint32_t cp)
 {
     uint8_t i;
     utf8_encode_t *encoded;
+
+    // double wide characters such as chinese use up two cells in the
+    // console display so must also take up two cells in the window
+    // the second sell is marked as dead - this is not an error
 
     if(cp != DEADCODE)
     {
@@ -116,9 +121,9 @@ uint8_t utf8_decode(uint32_t *cp, char *s)
 }
 
 // --------------------------------------------------------------------------
-// gets number of character cells the string will use. this accounts for
-// characters such as chinese characters which take up two cells worth of
-// space in the console when displayed
+// gets number of console character cells the string will use. this accounts
+// for characters such as chinese which take up two cells worth of space in
+// the console when displayed.
 
 uint16_t utf8_width(char *s)
 {

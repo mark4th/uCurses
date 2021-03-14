@@ -24,6 +24,7 @@ AM_CFLAGS = -Os -fno-inline -pedantic -Wall -Werror \
   -std=gnu17 -pipe -march=native -g3
 
 ## -----------------------------------------------------------------------
+## custom build targets i use during devel
 
 strip: u
 	strip -R .comment u

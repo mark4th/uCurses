@@ -11,3 +11,11 @@ aclocal.m4
 Makefile.in
 install-sh
 autom4te.cache
+Makefile
+build/*
+config.log
+src/.deps
+src/.dirstamp
+config.status
+config.h
+stamp-h1

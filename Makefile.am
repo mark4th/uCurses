@@ -1,4 +1,5 @@
 bin_PROGRAMS = u
+
 u_SOURCES = \
   src/border.c     \
   src/color.c      \

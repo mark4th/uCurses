@@ -2,3 +2,12 @@ o/*
 *.sublime*
 u
 *~
+config.h.in
+depcomp
+configure
+missing
+compile
+aclocal.m4
+Makefile.in
+install-sh
+autom4te.cache

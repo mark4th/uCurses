@@ -8,6 +8,9 @@
 #include "h/tui.h"
 
 // -----------------------------------------------------------------------
+// these three borders give the outer edge characters for a window
+// border plus the characters that you would use to segment up that window
+// the entries in these arrays are the utf8 codepoint for each char
 
 static border_t bdr_single[] =
 {

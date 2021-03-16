@@ -5,6 +5,7 @@
 #include <stdlib.h>
 
 #include "h/list.h"
+#include "h/tui.h"
 #include "h/uCurses.h"
 
 // -----------------------------------------------------------------------
@@ -20,51 +21,10 @@
 
 // -----------------------------------------------------------------------
 
-typedef void (*menu_fp_t)(void);
-
-// -----------------------------------------------------------------------
-
-typedef struct
-{
-    list_t list;            // linked list of entries
-    uint8_t *name;
-    menu_fp_t *fp;          // function to execute
-    uint16_t shortcut;      // keyboard shortcut
-} menu_item_t;
-
-// -----------------------------------------------------------------------
-
-typedef struct
-{
-    char *name;             // menu bar name for this pulldown menu
-    uint16_t width;         // width of widest item in pulldown menu
-    list_t items;           // list of items in this pulldown
-    uint8_t attr[8];        // attribs for pulldown menu border
-    uint16_t flags;         // masks for enabled/disabled etc
-    uint16_t which;         // current selected item
-    uint16_t xco;           // x coordinate of menu window
-    uint8_t normal[8];      // attribs for non selected menu items
-    uint8_t selected[8];    // atrribs for selected menu item
-    uint8_t disabled[8];    // attribs for disabled meny items
-} pulldown_t;
-
-// -----------------------------------------------------------------------
-
-typedef struct
-{
-    screen_t *screen;         // menu bars parent screen
-    list_t *items;            // list of pulldown menus in this bar
-    uint16_t which;           // which pulldown item is active
-    uint8_t attr_normal[8];   // attribs for non selected menu bar items
-    uint8_t attr_selected[8]; // attribs for selected menu bar items
-    uint8_t attr_disabled[8]; // attribs for disabled menu bar items
-} menu_bar_t;
-
-// -----------------------------------------------------------------------
-
 menu_bar_t *new_menu_bar(screen_t *scr)
 {
     menu_bar_t *bar = NULL;
+    window_t *win;
 
     if(scr != NULL)
     {
@@ -72,12 +32,26 @@ menu_bar_t *new_menu_bar(screen_t *scr)
 
         if(bar != NULL)
         {
-            bar->screen   = scr;
-            scr->menu_bar = bar;
-            bar->xco = 1;
-            *(uint64_t *)bar->attr_normal   = 0x60a0000000080;
-            *(uint64_t *)bar->attr_selected = 0x6050000000080;
-            *(uint64_t &)bar->attr_disabled = 0x0605000000008;
+            win = win_open(scr->width, 1);
+
+            if(win != NULL)
+            {
+                bar->window = win;
+                *(uint64_t *)&win->attrs[0]  = 0x60a0000000080;
+                win->attrs[ATTR] |= WIN_LOCKED;
+                win->screen = scr;
+
+                scr->menu_bar = bar;
+
+                *(uint64_t *)bar->attr_normal   = 0x60a0000000080;
+                *(uint64_t *)bar->attr_selected = 0x6050000000080;
+                *(uint64_t *)bar->attr_disabled = 0x0605000000008;
+            }
+            else
+            {
+                free(bar);
+                bar = NULL;
+            }
         }
     }
 
@@ -97,22 +71,26 @@ uint32_t new_pulldown(menu_bar_t *bar, char *name)
     {
         result = 0;
 
-        pd->name = name;
-        pd->xco = bar->xco;
-        bar->xco += utf8_strlen(name);
+        pd->name  = name;
+        pd->xco   = bar->xco;
+        bar->xco += utf8_strlen(name) + 1;
 
         *(uint64_t *)bar->attr_normal   = 0x60a0000000080;
         *(uint64_t *)bar->attr_selected = 0x6050000000080;
-        *(uint64_t &)bar->attr_disabled = 0x0605000000008;
+        *(uint64_t *)bar->attr_disabled = 0x0605000000008;
     }
+
+    return result;
 }
 
 // -----------------------------------------------------------------------
 // add a menu entry to a pulldown
 
-uint32_t new_menu_item(pulldown_t *pd, char *name, menu_fp_t fp)
+uint32_t new_menu_item(menu_bar_t *bar, pulldown_t *pd, char *name,
+    menu_fp_t fp, uint16_t shortcut)
 {
     uint32_t result = -1;   // assume failure
+    uint16_t width;
 
     if(pd != NULL)
     {
@@ -127,15 +105,16 @@ uint32_t new_menu_item(pulldown_t *pd, char *name, menu_fp_t fp)
             // the width of the menus oulldown window
 
             width = utf8_strlen(name);
-            if(width > pd.width)
+            if(width > pd->width)
             {
                 pd->width = width;
             }
 
-            item->name = name;
-            item->fp = fp;
+            item->name     = name;
+            item->fp       = fp;
+            item->shortcut = shortcut;
 
-            if(result = list_append_node(&bar->items, item) != 0)
+            if((result = list_append_node(bar->items, item)) != 0)
             {
                 free(item);  // oopts
             }
@@ -146,6 +125,37 @@ uint32_t new_menu_item(pulldown_t *pd, char *name, menu_fp_t fp)
 }
 
 // -----------------------------------------------------------------------
+
+void bar_draw(screen_t *scr)
+{
+    uint16_t i = 0;
+    uint8_t fg, bg;
+    list_t *l;
+    pulldown_t *pd;
+    menu_bar_t *bar = scr->menu_bar;
+
+    if(bar != NULL)
+    {
+        window_t *win = bar->window;
+        if(win != NULL)
+        {
+            win_el(win);     // there can be only one!
+            l = bar->items;
+
+            while((pd = list_scan(l)) != NULL)
+            {
+                l = NULL;
+                fg = (i == bar->which) ? pd->selected[FG] : pd->normal[FG];
+                bg = (i == bar->which) ? pd->selected[BG] : pd->normal[BG];
+                win_set_fg(win, fg);
+                win_set_bg(win, bg);
+                win_puts(win, pd->name);
+                i++;
+            }
+        }
+    }
+}
+
 // -----------------------------------------------------------------------
 
 // =======================================================================

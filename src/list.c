@@ -128,4 +128,24 @@ void *list_pop(list_t *list)
     return result;
 }
 
+// -----------------------------------------------------------------------
+
+void *list_scan(list_t *l)
+{
+    static node_t *node;
+
+    void *x = NULL;         // the unknown factor
+
+    if(l != NULL)           // initiating scan?
+    {
+        node = l->head;
+    }
+    if(node != NULL)
+    {
+        x = node->payload;
+        node = node->next;
+    }
+    return x;
+}
+
 // =======================================================================

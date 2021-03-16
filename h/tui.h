@@ -38,10 +38,53 @@ typedef enum
 
 // -----------------------------------------------------------------------
 
+typedef void (*menu_fp_t)(void);
+
+// -----------------------------------------------------------------------
+
+typedef struct
+{
+    node_t *links;
+    char *name;
+    menu_fp_t fp;           // function to execute
+    uint16_t shortcut;      // keyboard shortcut
+} menu_item_t;
+
+// -----------------------------------------------------------------------
+
+typedef struct
+{
+    char *name;             // menu bar name for this pulldown menu
+    uint16_t width;         // width of widest item in pulldown menu
+    list_t items;           // list of items in this pulldown
+    uint8_t attr[8];        // attribs for pulldown menu border
+    uint16_t flags;         // masks for enabled/disabled etc
+    uint16_t which;         // current selected item
+    uint16_t xco;           // x coordinate of menu window
+    uint8_t normal[8];      // attribs for non selected menu items
+    uint8_t selected[8];    // atrribs for selected menu item
+    uint8_t disabled[8];    // attribs for disabled meny items
+} pulldown_t;
+
+// -----------------------------------------------------------------------
+
+typedef struct
+{
+    list_t *items;            // list of pulldown menus in this bar
+    void *window;             // fwd ref to window_t * grrr (c sucks)
+    uint16_t xco;             // x coordinate of next pulldown
+    uint16_t which;           // which pulldown item is active
+    uint8_t attr_normal[8];   // attribs for non selected menu bar items
+    uint8_t attr_selected[8]; // attribs for selected menu bar items
+    uint8_t attr_disabled[8]; // attribs for disabled menu bar items
+} menu_bar_t;
+
+// -----------------------------------------------------------------------
+
 typedef struct
 {
     list_t windows;         // linked list of windows
-//    menu_bar_t *menu_bar;
+    menu_bar_t *menu_bar;
     cell_t *buffer1;        // screen buffer 1 and 2
     cell_t *buffer2;
     void *backdrop;         // really a window_t *
@@ -59,12 +102,12 @@ typedef struct
     cell_t      *buffer;
     screen_t    *screen;
     win_flags_t flags;
-    uint32_t    blank;      // window fill character for backdrop windows
-    uint16_t    width;      // window dimensions
+    uint32_t    blank;         // window fill character for backdrop windows
+    uint16_t    width;         // window dimensions
     uint16_t    height;
-    uint16_t    xco;        // window x/y coordinat within screen
+    uint16_t    xco;           // window x/y coordinat within screen
     uint16_t    yco;
-    uint16_t    cx;         // cursor position within window
+    uint16_t    cx;            // cursor position within window
     uint16_t    cy;
     uint16_t    bdr_type;
     uint8_t     attrs[8];      // bold blink underline, gray scale, rgb etc

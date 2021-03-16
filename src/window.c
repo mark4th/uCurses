@@ -61,16 +61,17 @@ window_t *win_open(uint16_t width, uint16_t height)
 
     if(win != 0)
     {
-        win->height  = height;
         win->width   = width;
+        win->height  = height;
 
         // win_alloc() uses width/height to determine how much
-        // space needs to be malloc'd
+        // space needs to be allocated
+
         if(win_alloc(win) == 0)
         {
             win->attrs[FG] = default_fg;
             win->attrs[BG] = default_bg;
-            win->blank   = 0x20;
+            win->blank     = 0x20;
             win_clear(win);
         }
         else
@@ -94,9 +95,6 @@ void win_pop(window_t *win)
 
 // -----------------------------------------------------------------------
 // set new x/y position of window within parent screen
-
-// look ma!   moveable, overlapping windows with text scrolling in any of
-// eight directions!!!
 
 uint16_t win_set_pos(window_t *win, uint16_t x, uint16_t y)
 {
@@ -466,7 +464,7 @@ void win_el(window_t *win)
 {
     while(win->cx != 0)
     {
-        win_emit(win, ' ');
+        win_emit(win, win->blank);
     }
 }
 

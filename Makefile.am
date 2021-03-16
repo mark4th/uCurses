@@ -6,6 +6,7 @@ u_SOURCES = \
   src/keys.c       \
   src/list.c       \
   src/main.c       \
+  src/menus.c      \
   src/parse.c      \
   src/screen.c     \
   src/tifile.c     \

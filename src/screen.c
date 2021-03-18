@@ -67,6 +67,7 @@ screen_t *scr_open(uint16_t width, uint16_t height)
 void scr_win_attach(screen_t *scr, window_t *win)
 {
     win->screen = scr;
+
     if(list_append_node(&scr->windows, win) != 0)
     {
         // log error here?
@@ -95,9 +96,12 @@ void scr_close(screen_t *scr)
 
     free(scr->buffer1);
     free(scr->buffer2);
+
     scr->buffer1 = 0;
     scr->buffer2 = 0;
+
     win_close(scr->backdrop);
+
     free(scr->backdrop);
 
     while(scr->windows.count != 0)
@@ -105,6 +109,8 @@ void scr_close(screen_t *scr)
          win = list_pop(&scr->windows);
          win_close(win);
     }
+    bar_close(scr);
+
     free(scr);
 }
 
@@ -116,22 +122,25 @@ static void scr_draw_win(window_t *win)
     uint16_t i;
     cell_t *src, *dst;
 
-    screen_t *scr = win->screen;
-
-    // borders must be drawn first
-    if(win->flags & WIN_BOXED)
+    if(win != NULL)
     {
-        win_draw_borders(win);
-    }
+        screen_t *scr = win->screen;
 
-    dst = &scr->buffer1[(win->yco * scr->width) + win->xco];
-    src = win->buffer;
+        // borders must be drawn first
+        if(win->flags & WIN_BOXED)
+        {
+            win_draw_borders(win);
+        }
 
-    for(i = 0; i < win->height; i++)
-    {
-        memcpy(dst, src, win->width * sizeof(cell_t));
-        dst += scr->width;
-        src += win->width;
+        dst = &scr->buffer1[(win->yco * scr->width) + win->xco];
+        src = win->buffer;
+
+        for(i = 0; i < win->height; i++)
+        {
+            memcpy(dst, src, win->width * sizeof(cell_t));
+            dst += scr->width;
+            src += win->width;
+        }
     }
 }
 
@@ -256,6 +265,7 @@ static uint32_t update(screen_t *scr, uint16_t index, uint16_t end)
     p1 = &scr->buffer1[index];
 
     *(uint64_t *)&attrs[0] = *(uint64_t *)&p1->attrs[0];
+
     apply_attribs();
 
     p1 = &scr->buffer1[index];
@@ -286,10 +296,21 @@ void scr_do_draw_screen(screen_t *scr)
     uint16_t index = 0, indx;
     uint16_t end = scr->width * scr->height;
 
+    menu_bar_t *bar;
+    window_t *win;
+
     memset(&old_attrs[0], 0, 8);
 
     scr_draw_win((window_t *)scr->backdrop);
     scr_draw_windows(scr);
+
+    if(scr->menu_bar != NULL)
+    {
+        bar = scr->menu_bar;
+        win = bar->window;
+        bar_draw_text(scr);
+        scr_draw_win(win);
+    }
 
     scr->cx = scr->cy = -1;
 

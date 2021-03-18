@@ -13,8 +13,7 @@
 uint8_t attrs[8];
 uint8_t old_attrs[8];  // to test for changes
 
-// terminfo format string pointer within the string section
-extern const uint8_t *f_str;
+extern const char *f_str;    // terminfo format string pointer
 
 // -----------------------------------------------------------------------
 // users can change their default fg and bg (make black on white? ICK!!)
@@ -31,8 +30,8 @@ static void do_set_fg(void)
     // these are not supported by any current terminfo files that I
     // know of and may not be supported by all terminal types
 
-    const uint8_t gray_seq[] = "\x1b[38;5;%p1%3dm";
-    const uint8_t rgb_seq[]  = "\x1b[38;2;%p1%3d;%p2%3d;%p3%3dm";
+    const char * const gray_seq = "\x1b[38;5;%p1%3dm";
+    const char * const rgb_seq  = "\x1b[38;2;%p1%3d;%p2%3d;%p3%3dm";
 
     // the params array is how we pass parameters to the terminfo
     // parsing functions for each format string.  this converts the
@@ -74,8 +73,8 @@ static void do_set_bg(void)
     // these are not supported by any current terminfo files that I
     // know of and may not be supported by all terminal types
 
-    const uint8_t gray_seq[] = "\x1b[48;5;%p1%3dm";
-    const uint8_t rgb_seq[]  = "\x1b[48;2;%p1%3d;%p2%3d;%p3%3dm";
+    const char * const gray_seq = "\x1b[48;5;%p1%3dm";
+    const char * const rgb_seq  = "\x1b[48;2;%p1%3d;%p2%3d;%p3%3dm";
 
     // the params array is how we pass parameters to the terminfo
     // parsing functions for each format string.  this converts the

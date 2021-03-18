@@ -44,7 +44,6 @@ typedef void (*menu_fp_t)(void);
 
 typedef struct
 {
-    node_t *links;
     char *name;
     menu_fp_t fp;           // function to execute
     uint16_t shortcut;      // keyboard shortcut
@@ -54,13 +53,13 @@ typedef struct
 
 typedef struct
 {
+    list_t items;           // list of items in this pulldown
     char *name;             // menu bar name for this pulldown menu
     uint16_t width;         // width of widest item in pulldown menu
-    list_t items;           // list of items in this pulldown
-    uint8_t attr[8];        // attribs for pulldown menu border
     uint16_t flags;         // masks for enabled/disabled etc
     uint16_t which;         // current selected item
     uint16_t xco;           // x coordinate of menu window
+    uint8_t attr[8];        // attribs for pulldown menu border
     uint8_t normal[8];      // attribs for non selected menu items
     uint8_t selected[8];    // atrribs for selected menu item
     uint8_t disabled[8];    // attribs for disabled meny items
@@ -70,13 +69,14 @@ typedef struct
 
 typedef struct
 {
-    list_t *items;            // list of pulldown menus in this bar
+    list_t items;             // list of pulldown menus in this bar
     void *window;             // fwd ref to window_t * grrr (c sucks)
+    pulldown_t *pd;           // pointer to current pd being populated
     uint16_t xco;             // x coordinate of next pulldown
     uint16_t which;           // which pulldown item is active
-    uint8_t attr_normal[8];   // attribs for non selected menu bar items
-    uint8_t attr_selected[8]; // attribs for selected menu bar items
-    uint8_t attr_disabled[8]; // attribs for disabled menu bar items
+    uint8_t normal[8];        // attribs for non selected menu bar items
+    uint8_t selected[8];      // attribs for selected menu bar items
+    uint8_t disabled[8];      // attribs for disabled menu bar items
 } menu_bar_t;
 
 // -----------------------------------------------------------------------
@@ -118,6 +118,7 @@ typedef struct
 // -----------------------------------------------------------------------
 
 #define win_clr_attr(win, attr) win->attrs[ATTR] &= ~attr
+
 #define win_set_ul(win)    win_set_attr(win, UNDERLINE)
 #define win_set_rev(win)   win_set_attr(win, REVERSE)
 #define win_set_bold(win)  win_set_attr(win, BOLD)
@@ -165,15 +166,25 @@ void win_emit(window_t *win, uint32_t c);
 void win_clear(window_t *win);
 void win_draw_borders(window_t *win);
 void win_el(window_t *win);
+void win_erase_line(window_t *win, uint16_t line);
+void win_printf(window_t *win, char* format, ...);
+void win_puts(window_t *win, char *s);
 
 // -----------------------------------------------------------------------
 
-void scr_win_attach(screen_t *scr, window_t *win);
-void scr_win_detach(window_t *win);
 screen_t *scr_open(uint16_t width, uint16_t height);
 void scr_close(screen_t *scr);
+void scr_win_attach(screen_t *scr, window_t *win);
+void scr_win_detach(window_t *win);
 void scr_cup(screen_t *scr, uint16_t x, uint16_t y);
 void scr_do_draw_screen(screen_t *scr);
 void scr_add_backdrop(screen_t *scr);
+
+uint32_t bar_open(screen_t *scr);
+void bar_close(screen_t *scr);
+uint32_t new_pulldown(screen_t *scr, char *name);
+uint32_t new_menu_item(screen_t *scr, char *name, menu_fp_t fp,
+    uint16_t shortcut);
+void bar_draw_text(screen_t *scr);
 
 // =======================================================================

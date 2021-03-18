@@ -348,9 +348,20 @@ int main(void)
 
     cup(20, 0);
 
+    bar_open(scr);
+
+    new_pulldown(scr, "File");
+    new_pulldown(scr, "Edit");
+    new_pulldown(scr, "Find");
+    new_pulldown(scr, "View");
+    new_pulldown(scr, "Tools");
+    new_pulldown(scr, "Help");
+
     scr_do_draw_screen(scr);
 
     run_demo(scr, win1, win2);
+
+    bar_close(scr);
 
     set_fg(WHITE);
     set_bg(BLACK);

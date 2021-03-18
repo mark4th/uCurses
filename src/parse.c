@@ -27,14 +27,14 @@ static void noop(void){;}
 
 // -----------------------------------------------------------------------
 
-uint8_t *esc_buff;          // format string compilation output buffer
+char *esc_buff;             // format string compilation output buffer
 uint32_t num_esc;           // max of 64k of compiled escape seq bytes
 uint64_t params[MAX_PARAM]; // format string parametesr
 
 static uint8_t fsp;         // stack pointer for ...
 static uint64_t fstack[5];  // format string stack
 
-const uint8_t *f_str;       // pointer to next character of format string
+const char *f_str;          // pointer to next character of format string
 static uint8_t digits;      // number of digits for %d (2 or 3)
 
 static uint64_t atoz[26];   // named format string variables
@@ -43,7 +43,7 @@ static uint64_t AtoZ[26];
 // -----------------------------------------------------------------------
 // addresses within memory mapped terminfo file
 
-extern uint8_t *ti_table;   // array of offsets within following
+extern char *ti_table;   // array of offsets within following
 extern uint16_t *ti_strings;
 
 // -----------------------------------------------------------------------
@@ -340,7 +340,7 @@ static void _less(void)
 
 static void _tick(void)
 {
-    uint8_t c1;
+    char c1;
 
     c1 = *f_str++;
     c_emit(c1);
@@ -361,10 +361,11 @@ static void _i(void)
 
 static void _s(void)
 {
-    uint8_t *s;
-    uint8_t c1;
+    char *s;
+    char c1;
 
-    s = (uint8_t *)fs_pop();
+    s = (char *)fs_pop();
+
     if(s != NULL)
     {
         while((c1 = *s++))
@@ -395,7 +396,7 @@ static void _l(void)
 static uint64_t *get_var_addr(void)
 {
     uint64_t *p;
-    uint8_t c1;
+    char c1;
 
     c1 = *f_str++;
 
@@ -439,7 +440,7 @@ static void _g(void)
 static void _brace(void)
 {
     uint64_t n1;
-    uint8_t c1;
+    char c1;
 
     n1 = 0;
 
@@ -469,7 +470,7 @@ static void to_cmd(void)
 static void _t(void)        // too much if/and/but loop nesting
 {
     uint64_t f1;
-    uint8_t c1;
+    char c1;
     uint8_t nest;           // not sure if any terminfo has nested %?
 
     nest = 0;
@@ -513,7 +514,7 @@ static void _t(void)        // too much if/and/but loop nesting
 
 static void _e(void)
 {
-    uint8_t c1;
+    char c1;
     uint8_t nest=0;
 
     for(;;)
@@ -545,23 +546,23 @@ static void _d(void)
 {
     uint64_t n1, n2;
 
-    uint8_t s[20];
+    char s[20];
 
     n1 = fs_pop();
 
     switch(digits)
     {
         case 2:
-            n2 = snprintf((char *)s, 3, "%ld", n1);
+            n2 = snprintf(s, 3, "%ld", n1);
             break;
         case 3:
-            n2 = snprintf((char *)s, 4, "%ld", n1);
+            n2 = snprintf(s, 4, "%ld", n1);
             break;
         default :
-            n2 = snprintf((char *)s, 5, "%ld", n1);
+            n2 = snprintf(s, 5, "%ld", n1);
     }
 
-    strncat((char *)&esc_buff[0], (char *)s, n2);
+    strncat(&esc_buff[0], s, n2);
     num_esc += n2;
 }
 
@@ -594,7 +595,7 @@ static void _p(void)
 
 static uint8_t next_c(void)
 {
-    uint8_t c1;
+    char c1;
 
     c1 = *f_str++;
 
@@ -630,7 +631,7 @@ const switch_t p_codes[] =
 
 static void command(void)
 {
-    uint8_t c1;
+    char c1;
     int n = PCOUNT;
 
     const switch_t *s = &p_codes[0];
@@ -663,7 +664,7 @@ static void command(void)
 
 void do_parse_format(void)
 {
-    uint8_t c1;
+    char c1;
 
     while((c1 = *f_str++))
     {

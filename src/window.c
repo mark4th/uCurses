@@ -202,7 +202,7 @@ void win_set_bg(window_t *win, uint8_t color)
 
 // -----------------------------------------------------------------------
 
-static void win_erase_line(window_t *win, uint16_t line)
+void win_erase_line(window_t *win, uint16_t line)
 {
     uint16_t i;
 
@@ -462,10 +462,10 @@ void win_emit(window_t *win, uint32_t c)
 
 void win_el(window_t *win)
 {
-    while(win->cx != 0)
+    do
     {
         win_emit(win, win->blank);
-    }
+    } while(win->cx != 0);
 }
 
 // =======================================================================

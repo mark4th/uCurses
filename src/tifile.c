@@ -39,7 +39,7 @@ uint8_t *ti_names;          // pointer to term names
 uint8_t *ti_bool;           // pointer to terminfo flags
 uint8_t *ti_numbers;        // pointer to terminfo numbers
 uint16_t *ti_strings;
-uint8_t *ti_table;
+char *ti_table;
 
 uint8_t wide;               // numbers item size size shift factor
 
@@ -115,7 +115,7 @@ void init_info()
 
     z = (uint16_t)p->ti_strings;
     offset += (z << 1);
-    ti_table = &ti_map[offset];
+    ti_table = (char *)&ti_map[offset];
 }
 
 // -----------------------------------------------------------------------

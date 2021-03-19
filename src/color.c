@@ -118,23 +118,20 @@ void apply_attribs(void)
 
     changes = attrs[ATTR] ^ old_attrs[ATTR];
 
-    if(changes != 0)
+    if((changes & BLINK) || (changes & BOLD) || (changes & REVERSE))
     {
-        if((changes & BLINK) || (changes & BOLD) || (changes & REVERSE))
-        {
-            ti_sgr0();
+        ti_sgr0();
 
-            if(attrs[ATTR] & BLINK)    { ti_blink(); }
-            if(attrs[ATTR] & BOLD)     { ti_bold();  }
-            if(attrs[ATTR] & REVERSE)  { ti_rev();   }
-        }
-        // if underline changed we need to set if.  if it was not changed
-        // we might need to restore it because of the above sgr0
-        if((changes & UNDERLINE) ||
-           (!(changes & UNDERLINE) && (attrs[ATTR] & UNDERLINE)))
-        {
-            (attrs[ATTR] & UNDERLINE) ? ti_smul() : ti_rmul();
-        }
+        if(attrs[ATTR] & BLINK)    { ti_blink(); }
+        if(attrs[ATTR] & BOLD)     { ti_bold();  }
+        if(attrs[ATTR] & REVERSE)  { ti_rev();   }
+    }
+    // if underline changed we need to set if.  if it was not changed
+    // we might need to restore it because of the above sgr0
+    if((changes & UNDERLINE) ||
+       (!(changes & UNDERLINE) && (attrs[ATTR] & UNDERLINE)))
+    {
+        (attrs[ATTR] & UNDERLINE) ? ti_smul() : ti_rmul();
     }
 
     if((attrs[BG]   != old_attrs[BG]) ||

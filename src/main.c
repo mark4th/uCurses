@@ -352,11 +352,16 @@ int main(void)
 
     new_pulldown(scr, "File");
     new_pulldown(scr, "Edit");
+
+// menu_bar_t *bar = scr->menu_bar;
+// pulldown_t *pd = bar->pd;
+// pd->flags |= MENU_DISABLED;
+
     new_pulldown(scr, "Find");
     new_pulldown(scr, "View");
     new_pulldown(scr, "Tools");
     new_pulldown(scr, "Help");
-
+pd_disable(scr, "Find");
     scr_do_draw_screen(scr);
 
     run_demo(scr, win1, win2);

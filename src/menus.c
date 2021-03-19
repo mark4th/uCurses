@@ -11,11 +11,11 @@
 extern uint8_t attrs[8];
 
 // -----------------------------------------------------------------------
-// hard coded for now
+// hard coded attributes for now
 
-#define NORMAL   0x4020000000080
+#define NORMAL   0x4030000000080
 #define SELECTED 0x1060000000080
-#define DISABLED 0x0605000000008
+#define DISABLED 0x80400000000c2
 
 // -----------------------------------------------------------------------
 // menu bars are added to the screen not individual windows
@@ -54,6 +54,10 @@ uint32_t bar_open(screen_t *scr)
             win->screen = scr;
             scr->menu_bar = bar;
 
+// win_set_gray_fg(win, 8);
+// win_set_gray_bg(win, 4);
+// printf("%lx\n", *(long unsigned int *)&win->attrs[0]);
+// exit(0);
             *(uint64_t *)bar->normal   = NORMAL;
             *(uint64_t *)bar->selected = SELECTED;
             *(uint64_t *)bar->disabled = DISABLED;
@@ -154,9 +158,10 @@ static uint32_t new_item(pulldown_t *pd, char *name,
 uint32_t new_menu_item(screen_t *scr, char *name, menu_fp_t fp,
     uint16_t shortcut)
 {
+    uint32_t result = -1;   // assume failure
+
     pulldown_t *pd;
     menu_bar_t *bar;
-    uint32_t result = -1;   // assume failure
 
     if((scr != NULL) && (scr->menu_bar != NULL))
     {
@@ -198,7 +203,9 @@ void bar_draw_text(screen_t *scr)
             l = NULL;
             *(uint64_t *)&win->attrs[0] = (i == bar->which)
                  ? *(uint64_t *)pd->selected
-                 : *(uint64_t *)pd->normal;
+                 : (pd->flags & MENU_DISABLED)
+                     ? *(uint64_t *)pd->disabled
+                     : *(uint64_t *)pd->normal;
             win_emit(win, win->blank);
             win_puts(win, pd->name);
             win_emit(win, win->blank);
@@ -225,6 +232,61 @@ void bar_close(screen_t *scr)
     }
     win_close(bar->window);
     free(bar);
+}
+
+// -----------------------------------------------------------------------
+// find address of pulldown structure with specified name
+
+pulldown_t *pd_find(screen_t *scr, char *name)
+{
+    menu_bar_t *bar = scr->menu_bar;
+    list_t *l       = &bar->items;
+    uint16_t len = utf8_strlen(name);
+    pulldown_t *pd;
+
+    while((pd = list_scan(l)) != NULL)
+    {
+        l = NULL;
+        if(utf8_strncmp(name, pd->name, len) == 0)
+        {
+            break;
+        }
+    }
+    return pd;
+}
+
+// -----------------------------------------------------------------------
+
+void pd_disable(screen_t *scr, char *name)
+{
+    pulldown_t *pd;
+
+    if(scr != NULL)
+    {
+        pd = pd_find(scr, name);
+
+        if(pd != NULL)
+        {
+            pd->flags |= MENU_DISABLED;
+        }
+    }
+}
+
+// -----------------------------------------------------------------------
+
+void pd_enable(screen_t *scr, char *name)
+{
+    pulldown_t *pd;
+
+    if(scr != NULL)
+    {
+        pd = pd_find(scr, name);
+
+        if(pd != NULL)
+        {
+            pd->flags &= MENU_DISABLED;
+        }
+    }
 }
 
 // =======================================================================

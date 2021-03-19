@@ -40,6 +40,10 @@ utf8_encode_t *utf8_encode(uint32_t cp);
 uint8_t utf8_decode(uint32_t *cp, char *s);
 uint16_t utf8_width(char *s);
 uint16_t utf8_strlen(char *s);
+uint16_t utf8_strncmp(char *s1, char *s2, uint16_t len);
+void pd_enable(screen_t *scr, char *name);
+void pd_disable(screen_t *scr, char *name);
+
 void apply_attribs(void);
 void flush(void);
 void c_emit(uint8_t c1);

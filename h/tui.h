@@ -65,6 +65,8 @@ typedef struct
     uint8_t disabled[8];    // attribs for disabled meny items
 } pulldown_t;
 
+#define MENU_DISABLED 1
+
 // -----------------------------------------------------------------------
 
 typedef struct

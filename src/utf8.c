@@ -136,6 +136,7 @@ uint16_t utf8_width(char *s)
         s += encode->len;
         width += (encode->width != 1) ? 2 : 1;
     }
+
     return width;
 }
 
@@ -154,7 +155,33 @@ uint16_t utf8_strlen(char *s)
         s += encode->len;
         len++;
     }
+
     return len;
+}
+
+// --------------------------------------------------------------------------
+
+uint16_t utf8_strncmp(char *s1, char *s2, uint16_t len)
+{
+    utf8_encode_t e1, e2;
+
+    while(*s1 != '\0')
+    {
+        e1 = *utf8_encode(*s1);
+        e2 = *utf8_encode(*s2);
+        if((e1.len == e2.len) &&
+           (*(uint64_t *)&e1.str == *(uint64_t *)&e2.str))
+        {
+            s1 += e1.len;
+            s2 += e2.len;
+        }
+        else
+        {
+            return *(uint64_t *)&e1.str - *(uint64_t *)&e2.str;
+        }
+    }
+
+    return 0;
 }
 
 // ==========================================================================

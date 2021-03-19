@@ -19,14 +19,9 @@ static void node_insert(node_t *n1, node_t *n2)
     t = (node_t *)(n1->next);
 
     n2->next = t;
-    if(t == NULL)
-    {
-        l->tail = n2;
-    }
-    else
-    {
-        t->prev = n2;
-    }
+    (t == NULL)
+        ? (l->tail = n2)
+        : (t->prev = n2);
     n1->next = n2;
     n2->prev = n1;
 }

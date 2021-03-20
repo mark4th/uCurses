@@ -16,16 +16,6 @@ extern uint16_t num_esc;
 static void noop(void){;}
 
 // -----------------------------------------------------------------------
-
-typedef void key_handler(void);
-typedef uint8_t key_reader(void);
-
-// -----------------------------------------------------------------------
-
-    key_reader *_keys;      // pointer to func to test if keys available
-    key_reader *_key;       // pointer to func to read keys
-
-// -----------------------------------------------------------------------
 // key sequence input buffer
 
 static uint8_t keybuff[32];
@@ -39,11 +29,6 @@ static struct pollfd pfd =
     POLLIN,                 // want to know when data is available
     0
 };
-
-// -----------------------------------------------------------------------
-
-uint8_t keys(void)  { return _keys(); }
-uint8_t key(void)   { return _key();  }
 
 // -----------------------------------------------------------------------
 // returns 0 = no keys available, 1 = keys available
@@ -64,7 +49,7 @@ uint8_t test_keys(void)
 // -----------------------------------------------------------------------
 // read single keypress
 
-uint8_t read_key(void)
+static uint8_t read_key(void)
 {
     uint8_t buffer;
     ssize_t n;
@@ -81,7 +66,7 @@ uint8_t read_key(void)
 // -----------------------------------------------------------------------
 // read escape sequence or singke keypress character
 
-void read_keys(void)
+static void read_keys(void)
 {
     num_k = 0;
 
@@ -94,7 +79,7 @@ void read_keys(void)
 // -----------------------------------------------------------------------
 // put a enter character in keyboard input buffer
 
-void ent(void)
+static void ent(void)
 {
     esc_buff[0] = 0x0a;
     num_esc = 1;
@@ -103,7 +88,7 @@ void ent(void)
 // -----------------------------------------------------------------------
 // put a backspace character in the keyboard input buffer
 
-void kbs(void)
+static void kbs(void)
 {
     esc_buff[0] = 0x7f;
     num_esc = 1;
@@ -116,38 +101,30 @@ void kbs(void)
 // these allow us to determine which key was pressed by comparing the
 // actual sequence that was input with the data returned by each of these
 
-void kdch1(void) { ti_kdch1(); }
-void kcud1(void) { ti_kcud1(); }
-void kf1(void)   { ti_kf1();   }
-void kf10(void)  { ti_kf10();  }
-void kf2(void)   { ti_kf2();   }
-void kf3(void)   { ti_kf3();   }
-void kf4(void)   { ti_kf4();   }
-void kf5(void)   { ti_kf5();   }
-void kf6(void)   { ti_kf6();   }
-void kf7(void)   { ti_kf7();   }
-void kf8(void)   { ti_kf8();   }
-void kf9(void)   { ti_kf9();   }
-void khome(void) { ti_khome(); }
-void kich1(void) { ti_kich1(); }
-void kcub1(void) { ti_kcub1(); }
-void knp(void)   { ti_knp();   }
-void kpp(void)   { ti_kpp();   }
-void kcuf1(void) { ti_kcuf1(); }
-void kcuu1(void) { ti_kcuu1(); }
-void kcbt(void)  { ti_kcbt();  }
-void kend(void)  { ti_kend();  }
-void kent(void)  { ti_kent();  }
-void kDC(void)   { ti_kDC();   }
-void kEND(void)  { ti_kEND();  }
-void kHOM(void)  { ti_kHOM();  }
-void kIC(void)   { ti_kIC();   }
-void kLFT(void)  { ti_kLFT();  }
-void kNXT(void)  { ti_kNXT();  }
-void kPRV(void)  { ti_kPRV();  }
-void kRIT(void)  { ti_kRIT();  }
-void kf11(void)  { ti_kf11();  }
-void kf12(void)  { ti_kf12();  }
+ static void kcuu1(void) { ti_kcuu1(); }
+ static void kcud1(void) { ti_kcud1(); }
+ static void kcub1(void) { ti_kcub1(); }
+ static void kcuf1(void) { ti_kcuf1(); }
+
+ static void kdch1(void) { ti_kdch1(); }
+ static void kich1(void) { ti_kich1(); }
+ static void khome(void) { ti_khome(); }
+ static void kend(void)  { ti_kend();  }
+ static void knp(void)   { ti_knp();   }
+ static void kpp(void)   { ti_kpp();   }
+
+ static void kf1(void)   { ti_kf1();   }
+ static void kf2(void)   { ti_kf2();   }
+ static void kf3(void)   { ti_kf3();   }
+ static void kf4(void)   { ti_kf4();   }
+ static void kf5(void)   { ti_kf5();   }
+ static void kf6(void)   { ti_kf6();   }
+ static void kf7(void)   { ti_kf7();   }
+ static void kf8(void)   { ti_kf8();   }
+ static void kf9(void)   { ti_kf9();   }
+ static void kf10(void)  { ti_kf10();  }
+ static void kf11(void)  { ti_kf11();  }
+ static void kf12(void)  { ti_kf12();  }
 
 // -----------------------------------------------------------------------
 // array of pointers to functions to get each key escape sequence
@@ -156,10 +133,12 @@ void kf12(void)  { ti_kf12();  }
 
 void (*k_table[24])() =
 {
-    ent,   kcuu1, kcud1, kcub1, kcuf1, kbs,
-    kdch1, kich1, khome, kend,  knp,   kpp,
-    kf1,   kf2,   kf3,   kf4,   kf5,   kf6,
-    kf7,   kf8,   kf9,   kf10,  kf11,  kf12
+    ent,   kcuu1, kcud1, kcub1,
+    kcuf1, kbs,   kdch1, kich1,
+    khome, kend,  knp,   kpp,
+    kf1,   kf2,   kf3,   kf4,
+    kf5,   kf6,   kf7,   kf8,
+    kf9,   kf10,  kf11,  kf12
 };
 
 // -----------------------------------------------------------------------
@@ -167,9 +146,10 @@ void (*k_table[24])() =
 // compare input key sequence with each key seuence returned by the
 // functions referenced in the above k_table
 
-uint16_t match_key(void)
+static uint16_t match_key(void)
 {
     int i;
+    uint16_t q;
 
     for(i = 0; i < 24; i++)
     {
@@ -184,7 +164,9 @@ uint16_t match_key(void)
 
       if(num_k == num_esc)
       {
-          if(strcmp((const char *)&keybuff, (const char *)&esc_buff) == 0)
+          q = memcmp((const char *)&keybuff[0],
+            (const char *)&esc_buff[0], num_k);
+          if(q == 0)
           {
               return i;     // sequences match.
           }
@@ -197,7 +179,7 @@ uint16_t match_key(void)
 // -----------------------------------------------------------------------
 // add eol char to keyboard input buffer
 
-void k_ent(void)
+static void k_ent(void)
 {
     keybuff[0] = 0x0a;
     num_k = 1;
@@ -206,68 +188,50 @@ void k_ent(void)
 // -----------------------------------------------------------------------
 // add delete char to keyboard input buffer
 
-void k_bs(void)
+static void k_bs(void)
 {
     keybuff[0] = 8;
     num_k = 1;
 }
 
 // -----------------------------------------------------------------------
-// pointers to default handlers for each key press
-
-    // you can directly modify these
-    // you should not directly modify these :)
-
-    key_handler *_key_ent   = k_ent;
-    key_handler *_key_up    = noop;
-    key_handler *_key_down  = noop;
-    key_handler *_key_left  = noop;
-    key_handler *_key_right = noop;
-    key_handler *_key_bs    = k_bs;
-    key_handler *_key_del   = noop;
-    key_handler *_key_ins   = noop;
-    key_handler *_key_home  = noop;
-    key_handler *_key_end   = noop;
-    key_handler *_key_np    = noop;
-    key_handler *_key_pp    = noop;
-    key_handler *_key_f1    = noop;
-    key_handler *_key_f2    = noop;
-    key_handler *_key_f3    = noop;
-    key_handler *_key_f4    = noop;
-    key_handler *_key_f5    = noop;
-    key_handler *_key_f6    = noop;
-    key_handler *_key_f7    = noop;
-    key_handler *_key_f8    = noop;
-    key_handler *_key_f9    = noop;
-    key_handler *_key_f10   = noop;
-    key_handler *_key_f11   = noop;
-    key_handler *_key_f12   = noop;
-
-// -----------------------------------------------------------------------
 // the system indirectly calls the function pointers pointed to by the
 // items in this array.  the end user does not get to modify this array as
 // the order of items within it is critical
 
-static key_handler **key_actions[24] =
+static key_handler_t *default_key_actions[24] =
 {
-    &_key_ent,    &_key_up,   &_key_down,  &_key_left,
-    &_key_right,  &_key_bs,   &_key_del,   &_key_ins,
-    &_key_home,   &_key_end,  &_key_np,    &_key_pp,
-    &_key_f1,     &_key_f2,   &_key_f3,    &_key_f4,
-    &_key_f5,     &_key_f6,   &_key_f7,    &_key_f8,
-    &_key_f9,     &_key_f10,  &_key_f11,   &_key_f12
+//  ENTER  UP    DOWN  LEFT
+    k_ent, noop, noop, noop,
+//  RIGHT  BS    DEL   INSERT
+    noop,  k_bs, noop, noop,
+//  HOME   END   PDN   PUP
+    noop,  noop, noop, noop,
+//  F1     F2    F3    F4
+    noop,  noop, noop, noop,
+//  F5     F6    F7    F8
+    noop,  noop, noop, noop,
+//  F9     F10   F11   F12
+    noop,  noop, noop, noop
 };
 
 // -----------------------------------------------------------------------
-// this pointer can be modified to point to a user table by calling a
-// setter below..
 
-static key_handler **(*key_action)[24] = &key_actions;
+key_handler_t *user_key_actions[24] = { NULL };
+
+// -----------------------------------------------------------------------
+
+key_handler_t *set_key_action(key_index_t index, key_handler_t* action)
+{
+    key_handler_t *x = user_key_actions[index];
+    user_key_actions[index] = action;
+    return x;
+}
 
 // -----------------------------------------------------------------------
 // keep processing key sequences till we get a normal key
 
-uint8_t new_key(void)
+uint8_t key(void)
 {
     uint16_t c;
 
@@ -280,15 +244,20 @@ uint8_t new_key(void)
         if(c != 0xffff)     // if escape sequence is one we handle
         {
             num_esc = 0;    // ensure there are no keys in the buffer
-            (*(*key_action)[c])();
+            (user_key_actions[c])();
+            return 0xff;
         }
     } while (1 != num_k);
 
-  return keybuff[0];
+    return keybuff[0];
 }
 
 // -----------------------------------------------------------------------
 
-// todo: add setter mentioned above :)
+void init_key_handlers(void)
+{
+    memcpy(user_key_actions, default_key_actions,
+        sizeof(user_key_actions));
+}
 
 // =======================================================================

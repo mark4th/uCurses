@@ -13,7 +13,7 @@
 
 // -----------------------------------------------------------------------
 
-screen_t *current_screen;
+screen_t *active_screen;
 
 extern uint8_t attrs[8];
 extern uint8_t old_attrs[8];
@@ -186,14 +186,16 @@ static uint16_t scr_is_modified(screen_t *scr, uint16_t index)
 {
     cell_t *p1 = &scr->buffer1[index];
     cell_t *p2 = &scr->buffer2[index];
+    uint16_t result;
 
     // if attrs of this cell in buffer1 are different from the attrs
     // in buffer 2 or if the characters in those cells are different
     // then this cell needs updating
 
-    return(
-        *(uint64_t *)&p1->attrs != *(uint64_t *)p2->attrs ||
-        (p1->code != p2->code));
+    result = *(uint64_t *)&p1->attrs != *(uint64_t *)p2->attrs;
+    result |= p1->code != p2->code;
+
+    return result;
 }
 
 // -----------------------------------------------------------------------
@@ -286,20 +288,23 @@ static uint32_t update(screen_t *scr, uint16_t index, uint16_t end)
         p1++;
     } while (index != end);
 
+    // return index of first char that had different attributes to the
+    // ones we were updating
     return indx;
 }
 
 // -----------------------------------------------------------------------
 
-void scr_do_draw_screen(screen_t *scr)
+void scr_draw_screen(screen_t *scr)
 {
     uint16_t index = 0, indx;
     uint16_t end = scr->width * scr->height;
 
-    menu_bar_t *bar;
-    window_t *win;
+    active_screen = scr;
 
-    memset(&old_attrs[0], 0, 8);
+    menu_bar_t *bar;
+
+    *(uint64_t *)&old_attrs[0] = 0;
 
     scr_draw_win((window_t *)scr->backdrop);
     scr_draw_windows(scr);
@@ -307,9 +312,8 @@ void scr_do_draw_screen(screen_t *scr)
     if(scr->menu_bar != NULL)
     {
         bar = scr->menu_bar;
-        win = bar->window;
         bar_draw_text(scr);
-        scr_draw_win(win);
+        scr_draw_win(bar->window);
     }
 
     scr->cx = scr->cy = -1;

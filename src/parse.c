@@ -87,6 +87,7 @@ void flush(void)
 
     n =  write(1, &esc_buff[0], num_esc);
     num_esc = 0;
+
     if(n < 0)
     {
         // log warning? try again?
@@ -99,13 +100,6 @@ void flush(void)
 void c_emit(uint8_t c1)
 {
     esc_buff[num_esc++] = c1;
-
-    // this following line of code should not be needed but things get
-    // reall messy if i dont do it.  WHY?
-    // previously I was memsetting the entire used esc_buff to 0 in
-    // do_flush but this seems preferable to me
-
-    esc_buff[num_esc] = '\0';
 
     if(num_esc == 0xffff)
     {
@@ -261,14 +255,10 @@ static void _slash(void)
 
     n1 = fs_pop();
     n2 = fs_pop();
-    if(n1 != 0)
-    {
-        fs_push(n2 / n1);
-    }
-    else
-    {
-        fs_push(0);
-    }
+
+    (n1 != 0)
+       ? fs_push(n2 / n1)
+       : fs_push(0);
 }
 
 // -----------------------------------------------------------------------
@@ -280,14 +270,10 @@ static void _mod(void)
 
     n1 = fs_pop();
     n2 = fs_pop();
-    if(n1 != 0)
-    {
-        fs_push(n2 % n1);
-    }
-    else
-    {
-        fs_push(0);
-    }
+
+    (n1 != 0)
+       ? fs_push(n2 % n1)
+       : fs_push(0);
 }
 
 // -----------------------------------------------------------------------
@@ -381,12 +367,14 @@ static void _s(void)
 static void _l(void)
 {
     char *s;
+    uint16_t len;
 
     s = (char *)fs_pop();
+    len = utf8_strlen(s);
 
     if(s != NULL)
     {
-        fs_push(utf8_strlen(s));
+        fs_push(len);
     }
 }
 
@@ -545,24 +533,28 @@ static void _e(void)
 static void _d(void)
 {
     uint64_t n1, n2;
-
-    char s[20];
-
     n1 = fs_pop();
+
+    uint16_t available = 0xffff - num_esc;
+
+    if(available <= n1)
+    {
+        flush();
+        available = 0xffff;
+    }
 
     switch(digits)
     {
         case 2:
-            n2 = snprintf(s, 3, "%ld", n1);
+            n2 = snprintf(&esc_buff[num_esc], available, "%02" PRIu64, n1);
             break;
         case 3:
-            n2 = snprintf(s, 4, "%ld", n1);
+            n2 = snprintf(&esc_buff[num_esc], available, "%03" PRIu64, n1);
             break;
         default :
-            n2 = snprintf(s, 5, "%ld", n1);
+            n2 = snprintf(&esc_buff[num_esc], available, "%" PRIu64, n1);
     }
 
-    strncat(&esc_buff[0], s, n2);
     num_esc += n2;
 }
 
@@ -596,13 +588,13 @@ static void _p(void)
 static uint8_t next_c(void)
 {
     char c1;
-
+    digits = 1;
     c1 = *f_str++;
 
     if((c1 == '2') || (c1 == '3'))
     {
         digits = (c1 & 0x0f);
-        // this should be a d
+        // this should be a d ... should i test that?
         c1 = *f_str++;
     }
     return c1;

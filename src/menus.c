@@ -9,6 +9,7 @@
 #include "h/uCurses.h"
 
 extern uint8_t attrs[8];
+extern screen_t *active_screen;
 
 // -----------------------------------------------------------------------
 // hard coded attributes for now
@@ -16,17 +17,6 @@ extern uint8_t attrs[8];
 #define NORMAL   0x4030000000080
 #define SELECTED 0x1060000000080
 #define DISABLED 0x80400000000c2
-
-// -----------------------------------------------------------------------
-// menu bars are added to the screen not individual windows
-
-// menu bar
-//    pulldown
-//       item
-//       item
-//       item
-//    pulldown
-//       ...
 
 // -----------------------------------------------------------------------
 
@@ -46,18 +36,19 @@ uint32_t bar_open(screen_t *scr)
 
         if((bar != NULL) && (win != NULL))
         {
-            bar->window    = win;
-            // make window non scrolling
+            bar->window = win;
 
+            // make window non scrolling
             win->attrs[ATTR] |= WIN_LOCKED;
 
-            win->screen = scr;
+            win->screen   = scr;
             scr->menu_bar = bar;
 
 // win_set_gray_fg(win, 8);
 // win_set_gray_bg(win, 4);
 // printf("%lx\n", *(long unsigned int *)&win->attrs[0]);
 // exit(0);
+
             *(uint64_t *)bar->normal   = NORMAL;
             *(uint64_t *)bar->selected = SELECTED;
             *(uint64_t *)bar->disabled = DISABLED;
@@ -75,39 +66,48 @@ uint32_t bar_open(screen_t *scr)
 }
 
 // -----------------------------------------------------------------------
+
+static uint32_t new_pull(menu_bar_t *bar, pulldown_t *pd, char *name)
+{
+    uint32_t result = -1;
+
+    if(bar->count != MAX_MENU_ITEMS)
+    {
+        bar->items[bar->count++] = pd;
+
+        pd->which = -1;
+        pd->name  = name;
+        pd->xco   = bar->xco;
+        bar->xco += utf8_strlen(name) + 2;
+
+        *(uint64_t *)pd->normal   = NORMAL;
+        *(uint64_t *)pd->selected = SELECTED;
+        *(uint64_t *)pd->disabled = DISABLED;
+
+        result = 0;
+    }
+    else
+    {
+        free(pd);
+    }
+
+    return result;
+}
+
+// -----------------------------------------------------------------------
 // add a new pulldown to a menu bar
 
 uint32_t new_pulldown(screen_t *scr, char *name)
 {
     uint32_t result = -1;
     menu_bar_t *bar = scr->menu_bar;
+    pulldown_t *pd;
 
     if(bar != NULL)
     {
-        pulldown_t *pd = calloc(1, sizeof(pulldown_t));
-
-        if(pd != NULL)
+        if((pd = calloc(1, sizeof(pulldown_t))) != NULL)
         {
-            if((result = list_append_node(&bar->items, pd)) != 0)
-            {
-                free(pd);
-            }
-            else
-            {
-                pd->which = -1;
-                pd->name  = name;
-                pd->xco   = bar->xco;
-                bar->xco += utf8_strlen(name) + 1;
-
-                *(uint64_t *)pd->normal   = NORMAL;
-                *(uint64_t *)pd->selected = SELECTED;
-                *(uint64_t *)pd->disabled = DISABLED;
-
-                // once a pulldown is added to a bar you must populate
-                // it completely before adding another
-
-                bar->pd   = pd;
-            }
+            result = new_pull(bar, pd, name);
         }
     }
 
@@ -122,33 +122,29 @@ static uint32_t new_item(pulldown_t *pd, char *name,
     uint16_t width;
     uint32_t result = -1;
 
-    menu_item_t *item = calloc(1, sizeof(menu_item_t));
-
-    if(item != NULL)
+    if(pd->count != MAX_MENU_ITEMS)
     {
-        if((result = list_append_node(&pd->items, item)) != 0)
+        menu_item_t *item = calloc(1, sizeof(menu_item_t));
+
+        if(item != NULL)
         {
-            free(item);  // oopts
-        }
-        else
-        {
-            item->fp = fp;
+            pd->items[pd->count++] = item;
+
+            item->name     = name;
+            item->fp       = fp;
+            item->shortcut = shortcut;
 
             // keep track of which item in menu is widest as that will
             // determine the width of the pulldown window
 
             width = utf8_strlen(name);
+
             if(width > pd->width)
             {
                 pd->width = width;
             }
-
-            item->name     = name;
-            item->fp       = fp;
-            item->shortcut = shortcut;
         }
     }
-
     return result;
 }
 
@@ -166,7 +162,7 @@ uint32_t new_menu_item(screen_t *scr, char *name, menu_fp_t fp,
     if((scr != NULL) && (scr->menu_bar != NULL))
     {
         bar = scr->menu_bar;
-        pd  = bar->pd;
+        pd  = bar->items[bar->count -1];
 
         if(pd != NULL)
         {
@@ -183,7 +179,6 @@ uint32_t new_menu_item(screen_t *scr, char *name, menu_fp_t fp,
 void bar_draw_text(screen_t *scr)
 {
     uint16_t i = 0;
-    list_t *l;
     pulldown_t *pd;
     window_t *win;
 
@@ -194,22 +189,24 @@ void bar_draw_text(screen_t *scr)
         win = bar->window;
         *(uint64_t *)&win->attrs[0] = *(uint64_t *)&bar->normal[0];
         win_clear(win);
-        win->cx = 1;
+        win_crsr_rt(win);
 
-        l = &bar->items;
-
-        while((pd = list_scan(l)) != NULL)
+        for(i = 0; i < bar->count; i++)
         {
-            l = NULL;
-            *(uint64_t *)&win->attrs[0] = (i == bar->which)
-                 ? *(uint64_t *)pd->selected
-                 : (pd->flags & MENU_DISABLED)
-                     ? *(uint64_t *)pd->disabled
-                     : *(uint64_t *)pd->normal;
+            pd = bar->items[i];
+
+            // }:) trust me, im a professional! }:)
+
+            *(uint64_t *)&win->attrs[0] =
+                ((i == bar->which) && (bar->active != 0))
+                     ? *(uint64_t *)pd->selected
+                     : (pd->flags & MENU_DISABLED)
+                         ? *(uint64_t *)pd->disabled
+                         : *(uint64_t *)pd->normal;
+
             win_emit(win, win->blank);
             win_puts(win, pd->name);
             win_emit(win, win->blank);
-            i++;
         }
     }
 }
@@ -220,16 +217,19 @@ void bar_close(screen_t *scr)
 {
     menu_bar_t *bar = scr->menu_bar;
     pulldown_t *pd;
-    menu_item_t *item;
+    uint16_t i, j;
 
-    while((pd = list_pop(&bar->items)) != 0)
+    for(i = 0; i != bar->count; i++)
     {
-        while((item = list_pop(&pd->items)) != 0)
+        pd = bar->items[i];
+        for(j = 0; j != pd->count; j++)
         {
-            free(item);
+            free(pd->items[j]);
+            pd->items[j] = NULL;
         }
         free(pd);
     }
+
     win_close(bar->window);
     free(bar);
 }
@@ -239,14 +239,15 @@ void bar_close(screen_t *scr)
 
 pulldown_t *pd_find(screen_t *scr, char *name)
 {
+    pulldown_t *pd = NULL;
     menu_bar_t *bar = scr->menu_bar;
-    list_t *l       = &bar->items;
+    uint16_t i;
     uint16_t len = utf8_strlen(name);
-    pulldown_t *pd;
 
-    while((pd = list_scan(l)) != NULL)
+    for(i = 0; i < bar->count; i++)
     {
-        l = NULL;
+        pd = bar->items[i];
+
         if(utf8_strncmp(name, pd->name, len) == 0)
         {
             break;
@@ -287,6 +288,115 @@ void pd_enable(screen_t *scr, char *name)
             pd->flags &= MENU_DISABLED;
         }
     }
+}
+
+// -----------------------------------------------------------------------
+
+static void menu_up(void)    { }
+static void menu_down(void)  { }
+
+// -----------------------------------------------------------------------
+
+static void menu_activate(void)
+{
+   menu_bar_t *bar = active_screen->menu_bar;
+   bar->active ^= 1;
+}
+
+// -----------------------------------------------------------------------
+
+static void next_pd(menu_bar_t *bar)
+{
+    if(bar->which != bar->count -1)
+    {
+        bar->which++;
+    }
+    else
+    {
+        bar->which = 0;
+    }
+}
+
+// -----------------------------------------------------------------------
+
+static void menu_right(void)
+{
+    menu_bar_t *bar = active_screen->menu_bar;
+    pulldown_t *pd;
+    uint16_t n;
+
+    if((bar != NULL) && (bar->active != 0))
+    {
+        n = bar->count;
+
+        while(n != 0)
+        {
+            next_pd(bar);
+            n--;
+            pd = bar->items[bar->which];
+            if((pd->flags & MENU_DISABLED) == 0)
+            {
+                n = 0;
+            }
+        }
+    }
+}
+
+// -----------------------------------------------------------------------
+
+static void prev_pd(menu_bar_t *bar)
+{
+    if(bar->which != 0)
+    {
+        bar->which--;
+    }
+    else
+    {
+        bar->which = bar->count -1;
+    }
+}
+
+// -----------------------------------------------------------------------
+
+static void menu_left(void)
+{
+    menu_bar_t *bar = active_screen->menu_bar;
+    pulldown_t *pd;
+    uint16_t n;
+
+    if((bar != NULL) && (bar->active != 0))
+    {
+        n = bar->count;
+
+        while(n != 0)
+        {
+            prev_pd(bar);
+            n--;
+            pd = bar->items[bar->which];
+            if((pd->flags & MENU_DISABLED) == 0)
+            {
+                n = 0;
+            }
+        }
+    }
+}
+
+// -----------------------------------------------------------------------
+// you should not modify these pointers... but i can! (tm)
+
+void menu_init(void)
+{
+    init_key_handlers();
+    set_key_action(K_CUU1, menu_up);
+    set_key_action(K_CUD1, menu_down);
+    set_key_action(K_CUB1, menu_left);
+    set_key_action(K_CUF1, menu_right);
+    set_key_action(K_F10, menu_activate);
+    // without this the cursor up and down keys can return escape
+    // sequences that do not match what is specified for them in
+    // the terminfo file - emitting an smkx escape sequence to the
+    // terminal turns on keyboard transmit mode what ever that is
+    ti_smkx();
 }
 
 // =======================================================================

@@ -217,16 +217,14 @@ void run_demo(screen_t *scr, window_t *win1, window_t *win2)
         // check for key presses. space pauses anything else quits
         if(test_keys() != 0)
         {
-            if(read(STDIN_FILENO, &c, 1) == -1)
-            {
-                continue;
-            }
+            c = key();
+
             if(c == ' ')
             {
                 pause ^= 1;
                 continue;
             }
-            if(c == 0x0a)
+            if(c == 0x1b)
             {
                 return;
             }
@@ -241,7 +239,7 @@ void run_demo(screen_t *scr, window_t *win1, window_t *win2)
             // move each window and refrseh the screen display
             win_set_pos(win1, x1, y1);
             win_set_pos(win2, x2, y2);
-            scr_do_draw_screen(scr);
+            scr_draw_screen(scr);
 
             // add respective increments to x1, y1, x2, y2
             x1 += x1i;    y1 += y1i;
@@ -301,8 +299,12 @@ int main(void)
     window_t *win1, *win2;
 
     uCurses_init();
+    menu_init();
+
     setlocale(LC_ALL, "C.UTF-8");
+
     curoff();
+
     tcgetattr(STDIN_FILENO, &term_save);
     term = term_save;
     term.c_lflag &= ~(ECHO | ICANON);
@@ -351,6 +353,11 @@ int main(void)
     bar_open(scr);
 
     new_pulldown(scr, "File");
+    new_menu_item(scr, "Menu 1", NULL, 0);
+    new_menu_item(scr, "Menu 2", NULL, 0);
+    new_menu_item(scr, "Menu 3", NULL, 0);
+    new_menu_item(scr, "Menu 4", NULL, 0);
+
     new_pulldown(scr, "Edit");
 
 // menu_bar_t *bar = scr->menu_bar;
@@ -361,8 +368,8 @@ int main(void)
     new_pulldown(scr, "View");
     new_pulldown(scr, "Tools");
     new_pulldown(scr, "Help");
-pd_disable(scr, "Find");
-    scr_do_draw_screen(scr);
+    pd_disable(scr, "View");
+    scr_draw_screen(scr);
 
     run_demo(scr, win1, win2);
 

@@ -36,6 +36,9 @@ typedef enum
     WIN_FILLED     = 4      // backfilled with SOLID character
 } win_flags_t;
 
+#define MENU_DISABLED 1
+#define MAX_MENU_ITEMS 10
+
 // -----------------------------------------------------------------------
 
 typedef void (*menu_fp_t)(void);
@@ -53,29 +56,30 @@ typedef struct
 
 typedef struct
 {
-    list_t items;           // list of items in this pulldown
     char *name;             // menu bar name for this pulldown menu
     uint16_t width;         // width of widest item in pulldown menu
     uint16_t flags;         // masks for enabled/disabled etc
     uint16_t which;         // current selected item
     uint16_t xco;           // x coordinate of menu window
+    uint16_t count;
+    // not a linked list of sub items. max 10
+    menu_item_t *items[MAX_MENU_ITEMS];
     uint8_t attr[8];        // attribs for pulldown menu border
     uint8_t normal[8];      // attribs for non selected menu items
     uint8_t selected[8];    // atrribs for selected menu item
     uint8_t disabled[8];    // attribs for disabled meny items
 } pulldown_t;
 
-#define MENU_DISABLED 1
-
 // -----------------------------------------------------------------------
 
 typedef struct
 {
-    list_t items;             // list of pulldown menus in this bar
     void *window;             // fwd ref to window_t * grrr (c sucks)
-    pulldown_t *pd;           // pointer to current pd being populated
     uint16_t xco;             // x coordinate of next pulldown
+    uint16_t active;          // 0 = not active
     uint16_t which;           // which pulldown item is active
+    uint16_t count;           // number of pulldowns defined
+    pulldown_t *items[MAX_MENU_ITEMS];
     uint8_t normal[8];        // attribs for non selected menu bar items
     uint8_t selected[8];      // attribs for selected menu bar items
     uint8_t disabled[8];      // attribs for disabled menu bar items
@@ -116,6 +120,20 @@ typedef struct
     uint8_t     old_attrs[8];  // previous state..
     uint8_t     bdr_attrs[8];  // likewise for the windows border if it has
 } window_t;
+
+// -----------------------------------------------------------------------
+
+typedef void key_handler_t(void);
+
+typedef enum
+{
+    K_ENT,  K_CUU1, K_CUD1, K_CUB1,
+    K_CUF1, K_BS,   K_DCH1, K_ICH1,
+    K_HOME, K_END,  K_KNP,  K_KPP,
+    K_F1,   K_F2,   K_F3,   K_F4,
+    K_F5,   K_F6,   K_F7,   K_F8,
+    K_F9,   K_F10,  K_F11,  K_f12
+} key_index_t;
 
 // -----------------------------------------------------------------------
 
@@ -179,7 +197,7 @@ void scr_close(screen_t *scr);
 void scr_win_attach(screen_t *scr, window_t *win);
 void scr_win_detach(window_t *win);
 void scr_cup(screen_t *scr, uint16_t x, uint16_t y);
-void scr_do_draw_screen(screen_t *scr);
+void scr_draw_screen(screen_t *scr);
 void scr_add_backdrop(screen_t *scr);
 
 uint32_t bar_open(screen_t *scr);
@@ -188,5 +206,12 @@ uint32_t new_pulldown(screen_t *scr, char *name);
 uint32_t new_menu_item(screen_t *scr, char *name, menu_fp_t fp,
     uint16_t shortcut);
 void bar_draw_text(screen_t *scr);
+
+// -----------------------------------------------------------------------
+
+uint8_t key(void);
+void menu_init(void);
+void init_key_handlers(void);
+key_handler_t *set_key_action(key_index_t index, key_handler_t* action);
 
 // =======================================================================

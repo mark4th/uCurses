@@ -3,7 +3,6 @@
 
 #include <inttypes.h>
 #include <stdio.h>
-#include <string.h>
 
 #include "h/color.h"
 #include "h/uCurses.h"
@@ -11,7 +10,7 @@
 // -----------------------------------------------------------------------
 
 uint8_t attrs[8];
-uint8_t old_attrs[8];  // to test for changes
+uint8_t old_attrs[8];        // to test for changes
 
 extern const char *f_str;    // terminfo format string pointer
 
@@ -152,7 +151,7 @@ void apply_attribs(void)
         do_set_fg();
     }
 
-    memcpy(old_attrs, attrs, 8);
+    *(uint64_t *)&old_attrs = *(uint64_t *)&attrs;
 }
 
 // -----------------------------------------------------------------------

@@ -83,7 +83,7 @@ extern uint16_t *ti_strings;
 
 void flush(void)
 {
-    uint32_t n;
+    ssize_t n;
 
     n =  write(1, &esc_buff[0], num_esc);
     num_esc = 0;
@@ -673,14 +673,11 @@ void format(uint16_t i)
     i = ti_strings[i];
 
     // it is not an error for a format string to be blank
-    if(i == 0xffff)
+    if(i != 0xffff)
     {
-        return;
+        f_str = &ti_table[i];
+        do_parse_format();
     }
-
-    f_str = &ti_table[i];
-
-    do_parse_format();
 }
 
 // =======================================================================

@@ -3,6 +3,7 @@
 
 #include <inttypes.h>
 #include <stdlib.h>
+//#include <stdio.h>
 
 #include "h/list.h"
 #include "h/tui.h"
@@ -14,13 +15,11 @@ extern screen_t *active_screen;
 // -----------------------------------------------------------------------
 // hard coded attributes for now
 
-#define NORMAL   0x4030000000080
-#define SELECTED 0x1060000000080
-#define DISABLED 0x80400000000c2
+#define NORMAL   0x04030000000080
+#define SELECTED 0x01060000000080
+#define DISABLED 0x080400000000c2
 
 // -----------------------------------------------------------------------
-
-#include <stdio.h>
 
 uint32_t bar_open(screen_t *scr)
 {

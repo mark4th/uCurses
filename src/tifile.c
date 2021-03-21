@@ -47,7 +47,7 @@ uint8_t wide;               // numbers item size size shift factor
 
 static void map_tifile(void)
 {
-    uint32_t fd;
+    int fd;
     const uint8_t *term;
     uint8_t ti_file[128];
     struct stat st;
@@ -68,7 +68,7 @@ static void map_tifile(void)
     ti_size = st.st_size;
 
     fd = open((char *)ti_file, O_RDONLY, 0);
-    if(fd == -1)
+    if(fd != 0)
     {
         printf("No Terminfo File for %s\r\n", term);
         exit(1);

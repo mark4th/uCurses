@@ -165,7 +165,7 @@ uint16_t utf8_strncmp(char *s1, char *s2, uint16_t len)
 {
     utf8_encode_t e1, e2;
 
-    while(*s1 != '\0')
+    while((*s1 != '\0') && (len != 0))
     {
         e1 = *utf8_encode(*s1);
         e2 = *utf8_encode(*s2);
@@ -174,6 +174,7 @@ uint16_t utf8_strncmp(char *s1, char *s2, uint16_t len)
         {
             s1 += e1.len;
             s2 += e2.len;
+            len--;
         }
         else
         {

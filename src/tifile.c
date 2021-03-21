@@ -68,9 +68,9 @@ static void map_tifile(void)
     ti_size = st.st_size;
 
     fd = open((char *)ti_file, O_RDONLY, 0);
-    if(fd != 0)
+    if(fd == -1)
     {
-        printf("No Terminfo File for %s\r\n", term);
+        printf("No Terminfo File for %s\r\n %d\n", term, fd);
         exit(1);
     }
 

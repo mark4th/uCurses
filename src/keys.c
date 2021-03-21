@@ -153,27 +153,27 @@ static uint16_t match_key(void)
 
     for(i = 0; i < 24; i++)
     {
-      num_esc = 0;          // number chars in escape sequence buffer
+        num_esc = 0;          // number chars in escape sequence buffer
 
-      (*(*k_table[i]))();   // compile escape sequence for ith entry
+        (*(*k_table[i]))();   // compile escape sequence for ith entry
 
-      // the above k_table() call compiled an escape sequence into the
-      // esc_buff[] array.  compare it with the sequence in the
-      // keyboard input buffer which is the escape sequence or a single
-      // character of the key that was pressed
+        // the above k_table() call compiled an escape sequence into the
+        // esc_buff[] array.  compare it with the sequence in the
+        // keyboard input buffer which is the escape sequence or a single
+        // character of the key that was pressed
 
-      if(num_k == num_esc)
-      {
-          q = memcmp((const char *)&keybuff[0],
-            (const char *)&esc_buff[0], num_k);
-          if(q == 0)
-          {
-              return i;     // sequences match.
-          }
-      }
-  }
+        if(num_k == num_esc)
+        {
+            q = memcmp((const char *)&keybuff[0],
+                (const char *)&esc_buff[0], num_k);
+            if(q == 0)
+            {
+                return i;     // sequences match.
+            }
+        }
+    }
 
-  return -1;
+    return -1;
 }
 
 // -----------------------------------------------------------------------

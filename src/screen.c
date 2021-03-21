@@ -71,6 +71,7 @@ void scr_win_attach(screen_t *scr, window_t *win)
     if(list_append_node(&scr->windows, win) != 0)
     {
         // log error here?
+        // insert more ram to conginue!
     }
 }
 
@@ -115,31 +116,41 @@ void scr_close(screen_t *scr)
 }
 
 // -----------------------------------------------------------------------
+
+static cell_t *scr_line_addr(screen_t *scr, uint16_t line)
+{
+    uint16_t index = (scr->width) * line;
+    return &scr->buffer1[index];
+}
+
+// -----------------------------------------------------------------------
 // draw window into its parent screen with borders if it has them
 
 static void scr_draw_win(window_t *win)
 {
     uint16_t i;
     cell_t *src, *dst;
+    uint32_t q;
 
     if(win != NULL)
     {
         screen_t *scr = win->screen;
 
-        // borders must be drawn first
+        dst = scr_line_addr(scr, win->yco);
+        dst = &dst[win->xco];
+        src = win->buffer;
+
+        q = win->width * sizeof(cell_t);
+        for(i = 0; i < win->height; i++)
+        {
+            memcpy(dst, src, q);
+            dst += scr->width;
+            src += win->width;
+        }
+        // draw windows border if it has one
         if(win->flags & WIN_BOXED)
         {
             win_draw_borders(win);
-        }
-
-        dst = &scr->buffer1[(win->yco * scr->width) + win->xco];
-        src = win->buffer;
-
-        for(i = 0; i < win->height; i++)
-        {
-            memcpy(dst, src, win->width * sizeof(cell_t));
-            dst += scr->width;
-            src += win->width;
         }
     }
 }
@@ -164,17 +175,9 @@ static void scr_draw_windows(screen_t *scr)
 
 void scr_cup(screen_t *scr, uint16_t x, uint16_t y)
 {
-    if((x != scr->cx) && (y != scr->cy))
+    if((x != scr->cx) || (y != scr->cy))
     {
         cup(y, x);
-    }
-    else if(x != scr->cx)
-    {
-        hpa(x);
-    }
-    else if(y != scr->cy)
-    {
-        vpa(y);
     }
     scr->cx = x;
     scr->cy = y;
@@ -184,9 +187,10 @@ void scr_cup(screen_t *scr, uint16_t x, uint16_t y)
 
 static uint16_t scr_is_modified(screen_t *scr, uint16_t index)
 {
+    uint16_t result;
+
     cell_t *p1 = &scr->buffer1[index];
     cell_t *p2 = &scr->buffer2[index];
-    uint16_t result;
 
     // if attrs of this cell in buffer1 are different from the attrs
     // in buffer 2 or if the characters in those cells are different
@@ -199,6 +203,7 @@ static uint16_t scr_is_modified(screen_t *scr, uint16_t index)
 }
 
 // -----------------------------------------------------------------------
+// emits a charcter in the screen buffer1 out to the console
 
 static void scr_emit(screen_t *scr, uint16_t index)
 {
@@ -210,15 +215,12 @@ static void scr_emit(screen_t *scr, uint16_t index)
 
     *p2 = *p1;               // mark cell as no longer needing update
 
-    // convert index to coordinates
-    y = index / scr->width;
+    y = index / scr->width;  // convert index to coordinates
     x = index % scr->width;
 
-    // this only sets x or y if they are not already correct
-    scr_cup(scr, x, y);
+    scr_cup(scr, x, y);      // hopefylly only sets x or y if not correct
 
-    // output the utf-8 codepoint to the terminal
-    utf8_emit(p1->code);
+    utf8_emit(p1->code);     // output utf-8 codepoint to terminal
 
     scr->cx++;
 
@@ -250,7 +252,7 @@ void scr_add_backdrop(screen_t *scr)
         win->bdr_attrs[ATTR] = FG_GRAY | BG_GRAY | BOLD;
         win->bdr_attrs[FG] = 13;
         win->bdr_attrs[BG] = 0;
-        win->bdr_type = BDR_DOUBLE;
+        win->bdr_type = BDR_SINGLE;
         win_clear(win);
 
         scr->backdrop = win;
@@ -329,6 +331,10 @@ void scr_draw_screen(screen_t *scr)
             {
                 index = indx;
                 continue;
+            }
+            else
+            {
+                index = end;
             }
         }
         index++;

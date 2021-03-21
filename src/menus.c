@@ -186,9 +186,11 @@ void bar_draw_text(screen_t *scr)
     if((bar != NULL) && (bar->window != NULL))
     {
         win = bar->window;
+
         *(uint64_t *)&win->attrs[0] = *(uint64_t *)&bar->normal[0];
+
         win_clear(win);
-        win_crsr_rt(win);
+        win_emit(win, win->blank);
 
         for(i = 0; i < bar->count; i++)
         {
@@ -205,6 +207,11 @@ void bar_draw_text(screen_t *scr)
 
             win_emit(win, win->blank);
             win_puts(win, pd->name);
+            win_emit(win, win->blank);
+        }
+        *(uint64_t *)&win->attrs[0] = *(uint64_t *)pd->normal;
+        while(win->cx != win->width -1)
+        {
             win_emit(win, win->blank);
         }
     }
@@ -306,14 +313,9 @@ static void menu_activate(void)
 
 static void next_pd(menu_bar_t *bar)
 {
-    if(bar->which != bar->count -1)
-    {
-        bar->which++;
-    }
-    else
-    {
-        bar->which = 0;
-    }
+    bar->which = (bar->which != bar->count -1)
+       ? bar->which + 1
+       : 0;
 }
 
 // -----------------------------------------------------------------------
@@ -345,14 +347,9 @@ static void menu_right(void)
 
 static void prev_pd(menu_bar_t *bar)
 {
-    if(bar->which != 0)
-    {
-        bar->which--;
-    }
-    else
-    {
-        bar->which = bar->count -1;
-    }
+    bar->which =(bar->which != 0)
+       ? bar->which - 1
+       : bar->count -1;
 }
 
 // -----------------------------------------------------------------------

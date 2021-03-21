@@ -85,7 +85,7 @@ void flush(void)
 {
     ssize_t n;
 
-    n =  write(1, &esc_buff[0], num_esc);
+    n =  write(1, esc_buff, num_esc);
     num_esc = 0;
 
     if(n < 0)

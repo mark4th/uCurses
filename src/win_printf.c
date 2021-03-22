@@ -15,7 +15,7 @@ void win_puts(window_t *win, char *p)
     uint8_t skip;
     uint32_t codepoint;
 
-    while('\0' != *p)
+    while(*p != '\0')
     {
         skip = utf8_decode(&codepoint, p);
         win_emit(win, codepoint);

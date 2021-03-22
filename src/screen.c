@@ -305,6 +305,7 @@ void scr_draw_screen(screen_t *scr)
     active_screen = scr;
 
     menu_bar_t *bar;
+    pulldown_t *pd;
 
     *(uint64_t *)&old_attrs[0] = 0;
 
@@ -316,6 +317,13 @@ void scr_draw_screen(screen_t *scr)
         bar = scr->menu_bar;
         bar_draw_text(scr);
         scr_draw_win(bar->window);
+        pd = bar->items[bar->which];
+
+        if(bar->active != 0)
+        {
+            bar_populdate_pd(pd);
+            scr_draw_win((window_t *)pd->window);
+        }
     }
 
     scr->cx = scr->cy = -1;
@@ -332,9 +340,9 @@ void scr_draw_screen(screen_t *scr)
                 index = indx;
                 continue;
             }
-            else
-            {
-                index = end;
+            else       // the inner loop within update() scanned to the
+            {          // end of the display and found no new characters
+                break; // that needed to be updated. we can quit now too
             }
         }
         index++;

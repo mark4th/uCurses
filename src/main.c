@@ -103,7 +103,8 @@ char chinese[33][31] =
 void print_lorem(window_t *win)
 {
     static uint16_t i = 0;
-    static uint8_t r = 105, g = 100, b = 45;
+    static uint8_t r1 = 105, g1 = 100, b1 = 45;
+    static uint8_t r2, g2, b2;
 
     uint8_t len;
     i = (i == 69) ? 0 : i;
@@ -115,14 +116,16 @@ void print_lorem(window_t *win)
     if((len + win->cx) >= win->width)
     {
         win_el(win);   // this also effects a win_cr()
-
+        r2 = r1 + 128;
+        g2 = g1 + 128;
+        b2 = b1 + 128;
         win_printf(win, "%rf%rb",
-            sintab[r], sintab[g], sintab[b],    // foreground
-            sintab[g], sintab[b], sintab[r]);   // background
+            sintab[r1], sintab[g1], sintab[b1],    // foreground
+            sintab[r2], sintab[g2], sintab[b2]);   // background
 
-        r += 13; g += 18; b += 23;
+        r1 += 7; g1 += 5; b1 += 6;
     }
-    win_printf(win, &lorem[i][0]);
+    win_puts(win, &lorem[i][0]);
     i++;
 }
 
@@ -353,6 +356,7 @@ int main(void)
     bar_open(scr);
 
     new_pulldown(scr, "File");
+
     new_menu_item(scr, "Menu 1", NULL, 0);
     new_menu_item(scr, "Menu 2", NULL, 0);
     new_menu_item(scr, "Menu 3", NULL, 0);
@@ -360,14 +364,39 @@ int main(void)
 
     new_pulldown(scr, "Edit");
 
-// menu_bar_t *bar = scr->menu_bar;
-// pulldown_t *pd = bar->pd;
-// pd->flags |= MENU_DISABLED;
+    new_menu_item(scr, "Menu 1", NULL, 0);
+    new_menu_item(scr, "Menu 2", NULL, 0);
+    new_menu_item(scr, "Menu 3", NULL, 0);
+    new_menu_item(scr, "Menu 4", NULL, 0);
 
     new_pulldown(scr, "Find");
+
+    new_menu_item(scr, "Menu 1", NULL, 0);
+    new_menu_item(scr, "Menu 2", NULL, 0);
+    new_menu_item(scr, "Menu 3", NULL, 0);
+    new_menu_item(scr, "Menu 4", NULL, 0);
+
     new_pulldown(scr, "View");
+
+    new_menu_item(scr, "Menu 1", NULL, 0);
+    new_menu_item(scr, "Menu 2", NULL, 0);
+    new_menu_item(scr, "Menu 3", NULL, 0);
+    new_menu_item(scr, "Menu 4", NULL, 0);
+
     new_pulldown(scr, "Tools");
+
+    new_menu_item(scr, "Menu 1", NULL, 0);
+    new_menu_item(scr, "Menu 2", NULL, 0);
+    new_menu_item(scr, "Menu 3", NULL, 0);
+    new_menu_item(scr, "Menu 4", NULL, 0);
+
     new_pulldown(scr, "Help");
+
+    new_menu_item(scr, "Menu 1", NULL, 0);
+    new_menu_item(scr, "Menu 2", NULL, 0);
+    new_menu_item(scr, "Menu 3", NULL, 0);
+    new_menu_item(scr, "Menu 4", NULL, 0);
+
     pd_disable(scr, "View");
     scr_draw_screen(scr);
 

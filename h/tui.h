@@ -48,6 +48,7 @@ typedef void (*menu_fp_t)(void);
 typedef struct
 {
     char *name;
+    uint16_t flags;         // disable flags etc
     menu_fp_t fp;           // function to execute
     uint16_t shortcut;      // keyboard shortcut
 } menu_item_t;
@@ -64,6 +65,7 @@ typedef struct
     uint16_t count;
     // not a linked list of sub items. max 10
     menu_item_t *items[MAX_MENU_ITEMS];
+    void *window;           // this is a window_t honest!
     uint8_t attr[8];        // attribs for pulldown menu border
     uint8_t normal[8];      // attribs for non selected menu items
     uint8_t selected[8];    // atrribs for selected menu item
@@ -206,6 +208,7 @@ uint32_t new_pulldown(screen_t *scr, char *name);
 uint32_t new_menu_item(screen_t *scr, char *name, menu_fp_t fp,
     uint16_t shortcut);
 void bar_draw_text(screen_t *scr);
+void bar_populdate_pd(pulldown_t *pd);
 
 // -----------------------------------------------------------------------
 

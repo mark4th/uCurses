@@ -364,7 +364,7 @@ void win_crsr_dn(window_t *win)
     {
         win->cy++;
     }
-    else if((win->attrs[ATTR] & WIN_LOCKED) == 0)
+    else if((win->flags & WIN_LOCKED) == 0)
     {
         win_scroll_up(win);
     }

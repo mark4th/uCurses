@@ -38,7 +38,7 @@ uint32_t bar_open(screen_t *scr)
             bar->window = win;
 
             // make window non scrolling
-            win->attrs[ATTR] |= WIN_LOCKED;
+            win->flags = WIN_LOCKED;
 
             win->screen   = scr;
             scr->menu_bar = bar;
@@ -51,7 +51,7 @@ uint32_t bar_open(screen_t *scr)
             *(uint64_t *)bar->normal   = NORMAL;
             *(uint64_t *)bar->selected = SELECTED;
             *(uint64_t *)bar->disabled = DISABLED;
-
+            bar->xco = 2;
             result = 0;
         }
         else
@@ -173,6 +173,68 @@ uint32_t new_menu_item(screen_t *scr, char *name, menu_fp_t fp,
 }
 
 // -----------------------------------------------------------------------
+// create a new window for the pulldown menu we are about to display
+
+static uint32_t bar_create_pd(screen_t *scr, pulldown_t *pd)
+{
+    window_t *win;
+    uint32_t result = 1;
+
+    win = win_open(pd->width, pd->count);
+
+    if(win != NULL)
+    {
+        win->xco    = pd->xco;
+        win->yco    = 2;
+
+        win->flags  = WIN_BOXED | WIN_LOCKED;
+        win->blank  = 0x20;
+
+        win->bdr_attrs[ATTR] = FG_GRAY | BG_GRAY | BOLD;
+        win->bdr_attrs[FG]   = 11; //pd->attr[FG];
+        win->bdr_attrs[BG]   = 6; // pd->attr[BG];
+        win->bdr_type        = BDR_CURVED;
+
+        win->screen = scr;
+        pd->window  = win;
+
+        result = 0;
+    }
+
+    return result;
+}
+
+// -----------------------------------------------------------------------
+// populate pulldown window with menu items
+
+void bar_populdate_pd(pulldown_t *pd)
+{
+    menu_item_t *item;
+    window_t *win;
+    uint16_t i;
+
+    if((pd != NULL) && (pd->count != 0) && (pd->window != NULL))
+    {
+        win = pd->window;
+        win_clear(win);
+
+        for(i = 0; i != pd->count; i++)
+        {
+            item = pd->items[i];
+
+            *(uint64_t *)&win->attrs[0] = (i == pd->which)
+                ? *(uint64_t *)pd->selected
+                : (item->flags & MENU_DISABLED)
+                    ? *(uint64_t *)pd->disabled
+                    : *(uint64_t *)pd->normal;
+
+            win_cup(win, 0, i);
+            win_puts(win, item->name);
+        }
+    }
+}
+
+// -----------------------------------------------------------------------
 // draws menu bar text, does not draw bar into screen
 
 void bar_draw_text(screen_t *scr)
@@ -209,7 +271,9 @@ void bar_draw_text(screen_t *scr)
             win_puts(win, pd->name);
             win_emit(win, win->blank);
         }
+
         *(uint64_t *)&win->attrs[0] = *(uint64_t *)bar->normal;
+
         while(win->cx != win->width -1)
         {
             win_emit(win, win->blank);
@@ -298,6 +362,21 @@ void pd_enable(screen_t *scr, char *name)
 
 // -----------------------------------------------------------------------
 
+static void redraw_pulldown(menu_bar_t *bar)
+{
+    pulldown_t *pd = bar->items[bar->which];
+
+    if(pd->count != 0)
+    {
+        if(bar_create_pd(active_screen, pd) != 0)
+        {
+            bar_populdate_pd(pd);
+        }
+    }
+}
+
+// -----------------------------------------------------------------------
+
 static void menu_up(void)    { }
 static void menu_down(void)  { }
 
@@ -305,8 +384,19 @@ static void menu_down(void)  { }
 
 static void menu_activate(void)
 {
-   menu_bar_t *bar = active_screen->menu_bar;
-   bar->active ^= 1;
+    menu_bar_t *bar = active_screen->menu_bar;
+    pulldown_t *pd;
+    bar->active ^= 1;
+
+    if(bar->active != 0)
+    {
+        redraw_pulldown(bar);
+    }
+    else
+    {
+        pd = bar->items[bar->which];
+        win_close(pd->window);
+    }
 }
 
 // -----------------------------------------------------------------------
@@ -316,6 +406,8 @@ static void next_pd(menu_bar_t *bar)
     bar->which = (bar->which != bar->count -1)
        ? bar->which + 1
        : 0;
+
+    redraw_pulldown(bar);
 }
 
 // -----------------------------------------------------------------------
@@ -330,6 +422,10 @@ static void menu_right(void)
     {
         n = bar->count;
 
+        pd = bar->items[bar->which];
+        win_close(pd->window);
+        pd->window = NULL;
+
         while(n != 0)
         {
             next_pd(bar);
@@ -337,7 +433,7 @@ static void menu_right(void)
             pd = bar->items[bar->which];
             if((pd->flags & MENU_DISABLED) == 0)
             {
-                n = 0;
+                break;
             }
         }
     }
@@ -347,9 +443,11 @@ static void menu_right(void)
 
 static void prev_pd(menu_bar_t *bar)
 {
-    bar->which =(bar->which != 0)
+    bar->which = (bar->which != 0)
        ? bar->which - 1
-       : bar->count -1;
+       : bar->count - 1;
+
+    redraw_pulldown(bar);
 }
 
 // -----------------------------------------------------------------------
@@ -364,6 +462,10 @@ static void menu_left(void)
     {
         n = bar->count;
 
+        pd = bar->items[bar->which];
+        win_close(pd->window);
+        pd->window = NULL;
+
         while(n != 0)
         {
             prev_pd(bar);
@@ -371,7 +473,7 @@ static void menu_left(void)
             pd = bar->items[bar->which];
             if((pd->flags & MENU_DISABLED) == 0)
             {
-                n = 0;
+                break;
             }
         }
     }
@@ -383,15 +485,18 @@ static void menu_left(void)
 void menu_init(void)
 {
     init_key_handlers();
+
     set_key_action(K_CUU1, menu_up);
     set_key_action(K_CUD1, menu_down);
     set_key_action(K_CUB1, menu_left);
     set_key_action(K_CUF1, menu_right);
     set_key_action(K_F10, menu_activate);
+
     // without this the cursor up and down keys can return escape
     // sequences that do not match what is specified for them in
     // the terminfo file - emitting an smkx escape sequence to the
     // terminal turns on keyboard transmit mode what ever that is
+
     ti_smkx();
 }
 

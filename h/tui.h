@@ -209,6 +209,7 @@ uint32_t new_menu_item(screen_t *scr, char *name, menu_fp_t fp,
     uint16_t shortcut);
 void bar_draw_text(screen_t *scr);
 void bar_populdate_pd(pulldown_t *pd);
+uint16_t is_wide(uint32_t code);
 
 // -----------------------------------------------------------------------
 

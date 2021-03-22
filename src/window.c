@@ -237,10 +237,10 @@ void win_clear(window_t *win)
 
 static void win_copy_line(window_t *win, uint16_t src, uint16_t dst)
 {
-   cell_t *s = win_line_addr(win, src);
-   cell_t *d = win_line_addr(win, dst);
+    cell_t *s = win_line_addr(win, src);
+    cell_t *d = win_line_addr(win, dst);
 
-   memcpy(d, s, win->width * sizeof(cell_t));
+    memcpy(d, s, win->width * sizeof(cell_t));
 }
 
 // -----------------------------------------------------------------------

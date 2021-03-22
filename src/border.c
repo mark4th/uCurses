@@ -6,6 +6,7 @@
 
 #include "h/border.h"
 #include "h/tui.h"
+#include "h/uCurses.h"
 
 // -----------------------------------------------------------------------
 // these three borders give the outer edge characters for a window
@@ -68,10 +69,11 @@ static void draw_char(window_t *win, uint16_t cx,
     uint16_t cy, uint32_t code)
 {
     screen_t *scr = win->screen;
-    cell_t *p1 = &scr->buffer1[(cy * scr->width) + cx];
+    uint16_t index = (cy * scr->width) + cx;
+
+    cell_t *p1 = &scr->buffer1[index];
 
     *(uint64_t *)&p1->attrs = *(uint64_t *)&win->bdr_attrs;
-
     p1->code = code;
 }
 

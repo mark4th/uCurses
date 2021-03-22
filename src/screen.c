@@ -141,12 +141,14 @@ static void scr_draw_win(window_t *win)
         src = win->buffer;
 
         q = win->width * sizeof(cell_t);
+
         for(i = 0; i < win->height; i++)
         {
             memcpy(dst, src, q);
             dst += scr->width;
             src += win->width;
         }
+
         // draw windows border if it has one
         if(win->flags & WIN_BOXED)
         {
@@ -184,6 +186,7 @@ void scr_cup(screen_t *scr, uint16_t x, uint16_t y)
 }
 
 // -----------------------------------------------------------------------
+uint16_t is_wide(uint32_t code);
 
 static uint16_t scr_is_modified(screen_t *scr, uint16_t index)
 {
@@ -196,8 +199,8 @@ static uint16_t scr_is_modified(screen_t *scr, uint16_t index)
     // in buffer 2 or if the characters in those cells are different
     // then this cell needs updating
 
-    result = *(uint64_t *)&p1->attrs != *(uint64_t *)p2->attrs;
-    result |= p1->code != p2->code;
+    result = (*(uint64_t *)&p1->attrs != *(uint64_t *)p2->attrs);
+    result |= (p1->code != p2->code);
 
     return result;
 }
@@ -220,8 +223,28 @@ static void scr_emit(screen_t *scr, uint16_t index)
 
     scr_cup(scr, x, y);      // hopefylly only sets x or y if not correct
 
+    // this horrendous code ensures that any double wide character such
+    // as a chinese character that is not immediately followed by another
+    // double wide character is not drawn.  if it were drawn it would then
+    // overwrite the single wide char that follows it and that char would
+    // then not be redrawn because as far as the system is concerned
+    // that cell never changed
+
+    if(is_wide(p1->code) == 1)
+    {
+        if(is_wide((p1 + 1)->code) == 0)
+        {
+            utf8_emit(0x20);
+            scr->cx++;
+            (p2+1)->code = 0;
+            *(uint64_t *)&(p2+1)->attrs = 0;
+            goto skip;
+        }
+    }
+
     utf8_emit(p1->code);     // output utf-8 codepoint to terminal
 
+skip:
     scr->cx++;
 
     if(scr->cx == scr->width)
@@ -260,34 +283,36 @@ void scr_add_backdrop(screen_t *scr)
 }
 
 // -----------------------------------------------------------------------
+// inner loop of screen update
 
-static uint32_t update(screen_t *scr, uint16_t index, uint16_t end)
+static uint32_t inner_update(screen_t *scr, uint16_t index,
+    uint16_t end)
 {
     cell_t *p1;
     int indx = 0;
 
     p1 = &scr->buffer1[index];
 
-    *(uint64_t *)&attrs[0] = *(uint64_t *)&p1->attrs[0];
+    *(uint64_t *)&attrs = *(uint64_t *)&p1->attrs;
 
     apply_attribs();
 
     p1 = &scr->buffer1[index];
+
     do
     {
-        if(*(uint64_t *)&attrs[0] == *(uint64_t *)&p1->attrs)
+        if(*(uint64_t *)&attrs == *(uint64_t *)&p1->attrs)
         {
             scr_emit(scr, index);
         }
         else
         {
-            if(0 == indx)
+            if(indx == 0)
             {
                 indx = index;
             }
         }
-        index++;
-        p1++;
+        index++;  p1++;
     } while (index != end);
 
     // return index of first char that had different attributes to the
@@ -296,36 +321,14 @@ static uint32_t update(screen_t *scr, uint16_t index, uint16_t end)
 }
 
 // -----------------------------------------------------------------------
+// outer loop of screen update
 
-void scr_draw_screen(screen_t *scr)
+static void outer_update(screen_t *scr)
 {
-    uint16_t index = 0, indx;
+    uint16_t index = 0;
     uint16_t end = scr->width * scr->height;
 
-    active_screen = scr;
-
-    menu_bar_t *bar;
-    pulldown_t *pd;
-
-    *(uint64_t *)&old_attrs[0] = 0;
-
-    scr_draw_win((window_t *)scr->backdrop);
-    scr_draw_windows(scr);
-
-    if(scr->menu_bar != NULL)
-    {
-        bar = scr->menu_bar;
-        bar_draw_text(scr);
-        scr_draw_win(bar->window);
-        pd = bar->items[bar->which];
-
-        if(bar->active != 0)
-        {
-            bar_populdate_pd(pd);
-            scr_draw_win((window_t *)pd->window);
-        }
-    }
-
+    // force a screen cursor position update
     scr->cx = scr->cy = -1;
 
     do
@@ -334,19 +337,66 @@ void scr_draw_screen(screen_t *scr)
         // screen that shares its attributes.
         if(scr_is_modified(scr, index) != 0)
         {
-            indx = update(scr, index, end);
-            if(indx != 0)
-            {
-                index = indx;
-                continue;
-            }
-            else       // the inner loop within update() scanned to the
-            {          // end of the display and found no new characters
-                break; // that needed to be updated. we can quit now too
-            }
+            index = inner_update(scr, index, end);
+
+            // the return value is the index of the first character
+            // that update found that had different atributes to the
+            // ones it was setting.  this is our new scan point
+            // if indx is zero then update scanned to the end of the
+            // screen and found no characters that that it did not
+            // already update so we can exit early too
+
+            if(index == 0) { break; }
+            continue;  // skip the ++
         }
         index++;
     } while(index != end);
+}
+
+// -----------------------------------------------------------------------
+
+static void scr_update_menus(screen_t *scr)
+{
+    menu_bar_t *bar;
+    pulldown_t *pd;
+
+    if(scr->menu_bar != NULL)
+    {
+        bar = scr->menu_bar;
+
+        // draw all text into memu bar window then write that to
+        // the screen buffer
+        bar_draw_text(scr);
+        scr_draw_win(bar->window);
+
+        if(bar->active != 0)
+        {
+            pd = bar->items[bar->which];
+
+            // draw all text inside pulldown memus window
+            bar_populdate_pd(pd);
+            // draw pulldown window into screen
+            scr_draw_win((window_t *)pd->window);
+        }
+    }
+}
+
+// -----------------------------------------------------------------------
+
+void scr_draw_screen(screen_t *scr)
+{
+    active_screen = scr;
+
+    *(uint64_t *)&old_attrs[0] = 0;
+
+    // backdrop if it exists is always the first window to be drawn into
+    // the screen
+    scr_draw_win((window_t *)scr->backdrop);
+
+    scr_draw_windows(scr);
+    scr_update_menus(scr);
+
+    outer_update(scr);
 
     flush();
 }

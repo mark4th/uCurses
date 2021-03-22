@@ -1,6 +1,10 @@
 // test main
 // -----------------------------------------------------------------------
 
+// -----------------------------------------------------------------------
+// not an example of how to do thins properly, just test/debug code
+// -----------------------------------------------------------------------
+
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -357,45 +361,41 @@ int main(void)
 
     new_pulldown(scr, "File");
 
-    new_menu_item(scr, "Menu 1", NULL, 0);
-    new_menu_item(scr, "Menu 2", NULL, 0);
-    new_menu_item(scr, "Menu 3", NULL, 0);
-    new_menu_item(scr, "Menu 4", NULL, 0);
+    new_menu_item(scr, "Open File", NULL, 0);
+    new_menu_item(scr, "Close File", NULL, 0);
+    new_menu_item(scr, "Delete internet", NULL, 0);
+    new_menu_item(scr, "Copy Nothing", NULL, 0);
 
     new_pulldown(scr, "Edit");
 
-    new_menu_item(scr, "Menu 1", NULL, 0);
-    new_menu_item(scr, "Menu 2", NULL, 0);
-    new_menu_item(scr, "Menu 3", NULL, 0);
-    new_menu_item(scr, "Menu 4", NULL, 0);
+    new_menu_item(scr, "Insert Mode", NULL, 0);
+    new_menu_item(scr, "Overwrite Mode", NULL, 0);
+    new_menu_item(scr, "Delete Line", NULL, 0);
+    new_menu_item(scr, "Insert Line", NULL, 0);
 
     new_pulldown(scr, "Find");
 
-    new_menu_item(scr, "Menu 1", NULL, 0);
-    new_menu_item(scr, "Menu 2", NULL, 0);
-    new_menu_item(scr, "Menu 3", NULL, 0);
-    new_menu_item(scr, "Menu 4", NULL, 0);
+    new_menu_item(scr, "Search for Gold", NULL, 0);
+    new_menu_item(scr, "Search and Destroy", NULL, 0);
 
     new_pulldown(scr, "View");
 
-    new_menu_item(scr, "Menu 1", NULL, 0);
-    new_menu_item(scr, "Menu 2", NULL, 0);
-    new_menu_item(scr, "Menu 3", NULL, 0);
-    new_menu_item(scr, "Menu 4", NULL, 0);
+    new_menu_item(scr, "View Point", NULL, 0);
+    new_menu_item(scr, "View to a Kill", NULL, 0);
+    new_menu_item(scr, "Review", NULL, 0);
 
     new_pulldown(scr, "Tools");
 
-    new_menu_item(scr, "Menu 1", NULL, 0);
-    new_menu_item(scr, "Menu 2", NULL, 0);
-    new_menu_item(scr, "Menu 3", NULL, 0);
-    new_menu_item(scr, "Menu 4", NULL, 0);
+    new_menu_item(scr, "Manchester Screwdriver", NULL, 0);
+    new_menu_item(scr, "Dentists Drill", NULL, 0);
+    new_menu_item(scr, "Diamond File", NULL, 0);
+    new_menu_item(scr, "Shovel", NULL, 0);
 
     new_pulldown(scr, "Help");
 
-    new_menu_item(scr, "Menu 1", NULL, 0);
-    new_menu_item(scr, "Menu 2", NULL, 0);
-    new_menu_item(scr, "Menu 3", NULL, 0);
-    new_menu_item(scr, "Menu 4", NULL, 0);
+    new_menu_item(scr, "Self Help", NULL, 0);
+    new_menu_item(scr, "Helping Hand", NULL, 0);
+    new_menu_item(scr, "Helpless", NULL, 0);
 
     pd_disable(scr, "View");
     scr_draw_screen(scr);

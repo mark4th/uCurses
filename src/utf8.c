@@ -60,6 +60,15 @@ utf8_encode_t *utf8_encode(uint32_t cp)
 
 // --------------------------------------------------------------------------
 
+uint16_t is_wide(uint32_t code)
+{
+    uint16_t result;
+    result = (wcwidth(code) == 1) ? 0 : 1;
+    return(result);
+}
+
+// --------------------------------------------------------------------------
+
 void utf8_emit(uint32_t cp)
 {
     uint8_t i;

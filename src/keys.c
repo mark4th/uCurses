@@ -8,18 +8,18 @@
 
 #include "h/uCurses.h"
 
+// -----------------------------------------------------------------------
+
 extern uint8_t *esc_buff;
 extern uint16_t num_esc;
+static uint8_t keybuff[32];
+static uint16_t num_k;
+
+#define KEY_COUNT (sizeof(k_table) / sizeof(k_table[0]))
 
 // -----------------------------------------------------------------------
 
 static void noop(void){;}
-
-// -----------------------------------------------------------------------
-// key sequence input buffer
-
-static uint8_t keybuff[32];
-static uint16_t num_k;
 
 // -----------------------------------------------------------------------
 
@@ -73,25 +73,7 @@ static void read_keys(void)
     do
     {
          keybuff[num_k++] = read_key();
-    } while( 0 != test_keys());
-}
-
-// -----------------------------------------------------------------------
-// put a enter character in keyboard input buffer
-
-static void ent(void)
-{
-    esc_buff[0] = 0x0a;
-    num_esc = 1;
-}
-
-// -----------------------------------------------------------------------
-// put a backspace character in the keyboard input buffer
-
-static void kbs(void)
-{
-    esc_buff[0] = 0x7f;
-    num_esc = 1;
+    } while(0 != test_keys());
 }
 
 // -----------------------------------------------------------------------
@@ -101,6 +83,8 @@ static void kbs(void)
 // these allow us to determine which key was pressed by comparing the
 // actual sequence that was input with the data returned by each of these
 
+ static void kbs(void)   { ti_kbs();   }
+ static void kent(void)  { ti_kent();  }
  static void kcuu1(void) { ti_kcuu1(); }
  static void kcud1(void) { ti_kcud1(); }
  static void kcub1(void) { ti_kcub1(); }
@@ -131,14 +115,11 @@ static void kbs(void)
 
 // order of items is important here
 
-void (*k_table[24])() =
+void (*k_table[])() =
 {
-    ent,   kcuu1, kcud1, kcub1,
-    kcuf1, kbs,   kdch1, kich1,
-    khome, kend,  knp,   kpp,
-    kf1,   kf2,   kf3,   kf4,
-    kf5,   kf6,   kf7,   kf8,
-    kf9,   kf10,  kf11,  kf12
+    kent,  kcuu1, kcud1, kcub1, kcuf1, kbs,   kdch1, kich1,
+    khome, kend,  knp,   kpp,   kf1,   kf2,   kf3,   kf4,
+    kf5,   kf6,   kf7,   kf8,   kf9,   kf10,  kf11,  kf12
 };
 
 // -----------------------------------------------------------------------
@@ -181,17 +162,20 @@ static uint16_t match_key(void)
 
 static void k_ent(void)
 {
-    keybuff[0] = 0x0a;
-    num_k = 1;
+//    keybuff[0] = 0x0a;
+//    num_k = 1;
 }
 
 // -----------------------------------------------------------------------
 // add delete char to keyboard input buffer
 
+// stupid keyboard returns 0x7f when terminfo clearly states that the
+// backspace key returns control h which is 0x08
+
 static void k_bs(void)
 {
-    keybuff[0] = 8;
-    num_k = 1;
+//    keybuff[0] = 8;
+//    num_k = 1;
 }
 
 // -----------------------------------------------------------------------
@@ -199,7 +183,7 @@ static void k_bs(void)
 // items in this array.  the end user does not get to modify this array as
 // the order of items within it is critical
 
-static key_handler_t *default_key_actions[24] =
+static key_handler_t *default_key_actions[] =
 {
 //  ENTER  UP    DOWN  LEFT  RIGHT  BS    DEL   INSERT
     k_ent, noop, noop, noop, noop,  k_bs, noop, noop,
@@ -211,7 +195,7 @@ static key_handler_t *default_key_actions[24] =
 
 // -----------------------------------------------------------------------
 
-key_handler_t *user_key_actions[24] = { NULL };
+key_handler_t *user_key_actions[KEY_COUNT] = { NULL };
 
 // -----------------------------------------------------------------------
 
@@ -240,6 +224,7 @@ uint8_t key(void)
         {
             num_esc = 0;    // ensure there are no keys in the buffer
             (user_key_actions[c])();
+            if(num_k == 1) { break; }
             return 0xff;
         }
     } while (1 != num_k);

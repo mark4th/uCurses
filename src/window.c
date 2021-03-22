@@ -396,9 +396,13 @@ void win_crsr_rt(window_t *win)
     {
         win->cx++;
     }
-    else
+    else if((win->flags & WIN_LOCKED) == 0)
     {
         win_crsr_dn(win);
+        win->cx = 0;
+    }
+    else
+    {
         win->cx = 0;
     }
 }

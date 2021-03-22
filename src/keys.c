@@ -58,7 +58,7 @@ static uint8_t read_key(void)
     {
         n = read(1, &buffer, 1);
         // todo this might be bad :)
-    } while(-1 == n);
+    } while(n == -1);
 
     return buffer;
 }
@@ -201,18 +201,12 @@ static void k_bs(void)
 
 static key_handler_t *default_key_actions[24] =
 {
-//  ENTER  UP    DOWN  LEFT
-    k_ent, noop, noop, noop,
-//  RIGHT  BS    DEL   INSERT
-    noop,  k_bs, noop, noop,
-//  HOME   END   PDN   PUP
-    noop,  noop, noop, noop,
-//  F1     F2    F3    F4
-    noop,  noop, noop, noop,
-//  F5     F6    F7    F8
-    noop,  noop, noop, noop,
-//  F9     F10   F11   F12
-    noop,  noop, noop, noop
+//  ENTER  UP    DOWN  LEFT  RIGHT  BS    DEL   INSERT
+    k_ent, noop, noop, noop, noop,  k_bs, noop, noop,
+//  HOME   END   PDN   PUP   F1     F2    F3    F4
+    noop,  noop, noop, noop, noop,  noop, noop, noop,
+//  F5     F6    F7    F8    F9     F10   F11   F12
+    noop,  noop, noop, noop, noop,  noop, noop, noop
 };
 
 // -----------------------------------------------------------------------
@@ -225,6 +219,7 @@ key_handler_t *set_key_action(key_index_t index, key_handler_t* action)
 {
     key_handler_t *x = user_key_actions[index];
     user_key_actions[index] = action;
+
     return x;
 }
 

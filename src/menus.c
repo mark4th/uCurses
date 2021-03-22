@@ -74,7 +74,7 @@ static uint32_t new_pull(menu_bar_t *bar, pulldown_t *pd, char *name)
     {
         bar->items[bar->count++] = pd;
 
-        pd->which = -1;
+        pd->which = 0;
         pd->name  = name;
         pd->xco   = bar->xco;
         bar->xco += utf8_strlen(name) + 2;
@@ -258,8 +258,6 @@ void bar_draw_text(screen_t *scr)
         {
             pd = bar->items[i];
 
-            // }:) trust me, im a professional! }:)
-
             *(uint64_t *)&win->attrs[0] =
                 ((i == bar->which) && (bar->active != 0))
                      ? *(uint64_t *)bar->selected
@@ -377,8 +375,75 @@ static void redraw_pulldown(menu_bar_t *bar)
 
 // -----------------------------------------------------------------------
 
-static void menu_up(void)    { }
-static void menu_down(void)  { }
+static void prev_item(pulldown_t *pd)
+{
+    pd->which = (pd->which != 0)
+        ? pd->which - 1
+        : pd->count - 1;
+}
+
+// -----------------------------------------------------------------------
+
+static void menu_up(void)
+{
+   menu_bar_t *bar = active_screen->menu_bar;
+   pulldown_t *pd;
+   uint16_t n;
+   menu_item_t *item;
+
+   if((bar != NULL)  && (bar->active != 0))
+   {
+       pd = bar->items[bar->which];
+       n = bar->count;
+
+       while(n != 0)
+       {
+            prev_item(pd);
+            n--;
+            item = pd->items[pd->which];
+            if((item->flags & MENU_DISABLED) == 0)
+            {
+                break;
+            }
+       }
+   }
+}
+
+// -----------------------------------------------------------------------
+
+static void next_item(pulldown_t *pd)
+{
+    pd->which = (pd->which != pd->count -1)
+        ? pd->which + 1
+        : 0;
+}
+
+// -----------------------------------------------------------------------
+
+static void menu_down(void)
+{
+   menu_bar_t *bar = active_screen->menu_bar;
+   pulldown_t *pd;
+   uint16_t n;
+   menu_item_t *item;
+
+   if((bar != NULL)  && (bar->active != 0))
+   {
+       pd = bar->items[bar->which];
+       n = bar->count;
+
+       while(n != 0)
+       {
+            next_item(pd);
+            n--;
+            item = pd->items[pd->which];
+            if((item->flags & MENU_DISABLED) == 0)
+            {
+                break;
+            }
+       }
+   }
+}
 
 // -----------------------------------------------------------------------
 

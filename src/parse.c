@@ -6,7 +6,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "h/tui.h"
 #include "h/uCurses.h"
 
 // -----------------------------------------------------------------------
@@ -617,7 +616,7 @@ const switch_t p_codes[] =
 // format string such as for gray scales and rgb colors. otherwise it
 // would be static
 
-void do_parse_format(void)
+void parse_format(void)
 {
     char c1;
 
@@ -639,7 +638,7 @@ void format(uint16_t i)
     if(i != 0xffff)
     {
         f_str = &ti_table[i];
-        do_parse_format();
+        parse_format();
     }
 }
 

@@ -4,7 +4,6 @@
 #include <inttypes.h>
 #include <stdio.h>
 
-#include "h/color.h"
 #include "h/uCurses.h"
 
 // -----------------------------------------------------------------------
@@ -46,7 +45,7 @@ static void do_set_fg(void)
         // there is no format string for this within the terminfo
         // string section
         f_str = &rgb_seq[0];
-        do_parse_format();
+        parse_format();
         return;
     }
     if(attrs[ATTR] & FG_GRAY)
@@ -84,7 +83,7 @@ static void do_set_bg(void)
         params[2] = attrs[BG_B];
 
         f_str = &rgb_seq[0];
-        do_parse_format();
+        parse_format();
         return;
     }
     // are we setting a gray scale foreground?

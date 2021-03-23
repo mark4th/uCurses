@@ -7,9 +7,7 @@
 #include <string.h>
 
 #include "h/list.h"
-#include "h/tui.h"
 #include "h/uCurses.h"
-#include "h/util.h"
 
 // -----------------------------------------------------------------------
 

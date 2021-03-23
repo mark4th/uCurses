@@ -6,7 +6,6 @@
 //#include <stdio.h>
 
 #include "h/list.h"
-#include "h/tui.h"
 #include "h/uCurses.h"
 
 extern uint8_t attrs[8];

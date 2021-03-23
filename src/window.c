@@ -7,8 +7,7 @@
 #include <string.h>
 
 #include "h/uCurses.h"
-#include "h/color.h"
-#include "h/tui.h"
+//#include "h/color.h"
 
 extern uint8_t default_bg;
 extern uint8_t default_fg;

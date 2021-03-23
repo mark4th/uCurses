@@ -4,8 +4,6 @@
 #include <inttypes.h>
 #include <string.h>
 
-#include "h/border.h"
-#include "h/tui.h"
 #include "h/uCurses.h"
 
 // -----------------------------------------------------------------------

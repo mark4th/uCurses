@@ -19,3 +19,7 @@ src/.dirstamp
 config.status
 config.h
 stamp-h1
+config.guess
+config.sub
+ltmain.sh
+m4/

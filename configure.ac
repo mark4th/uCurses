@@ -2,14 +2,17 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT([uCurses], [0.01])
+AC_INIT([libuCurses], [0.01])
 AC_CONFIG_SRCDIR([src/screen.c])
 AC_CONFIG_HEADERS([config.h])
-AM_INIT_AUTOMAKE([foreign subdir-objects])
+AM_INIT_AUTOMAKE([subdir-objects])
 AC_CONFIG_FILES([Makefile])
+AC_USE_SYSTEM_EXTENSIONS
 
 # Checks for programs.
 AC_PROG_CC
+AM_PROG_LIBTOOL
+AC_CONFIG_MACRO_DIRS([m4])
 
 # Checks for libraries.
 

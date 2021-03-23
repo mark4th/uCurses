@@ -1,7 +1,9 @@
+ACLOCAL_AMFLAGS = -I m4
+LIBUCURSES_SHLIB_VER = 0.01
 
-bin_PROGRAMS = uCurses
+lib_LTLIBRARIES = libuCurses_0.01.la
 
-uCurses_SOURCES = \
+libuCurses_0_01_la_SOURCES =  \
   h/uCurses.h      \
   src/border.c     \
   src/color.c      \
@@ -18,10 +20,10 @@ uCurses_SOURCES = \
   src/win_printf.c
 
 
-CFLAGS = -Oz -fpic -fno-inline -pedantic -Wall -Werror \
+CFLAGS = -Os -fpic -fno-inline -pedantic -Wall -Werror \
   -Wextra -std=gnu17 -pipe -march=native -g3 \
   -fno-align-functions -flto
-LDFLAGS = -fuse-ld=lld -shared -flto
+AM_LDFLAGS = -fuse-ld=lld -shared -flto
 
 ## -----------------------------------------------------------------------
 ## custom build targets i use during devel
@@ -33,6 +35,6 @@ strip: uCurses
 
 scan:
 	make clean
-	scan-build make
+	scan-build --use-cc=clang make
 
 ## =======================================================================

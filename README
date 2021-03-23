@@ -1,0 +1,53 @@
+uCurses
+
+This library gives you the ability to create applications with
+a very powerful user interface.  It allows for moving, overlapping
+windows and for all characters to be drawn using either a normal
+color, a gray scale from 0 to 23 or a full 24 bit RGB color.
+
+The foreground and background color types are independent so you
+can have a gray scale background and a RGB foreground for example.
+
+This code can be built with either LLVM or Gcc but IMHO you should
+be using LLVM as it is far superior to gcc, specially at optimizing
+the code.  If i could force you to use LLVM i could set the
+optimization level to -Oz where I would prefer it remain :/
+
+Optimizing this codde for speed is not important, even at -O0 this
+code will run perfectly fine so I chose to build it to be as small
+as i can possibly make it - that would be with -Oz under LLVM.
+Gcc however does not understand this level of optimization so it
+is being built with -Os unless you override it.
+
+To build this, from the root of the source tree do
+
+autoreconf -fiv
+cd build
+../configure
+make -jXXX
+sudo make install
+
+...where xxx is your cpu's core count.
+
+The make install will copy the library files into /usr/local/lib
+does not currently make a sumbolic link called libuCurses.so which
+I will have to figure out...
+
+cd /usr/local/lib
+ln -s libuCurses_0.01.so.0 libuCurses.so
+
+... after which you should be able to build with -luCurses
+
+To build the example cd into the example directory within the
+root of the project sources and run a make.  This will produce
+a file called u (for u curses).
+
+./u is NOT a good example of what you SHOULD be doing, just a
+questionalb example of what you CAN do :)
+
+Documentation for how to use this library will be posted here soon.
+the example in main.c should help but this is going to be handled
+in a much cleaner way in the future (maybe with UI descriptions
+in JSON ???)
+
+

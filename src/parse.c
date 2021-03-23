@@ -10,17 +10,6 @@
 #include "h/uCurses.h"
 
 // -----------------------------------------------------------------------
-// c switch statements are FUGLY
-
-typedef void (*opt_t)(void);
-
-typedef struct
-{
-    uint8_t option;
-    opt_t vector;
-} switch_t;
-
-// -----------------------------------------------------------------------
 // for format string % commands that dont actually need to do anything
 
 static void noop(void){;}
@@ -100,6 +89,10 @@ void flush(void)
 void c_emit(uint8_t c1)
 {
     esc_buff[num_esc++] = c1;
+
+    // technically this is a bug, if we make it to 64k of escape
+    // seauenes we cant write out the 2/3 of the current escape
+    // sequence now and then the rest later...
 
     if(num_esc == 0xffff)
     {
@@ -392,8 +385,8 @@ static uint64_t *get_var_addr(void)
     // then it is within the range 'A' to 'Z'
 
     p = ((c1 >= 'a') && (c1 <= 'z'))
-      ? &atoz[c1 - 'a']
-      : &AtoZ[c1 - 'A'];
+        ? &atoz[c1 - 'a']
+        : &AtoZ[c1 - 'A'];
 
     return p;
 }
@@ -432,14 +425,12 @@ static void _brace(void)
 
     n1 = 0;
 
-    while ('}' != *f_str)
+    while ((c1 = *f_str++) != '}')
     {
-        c1 = *f_str++;
         n1 *= 10;
         n1 += (c1 - '0');
     }
 
-    f_str++;
     fs_push(n1);
 }
 
@@ -620,34 +611,6 @@ const switch_t p_codes[] =
 #define PCOUNT sizeof(p_codes) / sizeof(p_codes[0])
 
 // -----------------------------------------------------------------------
-
-static void command(void)
-{
-    char c1;
-    int n = PCOUNT;
-
-    const switch_t *s = &p_codes[0];
-
-    c1 = next_c();
-
-    while((0 != n) && c1 != s->option)
-    {
-       s++; n--;
-    }
-    // the only way this could fail here is if the terminfo fornat string
-    // has been corrupted or if terminfo format strings have been extended
-    // some time in the future.
-    if(c1 == s->option)
-    {
-        (s->vector)();
-    }
-    else
-    {
-        // snafu!
-    }
-}
-
-// -----------------------------------------------------------------------
 // parse format string pointed to by f_str
 
 // this function is called directly when ever we implement a hard coded
@@ -661,7 +624,7 @@ void do_parse_format(void)
     while((c1 = *f_str++))
     {
         (c1 == '%')
-            ? command()
+            ? re_switch(&p_codes[0], PCOUNT, next_c())
             : c_emit(c1);
     }
 }

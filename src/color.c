@@ -29,7 +29,8 @@ static void do_set_fg(void)
     // supported by any current terminfo files that I know of and may
     // not be supported by all terminal types
 
-    const char * const rgb_seq  = "\x1b[38;2;%p1%3d;%p2%3d;%p3%3dm";
+    const char * const rgb_seq  =
+        "\x1b[38;2;%p1%3d;%p2%3d;%p3%3dm";
 
     // the params array is how we pass parameters to the terminfo
     // parsing functions for each format string.  this converts the
@@ -66,7 +67,8 @@ static void do_set_bg(void)
     // supported by any current terminfo files that I know of and may
     // not be supported by all terminal types
 
-    const char * const rgb_seq  = "\x1b[48;2;%p1%3d;%p2%3d;%p3%3dm";
+    const char * const rgb_seq  =
+        "\x1b[48;2;%p1%3d;%p2%3d;%p3%3dm";
 
     // the params array is how we pass parameters to the terminfo
     // parsing functions for each format string.  this converts the

@@ -10,7 +10,7 @@ can have a gray scale background and a RGB foreground for example.
 
 This code can be built with either LLVM or Gcc but IMHO you should
 be using LLVM as it is far superior to gcc, specially at optimizing
-the code.  If i could force you to use LLVM i could set the
+the code.  If I could force you to use LLVM I could set the
 optimization level to -Oz where I would prefer it remain :/
 
 Optimizing this codde for speed is not important, even at -O0 this
@@ -50,4 +50,10 @@ the example in main.c should help but this is going to be handled
 in a much cleaner way in the future (maybe with UI descriptions
 in JSON ???)
 
+When running the example code the ESC button exits and the F10 key
+toggles the menus and the cursor keys move you around said menus
+the ENTER key currently does not execute any menu item so they 
+are all just fake for now and the menus are not actually usable
+yet in the library - should be a quick addition to the code as
+and be in fairly soon
 

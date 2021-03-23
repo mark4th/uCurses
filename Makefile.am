@@ -1,3 +1,4 @@
+
 bin_PROGRAMS = u
 
 u_SOURCES = \
@@ -8,6 +9,7 @@ u_SOURCES = \
   src/main.c       \
   src/menus.c      \
   src/parse.c      \
+  src/reswitch.c   \
   src/screen.c     \
   src/tifile.c     \
   src/utf8.c       \
@@ -21,10 +23,10 @@ u_SOURCES = \
   h/uCurses.h      \
   h/util.h
 
-AM_CFLAGS = -Oz -fno-inline -pedantic -Wall -Werror \
+CFLAGS = -Oz -fno-inline -pedantic -Wall -Werror \
   -Wextra -std=gnu17 -pipe -march=native -g3 \
   -fno-align-functions -flto
-AM_LDFLAGS = -fuse-ld=lld -flto
+LDFLAGS = -fuse-ld=lld -flto
 
 ## -----------------------------------------------------------------------
 ## custom build targets i use during devel

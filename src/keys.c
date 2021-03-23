@@ -77,13 +77,27 @@ static void read_keys(void)
 }
 
 // -----------------------------------------------------------------------
+// due to "design decisions" made elsewhere your backspace key may return
+// either an 0x08 as specified in the terminfo file (^h) or it may return
+// a 0x7f.
+// this is not based on what terminal you are using, the same terminal
+// might return one value on one system but the other value on another
+// system.
+// LUNACY like this is why libncurses is 200k in size.. NOT because TED
+// is incompetent but because the people upstream from him are.  So those
+// of you who are ranting and raving against TED have picked the wrong
+// target </2c>
+
+static void kbs(void)   { esc_buff[0] = 0x08;  num_esc = 1; }
+static void kbs2(void)  { esc_buff[0] = 0x7f;  num_esc = 1; }
+
+// -----------------------------------------------------------------------
 
 // each of these puts a key sequence in the esc_buff terminfo escape
 // sequence buffer which is usually used to compile output data.
 // these allow us to determine which key was pressed by comparing the
 // actual sequence that was input with the data returned by each of these
 
- static void kbs(void)   { ti_kbs();   }
  static void kent(void)  { ti_kent();  }
  static void kcuu1(void) { ti_kcuu1(); }
  static void kcud1(void) { ti_kcud1(); }
@@ -117,9 +131,10 @@ static void read_keys(void)
 
 void (*k_table[])() =
 {
-    kent,  kcuu1, kcud1, kcub1, kcuf1, kbs,   kdch1, kich1,
-    khome, kend,  knp,   kpp,   kf1,   kf2,   kf3,   kf4,
-    kf5,   kf6,   kf7,   kf8,   kf9,   kf10,  kf11,  kf12
+    kent,  kcuu1, kcud1, kcub1, kcuf1, kbs,   kbs2,
+    kdch1, kich1, khome, kend,  knp,   kpp,   kf1,
+    kf2,   kf3,   kf4,   kf5,   kf6,   kf7,   kf8,
+    kf9,   kf10,  kf11,  kf12
 };
 
 // -----------------------------------------------------------------------
@@ -158,24 +173,27 @@ static uint16_t match_key(void)
 }
 
 // -----------------------------------------------------------------------
-// add eol char to keyboard input buffer
-
-static void k_ent(void)
-{
-//    keybuff[0] = 0x0a;
-//    num_k = 1;
-}
-
-// -----------------------------------------------------------------------
 // add delete char to keyboard input buffer
-
-// stupid keyboard returns 0x7f when terminfo clearly states that the
-// backspace key returns control h which is 0x08
 
 static void k_bs(void)
 {
-//    keybuff[0] = 8;
-//    num_k = 1;
+    keybuff[0] = 8;
+    num_k = 1;
+}
+
+// -----------------------------------------------------------------------
+
+static void k_ent(void)
+{
+    // this does not need to do anything, the key buffer has the 0x0a
+    // in it already but we need to be able to specify a handler for
+    // this keypress.
+    // e.g. so the menu system can trap the enter key and steal it if
+    // the menus are active.  pressing enter when a menu is active will
+    // not return they key press to the user application but would
+    // execute the selected menu item.
+    // user applications can do this too if they dont mind the menus not
+    // working :)
 }
 
 // -----------------------------------------------------------------------
@@ -185,12 +203,14 @@ static void k_bs(void)
 
 static key_handler_t *default_key_actions[] =
 {
-//  ENTER  UP    DOWN  LEFT  RIGHT  BS    DEL   INSERT
-    k_ent, noop, noop, noop, noop,  k_bs, noop, noop,
-//  HOME   END   PDN   PUP   F1     F2    F3    F4
-    noop,  noop, noop, noop, noop,  noop, noop, noop,
-//  F5     F6    F7    F8    F9     F10   F11   F12
-    noop,  noop, noop, noop, noop,  noop, noop, noop
+//  ENTER   UP     DOWN   LEFT   RIGHT   BS     BS2
+    k_ent,  noop,  noop,  noop,  noop,   k_bs,  k_bs,
+//  DEL     INSERT HOME   END    PDN     PUP    F1
+    noop,   noop,  noop,  noop,  noop,   noop,  noop,
+//  F2      F3     F4     F5     F6      F7     F8
+    noop,   noop,  noop,  noop,  noop,   noop,  noop,
+//  F9      F10    F11    F12
+    noop,   noop,  noop,  noop
 };
 
 // -----------------------------------------------------------------------
@@ -221,13 +241,16 @@ uint8_t key(void)
         c = match_key();    // compare input with all handled escapes
 
         if(c != 0xffff)     // if escape sequence is one we handle
-        {
-            num_esc = 0;    // ensure there are no keys in the buffer
+        {                   // internally
+            num_esc = 0;    // flush the escape buffer
             (user_key_actions[c])();
+            // right now i think this is only the delete key
+            // which returns a different value based on
+            // planetary alignment or something
             if(num_k == 1) { break; }
             return 0xff;
         }
-    } while (1 != num_k);
+    } while (num_k != 1);
 
     return keybuff[0];
 }

@@ -21,6 +21,31 @@ extern screen_t *active_screen;
 
 // -----------------------------------------------------------------------
 
+static uint32_t init_bar(screen_t *scr, window_t *win, menu_bar_t *bar)
+{
+    bar->window = win;
+
+    // make window non scrolling
+    win->flags = WIN_LOCKED;
+
+    win->screen   = scr;
+    scr->menu_bar = bar;
+
+    // win_set_gray_fg(win, 8);
+    // win_set_gray_bg(win, 4);
+    // printf("%lx\n", *(long unsigned int *)&win->attrs[0]);
+    // exit(0);
+
+    *(uint64_t *)bar->normal   = NORMAL;
+    *(uint64_t *)bar->selected = SELECTED;
+    *(uint64_t *)bar->disabled = DISABLED;
+
+    bar->xco = 2;
+    return 0;
+}
+
+// -----------------------------------------------------------------------
+
 uint32_t bar_open(screen_t *scr)
 {
     menu_bar_t *bar = NULL;
@@ -35,30 +60,10 @@ uint32_t bar_open(screen_t *scr)
 
         if((bar != NULL) && (win != NULL))
         {
-            bar->window = win;
-
-            // make window non scrolling
-            win->flags = WIN_LOCKED;
-
-            win->screen   = scr;
-            scr->menu_bar = bar;
-
-// win_set_gray_fg(win, 8);
-// win_set_gray_bg(win, 4);
-// printf("%lx\n", *(long unsigned int *)&win->attrs[0]);
-// exit(0);
-
-            *(uint64_t *)bar->normal   = NORMAL;
-            *(uint64_t *)bar->selected = SELECTED;
-            *(uint64_t *)bar->disabled = DISABLED;
-            bar->xco = 2;
-            result = 0;
+            return init_bar(scr, win, bar);
         }
-        else
-        {
-            free(bar);
-            free(win);
-        }
+        free(bar);
+        free(win);
     }
 
     return result;
@@ -115,10 +120,34 @@ uint32_t new_pulldown(screen_t *scr, char *name)
 
 // -----------------------------------------------------------------------
 
-static uint32_t new_item(pulldown_t *pd, char *name,
+uint32_t init_item(pulldown_t *pd, menu_item_t *item, char *name,
     menu_fp_t fp, uint16_t shortcut)
 {
     uint16_t width;
+
+    pd->items[pd->count++] = item;
+
+    item->name     = name;
+    item->fp       = fp;
+    item->shortcut = shortcut;
+
+    // keep track of which item in menu is widest as that will
+    // determine the width of the pulldown window
+
+    width = utf8_strlen(name);
+
+    if(width > pd->width)
+    {
+        pd->width = width;
+    }
+    return 0;
+}
+
+// -----------------------------------------------------------------------
+
+static uint32_t new_item(pulldown_t *pd, char *name,
+    menu_fp_t fp, uint16_t shortcut)
+{
     uint32_t result = -1;
 
     if(pd->count != MAX_MENU_ITEMS)
@@ -127,21 +156,7 @@ static uint32_t new_item(pulldown_t *pd, char *name,
 
         if(item != NULL)
         {
-            pd->items[pd->count++] = item;
-
-            item->name     = name;
-            item->fp       = fp;
-            item->shortcut = shortcut;
-
-            // keep track of which item in menu is widest as that will
-            // determine the width of the pulldown window
-
-            width = utf8_strlen(name);
-
-            if(width > pd->width)
-            {
-                pd->width = width;
-            }
+            result = init_item(pd, item, name, fp, shortcut);
         }
     }
     return result;
@@ -458,16 +473,11 @@ static void menu_activate(void)
     menu_bar_t *bar = active_screen->menu_bar;
     pulldown_t *pd;
     bar->active ^= 1;
+    pd = bar->items[bar->which];
 
-    if(bar->active != 0)
-    {
-        redraw_pulldown(bar);
-    }
-    else
-    {
-        pd = bar->items[bar->which];
-        win_close(pd->window);
-    }
+    (bar->active != 0)
+        ? redraw_pulldown(bar)
+        : win_close(pd->window);
 }
 
 // -----------------------------------------------------------------------

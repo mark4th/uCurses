@@ -105,10 +105,9 @@ void scr_close(screen_t *scr)
 
     free(scr->backdrop);
 
-    while(scr->windows.count != 0)
+    while((win = list_pop(&scr->windows)) != NULL)
     {
-         win = list_pop(&scr->windows);
-         win_close(win);
+        win_close(win);
     }
     bar_close(scr);
 
@@ -276,6 +275,7 @@ void scr_add_backdrop(screen_t *scr)
         win->bdr_attrs[FG] = 13;
         win->bdr_attrs[BG] = 0;
         win->bdr_type = BDR_SINGLE;
+
         win_clear(win);
 
         scr->backdrop = win;
@@ -337,7 +337,7 @@ static void outer_update(screen_t *scr)
         // screen that shares its attributes.
         if(scr_is_modified(scr, index) != 0)
         {
-            index = inner_update(scr, index, end);
+            index = inner_update(scr, index, end) - 1;
 
             // the return value is the index of the first character
             // that update found that had different atributes to the

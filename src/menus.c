@@ -230,6 +230,7 @@ void bar_populdate_pd(pulldown_t *pd)
 
             win_cup(win, 0, i);
             win_puts(win, item->name);
+
             while((win->cx != win->width) && (win->cx != 0))
             {
                 win_emit(win, win->blank);
@@ -277,7 +278,7 @@ void bar_draw_text(screen_t *scr)
 
         *(uint64_t *)&win->attrs[0] = *(uint64_t *)bar->normal;
 
-        while(win->cx != win->width -1)
+        while((win->cx != win->width) && (win->cx != 0))
         {
             win_emit(win, win->blank);
         }

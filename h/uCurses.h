@@ -95,6 +95,9 @@ void c_emit(uint8_t c1);
 #define ti_cuf()     format(224 >> 1)  // move cursor forward
 #define ti_rin()     format(226 >> 1)  // scroll back lines
 #define ti_cuu()     format(228 >> 1)  // cursor up lines
+
+#define ti_rep()     format(242 >> 1)  // repeat char
+
 #define ti_rc()      format(252 >> 1)  // restore cursor location
 #define ti_vpa()     format(254 >> 1)  // vertical position absolute
 #define ti_sc()      format(256 >> 1)  // save cursor location

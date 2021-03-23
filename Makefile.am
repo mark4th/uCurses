@@ -21,8 +21,10 @@ u_SOURCES = \
   h/uCurses.h      \
   h/util.h
 
-AM_CFLAGS = -Os -fno-inline -pedantic -Wall -Werror \
-  -Wextra -std=gnu17 -pipe -march=native -g3
+AM_CFLAGS = -Oz -fno-inline -pedantic -Wall -Werror \
+  -Wextra -std=gnu17 -pipe -march=native -g3 \
+  -fno-align-functions -flto
+AM_LDFLAGS = -fuse-ld=lld -flto
 
 ## -----------------------------------------------------------------------
 ## custom build targets i use during devel

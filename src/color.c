@@ -25,11 +25,10 @@ uint8_t default_fg = WHITE;
 
 static void do_set_fg(void)
 {
-    // terminfo format strings for setting gray scales or RGB colors
-    // these are not supported by any current terminfo files that I
-    // know of and may not be supported by all terminal types
+    // terminfo format strings for setting RGB colors.  these are not
+    // supported by any current terminfo files that I know of and may
+    // not be supported by all terminal types
 
-    const char * const gray_seq = "\x1b[38;5;%p1%3dm";
     const char * const rgb_seq  = "\x1b[38;2;%p1%3d;%p2%3d;%p3%3dm";
 
     // the params array is how we pass parameters to the terminfo
@@ -47,20 +46,15 @@ static void do_set_fg(void)
         // string section
         f_str = &rgb_seq[0];
         do_parse_format();
+        return;
     }
-    else if(attrs[ATTR] & FG_GRAY)
+    if(attrs[ATTR] & FG_GRAY)
     {
-        // gray scales are specified as values from 0 to 20 but
+        // gray scales are specified as values from 0 to 23 but
         // the escape seaueces use values from 232 to 255
         params[0] += 232;
-        f_str = &gray_seq[0];
-        do_parse_format();
     }
-    // oridinay, every day, run of the mill. ho-hum foreground color
-    else
-    {
-        ti_setaf();
-    }
+    ti_setaf();
 }
 
 // -----------------------------------------------------------------------
@@ -68,11 +62,10 @@ static void do_set_fg(void)
 
 static void do_set_bg(void)
 {
-    // terminfo format strings for setting gray scales or RGB colors
-    // these are not supported by any current terminfo files that I
-    // know of and may not be supported by all terminal types
+    // terminfo format strings for setting RGB colors.  these are not
+    // supported by any current terminfo files that I know of and may
+    // not be supported by all terminal types
 
-    const char * const gray_seq = "\x1b[48;5;%p1%3dm";
     const char * const rgb_seq  = "\x1b[48;2;%p1%3d;%p2%3d;%p3%3dm";
 
     // the params array is how we pass parameters to the terminfo
@@ -87,25 +80,19 @@ static void do_set_bg(void)
         params[0] = attrs[BG_R];
         params[1] = attrs[BG_G];
         params[2] = attrs[BG_B];
-        // there is no format string for this within the terminfo
-        // string section
+
         f_str = &rgb_seq[0];
         do_parse_format();
+        return;
     }
     // are we setting a gray scale foreground?
-    else if(attrs[ATTR] & BG_GRAY)
+    if(attrs[ATTR] & BG_GRAY)
     {
-        // gray scales are specified as values from 0 to 20 but
+        // gray scales are specified as values from 0 to 23 but
         // the escape seaueces use values from 232 to 255
         params[0] += 232;
-        f_str = &gray_seq[0];
-        do_parse_format();
     }
-    // oridinay, every day, run of the mill. ho-hum background color
-    else
-    {
-        ti_setab();
-    }
+    ti_setab();
 }
 
 // -----------------------------------------------------------------------

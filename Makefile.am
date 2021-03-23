@@ -1,5 +1,4 @@
 ACLOCAL_AMFLAGS = -I m4
-LIBUCURSES_SHLIB_VER = 0.01
 
 lib_LTLIBRARIES = libuCurses_0.01.la
 

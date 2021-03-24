@@ -186,6 +186,8 @@ typedef struct
     uint16_t cy;
 } screen_t;
 
+    extern screen_t *active_screen;
+
 // -----------------------------------------------------------------------
 
 typedef struct
@@ -291,8 +293,6 @@ void scr_win_detach(window_t *win);
 void scr_cup(screen_t *scr, uint16_t x, uint16_t y);
 void scr_draw_screen(screen_t *scr);
 void scr_add_backdrop(screen_t *scr);
-void pd_enable(screen_t *scr, char *name);
-void pd_disable(screen_t *scr, char *name);
 
 // -----------------------------------------------------------------------
 
@@ -304,8 +304,12 @@ uint32_t new_menu_item(screen_t *scr, char *name, menu_fp_t fp,
     uint16_t shortcut);
 void bar_draw_text(screen_t *scr);
 void bar_populdate_pd(pulldown_t *pd);
+void pd_enable(screen_t *scr, char *name);
+void pd_disable(screen_t *scr, char *name);
+
 void init_key_handlers(void);
 key_handler_t *set_key_action(key_index_t index, key_handler_t* action);
+void stuff_key(uint8_t c);
 
 // -----------------------------------------------------------------------
 

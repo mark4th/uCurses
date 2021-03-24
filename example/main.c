@@ -223,7 +223,7 @@ void run_demo(screen_t *scr, window_t *win1, window_t *win2)
         {
             c = key();
 
-            if(c == ' ')
+            if((c == ' ') || (c == 0x0a))
             {
                 pause ^= 1;
                 continue;
@@ -296,6 +296,15 @@ void run_demo(screen_t *scr, window_t *win1, window_t *win2)
 
 // -----------------------------------------------------------------------
 
+static void fake_opem_file(void)
+{
+    screen_t *scr = active_screen;
+    window_t *win = list_scan(&scr->windows);
+    win->bdr_attrs[FG] ^= 0x55;
+}
+
+// -----------------------------------------------------------------------
+
 int main(void)
 {
     struct winsize w;
@@ -358,7 +367,7 @@ int main(void)
 
     new_pulldown(scr, "File");
 
-    new_menu_item(scr, "Open File", NULL, 0);
+    new_menu_item(scr, "Open File", fake_opem_file, 0);
     new_menu_item(scr, "Close File", NULL, 0);
     new_menu_item(scr, "Delete internet", NULL, 0);
     new_menu_item(scr, "Copy Nothing", NULL, 0);

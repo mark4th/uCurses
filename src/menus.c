@@ -9,7 +9,6 @@
 #include "h/uCurses.h"
 
 extern uint8_t attrs[8];
-extern screen_t *active_screen;
 
 // -----------------------------------------------------------------------
 // hard coded attributes for now
@@ -558,7 +557,30 @@ static void menu_right(void)
 
 static void menu_cr(void)
 {
+    menu_bar_t *bar = active_screen->menu_bar;
+    pulldown_t *pd;
+    menu_item_t *item;
 
+    if((bar != NULL) && (bar->active != 0))
+    {
+        stuff_key(0xff);
+
+        bar->active = 0;
+        pd = bar->items[bar->which];
+
+        win_close(pd->window);
+
+        pd->window = NULL;
+        item = pd->items[pd->which];
+        if(item->fp != NULL)
+        {
+            (item->fp)();
+        }
+    }
+    else
+    {
+        stuff_key(0x0a);
+    }
 }
 
 // -----------------------------------------------------------------------

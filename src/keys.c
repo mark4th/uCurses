@@ -77,6 +77,14 @@ static void read_keys(void)
 }
 
 // -----------------------------------------------------------------------
+// ti_kent seems to return 3 bytes for me and none of them are 0x0a
+
+static void kent(void)
+{
+    esc_buff[0] = 0x0a;  num_esc = 1;
+}
+
+// -----------------------------------------------------------------------
 // due to "design decisions" made elsewhere your backspace key may return
 // either an 0x08 as specified in the terminfo file (^h) or it may return
 // a 0x7f.
@@ -98,7 +106,7 @@ static void kbs2(void)  { esc_buff[0] = 0x7f;  num_esc = 1; }
 // these allow us to determine which key was pressed by comparing the
 // actual sequence that was input with the data returned by each of these
 
- static void kent(void)  { ti_kent();  }
+// static void kent(void)  { ti_kent();  }
  static void kcuu1(void) { ti_kcuu1(); }
  static void kcud1(void) { ti_kcud1(); }
  static void kcub1(void) { ti_kcub1(); }
@@ -185,15 +193,8 @@ static void k_bs(void)
 
 static void k_ent(void)
 {
-    // this does not need to do anything, the key buffer has the 0x0a
-    // in it already but we need to be able to specify a handler for
-    // this keypress.
-    // e.g. so the menu system can trap the enter key and steal it if
-    // the menus are active.  pressing enter when a menu is active will
-    // not return they key press to the user application but would
-    // execute the selected menu item.
-    // user applications can do this too if they dont mind the menus not
-    // working :)
+    keybuff[0] = 0x0a;
+    num_k = 1;
 }
 
 // -----------------------------------------------------------------------
@@ -253,6 +254,14 @@ uint8_t key(void)
     } while (num_k != 1);
 
     return keybuff[0];
+}
+
+// -----------------------------------------------------------------------
+
+void stuff_key(uint8_t c)
+{
+    keybuff[0] = c;
+    num_k = 1;
 }
 
 // -----------------------------------------------------------------------

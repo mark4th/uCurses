@@ -269,7 +269,7 @@ void bar_close(screen_t *scr)
             free(pd->items[j]);
         }
 
-        free(pd->window);
+        win_close(pd->window);
         free(pd);
     }
 

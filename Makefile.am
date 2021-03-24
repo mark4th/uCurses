@@ -18,11 +18,11 @@ libuCurses_0_01_la_SOURCES =  \
   src/window.c     \
   src/win_printf.c
 
+AM_CFLAGS = -Os -fpic -fno-inline -pedantic -Wall -Werror \
+   -Wextra -std=gnu17 -pipe -march=native -g3 \
+   -fno-align-functions
 
-CFLAGS = -Os -fpic -fno-inline -pedantic -Wall -Werror \
-  -Wextra -std=gnu17 -pipe -march=native -g3 \
-  -fno-align-functions -flto
-AM_LDFLAGS = -fuse-ld=lld -shared -flto
+AM_LDFLAGS = -fuse-ld=lld -shared
 
 ## -----------------------------------------------------------------------
 ## custom build targets i use during devel

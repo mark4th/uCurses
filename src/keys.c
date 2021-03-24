@@ -144,10 +144,10 @@ void (*k_table[])() =
 
 static uint16_t match_key(void)
 {
-    int i;
+    uint64_t i;
     uint16_t q;
 
-    for(i = 0; i < 24; i++)
+    for(i = 0; i < KEY_COUNT; i++)
     {
         num_esc = 0;          // number chars in escape sequence buffer
 

@@ -23,7 +23,7 @@
 struct termios term_save;
 struct termios term;
 
-#define SLEEP 20000000
+#define SLEEP 15000000
 
 // -----------------------------------------------------------------------
 
@@ -399,7 +399,7 @@ int main(void)
 
     run_demo(scr, win1, win2);
 
-    bar_close(scr);
+    scr_close(scr);
 
     set_fg(WHITE);
     set_bg(BLACK);
@@ -407,6 +407,9 @@ int main(void)
     clear();
     cup(10, 0);
     restore_term();
+
+    uCurses_deInit();
+
     printf("bye!\n");
     return 0;
 }

@@ -82,7 +82,7 @@ uint16_t list_append_node(list_t *l, void *payload)
 {
     node_t *n1;
 
-    n1 = (node_t *) calloc(1, sizeof(node_t));
+    n1 = calloc(1, sizeof(node_t));
     if(n1 == NULL)
     {
         return -1;
@@ -113,14 +113,14 @@ uint16_t list_append_node(list_t *l, void *payload)
 void *list_pop(list_t *list)
 {
     void *result = NULL;
-    node_t *n;
+    node_t *n1;
 
     if(list->count != 0)
     {
-        n = list->tail;
-        list->tail = n->prev;
-        list->count--;
-        result = n->payload;
+        n1 = list->tail;
+        result = n1->payload;
+        node_remove(n1);
+        free(n1);
     }
     return result;
 }

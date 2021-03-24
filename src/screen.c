@@ -96,12 +96,10 @@ void scr_close(screen_t *scr)
     free(scr->buffer1);
     free(scr->buffer2);
 
-    scr->buffer1 = 0;
-    scr->buffer2 = 0;
+    scr->buffer1 = NULL;
+    scr->buffer2 = NULL;
 
     win_close(scr->backdrop);
-
-    free(scr->backdrop);
 
     while((win = list_pop(&scr->windows)) != NULL)
     {
@@ -183,7 +181,6 @@ void scr_cup(screen_t *scr, uint16_t x, uint16_t y)
 }
 
 // -----------------------------------------------------------------------
-uint16_t is_wide(uint32_t code);
 
 static uint16_t scr_is_modified(screen_t *scr, uint16_t index)
 {

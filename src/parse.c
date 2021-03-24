@@ -613,8 +613,7 @@ const switch_t p_codes[] =
 // parse format string pointed to by f_str
 
 // this function is called directly when ever we implement a hard coded
-// format string such as for gray scales and rgb colors. otherwise it
-// would be static
+// format string such as for rgb colors. otherwise it would be static
 
 void parse_format(void)
 {
@@ -629,6 +628,7 @@ void parse_format(void)
 }
 
 // -----------------------------------------------------------------------
+// parse a terminfo format string from the terminfo files strings section
 
 void format(uint16_t i)
 {

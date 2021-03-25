@@ -296,6 +296,8 @@ void run_demo(screen_t *scr, window_t *win1, window_t *win2)
 
 // -----------------------------------------------------------------------
 
+// just flipflops the border color of which ever window is on top
+
 static void fake_opem_file(void)
 {
     screen_t *scr = active_screen;

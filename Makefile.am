@@ -1,8 +1,8 @@
 ACLOCAL_AMFLAGS = -I m4
 
-lib_LTLIBRARIES = libuCurses_0.01.la
+lib_LTLIBRARIES = libuCurses.la
 
-libuCurses_0_01_la_SOURCES =  \
+libuCurses_la_SOURCES =  \
   h/uCurses.h      \
   src/border.c     \
   src/color.c      \
@@ -22,7 +22,9 @@ AM_CFLAGS = -Os -fpic -fno-inline -pedantic -Wall -Werror \
    -Wextra -std=gnu17 -pipe -march=native -g3 \
    -fno-align-functions
 
-AM_LDFLAGS = -fuse-ld=lld -shared
+# AM_LDFLAGS =
+
+libuCurses_la_LDFLAGS = -fuse-ld=lld -shared -version-info @PACKAGE_VERSION@
 
 ## -----------------------------------------------------------------------
 ## custom build targets i use during devel

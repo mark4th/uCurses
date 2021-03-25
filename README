@@ -30,13 +30,8 @@ sudo make install
 ...where xxx is your cpu's core count.
 
 The make install will copy the library files into /usr/local/lib
-does not currently make a sumbolic link called libuCurses.so which
-I will have to figure out...
-
-cd /usr/local/lib
-ln -s libuCurses_0.01.so.0 libuCurses.so
-
-... after which you should be able to build with -luCurses
+after which you should be able to build with your applications
+with -l uCurses
 
 To build the example cd into the example directory within the
 root of the project sources and run a make.  This will produce
@@ -52,8 +47,7 @@ in JSON ???)
 
 When running the example code the ESC button exits and the F10 key
 toggles the menus and the cursor keys move you around said menus
-the ENTER key currently does not execute any menu item so they 
-are all just fake for now and the menus are not actually usable
-yet in the library - should be a quick addition to the code as
-and be in fairly soon
+the ENTER key executes the selected pulldown menu item but do not
+expect any of the current menu items to do much :)
+
 

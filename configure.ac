@@ -1,8 +1,20 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
+m4_define(v_maj, [0])
+m4_define(v_min, [0])
+m4_define(v_mic, [1])
+m4_define(project_version, [v_maj.v_min.v_mic])
+
+m4_define(lt_cur, [m4_eval(v_maj + v_min)])
+m4_define(lt_rev, [v_mic])
+m4_define(lt_age, [v_min])
+m4_define(version_info, ["lt_cur:lt_rev:lt_age"])
+
+AC_SUBST([version_info])
 AC_PREREQ([2.69])
-AC_INIT([libuCurses], [0.01],,[github.com/mark4th/uCurses])
+AC_INIT([libuCurses], [version_info],,[github.com/mark4th/uCurses])
+
 AC_CONFIG_SRCDIR([src/screen.c])
 AC_CONFIG_HEADERS([config.h])
 AM_INIT_AUTOMAKE([subdir-objects])

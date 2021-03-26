@@ -6,6 +6,7 @@ libuCurses_la_SOURCES =  \
   h/uCurses.h      \
   src/border.c     \
   src/color.c      \
+  src/json.c       \
   src/keys.c       \
   src/list.c       \
   src/menus.c      \
@@ -20,11 +21,12 @@ libuCurses_la_SOURCES =  \
 
 AM_CFLAGS = -Os -fpic -fno-inline -pedantic -Wall -Werror \
    -Wextra -std=gnu17 -pipe -march=native -g3 \
-   -fno-align-functions
+   -fno-align-functions -m64
 
-# AM_LDFLAGS =
+#AM_LDFLAGS =
 
-libuCurses_la_LDFLAGS = -fuse-ld=lld -shared -version-info @PACKAGE_VERSION@
+libuCurses_la_LDFLAGS = \
+  -fuse-ld=lld -Wl,--entry=entry -shared -version-info @PACKAGE_VERSION@
 
 ## -----------------------------------------------------------------------
 ## custom build targets i use during devel

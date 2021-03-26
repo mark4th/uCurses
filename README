@@ -21,7 +21,8 @@ is being built with -Os unless you override it.
 
 To build this, from the root of the source tree do
 
-autoreconf -fiv
+mkdir build
+autoreconf -iv
 cd build
 ../configure
 make -jXXX
@@ -38,7 +39,7 @@ root of the project sources and run a make.  This will produce
 a file called u (for u curses).
 
 ./u is NOT a good example of what you SHOULD be doing, just a
-questionalb example of what you CAN do :)
+questionable example of what you CAN do :)
 
 Documentation for how to use this library will be posted here soon.
 the example in main.c should help but this is going to be handled

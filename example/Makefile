@@ -1,5 +1,7 @@
+
+CFLAGS = -Os -m64 -g3 -g -march=native 
 foo:
-	clang -Os -g3 -g -o u main.c -LLIBDIR=/usr/local/lib -l uCurses
+	clang $(CFLAGS) -o u main.c -LLIBDIR=/usr/local/lib -luCurses
 #	strip -R .comment u
 clean:
 	rm -f u

@@ -7,6 +7,7 @@
 // -----------------------------------------------------------------------
 
 #include <inttypes.h>
+#include <aio.h>
 
 #include "list.h"
 
@@ -337,6 +338,11 @@ void format(uint16_t i);
 void parse_format(void);
 
 void apply_attribs(void);
+
+uint32_t fnv_hash(char *s);
+uint16_t is_keyword(uint32_t *table, size_t size, uint32_t hash);
+char *token(char *s);
+uint16_t is_token(uint32_t *table, size_t size, char *s);
 
 // -----------------------------------------------------------------------
 

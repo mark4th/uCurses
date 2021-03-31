@@ -7,6 +7,7 @@ libuCurses_la_SOURCES =  \
   src/border.c     \
   src/color.c      \
   src/json.c       \
+  src/json_token.c \
   src/keys.c       \
   src/list.c       \
   src/menus.c      \
@@ -19,11 +20,11 @@ libuCurses_la_SOURCES =  \
   src/window.c     \
   src/win_printf.c
 
-AM_CFLAGS = -Os -fpic -fno-inline -pedantic -Wall -Werror \
+CFLAGS = -Os -fpic -fno-inline -pedantic -Wall -Werror \
    -Wextra -std=gnu17 -pipe -march=native -g3 \
    -fno-align-functions -m64
 
-#AM_LDFLAGS =
+#AM_LDFLAGS = -fuse-ld=lld
 
 libuCurses_la_LDFLAGS = \
   -fuse-ld=lld -Wl,--entry=entry -shared -version-info @PACKAGE_VERSION@

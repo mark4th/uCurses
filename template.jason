@@ -1,127 +1,90 @@
-# templated json user interface layout description template
+# example json ui layout description
 # ------------------------------------------------------------------------
 
 # this file is not useable as is, you would need to edit it.  it shows
-# every legal entry in every instance but you would not necessarilly
-# specify all of them.  for example you might specify A | B | C but not
-# more than one thereof
+# every legal entry for each item but you would not necessarilly specify
+# all of them.  for example you might specify FG | GRAY-FG | RGB-FG
 
 # the uCurses json parser is heavily dependent on space delimited tokens
-# you can therefore not use any tools that strip out spaces from
-# json files on these UI descriptions.  there must be at least one white
-# space charater between every token to be parsed.  so for example you
-# must do
+# you can therefore not use any tools that strip out spaces from json
+# files on these UI descriptions.  there must be at least one white space
+# charater between every token to be parsed.  so for example you
+# must do  A below but NOT B
 #
-#               "foo" : "bar"
-# and not
-#               "foo":"bar"
+# A)      "foo" : "bar"
+# B)      "foo":"bar"
 #
 # the one exception to this rule is the comma.  it has been separated
 # by one space within this example file simply to highlight the need for
-# its presense where shown.  you do not need to do this in your files.
+# its presense where shown.  you should not do this in your UI layout
+# files.
+
+# "foo" : BAR,       <-- add commas like this
+# "foo" : BAR ,          not like this
 
 # ------------------------------------------------------------------------
 # the following is a template for the attribs field used in various
-# structures within the user interface.  when parsing this script the
-# parser will treat everything from the following opening { to the
-# corresponding closing } as a comment until this template is invoked.
+# structures within the user interface.  While it would be nice to be able
+# to templatize json in this way json does not work like that.  these
+# templates are simply a way for me to keep this example file short and
+# sweet.  anywhere you see a template invoked in these files you would
+# replace that with the full body of the specified template with your
+# required values specified for that instance of the template
 
-# note: templates *can* be nested
-# note: there is no mechanism for user defined templates
+attribs
+{ [
+    "fg"        : byte , |    # 0 to 15
+    "gray-fg"   : byte , |    # 0 to 23
 
-|attribs|
-{
-    "fg"      : byte , |
-    "gray-fg" : byte , |    # 0 to 23
-    "rgb-fg"  :
-    {
-        "red" : byte ,
+    "rgb-fg"    : { [
+        "red"   : byte ,
         "green" : byte ,
-        "blue" : byte
-    } ,
+        "blue"  : byte
+    ] } ,
 
-    "bg"      : byte , |
-    "gray-bg" : byte , |    # 0 to 23
-    "rgb-bg"  :
-    {
-        "red" : byte ,
+    "bg"        : byte , |    # 0 to 15
+    "gray-bg"   : byte , |    # 0 to 23
+
+    "rgb-bg"    : { [
+        "red"   : byte ,
         "green" : byte ,
-        "blue" : byte
-    }
-}
+        "blue"  : byte
+    ] }
+] }
 
 # ------------------------------------------------------------------------
-#  place a static string in a window when the UI is created
+# the backdrop is an optional window that you can attach to your screen
+# you can not currently write text into the backdrop window, it is only
+# there as a bacground window to overlay the other windows on top of
 
-|message|
+backdrop
 {
-    "xco" : word,           # 0 to window width ,
-    "yco" : word,           # 0 to window height ,
-    "string" : "string"
-}
-
-# ------------------------------------------------------------------------
-# other than on construction you can not normally write text
-# into a backdrop window as its only purpose is to delineate
-# the bounds of the screen and to give your interface a
-# background theme which you can not apply directly to the
-# screen as you have no write access there
-
-|backdrop|
-{
-    attribs : |attribs|
-    border-attribs : |attribs|
-    "border-type"  : "SINGLE" | "DOUBLE" | "ROUND" | "NONE" ,
-
-    # this is the only way you get to write strings into the
-    # backdrop window unless you cheat which you can do but
-    # should not.  you can place as many of these as you want
-    # but you should not normally make the backdrop too busy
-
-    "messages" : [
-        |message| ,
-        |message| ,
-        |message|
-    ]
+    "attribs"        : |attribs|
+    "border-attribs" : |attribs|
+    "border-type"    : { [ SINGLE | DOUBLE | ROUND | NONE ] } ,
 }
 
 # ------------------------------------------------------------------------
 
 |window|
 {
-    "name"  : "string" ,
-    "width" : 80 - 65535 ,
-    "height" : 80 - 65535 ,
-    "xco"    : 80 - screen width - width ,
-    "yco"    : 80 - screen height - height ,
+    "name"   : "string" ,
 
-    # make window coordinates relative to a previous window
-    # this would only define the windows initial position, not
-    # lock one window to another
+    "width"  : 80 to 65535 | % of screen width,
+    "height" : 80 to 65535 | % of screen width,
 
-    "relative-to" : "string"      # name of widnow this one is relative to
-    {
-        "position"    : LEFT-OF" : | "RIGHT-OF" | "ABOVE" | "BELOW" ,
-        "gravity"     : "TOP"      | "BOTTOM"   | "LEFT"  | "RIGHT" ,
-        "padding" : byte
-    }
+    "xco"    : 80 to screen width - width   | centered around % of screen width ,
+    "yco"    : 80 to screen height - height | centered around % of secrrn width ,
 
-    "border-type"    : "SINGLE" | "DOUBLE" | "ROUND" ,
+    "border-type"    : { [ SINGLE | DOUBLE | ROUND ] } ,
     "attribs"        : |attribs| ,
     "border-attribs" : |attribs| ,
 
-    "messages" : [
-        |message| ,
-        |message| ,
-        |message|
-    ]
-
-    flags :
-    {
-        "LOCKED" ,
-        "BOXED"  ,
-        "FILLED"
-    }
+    flags : { [
+        LOCKED ,
+        BOXED  ,
+        FILLED
+    ] }
 }
 
 # ------------------------------------------------------------------------
@@ -131,41 +94,41 @@
     "name"     : "string" ,
     "vector"   : "string" ,
     "shortcut" : "string" ,
-    "flags"    : [ { "disabled" } ]
+    "flags"    : { [ NONE | DISABLED ] }
 }
 
 # ------------------------------------------------------------------------
 
 |pulldown|
 {
-    "name" : "string" ,
+    "name"   : "string" ,
 
-    "flags" : { "disabled" } ,
+    "flags"  : { [ NONE | DISABLED ] } ,
 
     "attribs"          : |attribs| ,
     "selected-attribs" : |attribs| ,
     "disabled-attribs" : |attribs| ,
 
-    "menu-items" : [
+    "menu-items" :  { [
         |menu-item| ,
         |menu-item| ,
         |menu-item|
-   ]
+   ] }
 }
 
 # ------------------------------------------------------------------------
 
-|menu-bar|
+|menu-bar| :
 {
     "attribs"          : |attribs|
     "selected-attribs" : |attribs|
     "disabled-attribs" : |attribs|
 
-    "pulldowns" : [
+    "pulldowns" : { [
         |pulldown| ,
         |pulldown| ,
         |pulldown|
-    ]
+    ] }
 }
 
 # ------------------------------------------------------------------------
@@ -174,17 +137,17 @@
 {
     "screen" :
     {
-        "width"     : word ,      # 80 to term width
-        "height"    : word ,      # 25 to term width
+        # "width"     ALWAYS matches terminal size on create
+        # "height"    ALWAYS matches terminal size on create
 
-         |backdrop|
-         |menu-bar| ,
+        |backdrop| ,
+        |menu-bar| ,
 
-         "windows" : [
-             |window| ,
-             |window| ,
-             |window|
-          ]
+        "windows" : { [
+            |window| ,
+            |window| ,
+            |window|
+        ] }
     }
 }
 

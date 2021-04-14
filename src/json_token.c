@@ -13,6 +13,17 @@
 #define FNV_PRIME 0x01000193
 #define FNV_BASIS 0x811c9dc5
 
+extern j_state_t *j_state;
+
+extern char *json_data;        // pointer to json data to be parsed
+extern size_t json_len;        // total size of json data
+extern uint32_t json_index;    // parse index into data (current line)
+extern char line_buff[MAX_LINE_LEN];
+extern uint16_t line_no;
+extern uint16_t line_index;    // line parse location
+extern uint16_t line_left;     // number of chars left to parse in line
+extern char json_token[TOKEN_LEN];    // space delimited token extracted from data
+
 // -----------------------------------------------------------------------
 // FNV-1a on utf8 strings
 
@@ -36,74 +47,129 @@ uint32_t fnv_hash(char *s)
 
     return hash;
 }
+
 // -----------------------------------------------------------------------
-// over engineered (tm)
 
-uint16_t is_keyword(uint32_t *keys, size_t size, uint32_t hash)
+static void refill(void)
 {
-    uint16_t lo = 0;
-    uint16_t hi = size - 1;
-    uint16_t z;
+    uint16_t i = 0;
 
-    while(lo <= hi)
+    if(json_data[json_index] == 0x0a)
     {
-        z = (lo + hi) >> 1;
-
-        if(hash == keys[z])  { return z + 1; }
-        if(hash >  keys[z])  { lo =   z + 1; }
-        else                 { hi =   z - 1; }
+        line_no++;
+        json_index++;
     }
 
-    return 0;
+    while((json_index != json_len) &&
+          (json_data[json_index] != 0x0a))
+    {
+        line_buff[i++] = json_data[json_index];
+        if(i == MAX_LINE_LEN)
+        {
+            json_error("JSON Line Too Long");
+        }
+    }
+
+    line_left    = i;
+    line_buff[i] = '\0';
+    line_index   = 0;
+}
+
+// -----------------------------------------------------------------------
+
+    // we need to skip leading white space even if it crosses
+    // multiple lines of json source
+
+static void skip_white(void)
+{
+    char c;
+
+    do
+    {
+        // refill line buffer if it is empty
+        if(line_left == 0)
+        {
+            refill();
+        }
+        c = line_buff[line_index];
+
+        // now scan past leading white space
+
+        while((c == 0x20) && (line_left != 0))
+        {
+            line_index++;
+            line_left--;
+            c = line_buff[line_index];
+        }
+
+        if(line_left == 0)
+        {
+             return;
+        }
+        // did scanning past leading white space eat up
+        // the rest of the current line?
+
+    } while(line_left == 0);
+}
+
+// -----------------------------------------------------------------------
+// convert all 0x09 and 0x0d chars into 0x20
+
+void json_de_tab(char *s, size_t len)
+{
+    while(len != 0)
+    {
+        if((*s == 0x09) || (*s == 0x0d))
+        {
+            *s = 0x20;
+        }
+        s++; len--;
+    }
 }
 
 // -----------------------------------------------------------------------
 // extract next space delimited token from input data
 
-char *token(char *s)
+void token(void)
 {
-    utf8_encode_t *encode;
-    char *p = s;
+    char *s = line_buff;
+    uint16_t i, j = 0;
+    uint8_t l;
 
-    // scan past leading white space
-    while((*s == 0x20) || (*s == 0x0a))
+    memset(json_token, 0, TOKEN_LEN);
+
+    if(json_index == json_len)
     {
-        s++;
+        return;
     }
 
-    // scan from current index to next white space, null
-    // or end of string
-    while((*s != '\0') &&
-          (*s != 0x20) && (*s != 0x0a))
-    {
-        encode = utf8_encode(*s);
-        s += encode->len;
-    }
+    skip_white();           // skip leading white space
 
-    *s++ = '\0';
+    while((line_left != 0) &&
+          (s[line_index] != 0x20))
+   {
+       // have we been fed a truncated utf8 character ?
+       l = utf8_char_length(&s[line_index]);
 
-    // return pointer to tokenized string
-    return p;
-}
+       if(l > line_left)
+       {
+            // "warning: truncated utf8 character" ???
+           line_left = 0;
+           return;
+       }
 
-// -----------------------------------------------------------------------
-// comparing strings in c is dangerous im told
+       for(i = 0; i < l; i++)
+       {
+           json_token[j++] = s[line_index + i];
 
-uint16_t is_token(uint32_t *table, size_t size, char *s)
-{
-    uint16_t lastc;
-    uint32_t hash;
-    lastc = strlen(s) -1;
-
-    // trim quotes off keyword
-    if((*s == '"') && (s[lastc] == '"'))
-    {
-        s[lastc] = '\0';
-        s++;
-    }
-
-    hash = fnv_hash(s);
-    return(is_keyword(table, size, hash));
+           if(j == TOKEN_LEN)
+           {
+               break;
+           }
+       }
+       line_index += l;
+       line_left  -= l;
+   }
 }
 
 // =======================================================================

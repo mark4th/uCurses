@@ -9,20 +9,21 @@
 // structure contains a option and a function vector.  for example
 // see parse.c
 
-void re_switch(const switch_t *s, int n, char c1)
+int re_switch(const switch_t *s, size_t size, uint32_t option)
 {
-    while((n != 0) && c1 != s->option)
+    int result = -1;
+
+    while((size != 0) && option != s->option)
     {
-       s++; n--;
+       s++; size--;
     }
-    if(c1 == s->option)
+    if(option == s->option)
     {
         (s->vector)();
+        result = 0;
     }
-    else
-    {
-        // snafu?
-    }
+
+    return result;
 }
 
 // =======================================================================

@@ -130,6 +130,21 @@ uint8_t utf8_decode(uint32_t *cp, char *s)
 }
 
 // --------------------------------------------------------------------------
+// return number of bytes for a utf8 char pointed to by *s
+
+uint8_t utf8_char_length(char *s)
+{
+    uint8_t c = *(uint8_t *)s;
+
+    if ((c <  0x80))                { return 1; }
+    if ((c >= 0xc0) && (c < 0xe0))  { return 2; }
+    if ((c >= 0xe0) && (c < 0xf0))  { return 3; }
+    if ((c >  0xef))                { return 4; }
+
+    return -1;
+}
+
+// --------------------------------------------------------------------------
 // gets number of console character cells the string will use. this accounts
 // for characters such as chinese which take up two cells worth of space in
 // the console when displayed.

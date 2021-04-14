@@ -2,6 +2,7 @@ ACLOCAL_AMFLAGS = -I m4
 
 lib_LTLIBRARIES = libuCurses.la
 
+
 libuCurses_la_SOURCES =  \
   h/uCurses.h      \
   src/border.c     \
@@ -15,6 +16,7 @@ libuCurses_la_SOURCES =  \
   src/reswitch.c   \
   src/screen.c     \
   src/tifile.c     \
+  src/ui_json.c    \
   src/utf8.c       \
   src/util.c       \
   src/window.c     \
@@ -23,6 +25,7 @@ libuCurses_la_SOURCES =  \
 CFLAGS = -Os -fpic -fno-inline -pedantic -Wall -Werror \
    -Wextra -std=gnu17 -pipe -march=native -g3 \
    -fno-align-functions -m64
+   # -fsanitize=undefined
 
 #AM_LDFLAGS = -fuse-ld=lld
 

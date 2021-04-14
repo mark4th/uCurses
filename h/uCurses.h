@@ -49,7 +49,7 @@ typedef enum
 
 typedef struct
 {
-    uint8_t option;
+    uint32_t option;
     opt_t vector;
 } switch_t;
 
@@ -255,6 +255,19 @@ enum
 
 // -----------------------------------------------------------------------
 
+#define MAX_LINE_LEN 128
+#define TOKEN_LEN 32
+
+typedef struct
+{
+    uint16_t state;         // current state
+    void *parent;           // pointer to parent j_state_t
+    void *structure;        // pointer to structure being populated
+    uint16_t struct_type;   // type of structure being populated
+} j_state_t;
+
+// -----------------------------------------------------------------------
+
 void win_pop(window_t *win);
 void win_close(window_t *win);
 window_t *win_open(uint16_t width, uint16_t height);
@@ -314,7 +327,7 @@ void stuff_key(uint8_t c);
 
 // -----------------------------------------------------------------------
 
-void re_switch(const switch_t *s, int n, char c1);
+int re_switch(const switch_t *s, size_t size, uint32_t option);
 uint8_t key(void);
 
 // -----------------------------------------------------------------------
@@ -331,6 +344,7 @@ uint8_t utf8_decode(uint32_t *cp, char *s);
 uint16_t utf8_width(char *s);
 uint16_t utf8_strlen(char *s);
 uint16_t utf8_strncmp(char *s1, char *s2, uint16_t len);
+uint8_t utf8_char_length(char *s);
 
 void flush(void);
 void c_emit(uint8_t c1);
@@ -341,8 +355,10 @@ void apply_attribs(void);
 
 uint32_t fnv_hash(char *s);
 uint16_t is_keyword(uint32_t *table, size_t size, uint32_t hash);
-char *token(char *s);
+void token(void);
 uint16_t is_token(uint32_t *table, size_t size, char *s);
+void json_de_tab(char *s, size_t len);
+void json_error(char *s);
 
 // -----------------------------------------------------------------------
 

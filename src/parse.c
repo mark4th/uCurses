@@ -593,7 +593,7 @@ static uint8_t next_c(void)
 // -----------------------------------------------------------------------
 // terminfo format string % codes
 
-const switch_t p_codes[] =
+static const switch_t p_codes[] =
 {
     { '%', &_percent }, { 'p', &_p },      { 'd', &_d },
     { 'c', &_c },       { 'i', &_i },      { 's', &_s },
@@ -621,9 +621,14 @@ void parse_format(void)
 
     while((c1 = *f_str++))
     {
-        (c1 == '%')
-            ? re_switch(&p_codes[0], PCOUNT, next_c())
-            : c_emit(c1);
+        if(c1 == '%')
+        {
+            re_switch(p_codes, PCOUNT, next_c());
+        }
+        else
+        {
+            c_emit(c1);
+        }
     }
 }
 

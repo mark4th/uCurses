@@ -49,6 +49,7 @@ static char *ui_values[] =
 {
     "fg",    "gray-fg",
     "bg",    "gray-bg",
+    "red",   "green",   "blue",
     "xco",   "yco",
     "width", "height",
     "name",  "flags",
@@ -62,13 +63,12 @@ static char *ui_values[] =
 static char *ui_constants[] =
 {
     "MENU_DISABLED",
-    "BORDER_SINGLE",
-    "BORDER_DOUBLE",
-    "BORDER_ROUND",
+    "BDR_SINGLE",
+    "BDR_DOUBLE",
+    "BDR_CURVED",
     "WIN_LOCKED",
     "WIN_FILLED",
     "WIN_BOXED",
-    "NONE",
 };
 
 // -----------------------------------------------------------------------

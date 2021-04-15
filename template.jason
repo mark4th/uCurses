@@ -31,7 +31,7 @@
 # replace that with the full body of the specified template with your
 # required values specified for that instance of the template
 
-attribs
+attribs :
 {
     "fg"        : byte , |    # 0 to 15
     "gray-fg"   : byte , |    # 0 to 23
@@ -59,7 +59,7 @@ attribs
 # you can not currently write text into the backdrop window, it is only
 # there as a bacground window to overlay the other windows on top of
 
-backdrop
+backdrop :
 {
     "attribs"        : |attribs|
     "border-attribs" : |attribs|
@@ -68,7 +68,7 @@ backdrop
 
 # ------------------------------------------------------------------------
 
-|menu-item|
+menu-item :
 {
     "name"     : "string" ,
     "vector"   : "string" ,
@@ -78,7 +78,7 @@ backdrop
 
 # ------------------------------------------------------------------------
 
-|pulldown|
+pulldown :
 {
     "name"   : "string" ,
 
@@ -118,6 +118,8 @@ backdrop
 {
     "width"  : 80 to 65535 | % of screen width,
     "height" : 80 to 65535 | % of screen width,
+
+    # width and height must be above these: this is not tested for
 
     "xco"    : 80 to screen width - width   | centered around % of screen width ,
     "yco"    : 80 to screen height - height | centered around % of secrrn width ,

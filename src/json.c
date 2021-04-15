@@ -22,7 +22,6 @@ uint16_t line_left;     // number of chars left to parse in line
 
 char json_token[TOKEN_LEN];    // space delimited token extracted from data
 uint32_t json_hash;
-uint32_t name_hash;
 uint32_t has_comma;     // true if last token had a comma on it
 uint16_t array;         // true if structure is an array
 
@@ -34,7 +33,7 @@ typedef enum
 {
     STATE_STRUCT_COLON,
     STATE_L_BRACE,
-    STATE_STUCT_NAME,
+    STATE_STRUCT_NAME,
     STATE_VALUE_COLON,
     STATE_VALUE,
     STATE_R_BRACE,
@@ -85,7 +84,19 @@ typedef enum
     STRUCT_D_ATTRIBS,       // disabled attribs
     STRUCT_RGB_FG,          // an optional array of 3 bytes
     STRUCT_RGB_BG,          // an optional array of 3 bytes
-    STRUCT_FLAGS
+    STRUCT_FLAGS,
+    KEY_FG,
+    KEY_BG,
+    KEY_GRAY_BG,
+    KEY_XCO,
+    KEY_YCO,
+    KEY_WIDTH,
+    KEY_HEIGHT,
+    KEY_NAME,
+    KEY_FLAGS,
+    KEY_BORDER_TYPE,
+    KEY_VECTOR,
+    KEY_SHORTCUT
 } struct_type_t;
 
 // -----------------------------------------------------------------------
@@ -94,14 +105,19 @@ j_state_t *j_state;
 
 // -----------------------------------------------------------------------
 
-static void j_push(void)
+static void j_push(j_state_t *j)
 {
     list_append_node(&j_stack, j_state);
+    j_state = j;
 }
 
-__attribute__((used))
+// -----------------------------------------------------------------------
+
 static void j_pop(void)
 {
+    free(j_state->structure);
+    free(j_state);
+
     j_state = list_pop(&j_stack);
 }
 
@@ -109,6 +125,7 @@ static void j_pop(void)
 
 void json_error(char *s)
 {
+    // printf offending line and pointer to offending item?
     fprintf(stderr, "%d:%d %s\n", line_no, line_index, s);
     _exit(1);
 }
@@ -127,29 +144,48 @@ void *j_alloc(uint32_t size)
 }
 
 // -----------------------------------------------------------------------
-// json files and indiidual structures must start with a {
+// json files and individual structures must start with a {
 
 static void state_l_brace(void)
 {
-    if(json_hash != json_syntax[JSON_L_BRACE])
+    if(array == 1)
+    {
+        if(json_hash != json_syntax[JSON_L_BRACKET])
+        {
+            json_error("Array needs opening bracket");
+        }
+        // require closing bracket too
+        array = 2;
+    }
+    else if(json_hash != json_syntax[JSON_L_BRACE])
     {
         json_error("Opening brace missing");
     }
 
-    // are we expecting to see an opening bracket after the {
-    if(array == 1)
-    {
-        token();
-        if(json_hash == json_syntax[JSON_L_BRACKET])
-        {
-            array = 2;
-        }
-        else
-        {
-            json_error("Expected opening bracket");
-        }
-    }
     j_state->state++;
+}
+
+// -----------------------------------------------------------------------
+
+static void new_state_struct(size_t struct_size, uint32_t struct_type,
+    uint32_t state)
+{
+    j_state_t *j;
+    void *structure = NULL;
+
+    j = j_alloc(sizeof(*j));
+
+    if(struct_size != 0)
+    {
+        structure = j_alloc(struct_size);
+    }
+
+    j->parent      = j_state;
+    j->structure   = structure;
+    j->struct_type = struct_type;
+    j->state       = state;
+
+    j_push(j);
 }
 
 // -----------------------------------------------------------------------
@@ -164,31 +200,25 @@ static void struct_screen(void)
         json_error("There can be only one screen");
     }
 
-    scr = j_alloc(sizeof(*scr));
+    // this was a temp j_state just to get us to here
+    // the screen is the foundation for the entire UI
 
-    j_state->parent      = NULL;
-    j_state->structure   = scr;
-    j_state->struct_type = STRUCT_SCREEN;
-    j_state->state       = STATE_STRUCT_COLON;
+    free(j_state);
+    j_state = NULL;
+
+    new_state_struct(sizeof(*scr), STRUCT_SCREEN, STATE_STRUCT_COLON);
 }
 
 // -----------------------------------------------------------------------
 
 static void struct_windows(void)
 {
-    j_state_t *j;
+    if(j_state->struct_type != STRUCT_SCREEN)
+    {
+        json_error("Requires parent screen");
+    }
 
-    j = j_alloc(sizeof(*j));
-
-    j->parent      = j_state;
-    j->structure   = NULL;
-    j->struct_type = STRUCT_WINDOWS;
-    j->state       = STATE_STRUCT_COLON;
-
-    array = 1;  // tell state machine to expect a [ after the {
-
-    j_push();
-    j_state = j;
+    new_state_struct(0, STRUCT_WINDOWS, STATE_STRUCT_COLON);
 }
 
 // -----------------------------------------------------------------------
@@ -196,297 +226,393 @@ static void struct_windows(void)
 
 static void struct_window(void)
 {
-    window_t *win;
-    j_state_t *j;
+    if(j_state->struct_type != STRUCT_WINDOWS)
+    {
+        json_error("Requires parent windows structure");
+    }
 
-    /// *** ensure parent is struct_windows
-
-    j = j_alloc(sizeof(*j));
-    win = j_alloc(sizeof(*win));
-
-    j->parent      = j_state;
-    j->structure   = win;
-    j->struct_type = STRUCT_WINDOW;
-    j->state       = STATE_STRUCT_COLON;
-
-    j_push();
-    j_state = j;
+    new_state_struct(sizeof(window_t), STRUCT_WINDOW,
+        STATE_STRUCT_COLON);
 }
 
 // -----------------------------------------------------------------------
 
 static void struct_backdrop(void)
 {
-    window_t *win;
-    j_state_t *j;
+    if(j_state->struct_type != STRUCT_SCREEN)
+    {
+        json_error("Requires parent screen");
+    }
 
-// ensure parent structure is a screen
-
-    j = j_alloc(sizeof(*j));
-    win = j_alloc(sizeof(*win));
-
-    j->parent      = j_state;
-    j->structure   = win;
-    j->struct_type = STRUCT_BACKDROP;
-    j->state       = STATE_STRUCT_COLON;
-
-    j_push();
-    j_state = j;
+    new_state_struct(sizeof(window_t), STRUCT_BACKDROP,
+        STATE_STRUCT_COLON);
 }
 
 // -----------------------------------------------------------------------
 
 static void struct_m_bar(void)
 {
-    menu_bar_t *bar;
-    j_state_t *j;
+    if(j_state->struct_type != STRUCT_SCREEN)
+    {
+        json_error("Requires parent screen");
+    }
 
-    // ensure parent structure is a screen
-
-    j = j_alloc(sizeof(*j));
-    bar = j_alloc(sizeof(*bar));
-
-    j->parent      = j_state;
-    j->structure   = bar;
-    j->struct_type = STRUCT_MENU_BAR;
-    j->state       = STATE_STRUCT_COLON;
-
-    j_push();
-    j_state = j;
+    new_state_struct(sizeof(menu_bar_t), STRUCT_MENU_BAR,
+        STATE_STRUCT_COLON);
 }
 
 // -----------------------------------------------------------------------
 
 static void struct_pulldowns(void)
 {
-    // ensure parent structure is a menu bar
+    if(j_state->struct_type != STRUCT_MENU_BAR)
+    {
+        json_error("Requires parent screen");
+    }
 
-    j_state_t *j;
-
-    j = j_alloc(sizeof(*j));
-
-    j->parent      = j_state;
-    j->structure   = NULL;
-    j->struct_type = STRUCT_PULLDOWNS;
-    j->state = 0;
-
-    array = 1;  // tell state machine to expect a [ after the {
-
-    j_push();
-    j_state = j;
+    new_state_struct(0, STRUCT_PULLDOWNS, STATE_STRUCT_COLON);
 }
 
 // -----------------------------------------------------------------------
 
 static void struct_pulldown(void)
 {
-    pulldown_t *pd;
-    j_state_t *j;
+    if(j_state->struct_type != STRUCT_PULLDOWNS)
+    {
+        json_error("Requires parent pulldowns structure");
+    }
 
-    // ensure parent structure is a pulldowns
-
-    j = j_alloc(sizeof(*j));
-    pd = j_alloc(sizeof(*pd));
-
-    j->parent      = j_state;
-    j->structure   = pd;
-    j->struct_type = STRUCT_PULLDOWN;
-    j->state = 0;
-
-    j_push();
-    j_state = j;
+    new_state_struct(sizeof(pulldown_t), STRUCT_PULLDOWN,
+        STATE_STRUCT_COLON);
 }
 
 // -----------------------------------------------------------------------
 
 static void struct_m_items(void)
 {
-    j_state_t *j;
+    if(j_state->struct_type != STRUCT_PULLDOWN)
+    {
+        json_error("Requires parent pulldown structure");
+    }
 
-    // ensure parent structure is a pulldown
-
-    j = j_alloc(sizeof(*j));
-
-    j->parent      = j_state;
-    j->structure   = NULL;
-    j->struct_type = STRUCT_MENU_ITEMS;
-
-    array = 1;  // tell state machine to expect a [ after the {
-
-    j_push();
-    j_state = j;
+    new_state_struct(0, STRUCT_MENU_ITEMS, STATE_STRUCT_COLON);
 }
 
 // -----------------------------------------------------------------------
 
 static void struct_m_item(void)
 {
-    menu_item_t *item;
-    j_state_t *j;
+    if(j_state->struct_type != STRUCT_MENU_ITEMS)
+    {
+        json_error("requires parent menu-items array");
+    }
 
-    // ensure parent is a pulldown
-
-    j = j_alloc(sizeof(*j));
-    item = j_alloc(sizeof(*item));
-
-    j->parent      = j_state;
-    j->structure   = item;
-    j->struct_type = STRUCT_MENU_ITEM;
-
-    j_push();
-    j_state = j;
+    new_state_struct(sizeof(menu_item_t), STRUCT_MENU_ITEM,
+        STATE_STRUCT_COLON);
 }
 
 // -----------------------------------------------------------------------
 
 static void struct_attribs(void)
 {
-    j_state_t *j;
+    if((j_state->struct_type != STRUCT_BACKDROP) &&
+       (j_state->struct_type != STRUCT_WINDOW) &&
+       (j_state->struct_type != STRUCT_PULLDOWN) &&
+       (j_state->struct_type != STRUCT_MENU_BAR))
+    {
+        json_error(
+            "Requires parent backdrop, window, pulldown or menu bar");
+    }
 
-    // parent structure can be a backdrop, a window, a pulldown
-    // or a menu bar
-
-    j = j_alloc(sizeof(*j));
-
-    j->parent      = j_state;
-    j->structure   = NULL;
-    j->struct_type = STRUCT_ATTRIBS;
-
-    array = 1;  // tell state machine to expect a [ after the {
-
-    j_push();
-    j_state = j;
+    new_state_struct(0, STRUCT_ATTRIBS, STATE_STRUCT_COLON);
 }
 
 // -----------------------------------------------------------------------
 
 static void struct_b_attribs(void)
 {
-    j_state_t *j;
+    if((j_state->struct_type != STRUCT_BACKDROP) &&
+       (j_state->struct_type != STRUCT_WINDOW))
+    {
+        json_error("Requires parent backdrop or window");
+    }
 
-    // parent structure can be a backdrop, a window, a pulldown
-    // or a menu bar
-
-    j = j_alloc(sizeof(*j));
-
-    j->parent      = j_state;
-    j->structure   = NULL;
-    j->struct_type = STRUCT_B_ATTRIBS;
-
-    array = 1;  // tell state machine to expect a [ after the {
-
-    j_push();
-    j_state = j;
+    new_state_struct(0, STRUCT_B_ATTRIBS, STATE_STRUCT_COLON);
 }
 
 // -----------------------------------------------------------------------
 
 static void struct_s_attribs(void)
 {
-    j_state_t *j;
+    if((j_state->struct_type != STRUCT_BACKDROP) &&
+       (j_state->struct_type != STRUCT_WINDOW) &&
+       (j_state->struct_type != STRUCT_PULLDOWN) &&
+       (j_state->struct_type != STRUCT_MENU_BAR))
+    {
+        json_error(
+            "Requires parent backdrop, window, pulldown or menu bar");
+    }
 
-    // parent structure can be a backdrop, a window, a pulldown
-    // or a menu bar
-
-    j = j_alloc(sizeof(*j));
-
-    j->parent      = j_state;
-    j->structure   = NULL;
-    j->struct_type = STRUCT_S_ATTRIBS;
-
-    array = 1;  // tell state machine to expect a [ after the {
-
-    j_push();
-    j_state = j;
+    new_state_struct(0, STRUCT_S_ATTRIBS, STATE_STRUCT_COLON);
 }
 
 // -----------------------------------------------------------------------
 
 static void struct_d_attribs(void)
 {
-    j_state_t *j;
+    if((j_state->struct_type != STRUCT_BACKDROP) &&
+       (j_state->struct_type != STRUCT_WINDOW) &&
+       (j_state->struct_type != STRUCT_PULLDOWN) &&
+       (j_state->struct_type != STRUCT_MENU_BAR))
+    {
+        json_error(
+            "Requires parent backdrop, window, pulldown or menu bar");
+    }
 
-    // parent structure can be a backdrop, a window, a pulldown
-    // or a menu bar
-
-    j = j_alloc(sizeof(*j));
-
-    j->parent      = j_state;
-    j->structure   = NULL;
-    j->struct_type = STRUCT_D_ATTRIBS;
-
-    array = 1;  // tell state machine to expect a [ after the {
-
-    j_push();
-    j_state = j;
+    new_state_struct(0, STRUCT_D_ATTRIBS, STATE_STRUCT_COLON);
 }
 
 // -----------------------------------------------------------------------
 
 static void struct_rgb_fg(void)
 {
-    j_state_t *j;
+    if((j_state->struct_type != STRUCT_ATTRIBS) &&
+       (j_state->struct_type != STRUCT_B_ATTRIBS) &&
+       (j_state->struct_type != STRUCT_S_ATTRIBS) &&
+       (j_state->struct_type != STRUCT_D_ATTRIBS))
+    {
+        json_error("Requires parent atrribs structure");
+    }
 
-    // parent structure can be a backdrop, a window, a pulldown
-    // or a menu bar
-
-    j = j_alloc(sizeof(*j));
-
-    j->parent      = j_state;
-    j->structure   = NULL;
-    j->struct_type = STRUCT_RGB_FG;
-
-    array = 1;  // tell state machine to expect a [ after the {
-
-    j_push();
-    j_state = j;
+    new_state_struct(0, STRUCT_RGB_FG, STATE_STRUCT_COLON);
 }
 
 // -----------------------------------------------------------------------
 
 static void struct_rgb_bg(void)
 {
-    j_state_t *j;
+    if((j_state->struct_type != STRUCT_ATTRIBS) &&
+       (j_state->struct_type != STRUCT_B_ATTRIBS) &&
+       (j_state->struct_type != STRUCT_S_ATTRIBS) &&
+       (j_state->struct_type != STRUCT_D_ATTRIBS))
+    {
+        json_error("Requires parent atrribs structure");
+    }
 
-    // parent structure can be a backdrop, a window, a pulldown
-    // or a menu bar
-
-    j = j_alloc(sizeof(*j));
-
-    j->parent      = j_state;
-    j->structure   = NULL;
-    j->struct_type = STRUCT_RGB_BG;
-
-    array = 1;  // tell state machine to expect a [ after the {
-
-    j_push();
-    j_state = j;
+    new_state_struct(0, STRUCT_RGB_BG, STATE_STRUCT_COLON);
 }
 
 // -----------------------------------------------------------------------
 
 static void struct_flags(void)
 {
-    j_state_t *j;
+    if((j_state->struct_type != STRUCT_BACKDROP) &&
+       (j_state->struct_type != STRUCT_WINDOW) &&
+       (j_state->struct_type != STRUCT_PULLDOWN) &&
+       (j_state->struct_type != STRUCT_MENU_BAR))
+    {
+        json_error("Requires parent backdrop, window, pulldown or menu bar");
+    }
 
-    // parent structure can be a backdrop, a window, a pulldown
-    // or a menu bar
+    new_state_struct(0, STRUCT_FLAGS, STATE_STRUCT_COLON);
 
-    j = j_alloc(sizeof(*j));
-
-    j->parent      = j_state;
-    j->structure   = NULL;
-    j->struct_type = STRUCT_FLAGS;
-
-    array = 1;  // tell state machine to expect a [ after the {
-
-    j_push();
-    j_state = j;
+    array = 1;  // tell state machine to expect a [ instead of {
 }
 
 // -----------------------------------------------------------------------
 
-static const switch_t struct_type[] =
+static void key_fg(void)
+{
+    if((j_state->struct_type != STRUCT_ATTRIBS) &&
+       (j_state->struct_type != STRUCT_B_ATTRIBS) &&
+       (j_state->struct_type != STRUCT_S_ATTRIBS) &&
+       (j_state->struct_type != STRUCT_D_ATTRIBS))
+    {
+        json_error("Requires parent atrribs structure");
+    }
+
+    // leaves state unchanged
+    new_state_struct(0, KEY_FG, j_state->state);
+}
+
+// -----------------------------------------------------------------------
+
+static void key_gray_fg(void)
+{
+    if((j_state->struct_type != STRUCT_ATTRIBS) &&
+       (j_state->struct_type != STRUCT_B_ATTRIBS) &&
+       (j_state->struct_type != STRUCT_S_ATTRIBS) &&
+       (j_state->struct_type != STRUCT_D_ATTRIBS))
+    {
+        json_error("Requires parent atrribs structure");
+    }
+
+    // leaves state unchanged
+    new_state_struct(0, KEY_FG, j_state->state);
+}
+
+// -----------------------------------------------------------------------
+
+static void key_bg(void)
+{
+    if((j_state->struct_type != STRUCT_ATTRIBS) &&
+       (j_state->struct_type != STRUCT_B_ATTRIBS) &&
+       (j_state->struct_type != STRUCT_S_ATTRIBS) &&
+       (j_state->struct_type != STRUCT_D_ATTRIBS))
+    {
+        json_error("Requires parent atrribs structure");
+    }
+
+    // leaves state unchanged
+    new_state_struct(0, KEY_BG, j_state->state);
+}
+
+// -----------------------------------------------------------------------
+
+static void key_gray_bg(void)
+{
+    if((j_state->struct_type != STRUCT_ATTRIBS) &&
+       (j_state->struct_type != STRUCT_B_ATTRIBS) &&
+       (j_state->struct_type != STRUCT_S_ATTRIBS) &&
+       (j_state->struct_type != STRUCT_D_ATTRIBS))
+    {
+        json_error("Requires parent atrribs structure");
+    }
+
+    // leaves state unchanged
+    new_state_struct(0, KEY_GRAY_BG, j_state->state);
+}
+
+// -----------------------------------------------------------------------
+
+static void key_xco(void)
+{
+    if(j_state->struct_type != STRUCT_WINDOW)
+    {
+        json_error("Requires parent window");
+    }
+    new_state_struct(0, KEY_XCO, j_state->state);
+}
+
+// -----------------------------------------------------------------------
+
+static void key_yco(void)
+{
+    if(j_state->struct_type != STRUCT_WINDOW)
+    {
+        json_error("Requires parent window");
+    }
+    new_state_struct(0, KEY_YCO, j_state->state);
+}
+
+// -----------------------------------------------------------------------
+
+static void key_width(void)
+{
+    if(j_state->struct_type != STRUCT_WINDOW)
+    {
+        json_error("Requires parent window");
+    }
+    new_state_struct(0, KEY_WIDTH, j_state->state);
+}
+
+// -----------------------------------------------------------------------
+
+static void key_height(void)
+{
+    if(j_state->struct_type != STRUCT_WINDOW)
+    {
+        json_error("Requires parent window");
+    }
+    new_state_struct(0, KEY_HEIGHT, j_state->state);
+}
+
+// -----------------------------------------------------------------------
+
+static void key_name(void)
+{
+    if((j_state->struct_type != STRUCT_PULLDOWN) &&
+       (j_state->struct_type != STRUCT_MENU_ITEM))
+    {
+        json_error("Requires parent pulldown or menu-item");
+    }
+    new_state_struct(0, KEY_NAME, j_state->state);
+}
+
+// -----------------------------------------------------------------------
+
+static void key_flags(void)
+{
+    if((j_state->struct_type != STRUCT_PULLDOWN) &&
+       (j_state->struct_type != STRUCT_MENU_ITEM) &&
+       (j_state->struct_type != STRUCT_WINDOW))
+    {
+        json_error("Requires parent window, pulldown or menu-item");
+    }
+    new_state_struct(0, KEY_FLAGS, j_state->state);
+
+    // tell state machine to require [ instead of {
+    array = 1;
+}
+
+// -----------------------------------------------------------------------
+
+static void key_border_type(void)
+{
+    if((j_state->struct_type != STRUCT_BACKDROP) &&
+       (j_state->struct_type != STRUCT_WINDOW))
+    {
+        json_error("Requires parent window or backdrop");
+    }
+    new_state_struct(0, KEY_BORDER_TYPE, j_state->state);
+}
+
+// -----------------------------------------------------------------------
+
+static void key_vector(void)
+{
+    if(j_state->struct_type != STRUCT_MENU_ITEM)
+    {
+        json_error("Requires parent menu-item");
+    }
+    new_state_struct(0, KEY_VECTOR, j_state->state);
+}
+
+// -----------------------------------------------------------------------
+
+static void key_shortcut(void)
+{
+    if(j_state->struct_type != STRUCT_MENU_ITEM)
+    {
+        json_error("Requires parent menu-item");
+    }
+    new_state_struct(0, KEY_SHORTCUT, j_state->state);
+}
+
+// -----------------------------------------------------------------------
+
+static const switch_t key_types[] =
+{
+    { 0x6b77251c,  key_fg          },
+    { 0xaa3b6788,  key_gray_fg     },
+    { 0x6f772ba0,  key_bg          },
+    { 0xa63b61c4,  key_gray_bg     },
+    { 0x1c63995d,  key_xco         },
+    { 0x3461800c,  key_yco         },
+    { 0x182e64eb,  key_width       },
+    { 0x4c47d5c0,  key_height      },
+    { 0x2f8b3bf4,  key_name        },
+    { 0x68cdf632,  key_flags       },
+    { 0x362bb2fc,  key_border_type },
+    { 0x0ee694b4,  key_vector      },
+    { 0x1c13e01f,  key_shortcut    },
+};
+
+#define NUM_KEYS (sizeof(key_types) / sizeof(key_types[0]))
+
+// -----------------------------------------------------------------------
+
+static const switch_t struct_types[] =
 {
     { 0x2ff97421,  struct_screen     },
     { 0x1025ba8c,  struct_windows    },
@@ -506,20 +632,21 @@ static const switch_t struct_type[] =
     { 0x68cdf632,  struct_flags      }
 };
 
-#define NUM_STRUCTS (sizeof(struct_type) / sizeof(struct_type[0]))
+#define NUM_STRUCTS (sizeof(struct_types) / sizeof(struct_types[0]))
 
 // -----------------------------------------------------------------------
-// quoted name of structure to store value to
 
 static void state_struct(void)
 {
     uint16_t i;
+    int f;
+
     size_t len = strlen(json_token);
 
     if((json_token[0]       != '"') &&
        (json_token[len - 1] != '"'))
     {
-        json_error("Field names must be quoted");
+        json_error("Key names must be quoted");
     }
 
     // strip qutes from token and recalculate hash
@@ -527,16 +654,25 @@ static void state_struct(void)
     {
         json_token[i] = json_token[i + 1];
     }
-    json_token[i] = '0';
-
+    json_token[i] = '\0';
     json_hash = fnv_hash(json_token);
 
-    // if reswitch returns -1 here then we did not just parse in a
-    // structure name but a structure element name so....
-    // we are just trying to set some structure element to a value.
 
-    name_hash = (re_switch(struct_type, NUM_STRUCTS, json_hash) == -1)
-        ? json_hash : 0;
+    f = re_switch(struct_types, NUM_STRUCTS, json_hash);
+
+    // if reswitch returned -1 here then we did not just parse
+    // in a structure name but a possible key name so....
+    // we are just trying to set some key to some value.
+
+    if(f == -1)
+    {
+        f = re_switch(key_types, NUM_KEYS, json_hash);
+        if(f == -1)
+        {
+            json_error("Unknown key name");
+        }
+        j_state->state++;
+    }
 }
 
 // -----------------------------------------------------------------------
@@ -545,7 +681,7 @@ static void state_colon(void)
 {
     if(json_hash != json_syntax[JSON_COLON])
     {
-        json_error("Colon missing");
+        json_error("Missing Colon");
     }
     j_state->state++;
 }
@@ -589,10 +725,7 @@ static void state_r_brace(void)
         json_error("Closing brace missing");
     }
 
-    free(j_state->structure);
-    free(j_state);
-
-    j_state = list_pop(&j_stack);
+    j_pop();
     j_state->state++;
 
     if(j_stack.count == 0)
@@ -607,7 +740,7 @@ static const switch_t states[] =
 {
     { STATE_STRUCT_COLON, state_colon   },
     { STATE_L_BRACE,      state_l_brace },
-    { STATE_STUCT_NAME,   state_struct  },
+    { STATE_STRUCT_NAME,  state_struct  },
 
     { STATE_VALUE_COLON,  state_colon   },
     { STATE_VALUE,        state_value   },

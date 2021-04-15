@@ -32,24 +32,26 @@
 # required values specified for that instance of the template
 
 attribs
-{ [
+{
     "fg"        : byte , |    # 0 to 15
     "gray-fg"   : byte , |    # 0 to 23
 
-    "rgb-fg"    : { [
+    "rgb-fg"    :
+    {
         "red"   : byte ,
         "green" : byte ,
         "blue"  : byte
-    ] } ,
+    } ,
 
     "bg"        : byte , |    # 0 to 15
     "gray-bg"   : byte , |    # 0 to 23
 
-    "rgb-bg"    : { [
+    "rgb-bg"    :
+    {
         "red"   : byte ,
         "green" : byte ,
         "blue"  : byte
-    ] }
+    }
 ] }
 
 # ------------------------------------------------------------------------
@@ -61,30 +63,7 @@ backdrop
 {
     "attribs"        : |attribs|
     "border-attribs" : |attribs|
-    "border-type"    : { [ SINGLE | DOUBLE | ROUND | NONE ] } ,
-}
-
-# ------------------------------------------------------------------------
-
-|window|
-{
-    "name"   : "string" ,
-
-    "width"  : 80 to 65535 | % of screen width,
-    "height" : 80 to 65535 | % of screen width,
-
-    "xco"    : 80 to screen width - width   | centered around % of screen width ,
-    "yco"    : 80 to screen height - height | centered around % of secrrn width ,
-
-    "border-type"    : { [ SINGLE | DOUBLE | ROUND ] } ,
-    "attribs"        : |attribs| ,
-    "border-attribs" : |attribs| ,
-
-    flags : { [
-        LOCKED ,
-        BOXED  ,
-        FILLED
-    ] }
+    "border-type"    : SINGLE | DOUBLE | ROUND | NONE
 }
 
 # ------------------------------------------------------------------------
@@ -94,7 +73,7 @@ backdrop
     "name"     : "string" ,
     "vector"   : "string" ,
     "shortcut" : "string" ,
-    "flags"    : { [ NONE | DISABLED ] }
+    "flags"    : [ NONE | DISABLED ]
 }
 
 # ------------------------------------------------------------------------
@@ -103,17 +82,18 @@ backdrop
 {
     "name"   : "string" ,
 
-    "flags"  : { [ NONE | DISABLED ] } ,
+    "flags"  : [ NONE | DISABLED ] ,
 
     "attribs"          : |attribs| ,
     "selected-attribs" : |attribs| ,
     "disabled-attribs" : |attribs| ,
 
-    "menu-items" :  { [
+    "menu-items" :
+    {
         |menu-item| ,
         |menu-item| ,
         |menu-item|
-   ] }
+    }
 }
 
 # ------------------------------------------------------------------------
@@ -124,11 +104,29 @@ backdrop
     "selected-attribs" : |attribs|
     "disabled-attribs" : |attribs|
 
-    "pulldowns" : { [
+    "pulldowns" :
+    {
         |pulldown| ,
         |pulldown| ,
         |pulldown|
-    ] }
+    }
+}
+
+# ------------------------------------------------------------------------
+
+|window|
+{
+    "width"  : 80 to 65535 | % of screen width,
+    "height" : 80 to 65535 | % of screen width,
+
+    "xco"    : 80 to screen width - width   | centered around % of screen width ,
+    "yco"    : 80 to screen height - height | centered around % of secrrn width ,
+
+    "border-type"    : SINGLE | DOUBLE | ROUND ,
+    "attribs"        : |attribs| ,
+    "border-attribs" : |attribs| ,
+
+    flags : [ LOCKED , BOXED , FILLED ]
 }
 
 # ------------------------------------------------------------------------
@@ -137,17 +135,15 @@ backdrop
 {
     "screen" :
     {
-        # "width"     ALWAYS matches terminal size on create
-        # "height"    ALWAYS matches terminal size on create
-
         |backdrop| ,
         |menu-bar| ,
 
-        "windows" : { [
+        "windows" :
+        {
             |window| ,
             |window| ,
             |window|
-        ] }
+        }
     }
 }
 

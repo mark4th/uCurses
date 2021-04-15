@@ -1,4 +1,4 @@
-// parsing json definitions for user interface layout
+// uCurses json parsing for user interface layout
 // -----------------------------------------------------------------------
 
 #include <inttypes.h>
@@ -20,9 +20,8 @@ uint16_t line_no;
 uint16_t line_index;    // line parse location
 uint16_t line_left;     // number of chars left to parse in line
 
-char json_token[TOKEN_LEN];    // space delimited token extracted from data
+char json_token[TOKEN_LEN]; // space delimited token extracted from data
 uint32_t json_hash;
-uint32_t has_comma;     // true if last token had a comma on it
 uint16_t array;         // true if structure is an array
 
 static list_t j_stack;
@@ -31,10 +30,8 @@ static list_t j_stack;
 
 typedef enum
 {
-    STATE_STRUCT_COLON,
     STATE_L_BRACE,
-    STATE_STRUCT_NAME,
-    STATE_VALUE_COLON,
+    STATE_KEY,
     STATE_VALUE,
     STATE_R_BRACE,
     STATE_DONE,
@@ -46,7 +43,7 @@ typedef enum
 
 const uint32_t json_syntax[] =
 {
-    0x050c5d3c,             // #
+//    0x050c5d3c,             // #
     0x050c5d25,             // :
     0x050c5d64,             // {
     0x050c5d62,             // }
@@ -57,7 +54,7 @@ const uint32_t json_syntax[] =
 // pfffsets into above array of hash values
 typedef enum
 {
-    JSON_COMMENT,
+//    JSON_COMMENT,
     JSON_COLON,
     JSON_L_BRACE,
     JSON_R_BRACE,
@@ -193,20 +190,16 @@ static void new_state_struct(size_t struct_size, uint32_t struct_type,
 
 static void struct_screen(void)
 {
-    screen_t *scr;
-
     if(j_stack.count != 0)
     {
         json_error("There can be only one screen");
     }
 
-    // this was a temp j_state just to get us to here
-    // the screen is the foundation for the entire UI
+    // on completion of parsing in this screen our parent structure
+    // myst have a closing brace - after which we are done
 
-    free(j_state);
-    j_state = NULL;
-
-    new_state_struct(sizeof(*scr), STRUCT_SCREEN, STATE_STRUCT_COLON);
+    j_state->state = STATE_R_BRACE;
+    new_state_struct(sizeof(screen_t), STRUCT_SCREEN, STATE_L_BRACE);
 }
 
 // -----------------------------------------------------------------------
@@ -218,7 +211,7 @@ static void struct_windows(void)
         json_error("Requires parent screen");
     }
 
-    new_state_struct(0, STRUCT_WINDOWS, STATE_STRUCT_COLON);
+    new_state_struct(0, STRUCT_WINDOWS, STATE_L_BRACE);
 }
 
 // -----------------------------------------------------------------------
@@ -231,8 +224,7 @@ static void struct_window(void)
         json_error("Requires parent windows structure");
     }
 
-    new_state_struct(sizeof(window_t), STRUCT_WINDOW,
-        STATE_STRUCT_COLON);
+    new_state_struct(sizeof(window_t), STRUCT_WINDOW, STATE_L_BRACE);
 }
 
 // -----------------------------------------------------------------------
@@ -244,8 +236,7 @@ static void struct_backdrop(void)
         json_error("Requires parent screen");
     }
 
-    new_state_struct(sizeof(window_t), STRUCT_BACKDROP,
-        STATE_STRUCT_COLON);
+    new_state_struct(sizeof(window_t), STRUCT_BACKDROP, STATE_L_BRACE);
 }
 
 // -----------------------------------------------------------------------
@@ -257,8 +248,7 @@ static void struct_m_bar(void)
         json_error("Requires parent screen");
     }
 
-    new_state_struct(sizeof(menu_bar_t), STRUCT_MENU_BAR,
-        STATE_STRUCT_COLON);
+    new_state_struct(sizeof(menu_bar_t), STRUCT_MENU_BAR, STATE_L_BRACE);
 }
 
 // -----------------------------------------------------------------------
@@ -270,7 +260,7 @@ static void struct_pulldowns(void)
         json_error("Requires parent screen");
     }
 
-    new_state_struct(0, STRUCT_PULLDOWNS, STATE_STRUCT_COLON);
+    new_state_struct(0, STRUCT_PULLDOWNS, STATE_L_BRACE);
 }
 
 // -----------------------------------------------------------------------
@@ -282,8 +272,7 @@ static void struct_pulldown(void)
         json_error("Requires parent pulldowns structure");
     }
 
-    new_state_struct(sizeof(pulldown_t), STRUCT_PULLDOWN,
-        STATE_STRUCT_COLON);
+    new_state_struct(sizeof(pulldown_t), STRUCT_PULLDOWN, STATE_L_BRACE);
 }
 
 // -----------------------------------------------------------------------
@@ -295,7 +284,7 @@ static void struct_m_items(void)
         json_error("Requires parent pulldown structure");
     }
 
-    new_state_struct(0, STRUCT_MENU_ITEMS, STATE_STRUCT_COLON);
+    new_state_struct(0, STRUCT_MENU_ITEMS, STATE_L_BRACE);
 }
 
 // -----------------------------------------------------------------------
@@ -307,8 +296,7 @@ static void struct_m_item(void)
         json_error("requires parent menu-items array");
     }
 
-    new_state_struct(sizeof(menu_item_t), STRUCT_MENU_ITEM,
-        STATE_STRUCT_COLON);
+    new_state_struct(sizeof(menu_item_t), STRUCT_MENU_ITEM, STATE_L_BRACE);
 }
 
 // -----------------------------------------------------------------------
@@ -324,7 +312,7 @@ static void struct_attribs(void)
             "Requires parent backdrop, window, pulldown or menu bar");
     }
 
-    new_state_struct(0, STRUCT_ATTRIBS, STATE_STRUCT_COLON);
+    new_state_struct(0, STRUCT_ATTRIBS, STATE_L_BRACE);
 }
 
 // -----------------------------------------------------------------------
@@ -337,7 +325,7 @@ static void struct_b_attribs(void)
         json_error("Requires parent backdrop or window");
     }
 
-    new_state_struct(0, STRUCT_B_ATTRIBS, STATE_STRUCT_COLON);
+    new_state_struct(0, STRUCT_B_ATTRIBS, STATE_L_BRACE);
 }
 
 // -----------------------------------------------------------------------
@@ -353,7 +341,7 @@ static void struct_s_attribs(void)
             "Requires parent backdrop, window, pulldown or menu bar");
     }
 
-    new_state_struct(0, STRUCT_S_ATTRIBS, STATE_STRUCT_COLON);
+    new_state_struct(0, STRUCT_S_ATTRIBS, STATE_L_BRACE);
 }
 
 // -----------------------------------------------------------------------
@@ -369,7 +357,7 @@ static void struct_d_attribs(void)
             "Requires parent backdrop, window, pulldown or menu bar");
     }
 
-    new_state_struct(0, STRUCT_D_ATTRIBS, STATE_STRUCT_COLON);
+    new_state_struct(0, STRUCT_D_ATTRIBS, STATE_L_BRACE);
 }
 
 // -----------------------------------------------------------------------
@@ -384,7 +372,7 @@ static void struct_rgb_fg(void)
         json_error("Requires parent atrribs structure");
     }
 
-    new_state_struct(0, STRUCT_RGB_FG, STATE_STRUCT_COLON);
+    new_state_struct(0, STRUCT_RGB_FG, STATE_L_BRACE);
 }
 
 // -----------------------------------------------------------------------
@@ -399,7 +387,7 @@ static void struct_rgb_bg(void)
         json_error("Requires parent atrribs structure");
     }
 
-    new_state_struct(0, STRUCT_RGB_BG, STATE_STRUCT_COLON);
+    new_state_struct(0, STRUCT_RGB_BG, STATE_L_BRACE);
 }
 
 // -----------------------------------------------------------------------
@@ -414,7 +402,7 @@ static void struct_flags(void)
         json_error("Requires parent backdrop, window, pulldown or menu bar");
     }
 
-    new_state_struct(0, STRUCT_FLAGS, STATE_STRUCT_COLON);
+    new_state_struct(0, STRUCT_FLAGS, STATE_L_BRACE);
 
     array = 1;  // tell state machine to expect a [ instead of {
 }
@@ -431,8 +419,7 @@ static void key_fg(void)
         json_error("Requires parent atrribs structure");
     }
 
-    // leaves state unchanged
-    new_state_struct(0, KEY_FG, j_state->state);
+    new_state_struct(0, KEY_FG, STATE_VALUE);
 }
 
 // -----------------------------------------------------------------------
@@ -447,8 +434,7 @@ static void key_gray_fg(void)
         json_error("Requires parent atrribs structure");
     }
 
-    // leaves state unchanged
-    new_state_struct(0, KEY_FG, j_state->state);
+    new_state_struct(0, KEY_FG, STATE_VALUE);
 }
 
 // -----------------------------------------------------------------------
@@ -464,7 +450,7 @@ static void key_bg(void)
     }
 
     // leaves state unchanged
-    new_state_struct(0, KEY_BG, j_state->state);
+    new_state_struct(0, KEY_BG, STATE_VALUE);
 }
 
 // -----------------------------------------------------------------------
@@ -480,7 +466,7 @@ static void key_gray_bg(void)
     }
 
     // leaves state unchanged
-    new_state_struct(0, KEY_GRAY_BG, j_state->state);
+    new_state_struct(0, KEY_GRAY_BG, STATE_VALUE);
 }
 
 // -----------------------------------------------------------------------
@@ -491,7 +477,7 @@ static void key_xco(void)
     {
         json_error("Requires parent window");
     }
-    new_state_struct(0, KEY_XCO, j_state->state);
+    new_state_struct(0, KEY_XCO, STATE_VALUE);
 }
 
 // -----------------------------------------------------------------------
@@ -502,7 +488,7 @@ static void key_yco(void)
     {
         json_error("Requires parent window");
     }
-    new_state_struct(0, KEY_YCO, j_state->state);
+    new_state_struct(0, KEY_YCO, STATE_VALUE);
 }
 
 // -----------------------------------------------------------------------
@@ -513,7 +499,7 @@ static void key_width(void)
     {
         json_error("Requires parent window");
     }
-    new_state_struct(0, KEY_WIDTH, j_state->state);
+    new_state_struct(0, KEY_WIDTH, STATE_VALUE);
 }
 
 // -----------------------------------------------------------------------
@@ -524,7 +510,7 @@ static void key_height(void)
     {
         json_error("Requires parent window");
     }
-    new_state_struct(0, KEY_HEIGHT, j_state->state);
+    new_state_struct(0, KEY_HEIGHT, STATE_VALUE);
 }
 
 // -----------------------------------------------------------------------
@@ -536,22 +522,28 @@ static void key_name(void)
     {
         json_error("Requires parent pulldown or menu-item");
     }
-    new_state_struct(0, KEY_NAME, j_state->state);
+    new_state_struct(0, KEY_NAME, STATE_VALUE);
 }
 
 // -----------------------------------------------------------------------
 
 static void key_flags(void)
 {
+    if(array != 0)
+    {
+        json_error("Nested arrays not allowed here");
+    }
+
     if((j_state->struct_type != STRUCT_PULLDOWN) &&
        (j_state->struct_type != STRUCT_MENU_ITEM) &&
        (j_state->struct_type != STRUCT_WINDOW))
     {
         json_error("Requires parent window, pulldown or menu-item");
     }
-    new_state_struct(0, KEY_FLAGS, j_state->state);
+    new_state_struct(0, KEY_FLAGS, STATE_VALUE);
 
     // tell state machine to require [ instead of {
+
     array = 1;
 }
 
@@ -564,7 +556,7 @@ static void key_border_type(void)
     {
         json_error("Requires parent window or backdrop");
     }
-    new_state_struct(0, KEY_BORDER_TYPE, j_state->state);
+    new_state_struct(0, KEY_BORDER_TYPE, STATE_VALUE);
 }
 
 // -----------------------------------------------------------------------
@@ -575,7 +567,7 @@ static void key_vector(void)
     {
         json_error("Requires parent menu-item");
     }
-    new_state_struct(0, KEY_VECTOR, j_state->state);
+    new_state_struct(0, KEY_VECTOR, STATE_VALUE);
 }
 
 // -----------------------------------------------------------------------
@@ -586,7 +578,7 @@ static void key_shortcut(void)
     {
         json_error("Requires parent menu-item");
     }
-    new_state_struct(0, KEY_SHORTCUT, j_state->state);
+    new_state_struct(0, KEY_SHORTCUT, STATE_VALUE);
 }
 
 // -----------------------------------------------------------------------
@@ -612,7 +604,7 @@ static const switch_t key_types[] =
 
 // -----------------------------------------------------------------------
 
-static const switch_t struct_types[] =
+static const switch_t object_types[] =
 {
     { 0x2ff97421,  struct_screen     },
     { 0x1025ba8c,  struct_windows    },
@@ -632,11 +624,12 @@ static const switch_t struct_types[] =
     { 0x68cdf632,  struct_flags      }
 };
 
-#define NUM_STRUCTS (sizeof(struct_types) / sizeof(struct_types[0]))
+#define NUM_OBJECTS (sizeof(object_types) / sizeof(object_types[0]))
 
 // -----------------------------------------------------------------------
+// a key is a "quoted-name" used to name objects and key values
 
-static void state_struct(void)
+static void state_key(void)
 {
     uint16_t i;
     int f;
@@ -657,12 +650,11 @@ static void state_struct(void)
     json_token[i] = '\0';
     json_hash = fnv_hash(json_token);
 
-
-    f = re_switch(struct_types, NUM_STRUCTS, json_hash);
+    // objects are a type of key which are a container for keys
+    f = re_switch(object_types, NUM_OBJECTS, json_hash);
 
     // if reswitch returned -1 here then we did not just parse
-    // in a structure name but a possible key name so....
-    // we are just trying to set some key to some value.
+    // in an object name but a possible key name
 
     if(f == -1)
     {
@@ -671,19 +663,17 @@ static void state_struct(void)
         {
             json_error("Unknown key name");
         }
-        j_state->state++;
     }
-}
 
-// -----------------------------------------------------------------------
+    // every key must be followed by a colon
 
-static void state_colon(void)
-{
+    token();
+    json_hash = fnv_hash(json_token);
+
     if(json_hash != json_syntax[JSON_COLON])
     {
-        json_error("Missing Colon");
+        json_error("Missing colon");
     }
-    j_state->state++;
 }
 
 // -----------------------------------------------------------------------
@@ -699,14 +689,17 @@ static void state_value(void)
         json_hash = fnv_hash(json_token);
     }
 
-    // ... lots of logic to go here etc
 
+    // ... lots of logic to go here etc
 }
 
 // -----------------------------------------------------------------------
 
 static void state_r_brace(void)
 {
+    uint16_t has_comma = 0;
+    uint16_t end = strlen(json_token) - 1;
+
     if(array == 2)
     {
         if(json_hash != json_syntax[JSON_R_BRACKET])
@@ -720,16 +713,29 @@ static void state_r_brace(void)
         json_hash = fnv_hash(json_token);
     }
 
+    if(json_token[end] == ',')
+    {
+        json_token[end] = '\0';
+        json_hash = fnv_hash(json_token);
+        has_comma = 1;
+    }
+
     if(json_hash != json_syntax[JSON_R_BRACE])
     {
         json_error("Closing brace missing");
     }
 
-    j_pop();
-    j_state->state++;
-
-    if(j_stack.count == 0)
+    if(j_stack.count != 0)
     {
+        j_pop();
+
+        j_state->state = (has_comma == 0)
+            ? j_state->state + 1
+            : STATE_KEY;
+     }
+    else
+    {
+        // if has comma json_error("id10t") ?
         j_state->state = STATE_DONE;
     }
 }
@@ -738,13 +744,10 @@ static void state_r_brace(void)
 
 static const switch_t states[] =
 {
-    { STATE_STRUCT_COLON, state_colon   },
-    { STATE_L_BRACE,      state_l_brace },
-    { STATE_STRUCT_NAME,  state_struct  },
-
-    { STATE_VALUE_COLON,  state_colon   },
-    { STATE_VALUE,        state_value   },
-    { STATE_R_BRACE,      state_r_brace }
+    { STATE_L_BRACE,  state_l_brace },
+    { STATE_KEY,      state_key     },
+    { STATE_VALUE,    state_value   },
+    { STATE_R_BRACE,  state_r_brace },
 };
 
 // -----------------------------------------------------------------------
@@ -768,6 +771,9 @@ void json_state_machine(char *json, size_t len)
 
         re_switch(states, NUM_STATES, j_state->state);
     }
+    // TODO
+    // allocate screen and window structures backing stores here
+    // because we know there sizes now
 }
 
 // =======================================================================

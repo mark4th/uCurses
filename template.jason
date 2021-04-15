@@ -52,7 +52,7 @@ attribs
         "green" : byte ,
         "blue"  : byte
     }
-] }
+}
 
 # ------------------------------------------------------------------------
 # the backdrop is an optional window that you can attach to your screen

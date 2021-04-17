@@ -977,6 +977,10 @@ static void value_vector(void)
     j_state_t *parent = j_state->parent;
     menu_item_t *item = parent->structure;
 
+    if(fp_finder == NULL)
+    {
+        return;
+    }
     uint16_t len = strlen(json_token);
 
     if((json_token[0]       != '"') &&

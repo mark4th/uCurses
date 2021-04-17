@@ -188,17 +188,14 @@ static void new_state_struct(size_t struct_size, uint32_t struct_type)
 }
 
 // -----------------------------------------------------------------------
-// must be the first struture specified
+// must be the first object specified
 
 static void struct_screen(void)
 {
     if(j_stack.count != 0)
     {
-        json_error("There can be only one screen");
+        json_error("There can be only one!");
     }
-
-    // on completion of parsing in this screen our parent structure
-    // myst have a closing brace - after which we are done
 
     j_state->state = STATE_R_BRACE;
     new_state_struct(sizeof(screen_t), STRUCT_SCREEN);
@@ -262,6 +259,10 @@ static void struct_pulldowns(void)
         json_error("Requires parent menu-bar");
     }
 
+    // there is no actual structure for this, as this item is
+    // populated through json this state_t's parent structure
+    // is what will actually get populated
+
     new_state_struct(0, STRUCT_PULLDOWNS);
 }
 
@@ -285,6 +286,10 @@ static void struct_m_items(void)
     {
         json_error("Requires parent pulldown structure");
     }
+
+    // there is no actual structure for this, as this item is
+    // populated through json this state_t's parent structure
+    // is what will actually get populated
 
     new_state_struct(0, STRUCT_MENU_ITEMS);
 }
@@ -374,6 +379,10 @@ static void struct_rgb_fg(void)
         json_error("Requires parent atrribs structure");
     }
 
+    // there is no actual structure for this, as this item is
+    // populated through json this state_t's parent structure
+    // is what will actually get populated
+
     new_state_struct(0, STRUCT_RGB_FG);
 }
 
@@ -389,6 +398,10 @@ static void struct_rgb_bg(void)
         json_error("Requires parent atrribs structure");
     }
 
+    // there is no actual structure for this, as this item is
+    // populated through json this state_t's parent structure
+    // is what will actually get populated
+
     new_state_struct(0, STRUCT_RGB_BG);
 }
 
@@ -403,6 +416,10 @@ static void struct_flags(void)
     {
         json_error("Requires parent backdrop, window, pulldown or menu bar");
     }
+
+    // there is no actual structure for this, as this item is
+    // populated through json this state_t's parent structure
+    // is what will actually get populated
 
     new_state_struct(0, STRUCT_FLAGS);
 }
@@ -608,6 +625,9 @@ static void key_shortcut(void)
 }
 
 // -----------------------------------------------------------------------
+// these hash values look like magic numbers but they are derrived
+// programatically by running this library as an executable.  the
+// see ui_json.c
 
 static const switch_t key_types[] =
 {
@@ -656,7 +676,7 @@ static const switch_t object_types[] =
 #define NUM_OBJECTS (sizeof(object_types) / sizeof(object_types[0]))
 
 // -----------------------------------------------------------------------
-// a key is a "quoted-name" used to name objects and key values
+// a key is a "quoted-name" used to name objects and keys
 
 static void state_key(void)
 {
@@ -1054,9 +1074,15 @@ static uint32_t constant_val[] =
 // -----------------------------------------------------------------------
 // allowing hex or deciamal.
 
-static uint32_t parse_number(void)
+// todo - just being lazy, this is ezpz
+static void parse_number(void)
 {
-    return 1;
+    // parse token here... blah blah
+
+    if(key_value == -1)
+    {
+        json_error("Not a valid numerical value");
+    }
 }
 
 // -----------------------------------------------------------------------
@@ -1088,23 +1114,99 @@ static void state_value(void)
         }
     }
 
-    if(key_value == -1)
+    if((json_token[0] != '"') && (key_value == -1))
     {
-        // could be a quoted string too so NAN is possible
-        key_value = parse_number();
-    }
-
-    if(key_value == -1)
-    {
-        json_error("Unknown value");
+        parse_number();
     }
 
     // we got this far, one of these will work
     re_switch(value_types, NUM_KEYS, json_hash);
 
-    j_state->state = (has_comma != 0)
-        ? STATE_KEY
-        : STATE_R_BRACE ;
+    if(j_stack.count != 0)
+    {
+        j_pop();
+        j_state->state = (has_comma != 0)
+            ? STATE_KEY
+            : STATE_R_BRACE;
+    }
+    else  // dont think this is possible but.... ya. this is C so it is
+    {
+        json_error("Whiskey Tango Foxtrot!");
+    }
+}
+
+// -----------------------------------------------------------------------
+// classic example of why i hate c switch statements :P
+
+static void populate_parent(void)
+{
+    uint16_t i;
+    list_t *l;
+    j_state_t *parent = j_state->parent;
+    void *structure = parent->structure;
+    uint32_t ptype    = parent->struct_type;
+
+    switch(j_state->struct_type)
+    {
+        case STRUCT_ATTRIBS:
+            switch(ptype)
+            {
+                case STRUCT_WINDOW:
+                case STRUCT_BACKDROP:
+                    *(uint64_t *)((window_t *)structure)->attrs = *(uint64_t *)j_state->structure;
+                    break;
+                case STRUCT_PULLDOWN:
+                    *(uint64_t *)((pulldown_t *)structure)->normal = *(uint64_t *)j_state->structure;
+                    break;
+                case STRUCT_MENU_BAR:
+                    *(uint64_t *)((menu_bar_t *)structure)->normal = *(uint64_t *)j_state->structure;
+                    break;
+            }
+            break;
+        case STRUCT_B_ATTRIBS:
+            switch(ptype)
+            {
+                case STRUCT_WINDOW:
+                case STRUCT_BACKDROP:
+                    *(uint64_t *)((window_t *)structure)->bdr_attrs = *(uint64_t *)j_state->structure;
+                    break;
+            }
+            break;
+        case STRUCT_S_ATTRIBS:
+            switch(ptype)
+            {
+                case STRUCT_PULLDOWN:
+                    *(uint64_t *)((pulldown_t *)structure)->selected = *(uint64_t *)j_state->structure;
+                    break;
+                case STRUCT_MENU_BAR:
+                    *(uint64_t *)((menu_bar_t *)structure)->selected = *(uint64_t *)j_state->structure;
+                    break;
+            }
+            break;
+        case STRUCT_D_ATTRIBS:
+            switch(ptype)
+            {
+                case STRUCT_PULLDOWN:
+                    *(uint64_t *)((pulldown_t *)structure)->disabled = *(uint64_t *)j_state->structure;
+                    break;
+                case STRUCT_MENU_BAR:
+                    *(uint64_t *)((menu_bar_t *)structure)->disabled = *(uint64_t *)j_state->structure;
+                    break;
+            }
+            break;
+        case STRUCT_PULLDOWN:
+            i = ((menu_bar_t *)structure)->count++;
+            ((menu_bar_t *)structure)->items[i] = j_state->structure;
+            break;
+        case STRUCT_MENU_ITEM:
+            i = ((pulldown_t *)structure)->count++;
+            ((pulldown_t *)structure)->items[i] = j_state->structure;
+            break;
+        case STRUCT_WINDOW:
+            l = &((screen_t *)structure)->windows;
+            list_append_node(l, j_state->structure);
+            break;
+    }
 }
 
 // -----------------------------------------------------------------------
@@ -1126,15 +1228,15 @@ static void state_r_brace(void)
         json_error("Closing brace missing");
     }
 
-// structure being closed needs to be added to its parent here
+    populate_parent();
 
     if(j_stack.count != 0)
     {
         j_pop();
 
-        j_state->state = (has_comma == 0)
-            ? j_state->state + 1
-            : STATE_KEY;
+        j_state->state = (has_comma != 0)
+            ? STATE_KEY
+            : STATE_R_BRACE;
      }
     else
     {

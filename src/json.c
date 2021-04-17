@@ -10,6 +10,11 @@
 #include "h/list.h"
 
 // -----------------------------------------------------------------------
+// were only referencing this to get its size
+
+extern uint8_t attrs[8];
+
+// -----------------------------------------------------------------------
 
 char *json_data;        // pointer to json data to be parsed
 size_t json_len;        // total size of json data
@@ -22,7 +27,6 @@ uint16_t line_left;     // number of chars left to parse in line
 
 char json_token[TOKEN_LEN]; // space delimited token extracted from data
 uint32_t json_hash;
-uint16_t array;         // true if structure is an array
 int32_t key_value;
 
 static list_t j_stack;
@@ -55,7 +59,7 @@ const uint32_t json_syntax[] =
     0x050c5d42              // ]
 };
 
-// pfffsets into above array of hash values
+// offsets into above array of hash values
 typedef enum
 {
     // JSON_COMMENT,
@@ -151,16 +155,7 @@ void *j_alloc(uint32_t size)
 
 static void state_l_brace(void)
 {
-    if(array == 1)
-    {
-        if(json_hash != json_syntax[JSON_L_BRACKET])
-        {
-            json_error("Missing opening bracket");
-        }
-        // require closing bracket too
-        array = 2;
-    }
-    else if(json_hash != json_syntax[JSON_L_BRACE])
+    if(json_hash != json_syntax[JSON_L_BRACE])
     {
         json_error("Opening brace missing");
     }
@@ -170,8 +165,7 @@ static void state_l_brace(void)
 
 // -----------------------------------------------------------------------
 
-static void new_state_struct(size_t struct_size, uint32_t struct_type,
-    uint32_t state)
+static void new_state_struct(size_t struct_size, uint32_t struct_type)
 {
     j_state_t *j;
 
@@ -187,7 +181,6 @@ static void new_state_struct(size_t struct_size, uint32_t struct_type,
     j->parent      = j_state;
     j->structure   = structure;
     j->struct_type = struct_type;
-    j->state       = state;
 
     j_push(j);
 }
@@ -206,7 +199,7 @@ static void struct_screen(void)
     // myst have a closing brace - after which we are done
 
     j_state->state = STATE_R_BRACE;
-    new_state_struct(sizeof(screen_t), STRUCT_SCREEN, STATE_L_BRACE);
+    new_state_struct(sizeof(screen_t), STRUCT_SCREEN);
 }
 
 // -----------------------------------------------------------------------
@@ -218,7 +211,7 @@ static void struct_windows(void)
         json_error("Requires parent screen");
     }
 
-    new_state_struct(0, STRUCT_WINDOWS, STATE_L_BRACE);
+    new_state_struct(0, STRUCT_WINDOWS);
 }
 
 // -----------------------------------------------------------------------
@@ -231,7 +224,7 @@ static void struct_window(void)
         json_error("Requires parent windows structure");
     }
 
-    new_state_struct(sizeof(window_t), STRUCT_WINDOW, STATE_L_BRACE);
+    new_state_struct(sizeof(window_t), STRUCT_WINDOW);
 }
 
 // -----------------------------------------------------------------------
@@ -243,7 +236,7 @@ static void struct_backdrop(void)
         json_error("Requires parent screen");
     }
 
-    new_state_struct(sizeof(window_t), STRUCT_BACKDROP, STATE_L_BRACE);
+    new_state_struct(sizeof(window_t), STRUCT_BACKDROP);
 }
 
 // -----------------------------------------------------------------------
@@ -255,7 +248,7 @@ static void struct_m_bar(void)
         json_error("Requires parent screen");
     }
 
-    new_state_struct(sizeof(menu_bar_t), STRUCT_MENU_BAR, STATE_L_BRACE);
+    new_state_struct(sizeof(menu_bar_t), STRUCT_MENU_BAR);
 }
 
 // -----------------------------------------------------------------------
@@ -267,7 +260,7 @@ static void struct_pulldowns(void)
         json_error("Requires parent menu-bar");
     }
 
-    new_state_struct(0, STRUCT_PULLDOWNS, STATE_L_BRACE);
+    new_state_struct(0, STRUCT_PULLDOWNS);
 }
 
 // -----------------------------------------------------------------------
@@ -279,7 +272,7 @@ static void struct_pulldown(void)
         json_error("Requires parent pulldowns structure");
     }
 
-    new_state_struct(sizeof(pulldown_t), STRUCT_PULLDOWN, STATE_L_BRACE);
+    new_state_struct(sizeof(pulldown_t), STRUCT_PULLDOWN);
 }
 
 // -----------------------------------------------------------------------
@@ -291,7 +284,7 @@ static void struct_m_items(void)
         json_error("Requires parent pulldown structure");
     }
 
-    new_state_struct(0, STRUCT_MENU_ITEMS, STATE_L_BRACE);
+    new_state_struct(0, STRUCT_MENU_ITEMS);
 }
 
 // -----------------------------------------------------------------------
@@ -300,10 +293,10 @@ static void struct_m_item(void)
 {
     if(j_state->struct_type != STRUCT_MENU_ITEMS)
     {
-        json_error("requires parent menu-items array");
+        json_error("requires parent menu-items");
     }
 
-    new_state_struct(sizeof(menu_item_t), STRUCT_MENU_ITEM, STATE_L_BRACE);
+    new_state_struct(sizeof(menu_item_t), STRUCT_MENU_ITEM);
 }
 
 // -----------------------------------------------------------------------
@@ -319,7 +312,7 @@ static void struct_attribs(void)
             "Requires parent backdrop, window, pulldown or menu bar");
     }
 
-    new_state_struct(0, STRUCT_ATTRIBS, STATE_L_BRACE);
+    new_state_struct(sizeof(attrs), STRUCT_ATTRIBS);
 }
 
 // -----------------------------------------------------------------------
@@ -332,7 +325,7 @@ static void struct_b_attribs(void)
         json_error("Requires parent backdrop or window");
     }
 
-    new_state_struct(0, STRUCT_B_ATTRIBS, STATE_L_BRACE);
+    new_state_struct(sizeof(attrs), STRUCT_B_ATTRIBS);
 }
 
 // -----------------------------------------------------------------------
@@ -348,7 +341,7 @@ static void struct_s_attribs(void)
             "Requires parent backdrop, window, pulldown or menu bar");
     }
 
-    new_state_struct(0, STRUCT_S_ATTRIBS, STATE_L_BRACE);
+    new_state_struct(sizeof(attrs), STRUCT_S_ATTRIBS);
 }
 
 // -----------------------------------------------------------------------
@@ -364,7 +357,7 @@ static void struct_d_attribs(void)
             "Requires parent backdrop, window, pulldown or menu bar");
     }
 
-    new_state_struct(0, STRUCT_D_ATTRIBS, STATE_L_BRACE);
+    new_state_struct(sizeof(attrs), STRUCT_D_ATTRIBS);
 }
 
 // -----------------------------------------------------------------------
@@ -379,7 +372,7 @@ static void struct_rgb_fg(void)
         json_error("Requires parent atrribs structure");
     }
 
-    new_state_struct(0, STRUCT_RGB_FG, STATE_L_BRACE);
+    new_state_struct(0, STRUCT_RGB_FG);
 }
 
 // -----------------------------------------------------------------------
@@ -394,7 +387,7 @@ static void struct_rgb_bg(void)
         json_error("Requires parent atrribs structure");
     }
 
-    new_state_struct(0, STRUCT_RGB_BG, STATE_L_BRACE);
+    new_state_struct(0, STRUCT_RGB_BG);
 }
 
 // -----------------------------------------------------------------------
@@ -409,9 +402,7 @@ static void struct_flags(void)
         json_error("Requires parent backdrop, window, pulldown or menu bar");
     }
 
-    new_state_struct(0, STRUCT_FLAGS, STATE_L_BRACE);
-
-    array = 1;  // tell state machine to expect a [ instead of {
+    new_state_struct(0, STRUCT_FLAGS);
 }
 
 // -----------------------------------------------------------------------
@@ -426,22 +417,7 @@ static void key_fg(void)
         json_error("Requires parent atrribs structure");
     }
 
-    new_state_struct(0, KEY_FG, STATE_VALUE);
-}
-
-// -----------------------------------------------------------------------
-
-static void key_gray_fg(void)
-{
-    if((j_state->struct_type != STRUCT_ATTRIBS) &&
-       (j_state->struct_type != STRUCT_B_ATTRIBS) &&
-       (j_state->struct_type != STRUCT_S_ATTRIBS) &&
-       (j_state->struct_type != STRUCT_D_ATTRIBS))
-    {
-        json_error("Requires parent atrribs structure");
-    }
-
-    new_state_struct(0, KEY_FG, STATE_VALUE);
+    new_state_struct(0, KEY_FG);
 }
 
 // -----------------------------------------------------------------------
@@ -456,8 +432,22 @@ static void key_bg(void)
         json_error("Requires parent atrribs structure");
     }
 
-    // leaves state unchanged
-    new_state_struct(0, KEY_BG, STATE_VALUE);
+    new_state_struct(0, KEY_BG);
+}
+
+// -----------------------------------------------------------------------
+
+static void key_gray_fg(void)
+{
+    if((j_state->struct_type != STRUCT_ATTRIBS) &&
+       (j_state->struct_type != STRUCT_B_ATTRIBS) &&
+       (j_state->struct_type != STRUCT_S_ATTRIBS) &&
+       (j_state->struct_type != STRUCT_D_ATTRIBS))
+    {
+        json_error("Requires parent atrribs structure");
+    }
+
+    new_state_struct(0, KEY_FG);
 }
 
 // -----------------------------------------------------------------------
@@ -473,28 +463,43 @@ static void key_gray_bg(void)
     }
 
     // leaves state unchanged
-    new_state_struct(0, KEY_GRAY_BG, STATE_VALUE);
+    new_state_struct(0, KEY_GRAY_BG);
 }
 
 // -----------------------------------------------------------------------
 
 static void key_red(void)
 {
-    ;
+    if((j_state->struct_type != STRUCT_RGB_FG) &&
+       (j_state->struct_type != STRUCT_RGB_BG))
+    {
+        json_error("Requires parent RGB");
+    }
+    new_state_struct(0, KEY_RED);
 }
 
 // -----------------------------------------------------------------------
 
 static void key_green(void)
 {
-    ;
+    if((j_state->struct_type != STRUCT_RGB_FG) &&
+       (j_state->struct_type != STRUCT_RGB_BG))
+    {
+        json_error("Requires parent RGB");
+    }
+    new_state_struct(0, KEY_GREEN);
 }
 
 // -----------------------------------------------------------------------
 
 static void key_blue(void)
 {
-    ;
+    if((j_state->struct_type != STRUCT_RGB_FG) &&
+       (j_state->struct_type != STRUCT_RGB_BG))
+    {
+        json_error("Requires parent RGB");
+    }
+    new_state_struct(0, KEY_BLUE);
 }
 
 // -----------------------------------------------------------------------
@@ -505,7 +510,7 @@ static void key_xco(void)
     {
         json_error("Requires parent window");
     }
-    new_state_struct(0, KEY_XCO, STATE_VALUE);
+    new_state_struct(0, KEY_XCO);
 }
 
 // -----------------------------------------------------------------------
@@ -516,7 +521,7 @@ static void key_yco(void)
     {
         json_error("Requires parent window");
     }
-    new_state_struct(0, KEY_YCO, STATE_VALUE);
+    new_state_struct(0, KEY_YCO);
 }
 
 // -----------------------------------------------------------------------
@@ -527,7 +532,7 @@ static void key_width(void)
     {
         json_error("Requires parent window");
     }
-    new_state_struct(0, KEY_WIDTH, STATE_VALUE);
+    new_state_struct(0, KEY_WIDTH);
 }
 
 // -----------------------------------------------------------------------
@@ -538,7 +543,7 @@ static void key_height(void)
     {
         json_error("Requires parent window");
     }
-    new_state_struct(0, KEY_HEIGHT, STATE_VALUE);
+    new_state_struct(0, KEY_HEIGHT);
 }
 
 // -----------------------------------------------------------------------
@@ -550,29 +555,20 @@ static void key_name(void)
     {
         json_error("Requires parent pulldown or menu-item");
     }
-    new_state_struct(0, KEY_NAME, STATE_VALUE);
+    new_state_struct(0, KEY_NAME);
 }
 
 // -----------------------------------------------------------------------
 
 static void key_flags(void)
 {
-    if(array != 0)
-    {
-        json_error("Nested arrays not allowed here");
-    }
-
     if((j_state->struct_type != STRUCT_PULLDOWN) &&
        (j_state->struct_type != STRUCT_MENU_ITEM) &&
        (j_state->struct_type != STRUCT_WINDOW))
     {
         json_error("Requires parent window, pulldown or menu-item");
     }
-    new_state_struct(0, KEY_FLAGS, STATE_VALUE);
-
-    // tell state machine to require [ instead of {
-
-    array = 1;
+    new_state_struct(0, KEY_FLAGS);
 }
 
 // -----------------------------------------------------------------------
@@ -584,7 +580,7 @@ static void key_border_type(void)
     {
         json_error("Requires parent window or backdrop");
     }
-    new_state_struct(0, KEY_BORDER_TYPE, STATE_VALUE);
+    new_state_struct(0, KEY_BORDER_TYPE);
 }
 
 // -----------------------------------------------------------------------
@@ -595,7 +591,7 @@ static void key_vector(void)
     {
         json_error("Requires parent menu-item");
     }
-    new_state_struct(0, KEY_VECTOR, STATE_VALUE);
+    new_state_struct(0, KEY_VECTOR);
 }
 
 // -----------------------------------------------------------------------
@@ -606,7 +602,7 @@ static void key_shortcut(void)
     {
         json_error("Requires parent menu-item");
     }
-    new_state_struct(0, KEY_SHORTCUT, STATE_VALUE);
+    new_state_struct(0, KEY_SHORTCUT);
 }
 
 // -----------------------------------------------------------------------
@@ -683,6 +679,7 @@ static void state_key(void)
 
     // objects are a type of key which are a container for keys
     f = re_switch(object_types, NUM_OBJECTS, json_hash);
+    j_state->state = STATE_L_BRACE;
 
     // if reswitch returned -1 here then we did not just parse
     // in an object name but a possible key name
@@ -690,6 +687,8 @@ static void state_key(void)
     if(f == -1)
     {
         f = re_switch(key_types, NUM_KEYS, json_hash);
+        j_state->state = STATE_VALUE;
+
         if(f == -1)
         {
             json_error("Unknown key name");
@@ -711,323 +710,113 @@ static void state_key(void)
 
 static void value_fg(void)
 {
-    j_state_t *parent  = j_state->parent;
-    j_state_t *gparent = parent->parent;
-
-    void *structure   = gparent->structure;
-    uint32_t ptype    = parent->struct_type;
-    uint32_t gtype    = gparent->struct_type;
+    j_state_t *parent = j_state->parent;
+    char *structure   = parent->structure;
 
     if(key_value > 15)
     {
         json_error("Value out of range");
     }
 
-    switch(ptype)
-    {
-        case STRUCT_ATTRIBS:
-            switch(gtype)
-            {
-                case STRUCT_PULLDOWN:
-                    ((pulldown_t *)structure)->normal[FG] = key_value;
-                    break;
-                case STRUCT_MENU_BAR:
-                    ((menu_bar_t *)structure)->normal[FG] = key_value;
-                    break;
-                case STRUCT_WINDOW:
-                    ((window_t *)structure)->attrs[FG] = key_value;
-                    break;
-            }
-            break;
-
-        case STRUCT_B_ATTRIBS:
-            switch(gtype)
-            {
-                case STRUCT_PULLDOWN:
-                    ((pulldown_t *)structure)->attr[FG] = key_value;
-                    break;
-                case STRUCT_WINDOW:
-                    ((window_t *)structure)->attrs[FG] = key_value;
-                    break;
-            }
-            break;
-
-        case STRUCT_S_ATTRIBS:
-            switch(gtype)
-            {
-                case STRUCT_PULLDOWN:
-                    ((pulldown_t *)structure)->selected[FG] = key_value;
-                    break;
-                case STRUCT_MENU_BAR:
-                    ((menu_bar_t *)structure)->selected[FG] = key_value;
-                    break;
-            }
-            break;
-
-        case STRUCT_D_ATTRIBS:
-            switch(gtype)
-            {
-                case STRUCT_PULLDOWN:
-                    ((pulldown_t *)structure)->disabled[FG] = key_value;
-                    break;
-                case STRUCT_MENU_BAR:
-                    ((menu_bar_t *)structure)->disabled[FG] = key_value;
-                    break;
-            }
-            break;
-    }
-}
-
-// -----------------------------------------------------------------------
-
-static void value_gray_fg(void)
-{
-    j_state_t *parent  = j_state->parent;
-    j_state_t *gparent = parent->parent;
-
-    void *structure   = gparent->structure;
-    uint32_t ptype    = parent->struct_type;
-    uint32_t gtype    = gparent->struct_type;
-
-    if(key_value > 23)
-    {
-        json_error("Value out of range");
-    }
-
-    switch(ptype)
-    {
-        case STRUCT_ATTRIBS:
-            switch(gtype)
-            {
-                case STRUCT_PULLDOWN:
-                    ((pulldown_t *)structure)->normal[FG] = key_value;
-                    ((pulldown_t *)structure)->normal[ATTR] |= FG_GRAY;
-                    break;
-                case STRUCT_MENU_BAR:
-                    ((menu_bar_t *)structure)->normal[FG] = key_value;
-                    ((menu_bar_t *)structure)->normal[ATTR] |= FG_GRAY;
-                    break;
-                case STRUCT_WINDOW:
-                    ((window_t *)structure)->attrs[FG] = key_value;
-                    ((window_t *)structure)->attrs[ATTR] |= FG_GRAY;
-                    break;
-            }
-            break;
-
-        case STRUCT_B_ATTRIBS:
-            switch(gtype)
-            {
-                case STRUCT_PULLDOWN:
-                    ((pulldown_t *)structure)->attr[FG] = key_value;
-                    ((pulldown_t *)structure)->attr[ATTR] |= FG_GRAY;
-                    break;
-                case STRUCT_WINDOW:
-                    ((window_t *)structure)->bdr_attrs[FG] = key_value;
-                    ((window_t *)structure)->bdr_attrs[FG] = key_value;
-                    break;
-            }
-            break;
-
-        case STRUCT_S_ATTRIBS:
-            switch(gtype)
-            {
-                case STRUCT_PULLDOWN:
-                    ((pulldown_t *)structure)->selected[FG] = key_value;
-                    ((pulldown_t *)structure)->selected[ATTR] |= FG_GRAY;
-                    break;
-                case STRUCT_MENU_BAR:
-                    ((menu_bar_t *)structure)->selected[FG] = key_value;
-                    ((menu_bar_t *)structure)->selected[ATTR] |= FG_GRAY;
-                    break;
-            }
-            break;
-
-        case STRUCT_D_ATTRIBS:
-            switch(gtype)
-            {
-                case STRUCT_PULLDOWN:
-                    ((pulldown_t *)structure)->disabled[FG] = key_value;
-                    ((pulldown_t *)structure)->disabled[ATTR] |= FG_GRAY;
-                    break;
-                case STRUCT_MENU_BAR:
-                    ((menu_bar_t *)structure)->disabled[FG] = key_value;
-                    ((menu_bar_t *)structure)->disabled[ATTR] |= FG_GRAY;
-                    break;
-            }
-            break;
-    }
+    structure[FG] = key_value;
+    structure[ATTR] &= ~(BG_RGB | BG_GRAY);
 }
 
 // -----------------------------------------------------------------------
 
 static void value_bg(void)
 {
-    j_state_t *parent  = j_state->parent;
-    j_state_t *gparent = parent->parent;
-
-    void *structure   = gparent->structure;
-    uint32_t ptype    = parent->struct_type;
-    uint32_t gtype    = gparent->struct_type;
+    j_state_t *parent = j_state->parent;
+    char *structure   = parent->structure;
 
     if(key_value > 15)
     {
         json_error("Value out of range");
     }
 
-    switch(ptype)
-    {
-        case STRUCT_ATTRIBS:
-            switch(gtype)
-            {
-                case STRUCT_PULLDOWN:
-                    ((pulldown_t *)structure)->normal[BG] = key_value;
-                    break;
-                case STRUCT_MENU_BAR:
-                    ((menu_bar_t *)structure)->normal[BG] = key_value;
-                    break;
-                case STRUCT_WINDOW:
-                    ((window_t *)structure)->attrs[BG] = key_value;
-                    break;
-            }
-            break;
-
-        case STRUCT_B_ATTRIBS:
-            switch(gtype)
-            {
-                case STRUCT_PULLDOWN:
-                    ((pulldown_t *)structure)->attr[BG] = key_value;
-                    break;
-                case STRUCT_WINDOW:
-                    ((window_t *)structure)->bdr_attrs[BG] = key_value;
-                    break;
-            }
-            break;
-
-        case STRUCT_S_ATTRIBS:
-            switch(gtype)
-            {
-                case STRUCT_PULLDOWN:
-                    ((pulldown_t *)structure)->selected[BG] = key_value;
-                    break;
-                case STRUCT_MENU_BAR:
-                    ((menu_bar_t *)structure)->selected[BG] = key_value;
-                    break;
-            }
-            break;
-
-        case STRUCT_D_ATTRIBS:
-            switch(gtype)
-            {
-                case STRUCT_PULLDOWN:
-                    ((pulldown_t *)structure)->disabled[BG] = key_value;
-                    break;
-                case STRUCT_MENU_BAR:
-                    ((menu_bar_t *)structure)->disabled[BG] = key_value;
-                    break;
-            }
-            break;
-    }
+    structure[FG] = key_value;
+    structure[ATTR] &= ~(BG_RGB | BG_GRAY);
 }
 
 // -----------------------------------------------------------------------
 
-static void value_gray_bg(void)
+static void value_gray_fg(void)
 {
-    j_state_t *parent  = j_state->parent;
-    j_state_t *gparent = parent->parent;
-
-    void *structure   = gparent->structure;
-    uint32_t ptype    = parent->struct_type;
-    uint32_t gtype    = gparent->struct_type;
+    j_state_t *parent = j_state->parent;
+    char *structure   = parent->structure;
 
     if(key_value > 23)
     {
         json_error("Value out of range");
     }
 
-    switch(ptype)
+    structure[FG] = key_value;
+    structure[ATTR] |= FG_GRAY;
+}
+
+// -----------------------------------------------------------------------
+
+static void value_gray_bg(void)
+{
+    j_state_t *parent = j_state->parent;
+    char *structure   = parent->structure;
+
+    if(key_value > 23)
     {
-        case STRUCT_ATTRIBS:
-            switch(gtype)
-            {
-                case STRUCT_PULLDOWN:
-                    ((pulldown_t *)structure)->normal[BG] = key_value;
-                    ((pulldown_t *)structure)->normal[ATTR] |= BG_GRAY;
-                    break;
-                case STRUCT_MENU_BAR:
-                    ((menu_bar_t *)structure)->normal[BG] = key_value;
-                    ((menu_bar_t *)structure)->normal[ATTR] |= BG_GRAY;
-                    break;
-                case STRUCT_WINDOW:
-                    ((window_t *)structure)->attrs[BG] = key_value;
-                    ((window_t *)structure)->attrs[ATTR] |= BG_GRAY;
-                    break;
-            }
-            break;
-
-        case STRUCT_B_ATTRIBS:
-            switch(gtype)
-            {
-                case STRUCT_PULLDOWN:
-                    ((pulldown_t *)structure)->attr[BG] = key_value;
-                    ((pulldown_t *)structure)->attr[ATTR] |= BG_GRAY;
-                    break;
-                case STRUCT_WINDOW:
-                    ((window_t *)structure)->bdr_attrs[BG] = key_value;
-                    ((window_t *)structure)->bdr_attrs[ATTR] |= BG_GRAY;
-                    break;
-            }
-            break;
-
-        case STRUCT_S_ATTRIBS:
-            switch(gtype)
-            {
-                case STRUCT_PULLDOWN:
-                    ((pulldown_t *)structure)->selected[BG] = key_value;
-                    ((pulldown_t *)structure)->selected[ATTR] |= BG_GRAY;
-                    break;
-                case STRUCT_MENU_BAR:
-                    ((menu_bar_t *)structure)->selected[BG] = key_value;
-                    ((menu_bar_t *)structure)->selected[ATTR] |= BG_GRAY;
-                    break;
-            }
-            break;
-
-        case STRUCT_D_ATTRIBS:
-            switch(gtype)
-            {
-                case STRUCT_PULLDOWN:
-                    ((pulldown_t *)structure)->disabled[BG] = key_value;
-                    ((pulldown_t *)structure)->disabled[ATTR] |= BG_GRAY;
-                    break;
-                case STRUCT_MENU_BAR:
-                    ((menu_bar_t *)structure)->disabled[BG] = key_value;
-                    ((menu_bar_t *)structure)->disabled[ATTR] |= BG_GRAY;
-                    break;
-            }
-            break;
+        json_error("Value out of range");
     }
+
+    structure[BG] = key_value;
+    structure[ATTR] |= BG_GRAY;
+    structure[ATTR] &= ~BG_RGB;
 }
 
 // -----------------------------------------------------------------------
 
 static void value_red(void)
 {
-    ;
+    j_state_t *parent = j_state->parent;
+    char *structure   = parent->structure;
+
+    if(key_value > 255)
+    {
+        json_error("Value out of range");
+    }
+
+    structure[FG_R] = key_value;
+    structure[ATTR] |= FG_RGB;
 }
 
 // -----------------------------------------------------------------------
 
 static void value_green(void)
 {
-    ;
+    j_state_t *parent = j_state->parent;
+    char *structure   = parent->structure;
+
+    if(key_value > 255)
+    {
+        json_error("Value out of range");
+    }
+
+    structure[FG_G] = key_value;
+    structure[ATTR] |= FG_RGB;
 }
 
 // -----------------------------------------------------------------------
 
 static void value_blue(void)
 {
-    ;
+    j_state_t *parent = j_state->parent;
+    char *structure   = parent->structure;
+
+    if(key_value > 255)
+    {
+        json_error("Value out of range");
+    }
+
+    structure[FG_B] = key_value;
+    structure[ATTR] |= FG_RGB;
 }
 
 // -----------------------------------------------------------------------
@@ -1035,7 +824,7 @@ static void value_blue(void)
 static void value_xco(void)
 {
     j_state_t *parent  = j_state->parent;
-    window_t *win = (window_t *)parent->structure;
+    window_t *win = parent->structure;
 
     if((win->width + key_value) > console_width)
     {
@@ -1049,7 +838,7 @@ static void value_xco(void)
 static void value_yco(void)
 {
     j_state_t *parent  = j_state->parent;
-    window_t *win = (window_t *)parent->structure;
+    window_t *win = parent->structure;
 
     if((win->height + key_value) > console_height)
     {
@@ -1063,7 +852,7 @@ static void value_yco(void)
 static void value_width(void)
 {
     j_state_t *parent = j_state->parent;
-    window_t *win = (window_t *)parent->structure;
+    window_t *win = parent->structure;
 
     if(key_value > console_width)
     {
@@ -1077,7 +866,7 @@ static void value_width(void)
 static void value_height(void)
 {
     j_state_t *parent = j_state->parent;
-    window_t *win = (window_t *)parent->structure;
+    window_t *win = parent->structure;
 
     if(key_value > console_height)
     {
@@ -1090,21 +879,91 @@ static void value_height(void)
 
 static void value_name(void)
 {
-    ;
+    uint16_t i;
+    char *name;
+
+    j_state_t *parent = j_state->parent;
+    void *structure   = parent->structure;
+    uint32_t ptype    = parent->struct_type;
+
+    size_t len = strlen(json_token);
+
+    if((json_token[0]       != '"') &&
+       (json_token[len - 1] != '"'))
+    {
+        json_error("String key values must be quoted");
+    }
+
+    if(len > 34)
+    {
+        json_error("Name string too long (max 32)");
+    }
+
+    name = j_alloc(len - 2);
+
+    for(i = 0; i < len - 2; i++)
+    {
+        name[i] = json_token[i + 1];
+    }
+
+    switch(ptype)
+    {
+        case STRUCT_MENU_ITEM:
+            ((menu_item_t *)structure)->name = name;
+            break;
+        case STRUCT_PULLDOWN:
+            ((pulldown_t *)structure)->name = name;
+            break;
+    }
 }
 
 // -----------------------------------------------------------------------
 
-static void value_flags(void)
+static void value_flag(void)
 {
-    ;
+    j_state_t *parent = j_state->parent;
+    void *structure   = parent->structure;
+    uint32_t ptype    = parent->struct_type;
+
+    if(key_value == MENU_DISABLED)
+    {
+        if((ptype != STRUCT_MENU_ITEM) && (ptype != STRUCT_PULLDOWN))
+        {
+            json_error("Invalid flag type");
+        }
+    }
+    else if((ptype == STRUCT_MENU_ITEM) || (ptype == STRUCT_PULLDOWN))
+    {
+        json_error("Invalid flag type");
+    }
+
+    switch(ptype)
+    {
+        case STRUCT_MENU_ITEM:
+            ((menu_item_t *)structure)->flags = key_value;
+            break;
+        case STRUCT_PULLDOWN:
+            ((pulldown_t *)structure)->flags = key_value;
+            break;
+        case STRUCT_WINDOW:
+            ((window_t *)structure)->flags |= key_value;
+            break;
+    }
 }
 
 // -----------------------------------------------------------------------
 
 static void value_border_type(void)
 {
-    ;
+    j_state_t *parent = j_state->parent;
+    window_t *win = parent->structure;
+
+    if((key_value != WIN_LOCKED) && (key_value != WIN_FILLED) &&
+        (key_value != WIN_BOXED))
+    {
+        json_error("Invalid border type");
+    }
+    win->bdr_type = key_value;
 }
 
 // -----------------------------------------------------------------------
@@ -1137,10 +996,10 @@ static const switch_t value_types[] =
     { 0x182e64eb,  value_width       },
     { 0x4c47d5c0,  value_height      },
     { 0x2f8b3bf4,  value_name        },
-    { 0x68cdf632,  value_flags       },
     { 0x362bb2fc,  value_border_type },
     { 0x0ee694b4,  value_vector      },
     { 0x1c13e01f,  value_shortcut    },
+    { 0xaeb95d5b,  value_flag        }
 };
 
 // -----------------------------------------------------------------------
@@ -1222,19 +1081,6 @@ static void state_r_brace(void)
     uint16_t has_comma = 0;
     uint16_t end = strlen(json_token) - 1;
 
-    if(array == 2)
-    {
-        if(json_hash != json_syntax[JSON_R_BRACKET])
-        {
-            json_error("Expected closing bracket");
-        }
-        // we got the ] sp now we need the } this state
-        // expects normally
-        array = 0;
-        token();
-        json_hash = fnv_hash(json_token);
-    }
-
     if(json_token[end] == ',')
     {
         json_token[end] = '\0';
@@ -1246,6 +1092,8 @@ static void state_r_brace(void)
     {
         json_error("Closing brace missing");
     }
+
+// structure being closed needs to be added to its parent here
 
     if(j_stack.count != 0)
     {

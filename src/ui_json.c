@@ -55,7 +55,8 @@ static char *ui_values[] =
     "name",  "flags",
     "border-type",
     "vector",
-    "shortcut"
+    "shortcut",
+    "flag"
 };
 
 // -----------------------------------------------------------------------

@@ -63,7 +63,7 @@ backdrop :
 {
     "attribs"        : |attribs|
     "border-attribs" : |attribs|
-    "border-type"    : SINGLE | DOUBLE | ROUND | NONE
+    "border-type"    : BDR_SINGLE | BDR_DOUBLE | BDR_ROUND
 }
 
 # ------------------------------------------------------------------------
@@ -73,7 +73,12 @@ menu-item :
     "name"     : "string" ,
     "vector"   : "string" ,
     "shortcut" : "string" ,
-    "flags"    : [ NONE | DISABLED ]
+
+    # optional flag to disable this item
+    "flags"    :
+    {
+       flag : MENU_DISABLED
+    }
 }
 
 # ------------------------------------------------------------------------
@@ -82,7 +87,11 @@ pulldown :
 {
     "name"   : "string" ,
 
-    "flags"  : [ NONE | DISABLED ] ,
+    # optional flag to disable this item
+    "flags"  :
+    {
+       flag : MENU_DISABLED
+    }
 
     "attribs"          : |attribs| ,
     "selected-attribs" : |attribs| ,
@@ -124,11 +133,16 @@ pulldown :
     "xco"    : 80 to screen width - width   | centered around % of screen width ,
     "yco"    : 80 to screen height - height | centered around % of secrrn width ,
 
-    "border-type"    : SINGLE | DOUBLE | ROUND ,
+    "border-type"    : BDR_SINGLE | BDR_DOUBLE | BDR_ROUND ,
     "attribs"        : |attribs| ,
     "border-attribs" : |attribs| ,
 
-    flags : [ LOCKED , BOXED , FILLED ]
+    flags :
+    {
+       flag : WIN_LOCKED ,
+       flag : WIN_BOXED ,
+       flag : WIN_FILLED
+    }
 }
 
 # ------------------------------------------------------------------------

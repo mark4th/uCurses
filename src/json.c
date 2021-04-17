@@ -34,6 +34,8 @@ static list_t j_stack;
 static uint16_t console_width;
 static uint16_t console_height;
 
+fp_finder_t fp_finder;
+
 // -----------------------------------------------------------------------
 
 typedef enum
@@ -970,10 +972,37 @@ static void value_border_type(void)
 
 static void value_vector(void)
 {
-    ;
+    int i;
+
+    j_state_t *parent = j_state->parent;
+    menu_item_t *item = parent->structure;
+
+    uint16_t len = strlen(json_token);
+
+    if((json_token[0]       != '"') &&
+       (json_token[len - 1] != '"'))
+    {
+        json_error("Function name must be quoted");
+    }
+
+    // strip qutes from token and recalculate hash
+    for(i = 0; i < len - 2; i++)
+    {
+        json_token[i] = json_token[i + 1];
+    }
+    json_token[i] = '\0';
+    json_hash = fnv_hash(json_token);
+
+    item->fp = fp_finder(json_hash);
+
+    if(item->fp == NULL)
+    {
+        json_error("Unknown function");
+    }
 }
 
 // -----------------------------------------------------------------------
+// how == tbd
 
 static void value_shortcut(void)
 {
@@ -1122,8 +1151,9 @@ static const switch_t states[] =
 
 // -----------------------------------------------------------------------
 
-void json_state_machine(char *json, size_t len)
+void json_state_machine(char *json, size_t len, fp_finder_t fp)
 {
+    fp_finder = fp;
     j_state = j_alloc(sizeof(*j_state));
 
     json_data = json;

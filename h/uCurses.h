@@ -32,6 +32,8 @@ typedef void (*opt_t)(void);       // re_switch vectors
 typedef void (*menu_fp_t)(void);   // menu option vectors
 typedef void (*fp_t)(void *x);
 
+typedef menu_fp_t (*fp_finder_t)(uint32_t hash);
+
 // -----------------------------------------------------------------------
 
 typedef void key_handler_t(void);

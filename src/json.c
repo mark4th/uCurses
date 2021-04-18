@@ -36,6 +36,9 @@ static uint16_t console_height;
 
 fp_finder_t fp_finder;
 
+char name_string_buff[2048];
+uint16_t nsi;
+
 // -----------------------------------------------------------------------
 
 typedef enum
@@ -89,8 +92,8 @@ typedef enum
     STRUCT_B_ATTRIBS,       // border attribs
     STRUCT_S_ATTRIBS,       // selected attribs
     STRUCT_D_ATTRIBS,       // disabled attribs
-    STRUCT_RGB_FG,          // an optional array of 3 bytes
-    STRUCT_RGB_BG,          // an optional array of 3 bytes
+    STRUCT_RGB_FG,          // 3 bytes
+    STRUCT_RGB_BG,          // 3 bytes
     STRUCT_FLAGS,
     KEY_FG,
     KEY_BG,
@@ -153,7 +156,7 @@ void *j_alloc(uint32_t size)
 }
 
 // -----------------------------------------------------------------------
-// json files and individual structures must start with a {
+// json files and individual objects must start with a {
 
 static void state_l_brace(void)
 {
@@ -166,6 +169,9 @@ static void state_l_brace(void)
 }
 
 // -----------------------------------------------------------------------
+// every object and every key gets its own state structure
+// the current object state level is alwaus in j_state.  previous
+// states are pushed onto the json parse stack
 
 static void new_state_struct(size_t struct_size, uint32_t struct_type)
 {
@@ -227,6 +233,7 @@ static void struct_window(void)
 }
 
 // -----------------------------------------------------------------------
+// special non writeable window (well you can but usually dont :)
 
 static void struct_backdrop(void)
 {
@@ -339,9 +346,7 @@ static void struct_b_attribs(void)
 
 static void struct_s_attribs(void)
 {
-    if((j_state->struct_type != STRUCT_BACKDROP) &&
-       (j_state->struct_type != STRUCT_WINDOW) &&
-       (j_state->struct_type != STRUCT_PULLDOWN) &&
+    if((j_state->struct_type != STRUCT_PULLDOWN) &&
        (j_state->struct_type != STRUCT_MENU_BAR))
     {
         json_error(
@@ -355,9 +360,7 @@ static void struct_s_attribs(void)
 
 static void struct_d_attribs(void)
 {
-    if((j_state->struct_type != STRUCT_BACKDROP) &&
-       (j_state->struct_type != STRUCT_WINDOW) &&
-       (j_state->struct_type != STRUCT_PULLDOWN) &&
+    if((j_state->struct_type != STRUCT_PULLDOWN) &&
        (j_state->struct_type != STRUCT_MENU_BAR))
     {
         json_error(
@@ -625,8 +628,8 @@ static void key_shortcut(void)
 }
 
 // -----------------------------------------------------------------------
-// these hash values look like magic numbers but they are derrived
-// programatically by running this library as an executable.  the
+// these hash values look like magic numbers but they are derived
+// programatically by running this library as an executable.
 // see ui_json.c
 
 static const switch_t key_types[] =
@@ -733,7 +736,7 @@ static void state_key(void)
 static void value_fg(void)
 {
     j_state_t *parent = j_state->parent;
-    char *structure   = parent->structure;
+    uint8_t *structure   = parent->structure;
 
     if(key_value > 15)
     {
@@ -749,7 +752,7 @@ static void value_fg(void)
 static void value_bg(void)
 {
     j_state_t *parent = j_state->parent;
-    char *structure   = parent->structure;
+    uint8_t *structure   = parent->structure;
 
     if(key_value > 15)
     {
@@ -774,6 +777,7 @@ static void value_gray_fg(void)
 
     structure[FG] = key_value;
     structure[ATTR] |= FG_GRAY;
+    structure[ATTR] &= ~FG_RGB;
 }
 
 // -----------------------------------------------------------------------
@@ -805,8 +809,18 @@ static void value_red(void)
         json_error("Value out of range");
     }
 
-    structure[FG_R] = key_value;
-    structure[ATTR] |= FG_RGB;
+    if(j_state->struct_type == STRUCT_RGB_FG)
+    {
+        structure[FG_R] = key_value;
+        structure[ATTR] |= FG_RGB;
+        structure[ATTR] &= ~FG_GRAY;
+    }
+    else
+    {
+        structure[BG_R] = key_value;
+        structure[ATTR] |= BG_RGB;
+        structure[ATTR] &= ~BG_GRAY;
+    }
 }
 
 // -----------------------------------------------------------------------
@@ -820,9 +834,18 @@ static void value_green(void)
     {
         json_error("Value out of range");
     }
-
-    structure[FG_G] = key_value;
-    structure[ATTR] |= FG_RGB;
+    if(j_state->struct_type == STRUCT_RGB_FG)
+    {
+        structure[FG_G] = key_value;
+        structure[ATTR] |= FG_RGB;
+        structure[ATTR] &= ~FG_GRAY;
+    }
+    else
+    {
+        structure[BG_G] = key_value;
+        structure[ATTR] |= BG_RGB;
+        structure[ATTR] &= ~BG_GRAY;
+    }
 }
 
 // -----------------------------------------------------------------------
@@ -837,8 +860,18 @@ static void value_blue(void)
         json_error("Value out of range");
     }
 
-    structure[FG_B] = key_value;
-    structure[ATTR] |= FG_RGB;
+    if(j_state->struct_type == STRUCT_RGB_FG)
+    {
+        structure[FG_B] = key_value;
+        structure[ATTR] |= FG_RGB;
+        structure[ATTR] &= ~FG_GRAY;
+    }
+    else
+    {
+        structure[BG_B] = key_value;
+        structure[ATTR] |= BG_RGB;
+        structure[ATTR] &= ~BG_GRAY;
+    }
 }
 
 // -----------------------------------------------------------------------
@@ -921,12 +954,12 @@ static void value_name(void)
         json_error("Name string too long (max 32)");
     }
 
-    name = j_alloc(len - 2);
-
+    name = &name_string_buff[nsi];
     for(i = 0; i < len - 2; i++)
     {
-        name[i] = json_token[i + 1];
+        name_string_buff[nsi++] = json_token[i + 1];
     }
+    nsi++;
 
     switch(ptype)
     {
@@ -1164,14 +1197,8 @@ static void populate_parent(void)
             }
             break;
         case STRUCT_B_ATTRIBS:
-            switch(ptype)
-            {
-                case STRUCT_WINDOW:
-                case STRUCT_BACKDROP:
-                    *(uint64_t *)((window_t *)structure)->bdr_attrs = *(uint64_t *)j_state->structure;
-                    break;
-            }
-            break;
+               *(uint64_t *)((window_t *)structure)->bdr_attrs = *(uint64_t *)j_state->structure;
+                break;
         case STRUCT_S_ATTRIBS:
             switch(ptype)
             {

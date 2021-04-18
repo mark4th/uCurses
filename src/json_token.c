@@ -1,4 +1,4 @@
-// json parsing
+// json parsing - token extraction and hash calculation
 // -----------------------------------------------------------------------
 
 #include <stdlib.h>
@@ -63,7 +63,7 @@ static void refill(void)
     while((json_index != json_len) &&
           (json_data[json_index] != 0x0a))
     {
-        line_buff[i++] = json_data[json_index];
+        line_buff[i++] = json_data[json_index++];
         if(i == MAX_LINE_LEN)
         {
             json_error("JSON Line Too Long");
@@ -77,9 +77,6 @@ static void refill(void)
 
 // -----------------------------------------------------------------------
 
-    // we need to skip leading white space even if it crosses
-    // multiple lines of json source
-
 static void skip_white(void)
 {
     char c;
@@ -91,6 +88,12 @@ static void skip_white(void)
         {
             refill();
         }
+
+        if(json_index == json_len)
+        {
+             return;
+        }
+
         c = line_buff[line_index];
 
         // now scan past leading white space
@@ -102,18 +105,12 @@ static void skip_white(void)
             c = line_buff[line_index];
         }
 
-        if(line_left == 0)
-        {
-             return;
-        }
-        // did scanning past leading white space eat up
-        // the rest of the current line?
-
+        if(c == '#') { line_left = 0; }
     } while(line_left == 0);
 }
 
 // -----------------------------------------------------------------------
-// convert all 0x09 and 0x0d chars into 0x20
+// convert all 0x09 and 0x0d chars into 0x20 (makes parsing easier)
 
 void json_de_tab(char *s, size_t len)
 {
@@ -136,6 +133,10 @@ void token(void)
     uint16_t i, j = 0;
     uint8_t l;
 
+    // if this call runs out of data before parsing a full token
+    // then the has value for what was parsed would be unknwon
+    // and json parsing will abort
+
     memset(json_token, 0, TOKEN_LEN);
 
     if(json_index == json_len)
@@ -147,7 +148,7 @@ void token(void)
 
     while((line_left != 0) &&
           (s[line_index] != 0x20))
-   {
+    {
        // have we been fed a truncated utf8 character ?
        l = utf8_char_length(&s[line_index]);
 

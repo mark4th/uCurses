@@ -18,7 +18,6 @@ extern uint32_t json_hash;
 static uint16_t console_width;
 static uint16_t console_height;
 
-
 int32_t key_value;
 
 // -----------------------------------------------------------------------
@@ -32,16 +31,16 @@ uint16_t nsi;
 
 static void value_fg(void)
 {
-    j_state_t *parent = j_state->parent;
-    uint8_t *structure   = parent->structure;
+    j_state_t *parent  = j_state->parent;
+    uint8_t *pstruct = parent->structure;
 
     if(key_value > 15)
     {
         json_error("Value out of range");
     }
 
-    structure[FG] = key_value;
-    structure[ATTR] &= ~(BG_RGB | BG_GRAY);
+    pstruct[FG] = key_value;
+    pstruct[ATTR] &= ~(BG_RGB | BG_GRAY);
 }
 
 // -----------------------------------------------------------------------
@@ -49,15 +48,15 @@ static void value_fg(void)
 static void value_bg(void)
 {
     j_state_t *parent = j_state->parent;
-    uint8_t *structure   = parent->structure;
+    uint8_t *pstruct  = parent->structure;
 
     if(key_value > 15)
     {
         json_error("Value out of range");
     }
 
-    structure[FG] = key_value;
-    structure[ATTR] &= ~(BG_RGB | BG_GRAY);
+    pstruct[FG] = key_value;
+    pstruct[ATTR] &= ~(BG_RGB | BG_GRAY);
 }
 
 // -----------------------------------------------------------------------
@@ -65,16 +64,16 @@ static void value_bg(void)
 static void value_gray_fg(void)
 {
     j_state_t *parent = j_state->parent;
-    char *structure   = parent->structure;
+    char *pstruct     = parent->structure;
 
     if(key_value > 23)
     {
         json_error("Value out of range");
     }
 
-    structure[FG] = key_value;
-    structure[ATTR] |= FG_GRAY;
-    structure[ATTR] &= ~FG_RGB;
+    pstruct[FG]    = key_value;
+    pstruct[ATTR] |= FG_GRAY;
+    pstruct[ATTR] &= ~FG_RGB;
 }
 
 // -----------------------------------------------------------------------
@@ -82,16 +81,16 @@ static void value_gray_fg(void)
 static void value_gray_bg(void)
 {
     j_state_t *parent = j_state->parent;
-    char *structure   = parent->structure;
+    char *pstruct     = parent->structure;
 
     if(key_value > 23)
     {
         json_error("Value out of range");
     }
 
-    structure[BG] = key_value;
-    structure[ATTR] |= BG_GRAY;
-    structure[ATTR] &= ~BG_RGB;
+    pstruct[BG]    = key_value;
+    pstruct[ATTR] |= BG_GRAY;
+    pstruct[ATTR] &= ~BG_RGB;
 }
 
 // -----------------------------------------------------------------------
@@ -99,7 +98,7 @@ static void value_gray_bg(void)
 static void value_red(void)
 {
     j_state_t *parent = j_state->parent;
-    char *structure   = parent->structure;
+    char *pstruct     = parent->structure;
 
     if(key_value > 255)
     {
@@ -108,15 +107,15 @@ static void value_red(void)
 
     if(j_state->struct_type == STRUCT_RGB_FG)
     {
-        structure[FG_R] = key_value;
-        structure[ATTR] |= FG_RGB;
-        structure[ATTR] &= ~FG_GRAY;
+        pstruct[FG_R]  = key_value;
+        pstruct[ATTR] |= FG_RGB;
+        pstruct[ATTR] &= ~FG_GRAY;
     }
     else
     {
-        structure[BG_R] = key_value;
-        structure[ATTR] |= BG_RGB;
-        structure[ATTR] &= ~BG_GRAY;
+        pstruct[BG_R]  = key_value;
+        pstruct[ATTR] |= BG_RGB;
+        pstruct[ATTR] &= ~BG_GRAY;
     }
 }
 
@@ -125,7 +124,7 @@ static void value_red(void)
 static void value_green(void)
 {
     j_state_t *parent = j_state->parent;
-    char *structure   = parent->structure;
+    char *pstruct     = parent->structure;
 
     if(key_value > 255)
     {
@@ -133,15 +132,15 @@ static void value_green(void)
     }
     if(j_state->struct_type == STRUCT_RGB_FG)
     {
-        structure[FG_G] = key_value;
-        structure[ATTR] |= FG_RGB;
-        structure[ATTR] &= ~FG_GRAY;
+        pstruct[FG_G] = key_value;
+        pstruct[ATTR] |= FG_RGB;
+        pstruct[ATTR] &= ~FG_GRAY;
     }
     else
     {
-        structure[BG_G] = key_value;
-        structure[ATTR] |= BG_RGB;
-        structure[ATTR] &= ~BG_GRAY;
+        pstruct[BG_G] = key_value;
+        pstruct[ATTR] |= BG_RGB;
+        pstruct[ATTR] &= ~BG_GRAY;
     }
 }
 
@@ -150,7 +149,7 @@ static void value_green(void)
 static void value_blue(void)
 {
     j_state_t *parent = j_state->parent;
-    char *structure   = parent->structure;
+    char *pstruct     = parent->structure;
 
     if(key_value > 255)
     {
@@ -159,15 +158,15 @@ static void value_blue(void)
 
     if(j_state->struct_type == STRUCT_RGB_FG)
     {
-        structure[FG_B] = key_value;
-        structure[ATTR] |= FG_RGB;
-        structure[ATTR] &= ~FG_GRAY;
+        pstruct[FG_B]  = key_value;
+        pstruct[ATTR] |= FG_RGB;
+        pstruct[ATTR] &= ~FG_GRAY;
     }
     else
     {
-        structure[BG_B] = key_value;
-        structure[ATTR] |= BG_RGB;
-        structure[ATTR] &= ~BG_GRAY;
+        pstruct[BG_B] = key_value;
+        pstruct[ATTR] |= BG_RGB;
+        pstruct[ATTR] &= ~BG_GRAY;
     }
 }
 
@@ -175,8 +174,8 @@ static void value_blue(void)
 
 static void value_xco(void)
 {
-    j_state_t *parent  = j_state->parent;
-    window_t *win = parent->structure;
+    j_state_t *parent = j_state->parent;
+    window_t *win     = parent->structure;
 
     if((win->width + key_value) > console_width)
     {
@@ -189,8 +188,8 @@ static void value_xco(void)
 
 static void value_yco(void)
 {
-    j_state_t *parent  = j_state->parent;
-    window_t *win = parent->structure;
+    j_state_t *parent = j_state->parent;
+    window_t *win     = parent->structure;
 
     if((win->height + key_value) > console_height)
     {
@@ -204,7 +203,7 @@ static void value_yco(void)
 static void value_width(void)
 {
     j_state_t *parent = j_state->parent;
-    window_t *win = parent->structure;
+    window_t *win     = parent->structure;
 
     if(key_value > console_width)
     {
@@ -218,7 +217,7 @@ static void value_width(void)
 static void value_height(void)
 {
     j_state_t *parent = j_state->parent;
-    window_t *win = parent->structure;
+    window_t *win     = parent->structure;
 
     if(key_value > console_height)
     {
@@ -251,6 +250,7 @@ static void value_name(void)
         json_error("Name string too long (max 32)");
     }
 
+    // copy name token to the name buff minus the quotes
     name = &name_string_buff[nsi];
     for(i = 0; i < len - 2; i++)
     {
@@ -279,12 +279,14 @@ static void value_flag(void)
 
     if(key_value == MENU_DISABLED)
     {
-        if((ptype != STRUCT_MENU_ITEM) && (ptype != STRUCT_PULLDOWN))
+        if((ptype != STRUCT_MENU_ITEM) &&
+           (ptype != STRUCT_PULLDOWN))
         {
             json_error("Invalid flag type");
         }
     }
-    else if((ptype == STRUCT_MENU_ITEM) || (ptype == STRUCT_PULLDOWN))
+    else if((ptype == STRUCT_MENU_ITEM) ||
+            (ptype == STRUCT_PULLDOWN))
     {
         json_error("Invalid flag type");
     }
@@ -308,7 +310,7 @@ static void value_flag(void)
 static void value_border_type(void)
 {
     j_state_t *parent = j_state->parent;
-    window_t *win = parent->structure;
+    window_t *win     = parent->structure;
 
     if((key_value != WIN_LOCKED) && (key_value != WIN_FILLED) &&
         (key_value != WIN_BOXED))
@@ -322,8 +324,6 @@ static void value_border_type(void)
 
 static void value_vector(void)
 {
-    int i;
-
     j_state_t *parent = j_state->parent;
     menu_item_t *item = parent->structure;
 
@@ -339,15 +339,9 @@ static void value_vector(void)
         json_error("Function name must be quoted");
     }
 
-    // strip qutes from token and recalculate hash
-    for(i = 0; i < len - 2; i++)
-    {
-        json_token[i] = json_token[i + 1];
-    }
-    json_token[i] = '\0';
-    json_hash = fnv_hash(json_token);
+    strip_quotes(len -2);
 
-    item->fp = fp_finder(json_hash);
+    item->fp = (fp_finder)(json_hash);
 
     if(item->fp == NULL)
     {
@@ -367,22 +361,22 @@ static void value_shortcut(void)
 
 static const switch_t value_types[] =
 {
-    { 0x6b77251c,  value_fg          },
-    { 0xaa3b6788,  value_gray_fg     },
-    { 0x6f772ba0,  value_bg          },
-    { 0xa63b61c4,  value_gray_bg     },
-    { 0x3a72d292,  value_red         },
-    { 0xf73297b2,  value_green       },
-    { 0x4f068569,  value_blue        },
-    { 0x1c63995d,  value_xco         },
-    { 0x3461800c,  value_yco         },
-    { 0x182e64eb,  value_width       },
-    { 0x4c47d5c0,  value_height      },
-    { 0x2f8b3bf4,  value_name        },
-    { 0x362bb2fc,  value_border_type },
-    { 0x0ee694b4,  value_vector      },
-    { 0x1c13e01f,  value_shortcut    },
-    { 0xaeb95d5b,  value_flag        }
+    { KEY_FG,           value_fg          },
+    { KEY_BG,           value_bg          },
+    { KEY_GRAY_FG,      value_gray_fg     },
+    { KEY_GRAY_BG,      value_gray_bg     },
+    { KEY_RED,          value_red         },
+    { KEY_GREEN,        value_green       },
+    { KEY_BLUE,         value_blue        },
+    { KEY_XCO,          value_xco         },
+    { KEY_YCO,          value_yco         },
+    { KEY_WIDTH,        value_width       },
+    { KEY_HEIGHT,       value_height      },
+    { KEY_NAME,         value_name        },
+    { KEY_FLAGS,        value_flag        },
+    { KEY_BORDER_TYPE,  value_border_type },
+    { KEY_VECTOR,       value_vector      },
+    { KEY_SHORTCUT,     value_shortcut    }
 };
 
 #define NUM_KEYS (sizeof(value_types) / sizeof(value_types[0]))
@@ -452,7 +446,7 @@ void json_state_value(void)
     }
 
     // we got this far, one of these will work
-    re_switch(value_types, NUM_KEYS, json_hash);
+    re_switch(value_types, NUM_KEYS, j_state->struct_type);
 
     if(j_stack.count != 0)
     {

@@ -30,7 +30,6 @@ static void struct_screen(void)
         json_error("There can be only one!");
     }
 
-    j_state->state = STATE_R_BRACE;
     json_new_state_struct(sizeof(screen_t), STRUCT_SCREEN);
 }
 
@@ -296,7 +295,7 @@ static void key_gray_fg(void)
         json_error("Requires parent atrribs structure");
     }
 
-    json_new_state_struct(0, KEY_FG);
+    json_new_state_struct(0, KEY_GRAY_FG);
 }
 
 // -----------------------------------------------------------------------
@@ -311,7 +310,6 @@ static void key_gray_bg(void)
         json_error("Requires parent atrribs structure");
     }
 
-    // leaves state unchanged
     json_new_state_struct(0, KEY_GRAY_BG);
 }
 
@@ -506,19 +504,6 @@ static const switch_t object_types[] =
 #define NUM_OBJECTS (sizeof(object_types) / sizeof(object_types[0]))
 
 // -----------------------------------------------------------------------
-
-static void strip_quotes(uint16_t len)
-{
-    uint16_t i;
-    // strip qutes from token and recalculate hash
-    for(i = 0; i < len; i++)
-    {
-        json_token[i] = json_token[i + 1];
-    }
-    json_token[i] = '\0';
-}
-
-// -----------------------------------------------------------------------
 // a key is a "quoted-name" used to name objects and keys
 
 void json_state_key(void)
@@ -532,8 +517,8 @@ void json_state_key(void)
     {
         json_error("Key names must be quoted");
     }
+
     strip_quotes(len -2);
-    json_hash = fnv_hash(json_token);
 
     // objects are a type of key which are a container for keys
     f = re_switch(object_types, NUM_OBJECTS, json_hash);

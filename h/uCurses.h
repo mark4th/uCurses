@@ -258,7 +258,7 @@ enum
 // -----------------------------------------------------------------------
 
 #define MAX_LINE_LEN 128
-#define TOKEN_LEN 32
+#define TOKEN_LEN 34       // 32 chars plus two quote chars
 
 // -----------------------------------------------------------------------
 
@@ -295,6 +295,7 @@ typedef enum
     KEY_FG,
     KEY_BG,
     KEY_GRAY_BG,
+    KEY_GRAY_FG,
     KEY_RED,
     KEY_GREEN,
     KEY_BLUE,
@@ -429,6 +430,7 @@ void json_new_state_struct(size_t struct_size, uint32_t struct_type);
 void json_state_value(void);
 void json_state_key(void);
 void j_pop(void);
+void strip_quotes(uint16_t len);
 
 // -----------------------------------------------------------------------
 

@@ -260,6 +260,70 @@ enum
 #define MAX_LINE_LEN 128
 #define TOKEN_LEN 32
 
+// -----------------------------------------------------------------------
+
+typedef enum
+{
+    STATE_L_BRACE,
+    STATE_KEY,
+    STATE_VALUE,
+    STATE_R_BRACE,
+    STATE_DONE,
+    NUM_STATES
+} json_state_t;
+
+// -----------------------------------------------------------------------
+
+typedef enum
+{
+    STRUCT_SCREEN = 1,
+    STRUCT_WINDOWS,
+    STRUCT_WINDOW,
+    STRUCT_BACKDROP,
+    STRUCT_MENU_BAR,
+    STRUCT_PULLDOWNS,
+    STRUCT_PULLDOWN,
+    STRUCT_MENU_ITEMS,
+    STRUCT_MENU_ITEM,
+    STRUCT_ATTRIBS,         // normal attribs
+    STRUCT_B_ATTRIBS,       // border attribs
+    STRUCT_S_ATTRIBS,       // selected attribs
+    STRUCT_D_ATTRIBS,       // disabled attribs
+    STRUCT_RGB_FG,          // 3 bytes
+    STRUCT_RGB_BG,          // 3 bytes
+    STRUCT_FLAGS,
+    KEY_FG,
+    KEY_BG,
+    KEY_GRAY_BG,
+    KEY_RED,
+    KEY_GREEN,
+    KEY_BLUE,
+    KEY_XCO,
+    KEY_YCO,
+    KEY_WIDTH,
+    KEY_HEIGHT,
+    KEY_NAME,
+    KEY_FLAGS,
+    KEY_BORDER_TYPE,
+    KEY_VECTOR,
+    KEY_SHORTCUT
+} key_type_t;
+
+// -----------------------------------------------------------------------
+// offsets into json_syntax array of hash values found in json.c
+
+typedef enum
+{
+    // JSON_COMMENT,
+    JSON_COLON,
+    JSON_L_BRACE,
+    JSON_R_BRACE,
+    JSON_L_BRACKET,
+    JSON_R_BRACKET
+} json_syntax_t;
+
+// -----------------------------------------------------------------------
+
 typedef struct
 {
     uint16_t state;         // current state
@@ -361,6 +425,10 @@ void token(void);
 uint16_t is_token(uint32_t *table, size_t size, char *s);
 void json_de_tab(char *s, size_t len);
 void json_error(char *s);
+void json_new_state_struct(size_t struct_size, uint32_t struct_type);
+void json_state_value(void);
+void json_state_key(void);
+void j_pop(void);
 
 // -----------------------------------------------------------------------
 

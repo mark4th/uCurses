@@ -8,7 +8,9 @@ libuCurses_la_SOURCES =  \
   src/border.c     \
   src/color.c      \
   src/json.c       \
+  src/json_key.c   \
   src/json_token.c \
+  src/json_value.c \
   src/keys.c       \
   src/list.c       \
   src/menus.c      \

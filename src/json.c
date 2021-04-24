@@ -6,6 +6,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <fcntl.h>
+#include <termios.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
+#include <sys/ioctl.h>
 
 #include "h/uCurses.h"
 #include "h/list.h"
@@ -20,9 +25,9 @@
 //      STATE_R_BRACE
 //      STATE_DONE
 //
-// The initial state is json_state_l_brace which expects the next token
-// parsed to be the left brace '{' char.  If it is then the current state
-// is incremented to STATE_KEY.
+// The initial state is STATE_L_BRACE which expects the next token parsed
+// to be the left brace '{' char.  If it is then the current state is
+// incremented to STATE_KEY.
 //
 // the handler for STATE_KEY expect to see one of several known tokens
 // which will either be a 'key' token or an 'object' token.  when parsing
@@ -87,6 +92,9 @@ list_t j_stack;
 
 fp_finder_t fp_finder;
 
+uint16_t console_width;
+uint16_t console_height;
+
 // -----------------------------------------------------------------------
 
 j_state_t *j_state;
@@ -96,7 +104,6 @@ j_state_t *j_state;
 
 const uint32_t json_syntax[] =
 {
-    // 0x050c5d3c,          // #  handled in json_token.c
     0x050c5d25,             // :
     0x050c5d64,             // {
     0x050c5d62,             // }
@@ -122,27 +129,12 @@ void j_pop(void)
 }
 
 // -----------------------------------------------------------------------
-// strip quotes off of parsed json token and recalculate hash
 
-void strip_quotes(uint16_t len)
+__attribute__((noreturn)) void json_error(char *s)
 {
-    uint16_t i;
-
-    for(i = 0; i < len; i++)
-    {
-        json_token[i] = json_token[i + 1];
-    }
-
-    json_token[i] = '\0';
-    json_hash = fnv_hash(json_token);
-}
-
-// -----------------------------------------------------------------------
-
-void json_error(char *s)
-{
-    // printf offending line and pointer to offending item?
     fprintf(stderr, "%d:%d %s\n", line_no, line_index, s);
+    uCurses_deInit();
+    restore_term();
     _exit(1);
 }
 
@@ -152,12 +144,11 @@ void *j_alloc(uint32_t size)
 {
     void *v = calloc(1, size);
 
-    if(v == NULL)
+    if(v != NULL)
     {
-        json_error("Out of Memory!");
+        return v;
     }
-
-    return v;
+    json_error("Out of Memory!");
 }
 
 // -----------------------------------------------------------------------
@@ -165,30 +156,31 @@ void *j_alloc(uint32_t size)
 
 static void json_state_l_brace(void)
 {
-    if(json_hash != json_syntax[JSON_L_BRACE])
+    if(json_hash == json_syntax[JSON_L_BRACE])
     {
-        json_error("Opening brace missing");
+        j_state->state = STATE_KEY;
+        return;
     }
-
-    j_state->state++;
+    json_error("Opening brace missing");
 }
 
 // -----------------------------------------------------------------------
-// every object and every key gets its own state structure allocation
-// the current object state level is alwaus in the j_state variable.
-// previous object states are pushed onto the json parse stack.
-// key value states are never pushed onto the state stack
+// every object and every key gets its own state structure allocation.
+// the current object state level is always in the j_state variable.
+// previous object states are pushed onto the json parse stack. key value
+// states are never pushed onto the state stack
 
 void json_new_state_struct(size_t struct_size, uint32_t struct_type)
 {
     j_state_t *j;
-
-    void *structure = (struct_size != 0)
-        ? j_alloc(struct_size)
-        : NULL;
+    void *structure;
 
     // allocate a structure for the new state
     j = j_alloc(sizeof(*j));
+
+    structure = (struct_size != 0)
+        ? j_alloc(struct_size)
+        : NULL;
 
     j->parent      = j_state;
     j->structure   = structure;
@@ -203,16 +195,20 @@ void json_new_state_struct(size_t struct_size, uint32_t struct_type)
 
 // an object has been completed and thereby the associated C structure is
 // ready.  add this C structure to its parent objects C structure...
+// or sometimes its grandparents
 
 static void populate_parent(void)
 {
     uint16_t i;
     list_t *l;
-    j_state_t *parent = j_state->parent;
+    window_t *win;
+    screen_t *scr;
 
-    // point to parent states C structure
-    void *pstruct  = parent->structure;
-    uint32_t ptype = parent->struct_type;
+    j_state_t *parent = j_state->parent;
+    j_state_t *gp     = parent->parent;
+
+    void *pstruct     = parent->structure;
+    uint32_t ptype    = parent->struct_type;
 
     // whe a psudo structure is completed all of the key values
     // specified within that psudo structure will have been
@@ -233,10 +229,12 @@ static void populate_parent(void)
                     *(uint64_t *)((window_t *)pstruct)->attrs =
                         *(uint64_t *)j_state->structure;
                     break;
+
                 case STRUCT_PULLDOWN:
                     *(uint64_t *)((pulldown_t *)pstruct)->normal =
                         *(uint64_t *)j_state->structure;
                     break;
+
                 case STRUCT_MENU_BAR:
                     *(uint64_t *)((menu_bar_t *)pstruct)->normal =
                         *(uint64_t *)j_state->structure;
@@ -256,10 +254,12 @@ static void populate_parent(void)
                     *(uint64_t *)((pulldown_t *)pstruct)->selected =
                         *(uint64_t *)j_state->structure;
                     break;
+
                 case STRUCT_MENU_BAR:
                     *(uint64_t *)((menu_bar_t *)pstruct)->selected =
                         *(uint64_t *)j_state->structure;
                     break;
+
             }
             break;
 
@@ -270,10 +270,12 @@ static void populate_parent(void)
                     *(uint64_t *)((pulldown_t *)pstruct)->disabled =
                         *(uint64_t *)j_state->structure;
                     break;
+
                 case STRUCT_MENU_BAR:
                     *(uint64_t *)((menu_bar_t *)pstruct)->disabled =
                         *(uint64_t *)j_state->structure;
                     break;
+
             }
             break;
 
@@ -288,8 +290,15 @@ static void populate_parent(void)
             break;
 
         case STRUCT_WINDOW:
-            l = &((screen_t *)pstruct)->windows;
-            list_append_node(l, j_state->structure);
+            scr         = gp->structure;
+            win         = j_state->structure;
+            win->screen = scr;
+            l = &scr->windows;
+            list_append_node(l, win);
+            break;
+
+        case STRUCT_BACKDROP:
+            ((screen_t *)pstruct)->backdrop = j_state->structure;
             break;
     }
 }
@@ -318,6 +327,7 @@ static void json_state_r_brace(void)
 
     populate_parent();
 
+    j_state->state = STATE_DONE;
     if(j_stack.count != 0)
     {
         j_pop();
@@ -326,10 +336,6 @@ static void json_state_r_brace(void)
             ? STATE_KEY
             : STATE_R_BRACE;
      }
-    else
-    {
-        j_state->state = STATE_DONE;
-    }
 }
 
 // -----------------------------------------------------------------------
@@ -344,7 +350,7 @@ static const switch_t states[] =
 
 // -----------------------------------------------------------------------
 
-// when the above state machine parses in the structues that define the
+// when the state machine parses in the structues that define the
 // applications menus it will need to add function pointers to every
 // menu item to be executed when that menu item is selected.  this
 // library can not determine the address of any functions in the
@@ -354,29 +360,111 @@ static const switch_t states[] =
 // needs better documentation than im prepared to put in source file
 // comments :)
 
-void json_state_machine(char *json, size_t len, fp_finder_t fp)
+static void json_state_machine(void)
 {
-    fp_finder = fp;
+    int f;
     j_state = j_alloc(sizeof(*j_state));
-
-    json_data = json;
-    json_len  = len;
 
     j_state->struct_type = -1;
     j_state->state = JSON_L_BRACE;
-
-    json_de_tab(json, len);
 
     while(j_state->state != STATE_DONE)
     {
         token();
         json_hash = fnv_hash(json_token);
 
-        re_switch(states, NUM_STATES, j_state->state);
+        f = re_switch(states, NUM_STATES, j_state->state);
+        if(f == -1)
+        {
+            json_error("Unknown Token");
+        }
     }
-    // TODO
-    // allocate screen and window structures backing stores here
-    // because we know there sizes now
+}
+
+// -----------------------------------------------------------------------
+
+static void adjust_win_pos(screen_t *scr, window_t *win)
+{
+    uint8_t b = ((win->flags & WIN_BOXED) == 0) ? 0 : 1;
+
+    if((win->xco + win->width  + b) > scr->width)
+    {
+        win->xco = scr->width  - (win->width + b);
+    }
+    if((win->yco + win->height + b) > scr->height)
+    {
+        win->xco = scr->height - (win->height + b);
+    }
+}
+
+// -----------------------------------------------------------------------
+
+int json_create_ui(char *path, fp_finder_t fp)
+{
+    window_t *win;
+    screen_t *scr;
+
+    struct winsize w;
+
+    ioctl(0, TIOCGWINSZ, &w);
+    console_width  = w.ws_col;
+    console_height = w.ws_row;
+
+    struct stat st;
+    fp_finder = fp;
+
+    int fd = open(path, O_RDONLY);
+
+    if(fd < 0)
+    {
+        return -1;
+    }
+
+    fstat(fd, &st);
+    json_len  = st.st_size;
+    json_data = mmap(NULL, json_len, PROT_READ | PROT_WRITE,
+        MAP_PRIVATE, fd, 0);
+    close(fd);
+
+    if(json_data == MAP_FAILED)
+    {
+        return -1;
+    }
+
+    json_de_tab(json_data, json_len);
+    json_state_machine();
+
+    munmap(json_data, json_len);
+
+    scr = active_screen;
+    if(scr != NULL)
+    {
+        scr_alloc(scr);
+
+        if(scr->backdrop != NULL)
+        {
+            win = scr->backdrop;
+            win_alloc(win);
+
+            win->screen = scr;
+            win->width  = scr->width - 2;
+            win->height = scr->height - 2;
+            win->xco = 1;
+            win->yco = 1;
+            win->flags = WIN_BOXED;
+        }
+
+        node_t *n = scr->windows.head;
+
+        while(n != NULL)
+        {
+            win = n->payload;
+            adjust_win_pos(win->screen, win);
+            win_alloc(win);
+            n = n->next;
+        }
+    }
+    return 0;
 }
 
 // =======================================================================

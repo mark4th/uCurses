@@ -13,36 +13,45 @@ extern list_t j_stack;
 extern j_state_t *j_state;
 extern uint32_t json_hash;
 extern const uint32_t json_syntax[];
+extern screen_t *active_screen;
 
 // -----------------------------------------------------------------------
 // were only referencing this to get its size
 
 extern uint8_t attrs[8];
 extern char json_token[TOKEN_LEN]; // space delimited token extracted from data
+extern uint16_t console_width;
+extern uint16_t console_height;
 
 // -----------------------------------------------------------------------
 // must be the first object specified
 
 static void struct_screen(void)
 {
-    if(j_stack.count != 0)
+    screen_t *scr;
+    if(j_stack.count == 0)
     {
-        json_error("There can be only one!");
+        json_new_state_struct(sizeof(screen_t), STRUCT_SCREEN);
+        scr = j_state->structure;
+        // you have no say in this
+        scr->width  = console_width;
+        scr->height = console_height;
+        active_screen = scr;
+        return;
     }
-
-    json_new_state_struct(sizeof(screen_t), STRUCT_SCREEN);
+    json_error("There can be only one!");
 }
 
 // -----------------------------------------------------------------------
 
 static void struct_windows(void)
 {
-    if(j_state->struct_type != STRUCT_SCREEN)
+    if(j_state->struct_type == STRUCT_SCREEN)
     {
-        json_error("Requires parent screen");
+        json_new_state_struct(0, STRUCT_WINDOWS);
+        return;
     }
-
-    json_new_state_struct(0, STRUCT_WINDOWS);
+    json_error("Requires parent screen");
 }
 
 // -----------------------------------------------------------------------
@@ -50,12 +59,24 @@ static void struct_windows(void)
 
 static void struct_window(void)
 {
-    if(j_state->struct_type != STRUCT_WINDOWS)
-    {
-        json_error("Requires parent windows structure");
-    }
+    window_t *win;
 
-    json_new_state_struct(sizeof(window_t), STRUCT_WINDOW);
+    if(j_state->struct_type == STRUCT_WINDOWS)
+    {
+        json_new_state_struct(sizeof(*win), STRUCT_WINDOW);
+        win = j_state->structure;
+
+        // if the windows xco or yco is defined as "FAR" it means place
+        // this window as far right or down the screen as it can go
+        // in this case we must know the screebs width or height before
+        // we can position it
+
+        win->width  = NAN;
+        win->height = NAN;
+
+        return;
+    }
+    json_error("Requires parent windows structure");
 }
 
 // -----------------------------------------------------------------------
@@ -63,393 +84,325 @@ static void struct_window(void)
 
 static void struct_backdrop(void)
 {
-    if(j_state->struct_type != STRUCT_SCREEN)
+    if(j_state->struct_type == STRUCT_SCREEN)
     {
-        json_error("Requires parent screen");
+        json_new_state_struct(sizeof(window_t), STRUCT_BACKDROP);
+        return;
     }
-
-    json_new_state_struct(sizeof(window_t), STRUCT_BACKDROP);
+    json_error("Requires parent screen");
 }
 
 // -----------------------------------------------------------------------
 
 static void struct_m_bar(void)
 {
-    if(j_state->struct_type != STRUCT_SCREEN)
+    if(j_state->struct_type == STRUCT_SCREEN)
     {
-        json_error("Requires parent screen");
+        json_new_state_struct(sizeof(menu_bar_t), STRUCT_MENU_BAR);
+        return;
     }
-
-    json_new_state_struct(sizeof(menu_bar_t), STRUCT_MENU_BAR);
+    json_error("Requires parent screen");
 }
 
 // -----------------------------------------------------------------------
 
 static void struct_pulldowns(void)
 {
-    if(j_state->struct_type != STRUCT_MENU_BAR)
+    if(j_state->struct_type == STRUCT_MENU_BAR)
     {
-        json_error("Requires parent menu-bar");
+        // there is no actual structure for this, as this item is
+        // populated through json this state_t's parent structure
+        // is what will actually get populated
+
+        json_new_state_struct(0, STRUCT_PULLDOWNS);
+        return;
     }
-
-    // there is no actual structure for this, as this item is
-    // populated through json this state_t's parent structure
-    // is what will actually get populated
-
-    json_new_state_struct(0, STRUCT_PULLDOWNS);
+    json_error("Requires parent menu-bar");
 }
 
 // -----------------------------------------------------------------------
 
 static void struct_pulldown(void)
 {
-    if(j_state->struct_type != STRUCT_PULLDOWNS)
+    if(j_state->struct_type == STRUCT_PULLDOWNS)
     {
-        json_error("Requires parent pulldowns structure");
+        json_new_state_struct(sizeof(pulldown_t), STRUCT_PULLDOWN);
+        return;
     }
-
-    json_new_state_struct(sizeof(pulldown_t), STRUCT_PULLDOWN);
+    json_error("Requires parent pulldowns structure");
 }
 
 // -----------------------------------------------------------------------
 
 static void struct_m_items(void)
 {
-    if(j_state->struct_type != STRUCT_PULLDOWN)
+    if(j_state->struct_type == STRUCT_PULLDOWN)
     {
-        json_error("Requires parent pulldown structure");
+        // there is no actual structure for this, as this item is
+        // populated through json this state_t's parent structure
+        // is what will actually get populated
+
+        json_new_state_struct(0, STRUCT_MENU_ITEMS);
+        return;
     }
-
-    // there is no actual structure for this, as this item is
-    // populated through json this state_t's parent structure
-    // is what will actually get populated
-
-    json_new_state_struct(0, STRUCT_MENU_ITEMS);
+    json_error("Requires parent pulldown structure");
 }
 
 // -----------------------------------------------------------------------
 
 static void struct_m_item(void)
 {
-    if(j_state->struct_type != STRUCT_MENU_ITEMS)
+    if(j_state->struct_type == STRUCT_MENU_ITEMS)
     {
-        json_error("requires parent menu-items");
+        json_new_state_struct(sizeof(menu_item_t), STRUCT_MENU_ITEM);
+        return;
     }
-
-    json_new_state_struct(sizeof(menu_item_t), STRUCT_MENU_ITEM);
+    json_error("requires parent menu-items");
 }
 
 // -----------------------------------------------------------------------
 
 static void struct_attribs(void)
 {
-    if((j_state->struct_type != STRUCT_BACKDROP) &&
-       (j_state->struct_type != STRUCT_WINDOW) &&
-       (j_state->struct_type != STRUCT_PULLDOWN) &&
-       (j_state->struct_type != STRUCT_MENU_BAR))
+    if((j_state->struct_type == STRUCT_BACKDROP) ||
+       (j_state->struct_type == STRUCT_WINDOW)   ||
+       (j_state->struct_type == STRUCT_PULLDOWN) ||
+       (j_state->struct_type == STRUCT_MENU_BAR))
     {
-        json_error(
-            "Requires parent backdrop, window, pulldown or menu bar");
+        json_new_state_struct(sizeof(attrs), STRUCT_ATTRIBS);
+        return;
     }
-
-    json_new_state_struct(sizeof(attrs), STRUCT_ATTRIBS);
+    json_error(
+        "Requires parent backdrop, window, pulldown or menu bar");
 }
 
 // -----------------------------------------------------------------------
 
 static void struct_b_attribs(void)
 {
-    if((j_state->struct_type != STRUCT_BACKDROP) &&
-       (j_state->struct_type != STRUCT_WINDOW))
+    if((j_state->struct_type == STRUCT_BACKDROP) ||
+       (j_state->struct_type == STRUCT_WINDOW))
     {
-        json_error("Requires parent backdrop or window");
+        json_new_state_struct(sizeof(attrs), STRUCT_B_ATTRIBS);
+        return;
     }
-
-    json_new_state_struct(sizeof(attrs), STRUCT_B_ATTRIBS);
+    json_error("Requires parent backdrop or window");
 }
 
 // -----------------------------------------------------------------------
 
 static void struct_s_attribs(void)
 {
-    if((j_state->struct_type != STRUCT_PULLDOWN) &&
-       (j_state->struct_type != STRUCT_MENU_BAR))
+    if((j_state->struct_type == STRUCT_PULLDOWN) ||
+       (j_state->struct_type == STRUCT_MENU_BAR))
     {
-        json_error(
-            "Requires parent backdrop, window, pulldown or menu bar");
+        json_new_state_struct(sizeof(attrs), STRUCT_S_ATTRIBS);
+        return;
     }
-
-    json_new_state_struct(sizeof(attrs), STRUCT_S_ATTRIBS);
+    json_error(
+        "Requires parent backdrop, window, pulldown or menu bar");
 }
 
 // -----------------------------------------------------------------------
 
 static void struct_d_attribs(void)
 {
-    if((j_state->struct_type != STRUCT_PULLDOWN) &&
-       (j_state->struct_type != STRUCT_MENU_BAR))
+    if((j_state->struct_type == STRUCT_PULLDOWN) ||
+       (j_state->struct_type == STRUCT_MENU_BAR))
     {
-        json_error(
-            "Requires parent backdrop, window, pulldown or menu bar");
+        json_new_state_struct(sizeof(attrs), STRUCT_D_ATTRIBS);
+        return;
     }
-
-    json_new_state_struct(sizeof(attrs), STRUCT_D_ATTRIBS);
+    json_error(
+        "Requires parent backdrop, window, pulldown or menu bar");
 }
 
 // -----------------------------------------------------------------------
 
 static void struct_rgb_fg(void)
 {
-    if((j_state->struct_type != STRUCT_ATTRIBS) &&
-       (j_state->struct_type != STRUCT_B_ATTRIBS) &&
-       (j_state->struct_type != STRUCT_S_ATTRIBS) &&
-       (j_state->struct_type != STRUCT_D_ATTRIBS))
+    if((j_state->struct_type == STRUCT_ATTRIBS)   ||
+       (j_state->struct_type == STRUCT_B_ATTRIBS) ||
+       (j_state->struct_type == STRUCT_S_ATTRIBS) ||
+       (j_state->struct_type == STRUCT_D_ATTRIBS))
     {
-        json_error("Requires parent atrribs structure");
+        // there is no actual structure for this, as this item is
+        // populated through json this state_t's parent structure
+        // is what will actually get populated
+
+        json_new_state_struct(0, STRUCT_RGB_FG);
+        return;
     }
-
-    // there is no actual structure for this, as this item is
-    // populated through json this state_t's parent structure
-    // is what will actually get populated
-
-    json_new_state_struct(0, STRUCT_RGB_FG);
+    json_error("Requires parent atrribs structure");
 }
 
 // -----------------------------------------------------------------------
 
 static void struct_rgb_bg(void)
 {
-    if((j_state->struct_type != STRUCT_ATTRIBS) &&
-       (j_state->struct_type != STRUCT_B_ATTRIBS) &&
-       (j_state->struct_type != STRUCT_S_ATTRIBS) &&
-       (j_state->struct_type != STRUCT_D_ATTRIBS))
+    if((j_state->struct_type == STRUCT_ATTRIBS)   ||
+       (j_state->struct_type == STRUCT_B_ATTRIBS) ||
+       (j_state->struct_type == STRUCT_S_ATTRIBS) ||
+       (j_state->struct_type == STRUCT_D_ATTRIBS))
     {
-        json_error("Requires parent atrribs structure");
+        // there is no actual structure for this, as this item is
+        // populated through json this state_t's parent structure
+        // is what will actually get populated
+
+        json_new_state_struct(0, STRUCT_RGB_BG);
+        return;
     }
-
-    // there is no actual structure for this, as this item is
-    // populated through json this state_t's parent structure
-    // is what will actually get populated
-
-    json_new_state_struct(0, STRUCT_RGB_BG);
+    json_error("Requires parent atrribs structure");
 }
 
 // -----------------------------------------------------------------------
 
 static void struct_flags(void)
 {
-    if((j_state->struct_type != STRUCT_BACKDROP) &&
-       (j_state->struct_type != STRUCT_WINDOW) &&
-       (j_state->struct_type != STRUCT_PULLDOWN) &&
-       (j_state->struct_type != STRUCT_MENU_BAR))
+    if((j_state->struct_type == STRUCT_BACKDROP) ||
+       (j_state->struct_type == STRUCT_WINDOW)   ||
+       (j_state->struct_type == STRUCT_PULLDOWN) ||
+       (j_state->struct_type == STRUCT_MENU_BAR))
     {
-        json_error("Requires parent backdrop, window, pulldown or menu bar");
+        // there is no actual structure for this, as this item is
+        // populated through json this state_t's parent structure
+        // is what will actually get populated
+
+        json_new_state_struct(0, STRUCT_FLAGS);
+        return;
     }
+    json_error("Requires parent backdrop, window, pulldown or menu bar");
 
-    // there is no actual structure for this, as this item is
-    // populated through json this state_t's parent structure
-    // is what will actually get populated
-
-    json_new_state_struct(0, STRUCT_FLAGS);
 }
 
 // -----------------------------------------------------------------------
 
-static void key_fg(void)
+static void key_attr(uint16_t key)
 {
-    if((j_state->struct_type != STRUCT_ATTRIBS) &&
-       (j_state->struct_type != STRUCT_B_ATTRIBS) &&
-       (j_state->struct_type != STRUCT_S_ATTRIBS) &&
-       (j_state->struct_type != STRUCT_D_ATTRIBS))
+    if((j_state->struct_type == STRUCT_ATTRIBS)   ||
+       (j_state->struct_type == STRUCT_B_ATTRIBS) ||
+       (j_state->struct_type == STRUCT_S_ATTRIBS) ||
+       (j_state->struct_type == STRUCT_D_ATTRIBS))
     {
-        json_error("Requires parent atrribs structure");
+        json_new_state_struct(0, key);
+        return;
     }
-
-    json_new_state_struct(0, KEY_FG);
+    json_error("Requires parent atrribs structure");
 }
+
+static void key_fg(void)        { key_attr(KEY_FG);      }
+static void key_bg(void)        { key_attr(KEY_BG);      }
+static void key_gray_fg(void)   { key_attr(KEY_GRAY_FG); }
+static void key_gray_bg(void)   { key_attr(KEY_GRAY_BG); }
 
 // -----------------------------------------------------------------------
 
-static void key_bg(void)
+static void key_rgb(uint16_t key)
 {
-    if((j_state->struct_type != STRUCT_ATTRIBS) &&
-       (j_state->struct_type != STRUCT_B_ATTRIBS) &&
-       (j_state->struct_type != STRUCT_S_ATTRIBS) &&
-       (j_state->struct_type != STRUCT_D_ATTRIBS))
+    if((j_state->struct_type == STRUCT_RGB_FG) ||
+       (j_state->struct_type == STRUCT_RGB_BG))
     {
-        json_error("Requires parent atrribs structure");
+        json_new_state_struct(0, key);
+        return;
     }
-
-    json_new_state_struct(0, KEY_BG);
+    json_error("Requires parent RGB");
 }
+
+static void key_red(void)    { key_rgb(KEY_RED);   }
+static void key_green(void)  { key_rgb(KEY_GREEN); }
+static void key_blue(void)   { key_rgb(KEY_BLUE);  }
 
 // -----------------------------------------------------------------------
 
-static void key_gray_fg(void)
+static void key_xywh(uint16_t key)
 {
-    if((j_state->struct_type != STRUCT_ATTRIBS) &&
-       (j_state->struct_type != STRUCT_B_ATTRIBS) &&
-       (j_state->struct_type != STRUCT_S_ATTRIBS) &&
-       (j_state->struct_type != STRUCT_D_ATTRIBS))
+    if(j_state->struct_type == STRUCT_WINDOW)
     {
-        json_error("Requires parent atrribs structure");
+        json_new_state_struct(0, key);
+        return;
     }
-
-    json_new_state_struct(0, KEY_GRAY_FG);
+    json_error("Requires parent window");
 }
 
-// -----------------------------------------------------------------------
-
-static void key_gray_bg(void)
-{
-    if((j_state->struct_type != STRUCT_ATTRIBS) &&
-       (j_state->struct_type != STRUCT_B_ATTRIBS) &&
-       (j_state->struct_type != STRUCT_S_ATTRIBS) &&
-       (j_state->struct_type != STRUCT_D_ATTRIBS))
-    {
-        json_error("Requires parent atrribs structure");
-    }
-
-    json_new_state_struct(0, KEY_GRAY_BG);
-}
-
-// -----------------------------------------------------------------------
-
-static void key_red(void)
-{
-    if((j_state->struct_type != STRUCT_RGB_FG) &&
-       (j_state->struct_type != STRUCT_RGB_BG))
-    {
-        json_error("Requires parent RGB");
-    }
-    json_new_state_struct(0, KEY_RED);
-}
-
-// -----------------------------------------------------------------------
-
-static void key_green(void)
-{
-    if((j_state->struct_type != STRUCT_RGB_FG) &&
-       (j_state->struct_type != STRUCT_RGB_BG))
-    {
-        json_error("Requires parent RGB");
-    }
-    json_new_state_struct(0, KEY_GREEN);
-}
-
-// -----------------------------------------------------------------------
-
-static void key_blue(void)
-{
-    if((j_state->struct_type != STRUCT_RGB_FG) &&
-       (j_state->struct_type != STRUCT_RGB_BG))
-    {
-        json_error("Requires parent RGB");
-    }
-    json_new_state_struct(0, KEY_BLUE);
-}
-
-// -----------------------------------------------------------------------
-
-static void key_xco(void)
-{
-    if(j_state->struct_type != STRUCT_WINDOW)
-    {
-        json_error("Requires parent window");
-    }
-    json_new_state_struct(0, KEY_XCO);
-}
-
-// -----------------------------------------------------------------------
-
-static void key_yco(void)
-{
-    if(j_state->struct_type != STRUCT_WINDOW)
-    {
-        json_error("Requires parent window");
-    }
-    json_new_state_struct(0, KEY_YCO);
-}
-
-// -----------------------------------------------------------------------
-
-static void key_width(void)
-{
-    if(j_state->struct_type != STRUCT_WINDOW)
-    {
-        json_error("Requires parent window");
-    }
-    json_new_state_struct(0, KEY_WIDTH);
-}
-
-// -----------------------------------------------------------------------
-
-static void key_height(void)
-{
-    if(j_state->struct_type != STRUCT_WINDOW)
-    {
-        json_error("Requires parent window");
-    }
-    json_new_state_struct(0, KEY_HEIGHT);
-}
+static void key_xco(void)    { key_xywh(KEY_XCO);    }
+static void key_yco(void)    { key_xywh(KEY_YCO);    }
+static void key_width(void)  { key_xywh(KEY_WIDTH);  }
+static void key_height(void) { key_xywh(KEY_HEIGHT); }
 
 // -----------------------------------------------------------------------
 
 static void key_name(void)
 {
-    if((j_state->struct_type != STRUCT_PULLDOWN) &&
-       (j_state->struct_type != STRUCT_MENU_ITEM))
+    if((j_state->struct_type == STRUCT_PULLDOWN)   ||
+       (j_state->struct_type == STRUCT_MENU_ITEM))
     {
-        json_error("Requires parent pulldown or menu-item");
+        json_new_state_struct(0, KEY_NAME);
+        return;
     }
-    json_new_state_struct(0, KEY_NAME);
+    json_error("Requires parent pulldown or menu-item");
 }
 
 // -----------------------------------------------------------------------
 
 static void key_flags(void)
 {
-    if((j_state->struct_type != STRUCT_PULLDOWN) &&
-       (j_state->struct_type != STRUCT_MENU_ITEM) &&
-       (j_state->struct_type != STRUCT_WINDOW))
+    if((j_state->struct_type == STRUCT_PULLDOWN)  ||
+       (j_state->struct_type == STRUCT_MENU_ITEM) ||
+       (j_state->struct_type == STRUCT_WINDOW))
     {
-        json_error("Requires parent window, pulldown or menu-item");
+        json_new_state_struct(0, KEY_FLAGS);
+        return;
     }
-    json_new_state_struct(0, KEY_FLAGS);
+    json_error("Requires parent window, pulldown or menu-item");
 }
 
 // -----------------------------------------------------------------------
 
 static void key_border_type(void)
 {
-    if((j_state->struct_type != STRUCT_BACKDROP) &&
-       (j_state->struct_type != STRUCT_WINDOW))
+    if((j_state->struct_type == STRUCT_BACKDROP) ||
+       (j_state->struct_type == STRUCT_WINDOW))
     {
-        json_error("Requires parent window or backdrop");
+        json_new_state_struct(0, KEY_BORDER_TYPE);
+        return;
     }
-    json_new_state_struct(0, KEY_BORDER_TYPE);
+    json_error("Requires parent window or backdrop");
 }
 
 // -----------------------------------------------------------------------
 
 static void key_vector(void)
 {
-    if(j_state->struct_type != STRUCT_MENU_ITEM)
+    if(j_state->struct_type == STRUCT_MENU_ITEM)
     {
-        json_error("Requires parent menu-item");
+        json_new_state_struct(0, KEY_VECTOR);
+        return;
     }
-    json_new_state_struct(0, KEY_VECTOR);
+    json_error("Requires parent menu-item");
 }
 
 // -----------------------------------------------------------------------
 
 static void key_shortcut(void)
 {
-    if(j_state->struct_type != STRUCT_MENU_ITEM)
+    if(j_state->struct_type == STRUCT_MENU_ITEM)
     {
-        json_error("Requires parent menu-item");
+        json_new_state_struct(0, KEY_SHORTCUT);
+        return;
     }
-    json_new_state_struct(0, KEY_SHORTCUT);
+    json_error("Requires parent menu-item");
+}
+
+// -----------------------------------------------------------------------
+
+static void key_flag(void)
+{
+    if(j_state->struct_type == STRUCT_FLAGS)
+    {
+        json_new_state_struct(0, KEY_FLAG);
+        return;
+    }
+    json_error("Requires parent flags structure");
 }
 
 // -----------------------------------------------------------------------
@@ -475,6 +428,7 @@ static const switch_t key_types[] =
     { 0x362bb2fc,  key_border_type },
     { 0x0ee694b4,  key_vector      },
     { 0x1c13e01f,  key_shortcut    },
+    { 0xaeb95d5b,  key_flag        }
 };
 
 #define NUM_KEYS (sizeof(key_types) / sizeof(key_types[0]))
@@ -512,10 +466,11 @@ void json_state_key(void)
 
     size_t len = strlen(json_token);
 
-    if((json_token[0]       != '"') &&
+    if((json_token[0]       != '"') ||
        (json_token[len - 1] != '"'))
     {
         json_error("Key names must be quoted");
+        return;
     }
 
     strip_quotes(len -2);

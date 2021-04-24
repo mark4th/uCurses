@@ -70,6 +70,11 @@ static char *ui_constants[] =
     "WIN_LOCKED",
     "WIN_FILLED",
     "WIN_BOXED",
+    "FAR",
+    "BLACK",   "RED",        "GREEN",    "BROWN",
+    "BLUE",    "MAGENTA",    "CYAN",     "WHITE",
+    "GRAY",    "PINK",       "LT_GREEN", "YELLOW",
+    "LT_BLUE", "LT_MAGENTA", "CYAN",     "LT_WHITE"
 };
 
 // -----------------------------------------------------------------------

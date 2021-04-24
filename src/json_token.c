@@ -23,6 +23,7 @@ extern uint16_t line_no;
 extern uint16_t line_index;    // line parse location
 extern uint16_t line_left;     // number of chars left to parse in line
 extern char json_token[TOKEN_LEN];    // space delimited token extracted from data
+extern uint32_t json_hash;
 
 // -----------------------------------------------------------------------
 // FNV-1a on utf8 strings
@@ -30,22 +31,38 @@ extern char json_token[TOKEN_LEN];    // space delimited token extracted from da
 uint32_t fnv_hash(char *s)
 {
     uint32_t hash = FNV_BASIS;
-    uint8_t j;
 
-    utf8_encode_t *encode;
+    uint8_t len;
 
     while(*s != '\0')
     {
-        encode = utf8_encode(*s);
+        len = utf8_char_length(s);
 
-        for(j = 0; j < encode->len; j++)
+        while(len != 0)
         {
             hash *= FNV_PRIME;
             hash ^= *s++;
+            len--;
         }
     }
 
     return hash;
+}
+
+// -----------------------------------------------------------------------
+// strip quotes off of parsed json token and recalculate hash
+
+void strip_quotes(uint16_t len)
+{
+    uint16_t i;
+
+    for(i = 0; i < len; i++)
+    {
+        json_token[i] = json_token[i + 1];
+    }
+
+    json_token[i] = '\0';
+    json_hash = fnv_hash(json_token);
 }
 
 // -----------------------------------------------------------------------
@@ -83,28 +100,30 @@ static void skip_white(void)
 
     do
     {
+        if(json_index == json_len)
+        {
+             return;
+        }
+
         // refill line buffer if it is empty
         if(line_left == 0)
         {
             refill();
         }
 
-        if(json_index == json_len)
-        {
-             return;
-        }
-
-        c = line_buff[line_index];
-
         // now scan past leading white space
 
+        c = line_buff[line_index];
         while((c == 0x20) && (line_left != 0))
         {
             line_index++;
             line_left--;
             c = line_buff[line_index];
         }
-
+        // not being able to comment in json is the single most
+        // MORONIC decision they made.  there is zero reason
+        // why a comment has to take up space in your structure
+        // not like its that freeking difficult
         if(c == '#') { line_left = 0; }
     } while(line_left == 0);
 }
@@ -165,7 +184,7 @@ void token(void)
 
            if(j == TOKEN_LEN)
            {
-               break;
+               return;
            }
        }
        line_index += l;

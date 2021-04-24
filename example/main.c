@@ -9,19 +9,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/ioctl.h>
-#include <termios.h>
 #include <unistd.h>
 #include <time.h>
 #include <errno.h>
-#include <locale.h>
 #include <string.h>
 
 #include "../h/uCurses.h"
 
 // -----------------------------------------------------------------------
-
-struct termios term_save;
-struct termios term;
 
 #define SLEEP 15000000
 
@@ -170,15 +165,6 @@ void clock_sleep(uint32_t when)
 
 // -----------------------------------------------------------------------
 
-void restore_term(void)
-{
-    tcsetattr(STDIN_FILENO, TCSANOW, &term_save);
-    curon();
-    flush();
-}
-
-// -----------------------------------------------------------------------
-
 #define X_END(win) (scr->width  - win->width  - 2)
 #define Y_END(win) (scr->height - win->height - 2)
 
@@ -309,103 +295,53 @@ static void fake_opem_file(void)
 
 int main(void)
 {
-    struct winsize w;
     screen_t *scr;
     window_t *win1, *win2;
 
     uCurses_init();
     menu_init();
+    json_create_ui("example.json", NULL);
+    scr = active_screen;
 
-    setlocale(LC_ALL, "C.UTF-8");
-
-    curoff();
-
-    tcgetattr(STDIN_FILENO, &term_save);
-    term = term_save;
-    term.c_lflag &= ~(ECHO | ICANON);
-    tcsetattr(STDIN_FILENO, TCSANOW, &term);
-
-    ioctl(0, TIOCGWINSZ, &w);
-
-    scr = scr_open(w.ws_col, w.ws_row);
-    scr_add_backdrop(scr);
-
-    win1 = win_open(35, 15);
-    win2 = win_open(35, 15);
-    win1->xco = 2;
-    win1->yco = 2;
-    win2->xco = X_END(win2);
-    win2->yco = Y_END(win2);
-
-    win_set_fg(win1, WHITE);
-    win_set_bg(win1, BLUE);
-    win_set_fg(win2, LT_CYAN);
-    win_set_bg(win2, GRAY);
-
-    win1->flags |= WIN_BOXED;
-    win2->flags |= WIN_BOXED;
-
-    win1->bdr_attrs[ATTR] = BG_GRAY;
-    win1->bdr_attrs[FG]   = 10;
-    win1->bdr_attrs[BG]   = 6;
-    win1->bdr_type        = BDR_SINGLE;
-
-    win1->bdr_attrs[FG]   = 5;
-
-    win2->bdr_attrs[ATTR] = BG_GRAY;
-    win2->bdr_attrs[FG]   = 11;
-    win2->bdr_attrs[BG]   = 6;
-    win2->bdr_type        = BDR_SINGLE;
-
-    win_clear(win1);
-    win_clear(win2);
-
-    scr_win_attach(scr, win1);
-    scr_win_attach(scr, win2);
-
-    cup(20, 0);
-
-    bar_open(scr);
-
-    new_pulldown(scr, "File");
-
-    new_menu_item(scr, "Open File", fake_opem_file, 0);
-    new_menu_item(scr, "Close File", NULL, 0);
-    new_menu_item(scr, "Delete internet", NULL, 0);
-    new_menu_item(scr, "Copy Nothing", NULL, 0);
-
-    new_pulldown(scr, "Edit");
-
-    new_menu_item(scr, "Insert Mode", NULL, 0);
-    new_menu_item(scr, "Overwrite Mode", NULL, 0);
-    new_menu_item(scr, "Delete Line", NULL, 0);
-    new_menu_item(scr, "Insert Line", NULL, 0);
-
-    new_pulldown(scr, "Find");
-
-    new_menu_item(scr, "Search for Gold", NULL, 0);
-    new_menu_item(scr, "Search and Destroy", NULL, 0);
-
-    new_pulldown(scr, "View");
-
-    new_menu_item(scr, "View Point", NULL, 0);
-    new_menu_item(scr, "View to a Kill", NULL, 0);
-    new_menu_item(scr, "Review", NULL, 0);
-
-    new_pulldown(scr, "Tools");
-
-    new_menu_item(scr, "Manchester Screwdriver", NULL, 0);
-    new_menu_item(scr, "Dentists Drill", NULL, 0);
-    new_menu_item(scr, "Diamond File", NULL, 0);
-    new_menu_item(scr, "Shovel", NULL, 0);
-
-    new_pulldown(scr, "Help");
-
-    new_menu_item(scr, "Self Help", NULL, 0);
-    new_menu_item(scr, "Helping Hand", NULL, 0);
-    new_menu_item(scr, "Helpless", NULL, 0);
-
-    pd_disable(scr, "View");
+//    new_pulldown(scr, "File");
+//
+//    new_menu_item(scr, "Open File", fake_opem_file, 0);
+//    new_menu_item(scr, "Close File", NULL, 0);
+//    new_menu_item(scr, "Delete internet", NULL, 0);
+//    new_menu_item(scr, "Copy Nothing", NULL, 0);
+//
+//    new_pulldown(scr, "Edit");
+//
+//    new_menu_item(scr, "Insert Mode", NULL, 0);
+//    new_menu_item(scr, "Overwrite Mode", NULL, 0);
+//    new_menu_item(scr, "Delete Line", NULL, 0);
+//    new_menu_item(scr, "Insert Line", NULL, 0);
+//
+//    new_pulldown(scr, "Find");
+//
+//    new_menu_item(scr, "Search for Gold", NULL, 0);
+//    new_menu_item(scr, "Search and Destroy", NULL, 0);
+//
+//    new_pulldown(scr, "View");
+//
+//    new_menu_item(scr, "View Point", NULL, 0);
+//    new_menu_item(scr, "View to a Kill", NULL, 0);
+//    new_menu_item(scr, "Review", NULL, 0);
+//
+//    new_pulldown(scr, "Tools");
+//
+//    new_menu_item(scr, "Manchester Screwdriver", NULL, 0);
+//    new_menu_item(scr, "Dentists Drill", NULL, 0);
+//    new_menu_item(scr, "Diamond File", NULL, 0);
+//    new_menu_item(scr, "Shovel", NULL, 0);
+//
+//    new_pulldown(scr, "Help");
+//
+//    new_menu_item(scr, "Self Help", NULL, 0);
+//    new_menu_item(scr, "Helping Hand", NULL, 0);
+//    new_menu_item(scr, "Helpless", NULL, 0);
+//
+//    pd_disable(scr, "View");
     scr_draw_screen(scr);
 
     run_demo(scr, win1, win2);

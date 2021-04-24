@@ -2,6 +2,8 @@
 // -----------------------------------------------------------------------
 
 #include <inttypes.h>
+#include <termios.h>
+#include <unistd.h>
 
 #include "h/uCurses.h"
 
@@ -13,6 +15,7 @@ uint16_t width;             // width and height of screen
 uint16_t height;
 
 extern uint64_t params[MAX_PARAM];
+extern struct termios term_save;
 
 // -----------------------------------------------------------------------
 // turn cursor off
@@ -215,5 +218,14 @@ void cr(void)
 
 void smkx(void) { ti_smkx(); }
 void rmkx(void) { ti_rmkx(); }
+
+// -----------------------------------------------------------------------
+
+void restore_term(void)
+{
+    tcsetattr(STDIN_FILENO, TCSANOW, &term_save);
+    curon();
+    flush();
+}
 
 // =======================================================================

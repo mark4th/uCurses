@@ -90,8 +90,8 @@ pulldown :
     # optional flag to disable this item
     "flags"  :
     {
-       flag : MENU_DISABLED
-    }
+       "flag" : "MENU_DISABLED"
+    },
 
     "attribs"          : |attribs| ,
     "selected-attribs" : |attribs| ,
@@ -123,7 +123,7 @@ pulldown :
 
 # ------------------------------------------------------------------------
 
-|window|
+window :
 {
     "width"  : 80 to 65535 | % of screen width,
     "height" : 80 to 65535 | % of screen width,
@@ -137,11 +137,11 @@ pulldown :
     "attribs"        : |attribs| ,
     "border-attribs" : |attribs| ,
 
-    flags :
+    "flags" :
     {
-       flag : WIN_LOCKED ,
-       flag : WIN_BOXED ,
-       flag : WIN_FILLED
+       "flag" : "WIN_LOCKED" ,
+       "flag" : "WIN_BOXED" ,
+       "flag" : "WIN_FILLED"
     }
 }
 

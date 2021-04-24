@@ -9,12 +9,16 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <termios.h>
+#include <locale.h>
 
 #include "h/uCurses.h"
 
 // -----------------------------------------------------------------------
 
 extern uint8_t *esc_buff;
+struct termios term_save;
+struct termios term;
 
 // -----------------------------------------------------------------------
 
@@ -148,6 +152,13 @@ void uCurses_init(void)
         exit(1);
     }
     init_info();
+
+    setlocale(LC_ALL, "C.UTF-8");
+    curoff();
+    tcgetattr(STDIN_FILENO, &term_save);
+    term = term_save;
+    term.c_lflag &= ~(ECHO | ICANON);
+    tcsetattr(STDIN_FILENO, TCSANOW, &term);
 }
 
 // -----------------------------------------------------------------------

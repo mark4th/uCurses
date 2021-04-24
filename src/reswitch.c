@@ -13,11 +13,11 @@ int re_switch(const switch_t *s, size_t size, uint32_t option)
 {
     int result = -1;
 
-    while((size != 0) && option != s->option)
+    while((size != 0) && (option != s->option))
     {
        s++; size--;
     }
-    if(option == s->option)
+    if((size != 0) && (option == s->option))
     {
         (s->vector)();
         result = 0;

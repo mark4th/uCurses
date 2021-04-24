@@ -23,7 +23,7 @@ static cell_t *win_line_addr(window_t *win, uint16_t line)
 // -----------------------------------------------------------------------
 // allocate buffer for window contents
 
-static uint16_t win_alloc(window_t *win)
+uint16_t win_alloc(window_t *win)
 {
     uint16_t rv = -1;   // assume failure
     cell_t *p;

@@ -18,7 +18,7 @@ extern uint8_t old_attrs[8];
 
 // -----------------------------------------------------------------------
 
-static uint16_t scr_alloc(screen_t *scr)
+uint16_t scr_alloc(screen_t *scr)
 {
     cell_t *p1, *p2;
 
@@ -156,12 +156,14 @@ static void scr_draw_win(window_t *win)
 
 static void scr_draw_windows(screen_t *scr)
 {
+    window_t *win;
     node_t *n = scr->windows.head;
 
     while(n != NULL)
     {
-       scr_draw_win(n->payload);
-       n = n->next;
+        win = n->payload;
+        scr_draw_win(win);
+        n = n->next;
     }
 }
 

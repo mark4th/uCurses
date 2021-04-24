@@ -13,6 +13,8 @@
 
 // -----------------------------------------------------------------------
 
+    #define NAN 0x7fff      // not a number (honest!)
+
     #define MAX_PARAM 9
     extern uint64_t params[MAX_PARAM];
 
@@ -178,26 +180,9 @@ typedef struct
 
 typedef struct
 {
-    list_t windows;         // linked list of windows
-    menu_bar_t *menu_bar;
-    cell_t *buffer1;        // screen buffer 1 and 2
-    cell_t *buffer2;
-    void *backdrop;         // really a window_t *
-    uint16_t width;         // screen dimensions
-    uint16_t height;
-    uint16_t cx;            // cursor corrdinates within screen
-    uint16_t cy;
-} screen_t;
-
-    extern screen_t *active_screen;
-
-// -----------------------------------------------------------------------
-
-typedef struct
-{
     node_t      *links;
     cell_t      *buffer;
-    screen_t    *screen;
+    void        *screen;
     win_flags_t flags;
     uint32_t    blank;         // window fill character for backdrop windows
     uint16_t    width;         // window dimensions
@@ -211,6 +196,23 @@ typedef struct
     uint8_t     old_attrs[8];  // previous state..
     uint8_t     bdr_attrs[8];  // likewise for the windows border if it has
 } window_t;
+
+// -----------------------------------------------------------------------
+
+typedef struct
+{
+    list_t windows;         // linked list of windows
+    menu_bar_t *menu_bar;
+    cell_t *buffer1;        // screen buffer 1 and 2
+    cell_t *buffer2;
+    window_t *backdrop;
+    uint16_t width;         // screen dimensions
+    uint16_t height;
+    uint16_t cx;            // cursor corrdinates within screen
+    uint16_t cy;
+} screen_t;
+
+    extern screen_t *active_screen;
 
 // -----------------------------------------------------------------------
 
@@ -264,6 +266,7 @@ enum
 
 typedef enum
 {
+    STATE_NONE,
     STATE_L_BRACE,
     STATE_KEY,
     STATE_VALUE,
@@ -277,21 +280,21 @@ typedef enum
 typedef enum
 {
     STRUCT_SCREEN = 1,
-    STRUCT_WINDOWS,
     STRUCT_WINDOW,
     STRUCT_BACKDROP,
     STRUCT_MENU_BAR,
-    STRUCT_PULLDOWNS,
     STRUCT_PULLDOWN,
-    STRUCT_MENU_ITEMS,
     STRUCT_MENU_ITEM,
     STRUCT_ATTRIBS,         // normal attribs
     STRUCT_B_ATTRIBS,       // border attribs
     STRUCT_S_ATTRIBS,       // selected attribs
     STRUCT_D_ATTRIBS,       // disabled attribs
+    STRUCT_FLAGS,
     STRUCT_RGB_FG,          // 3 bytes
     STRUCT_RGB_BG,          // 3 bytes
-    STRUCT_FLAGS,
+    STRUCT_WINDOWS,
+    STRUCT_PULLDOWNS,
+    STRUCT_MENU_ITEMS,
     KEY_FG,
     KEY_BG,
     KEY_GRAY_BG,
@@ -307,7 +310,8 @@ typedef enum
     KEY_FLAGS,
     KEY_BORDER_TYPE,
     KEY_VECTOR,
-    KEY_SHORTCUT
+    KEY_SHORTCUT,
+    KEY_FLAG
 } key_type_t;
 
 // -----------------------------------------------------------------------
@@ -315,7 +319,6 @@ typedef enum
 
 typedef enum
 {
-    // JSON_COMMENT,
     JSON_COLON,
     JSON_L_BRACE,
     JSON_R_BRACE,
@@ -335,6 +338,7 @@ typedef struct
 
 // -----------------------------------------------------------------------
 
+uint16_t win_alloc(window_t *win);
 void win_pop(window_t *win);
 void win_close(window_t *win);
 window_t *win_open(uint16_t width, uint16_t height);
@@ -374,6 +378,7 @@ void scr_win_detach(window_t *win);
 void scr_cup(screen_t *scr, uint16_t x, uint16_t y);
 void scr_draw_screen(screen_t *scr);
 void scr_add_backdrop(screen_t *scr);
+uint16_t scr_alloc(screen_t *scr);
 
 // -----------------------------------------------------------------------
 
@@ -401,6 +406,7 @@ uint8_t key(void);
 
 void uCurses_init(void);
 void uCurses_deInit(void);
+void restore_term(void);
 
 // -----------------------------------------------------------------------
 
@@ -431,6 +437,7 @@ void json_state_value(void);
 void json_state_key(void);
 void j_pop(void);
 void strip_quotes(uint16_t len);
+int json_create_ui(char *path, fp_finder_t fp);
 
 // -----------------------------------------------------------------------
 

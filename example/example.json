@@ -1,0 +1,78 @@
+{
+    "screen" :
+    {
+        "backdrop" :
+        {
+            "attribs" :
+            {
+                "fg"        : "LT_WHITE",
+                "gray-bg"   : 8
+            },
+            "border-attribs" :
+            {
+                "fg"        : "LT_WHITE",
+                "gray-bg"   : 8
+            },
+            "border-type"   : "BDR_DOUBLE"
+        },
+
+        "windows" :
+        {
+            "window" :
+            {
+                "width"  : 35,
+                "height" : 15,
+
+                "xco"    : 2,
+                "yco"    : 2,
+
+                "border-type" : "BDR_SINGLE",
+
+                "attribs" :
+                {
+                    "fg" : 15,
+                    "bg" : 5
+                },
+
+                "border-attribs" :
+                {
+                    "gray-fg" : 11,
+                    "gray-bg" : 6
+                },
+
+                "flags" :
+                {
+                   "flag" : "WIN_BOXED"
+                }
+            },
+
+            "window" :
+            {
+                "width"  : 35,
+                "height" : 15,
+
+                "xco" : "FAR",
+                "yco" : "FAR",
+
+                "border-type" : "BDR_SINGLE",
+
+                "attribs" :
+                {
+                    "fg" : 15,
+                    "bg" : 5
+                },
+
+                "border-attribs" :
+                {
+                    "gray-fg" : 11,
+                    "gray-bg" : 6
+                },
+
+                "flags" :
+                {
+                   "flag" : "WIN_BOXED"
+                }
+            }
+        }
+    }
+}

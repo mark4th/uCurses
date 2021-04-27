@@ -192,7 +192,8 @@ void run_demo(screen_t *scr, window_t *win1, window_t *win2)
     uint8_t c;
     uint8_t pause = 0;
     uint16_t x1 = 2, y1 = 2;
-    uint16_t x2 = X_END(win2), y2 = Y_END(win2);
+    uint16_t x2 = X_END(win2);
+    uint16_t y2 = Y_END(win2);
 
     uint16_t x1i, x2i;
     uint16_t y1i, y2i;
@@ -299,7 +300,10 @@ int main(void)
     window_t *win1, *win2;
 
     uCurses_init();
+
+    // initialize menu key handling
     menu_init();
+
     json_create_ui("example.json", NULL);
     scr = active_screen;
 
@@ -342,7 +346,13 @@ int main(void)
 //    new_menu_item(scr, "Helpless", NULL, 0);
 //
 //    pd_disable(scr, "View");
+
     scr_draw_screen(scr);
+
+    node_t *n = scr->windows.head;
+    win1 = n->payload;
+    n = n->next;
+    win2 = n->payload;
 
     run_demo(scr, win1, win2);
 

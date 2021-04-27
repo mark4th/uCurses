@@ -29,16 +29,20 @@ extern uint16_t console_height;
 static void struct_screen(void)
 {
     screen_t *scr;
+
     if(j_stack.count == 0)
     {
         json_new_state_struct(sizeof(screen_t), STRUCT_SCREEN);
         scr = j_state->structure;
+
         // you have no say in this
         scr->width  = console_width;
         scr->height = console_height;
+
         active_screen = scr;
         return;
     }
+
     json_error("There can be only one!");
 }
 
@@ -51,6 +55,7 @@ static void struct_windows(void)
         json_new_state_struct(0, STRUCT_WINDOWS);
         return;
     }
+
     json_error("Requires parent screen");
 }
 
@@ -65,17 +70,9 @@ static void struct_window(void)
     {
         json_new_state_struct(sizeof(*win), STRUCT_WINDOW);
         win = j_state->structure;
-
-        // if the windows xco or yco is defined as "FAR" it means place
-        // this window as far right or down the screen as it can go
-        // in this case we must know the screebs width or height before
-        // we can position it
-
-        win->width  = NAN;
-        win->height = NAN;
-
         return;
     }
+
     json_error("Requires parent windows structure");
 }
 
@@ -89,6 +86,7 @@ static void struct_backdrop(void)
         json_new_state_struct(sizeof(window_t), STRUCT_BACKDROP);
         return;
     }
+
     json_error("Requires parent screen");
 }
 
@@ -101,6 +99,7 @@ static void struct_m_bar(void)
         json_new_state_struct(sizeof(menu_bar_t), STRUCT_MENU_BAR);
         return;
     }
+
     json_error("Requires parent screen");
 }
 
@@ -117,6 +116,7 @@ static void struct_pulldowns(void)
         json_new_state_struct(0, STRUCT_PULLDOWNS);
         return;
     }
+
     json_error("Requires parent menu-bar");
 }
 
@@ -129,6 +129,7 @@ static void struct_pulldown(void)
         json_new_state_struct(sizeof(pulldown_t), STRUCT_PULLDOWN);
         return;
     }
+
     json_error("Requires parent pulldowns structure");
 }
 
@@ -145,6 +146,7 @@ static void struct_m_items(void)
         json_new_state_struct(0, STRUCT_MENU_ITEMS);
         return;
     }
+
     json_error("Requires parent pulldown structure");
 }
 
@@ -157,6 +159,7 @@ static void struct_m_item(void)
         json_new_state_struct(sizeof(menu_item_t), STRUCT_MENU_ITEM);
         return;
     }
+
     json_error("requires parent menu-items");
 }
 
@@ -172,6 +175,7 @@ static void struct_attribs(void)
         json_new_state_struct(sizeof(attrs), STRUCT_ATTRIBS);
         return;
     }
+
     json_error(
         "Requires parent backdrop, window, pulldown or menu bar");
 }
@@ -186,6 +190,7 @@ static void struct_b_attribs(void)
         json_new_state_struct(sizeof(attrs), STRUCT_B_ATTRIBS);
         return;
     }
+
     json_error("Requires parent backdrop or window");
 }
 
@@ -199,6 +204,7 @@ static void struct_s_attribs(void)
         json_new_state_struct(sizeof(attrs), STRUCT_S_ATTRIBS);
         return;
     }
+
     json_error(
         "Requires parent backdrop, window, pulldown or menu bar");
 }
@@ -213,6 +219,7 @@ static void struct_d_attribs(void)
         json_new_state_struct(sizeof(attrs), STRUCT_D_ATTRIBS);
         return;
     }
+
     json_error(
         "Requires parent backdrop, window, pulldown or menu bar");
 }
@@ -233,6 +240,7 @@ static void struct_rgb_fg(void)
         json_new_state_struct(0, STRUCT_RGB_FG);
         return;
     }
+
     json_error("Requires parent atrribs structure");
 }
 
@@ -252,6 +260,7 @@ static void struct_rgb_bg(void)
         json_new_state_struct(0, STRUCT_RGB_BG);
         return;
     }
+
     json_error("Requires parent atrribs structure");
 }
 
@@ -271,8 +280,8 @@ static void struct_flags(void)
         json_new_state_struct(0, STRUCT_FLAGS);
         return;
     }
-    json_error("Requires parent backdrop, window, pulldown or menu bar");
 
+    json_error("Requires parent backdrop, window, pulldown or menu bar");
 }
 
 // -----------------------------------------------------------------------
@@ -287,8 +296,11 @@ static void key_attr(uint16_t key)
         json_new_state_struct(0, key);
         return;
     }
+
     json_error("Requires parent atrribs structure");
 }
+
+// -----------------------------------------------------------------------
 
 static void key_fg(void)        { key_attr(KEY_FG);      }
 static void key_bg(void)        { key_attr(KEY_BG);      }
@@ -305,8 +317,11 @@ static void key_rgb(uint16_t key)
         json_new_state_struct(0, key);
         return;
     }
+
     json_error("Requires parent RGB");
 }
+
+// -----------------------------------------------------------------------
 
 static void key_red(void)    { key_rgb(KEY_RED);   }
 static void key_green(void)  { key_rgb(KEY_GREEN); }
@@ -321,8 +336,11 @@ static void key_xywh(uint16_t key)
         json_new_state_struct(0, key);
         return;
     }
+
     json_error("Requires parent window");
 }
+
+// -----------------------------------------------------------------------
 
 static void key_xco(void)    { key_xywh(KEY_XCO);    }
 static void key_yco(void)    { key_xywh(KEY_YCO);    }
@@ -339,6 +357,7 @@ static void key_name(void)
         json_new_state_struct(0, KEY_NAME);
         return;
     }
+
     json_error("Requires parent pulldown or menu-item");
 }
 
@@ -353,6 +372,7 @@ static void key_flags(void)
         json_new_state_struct(0, KEY_FLAGS);
         return;
     }
+
     json_error("Requires parent window, pulldown or menu-item");
 }
 
@@ -366,6 +386,7 @@ static void key_border_type(void)
         json_new_state_struct(0, KEY_BORDER_TYPE);
         return;
     }
+
     json_error("Requires parent window or backdrop");
 }
 
@@ -378,6 +399,7 @@ static void key_vector(void)
         json_new_state_struct(0, KEY_VECTOR);
         return;
     }
+
     json_error("Requires parent menu-item");
 }
 
@@ -390,6 +412,7 @@ static void key_shortcut(void)
         json_new_state_struct(0, KEY_SHORTCUT);
         return;
     }
+
     json_error("Requires parent menu-item");
 }
 
@@ -402,6 +425,7 @@ static void key_flag(void)
         json_new_state_struct(0, KEY_FLAG);
         return;
     }
+
     json_error("Requires parent flags structure");
 }
 

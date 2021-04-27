@@ -251,6 +251,19 @@ skip:
 }
 
 // -----------------------------------------------------------------------
+
+void init_backdrop(screen_t *scr, window_t *win)
+{
+    win->xco    = 1;
+    win->yco    = 1;
+    win->width  = scr->width  - 2;
+    win->height = scr->height - 2;
+    win->flags  = WIN_BOXED | WIN_LOCKED;
+    win->blank  = SOLID;
+    win->screen = scr;
+}
+
+// -----------------------------------------------------------------------
 // add a backdrop window to the screen
 
 void scr_add_backdrop(screen_t *scr)
@@ -259,23 +272,15 @@ void scr_add_backdrop(screen_t *scr)
 
     if(win != NULL)
     {
-        win->xco    = 1;
-        win->yco    = 1;
-
-        win->flags  = WIN_BOXED | WIN_LOCKED;
-        win->blank  = SOLID;
-        win->screen = scr;
-
-        win_set_gray_fg(win, 12);
-
         win->bdr_attrs[ATTR] = FG_GRAY | BG_GRAY | BOLD;
         win->bdr_attrs[FG] = 13;
         win->bdr_attrs[BG] = 0;
         win->bdr_type = BDR_SINGLE;
 
-        win_clear(win);
-
+        win_set_gray_fg(win, 12);
+        init_backdrop(scr, win);
         scr->backdrop = win;
+        win_clear(win);
     }
 }
 
@@ -302,14 +307,12 @@ static uint32_t inner_update(screen_t *scr, uint16_t index,
         {
             scr_emit(scr, index);
         }
-        else
+        else if(indx == 0)
         {
-            if(indx == 0)
-            {
-                indx = index;
-            }
+            indx = index;
         }
-        index++;  p1++;
+        index++;
+        p1++;
     } while (index != end);
 
     // return index of first char that had different attributes to the

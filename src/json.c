@@ -100,7 +100,7 @@ uint16_t console_height;
 j_state_t *j_state;
 
 // -----------------------------------------------------------------------
-// json syntax
+// fnv-1a hash values for various json syntax chars
 
 const uint32_t json_syntax[] =
 {
@@ -112,6 +112,7 @@ const uint32_t json_syntax[] =
 };
 
 // -----------------------------------------------------------------------
+// push current state onto end of state stack
 
 static void j_push(j_state_t *j)
 {
@@ -120,6 +121,8 @@ static void j_push(j_state_t *j)
 }
 
 // -----------------------------------------------------------------------
+// deallocate current state structure but not the C structure associated
+// with it.  then pop previous state off stack
 
 void j_pop(void)
 {
@@ -178,6 +181,9 @@ void json_new_state_struct(size_t struct_size, uint32_t struct_type)
     // allocate a structure for the new state
     j = j_alloc(sizeof(*j));
 
+    // if there is one allocate buffer for C structure for subseqeuent
+    // keys to populate
+
     structure = (struct_size != 0)
         ? j_alloc(struct_size)
         : NULL;
@@ -191,21 +197,117 @@ void json_new_state_struct(size_t struct_size, uint32_t struct_type)
 }
 
 // -----------------------------------------------------------------------
-// classic example of why i hate c switch statements :P
+// this series of IF statements produces significantly smaller code than
+// a switch statement does.   C sucks
 
+static void populate_attribs(void *pstruct, uint32_t ptype)
+{
+    if((ptype == STRUCT_WINDOW) || (ptype == STRUCT_BACKDROP))
+    {
+        *(uint64_t *)((window_t *)pstruct)->attrs =
+            *(uint64_t *)j_state->structure;
+    }
+    else if(ptype == STRUCT_PULLDOWN)
+    {
+        *(uint64_t *)((pulldown_t *)pstruct)->normal =
+            *(uint64_t *)j_state->structure;
+    }
+    else   // ptype == STRUCT_MENU_BAR:
+    {
+        *(uint64_t *)((menu_bar_t *)pstruct)->normal =
+            *(uint64_t *)j_state->structure;
+    }
+}
+
+// -----------------------------------------------------------------------
+
+static void populate_b_attribs(void *pstruct)
+{
+    *(uint64_t *)((window_t *)pstruct)->bdr_attrs =
+        *(uint64_t *)j_state->structure;
+}
+
+// -----------------------------------------------------------------------
+
+static void populate_s_attribs(void *pstruct, uint32_t ptype)
+{
+    if(ptype == STRUCT_PULLDOWN)
+    {
+        *(uint64_t *)((pulldown_t *)pstruct)->selected =
+            *(uint64_t *)j_state->structure;
+    }
+    else   // ptype == STRUCT_MENU_BAR:
+    {
+        *(uint64_t *)((menu_bar_t *)pstruct)->selected =
+            *(uint64_t *)j_state->structure;
+    }
+}
+
+// -----------------------------------------------------------------------
+
+static void populate_d_attribs(void *pstruct, uint32_t ptype)
+{
+    if(ptype == STRUCT_PULLDOWN)
+    {
+        *(uint64_t *)((pulldown_t *)pstruct)->disabled =
+            *(uint64_t *)j_state->structure;
+    }
+    else   // ptype == STRUCT_MENU_BAR:
+    {
+        *(uint64_t *)((menu_bar_t *)pstruct)->disabled =
+            *(uint64_t *)j_state->structure;
+    }
+}
+
+// -----------------------------------------------------------------------
+
+static void populate_pulldown(void *pstruct)
+{
+    uint16_t i;
+
+    i = ((menu_bar_t *)pstruct)->count++;
+    ((menu_bar_t *)pstruct)->items[i] = j_state->structure;
+}
+
+// -----------------------------------------------------------------------
+
+static void populate_menu_item(void *pstruct)
+{
+    uint16_t i;
+
+    i = ((pulldown_t *)pstruct)->count++;
+    ((pulldown_t *)pstruct)->items[i] = j_state->structure;
+}
+
+// -----------------------------------------------------------------------
+
+static void populate_window(j_state_t *parent)
+{
+    window_t *win;
+    screen_t *scr;
+
+    j_state_t *gp = parent->parent;
+    scr         = gp->structure;
+    win         = j_state->structure;
+
+    scr_win_attach(scr, win);
+}
+
+// -----------------------------------------------------------------------
+
+static void populate_backdrop(void *pstruct)
+{
+    ((screen_t *)pstruct)->backdrop = j_state->structure;
+}
+
+// -----------------------------------------------------------------------
 // an object has been completed and thereby the associated C structure is
 // ready.  add this C structure to its parent objects C structure...
 // or sometimes its grandparents
 
 static void populate_parent(void)
 {
-    uint16_t i;
-    list_t *l;
-    window_t *win;
-    screen_t *scr;
-
     j_state_t *parent = j_state->parent;
-    j_state_t *gp     = parent->parent;
 
     void *pstruct     = parent->structure;
     uint32_t ptype    = parent->struct_type;
@@ -221,85 +323,14 @@ static void populate_parent(void)
 
     switch(j_state->struct_type)
     {
-        case STRUCT_ATTRIBS:
-            switch(ptype)
-            {
-                case STRUCT_WINDOW:
-                case STRUCT_BACKDROP:
-                    *(uint64_t *)((window_t *)pstruct)->attrs =
-                        *(uint64_t *)j_state->structure;
-                    break;
-
-                case STRUCT_PULLDOWN:
-                    *(uint64_t *)((pulldown_t *)pstruct)->normal =
-                        *(uint64_t *)j_state->structure;
-                    break;
-
-                case STRUCT_MENU_BAR:
-                    *(uint64_t *)((menu_bar_t *)pstruct)->normal =
-                        *(uint64_t *)j_state->structure;
-                    break;
-            }
-            break;
-
-        case STRUCT_B_ATTRIBS:
-               *(uint64_t *)((window_t *)pstruct)->bdr_attrs =
-                   *(uint64_t *)j_state->structure;
-                break;
-
-        case STRUCT_S_ATTRIBS:
-            switch(ptype)
-            {
-                case STRUCT_PULLDOWN:
-                    *(uint64_t *)((pulldown_t *)pstruct)->selected =
-                        *(uint64_t *)j_state->structure;
-                    break;
-
-                case STRUCT_MENU_BAR:
-                    *(uint64_t *)((menu_bar_t *)pstruct)->selected =
-                        *(uint64_t *)j_state->structure;
-                    break;
-
-            }
-            break;
-
-        case STRUCT_D_ATTRIBS:
-            switch(ptype)
-            {
-                case STRUCT_PULLDOWN:
-                    *(uint64_t *)((pulldown_t *)pstruct)->disabled =
-                        *(uint64_t *)j_state->structure;
-                    break;
-
-                case STRUCT_MENU_BAR:
-                    *(uint64_t *)((menu_bar_t *)pstruct)->disabled =
-                        *(uint64_t *)j_state->structure;
-                    break;
-
-            }
-            break;
-
-        case STRUCT_PULLDOWN:
-            i = ((menu_bar_t *)pstruct)->count++;
-            ((menu_bar_t *)pstruct)->items[i] = j_state->structure;
-            break;
-
-        case STRUCT_MENU_ITEM:
-            i = ((pulldown_t *)pstruct)->count++;
-            ((pulldown_t *)pstruct)->items[i] = j_state->structure;
-            break;
-
-        case STRUCT_WINDOW:
-            scr         = gp->structure;
-            win         = j_state->structure;
-            win->screen = scr;
-            l = &scr->windows;
-            list_append_node(l, win);
-            break;
-
-        case STRUCT_BACKDROP:
-            ((screen_t *)pstruct)->backdrop = j_state->structure;
-            break;
+        case STRUCT_ATTRIBS:    populate_attribs(pstruct, ptype);    break;
+        case STRUCT_B_ATTRIBS:  populate_b_attribs(pstruct);         break;
+        case STRUCT_S_ATTRIBS:  populate_s_attribs(pstruct, ptype);  break;
+        case STRUCT_D_ATTRIBS:  populate_d_attribs(pstruct, ptype);  break;
+        case STRUCT_PULLDOWN:   populate_pulldown(pstruct);          break;
+        case STRUCT_MENU_ITEM:  populate_menu_item(pstruct);         break;
+        case STRUCT_WINDOW:     populate_window(parent);             break;
+        case STRUCT_BACKDROP:   populate_backdrop(pstruct);          break;
     }
 }
 
@@ -350,16 +381,6 @@ static const switch_t states[] =
 
 // -----------------------------------------------------------------------
 
-// when the state machine parses in the structues that define the
-// applications menus it will need to add function pointers to every
-// menu item to be executed when that menu item is selected.  this
-// library can not determine the address of any functions in the
-// application code it is linked against.   said application will need
-// to supply this library with a pointer to a function that will return
-// a pointer to a menu function based off of a string.  The HOW of this
-// needs better documentation than im prepared to put in source file
-// comments :)
-
 static void json_state_machine(void)
 {
     int f;
@@ -376,34 +397,103 @@ static void json_state_machine(void)
         f = re_switch(states, NUM_STATES, j_state->state);
         if(f == -1)
         {
-            json_error("Unknown Token");
+            json_error("Unknown or miss placed token");
         }
     }
 }
 
 // -----------------------------------------------------------------------
 
-static void adjust_win_pos(screen_t *scr, window_t *win)
+static void bounds_check(window_t *win)
 {
-    uint8_t b = ((win->flags & WIN_BOXED) == 0) ? 0 : 1;
+    uint16_t xco = win->xco;
+    uint16_t yco = win->yco;
+    uint16_t z = (win->flags & WIN_BOXED) ? 1 :0;
 
-    if((win->xco + win->width  + b) > scr->width)
+    if(((xco + win->width  + z) <= console_width)  &&
+       ((yco + win->height + z) <= console_height) &&
+       ((xco - z) <= console_width) &&
+       ((yco - z) <= console_height))
     {
-        win->xco = scr->width  - (win->width + b);
+        return;
     }
-    if((win->yco + win->height + b) > scr->height)
+
+    json_error("Window outside bounds of screen");
+}
+
+// -----------------------------------------------------------------------
+// fix far window position
+
+static void fix_win(screen_t *scr, window_t *win)
+{
+    uint16_t fudge = 1;
+    window_t *bd = scr->backdrop;
+
+    if((bd != NULL) && ((bd->flags & WIN_BOXED) != 0))
     {
-        win->xco = scr->height - (win->height + b);
+        fudge++;
+    }
+
+    if(win->xco == FAR)
+    {
+        win->xco = scr->width - (win->width + fudge);
+    }
+
+    if(win->yco == FAR)
+    {
+        win->yco = scr->height - (win->height + fudge);
     }
 }
 
 // -----------------------------------------------------------------------
 
+static void build_ui(void)
+{
+    screen_t *scr = active_screen;
+    window_t *win;
+
+    if(scr_alloc(scr) != 0)
+    {
+        goto build_error;
+    }
+    if(scr->backdrop != NULL)
+    {
+        init_backdrop(scr, scr->backdrop);
+        win_alloc(scr->backdrop);
+        win_clear(scr->backdrop);
+    }
+
+    node_t *n = scr->windows.head;
+
+    while(n != NULL)
+    {
+        win = n->payload;
+        fix_win(win->screen, win);
+        bounds_check(win);
+        win_alloc(win);
+        win->blank = 0x20;
+        win_clear(win);
+        n = n->next;
+    }
+    return;
+
+build_error:
+    json_error("Error building UI from JSON data");
+}
+
+// -----------------------------------------------------------------------
+
+// when the state machine parses in the structues that define the app
+// menus it will need to add function pointers to every menu item to be
+// executed when that menu item is selected.  this library can not
+// determine the address of any functions in the application code it is linked against.   said application will need
+// to supply this library with a pointer to a function that will return
+// a pointer to a menu function based off of a string.  The HOW of this
+// needs better documentation than im prepared to put in source file
+// comments :)
+
 int json_create_ui(char *path, fp_finder_t fp)
 {
-    window_t *win;
-    screen_t *scr;
-
     struct winsize w;
 
     ioctl(0, TIOCGWINSZ, &w);
@@ -422,8 +512,10 @@ int json_create_ui(char *path, fp_finder_t fp)
 
     fstat(fd, &st);
     json_len  = st.st_size;
+
     json_data = mmap(NULL, json_len, PROT_READ | PROT_WRITE,
         MAP_PRIVATE, fd, 0);
+
     close(fd);
 
     if(json_data == MAP_FAILED)
@@ -432,37 +524,14 @@ int json_create_ui(char *path, fp_finder_t fp)
     }
 
     json_de_tab(json_data, json_len);
+
     json_state_machine();
 
     munmap(json_data, json_len);
 
-    scr = active_screen;
-    if(scr != NULL)
+    if(active_screen != NULL)
     {
-        scr_alloc(scr);
-
-        if(scr->backdrop != NULL)
-        {
-            win = scr->backdrop;
-            win_alloc(win);
-
-            win->screen = scr;
-            win->width  = scr->width - 2;
-            win->height = scr->height - 2;
-            win->xco = 1;
-            win->yco = 1;
-            win->flags = WIN_BOXED;
-        }
-
-        node_t *n = scr->windows.head;
-
-        while(n != NULL)
-        {
-            win = n->payload;
-            adjust_win_pos(win->screen, win);
-            win_alloc(win);
-            n = n->next;
-        }
+        build_ui();
     }
     return 0;
 }

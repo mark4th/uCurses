@@ -5,13 +5,13 @@
         {
             "attribs" :
             {
-                "fg"        : "LT_WHITE",
-                "gray-bg"   : 8
+                "gray-fg"   : 1,
+                "gray-bg"   : 6
             },
             "border-attribs" :
             {
-                "fg"        : "LT_WHITE",
-                "gray-bg"   : 8
+                "gray-fg"   : 12,
+                "gray-bg"   : 5
             },
             "border-type"   : "BDR_DOUBLE"
         },

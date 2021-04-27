@@ -52,6 +52,8 @@ uint32_t fnv_hash(char *s)
 // -----------------------------------------------------------------------
 // strip quotes off of parsed json token and recalculate hash
 
+// the past in length is the length minus the quotes
+
 void strip_quotes(uint16_t len)
 {
     uint16_t i;
@@ -66,11 +68,13 @@ void strip_quotes(uint16_t len)
 }
 
 // -----------------------------------------------------------------------
+// copy next line of soruce out of json data into line_buff
 
 static void refill(void)
 {
     uint16_t i = 0;
 
+    // line number only needed for error printf
     if(json_data[json_index] == 0x0a)
     {
         line_no++;
@@ -87,12 +91,13 @@ static void refill(void)
         }
     }
 
-    line_left    = i;
-    line_buff[i] = '\0';
-    line_index   = 0;
+    line_left    = i;       // how much of current line is left to parse
+    line_buff[i] = '\0';    // make line_buff asciiz
+    line_index   = 0;       // reset current parse index
 }
 
 // -----------------------------------------------------------------------
+// skip leasing white space prior to parsing next space delimited token
 
 static void skip_white(void)
 {
@@ -102,7 +107,7 @@ static void skip_white(void)
     {
         if(json_index == json_len)
         {
-             return;
+             return;        // out of data
         }
 
         // refill line buffer if it is empty
@@ -120,10 +125,12 @@ static void skip_white(void)
             line_left--;
             c = line_buff[line_index];
         }
+
         // not being able to comment in json is the single most
         // MORONIC decision they made.  there is zero reason
         // why a comment has to take up space in your structure
         // not like its that freeking difficult
+
         if(c == '#') { line_left = 0; }
     } while(line_left == 0);
 }
@@ -153,7 +160,7 @@ void token(void)
     uint8_t l;
 
     // if this call runs out of data before parsing a full token
-    // then the has value for what was parsed would be unknwon
+    // then the hash value for what was parsed would be unknown
     // and json parsing will abort
 
     memset(json_token, 0, TOKEN_LEN);
@@ -168,28 +175,31 @@ void token(void)
     while((line_left != 0) &&
           (s[line_index] != 0x20))
     {
-       // have we been fed a truncated utf8 character ?
-       l = utf8_char_length(&s[line_index]);
+        // have we been fed a truncated utf8 character ?
+        l = utf8_char_length(&s[line_index]);
 
-       if(l > line_left)
-       {
+        if(l > line_left)
+        {
             // "warning: truncated utf8 character" ???
-           line_left = 0;
-           return;
-       }
+            line_left = 0;
+            return;
+        }
 
        for(i = 0; i < l; i++)
        {
-           json_token[j++] = s[line_index + i];
+            json_token[j++] = s[line_index + i];
 
-           if(j == TOKEN_LEN)
-           {
-               return;
-           }
-       }
-       line_index += l;
-       line_left  -= l;
-   }
+            if(j == TOKEN_LEN)
+            {
+                // error/warning token too long ?
+                line_index += l;
+                line_left  -= l;
+                return;
+            }
+        }
+        line_index += l;
+        line_left  -= l;
+    }
 }
 
 // =======================================================================

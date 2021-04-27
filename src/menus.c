@@ -259,6 +259,10 @@ void bar_close(screen_t *scr)
     pulldown_t *pd;
     uint16_t i, j;
 
+    if(bar == NULL)
+    {
+        return;
+    }
     for(i = 0; i != bar->count; i++)
     {
         pd = bar->items[i];

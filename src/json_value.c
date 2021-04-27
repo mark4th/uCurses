@@ -290,14 +290,12 @@ static void value_border_type(void)
 {
     j_state_t *parent = j_state->parent;
     window_t *win     = parent->structure;
-    screen_t *scr;
 
     if((key_value == BDR_SINGLE) ||
        (key_value == BDR_DOUBLE) ||
        (key_value == BDR_CURVED))
     {
         win->bdr_type = key_value;
-        scr = win->screen;
         return;
     }
 

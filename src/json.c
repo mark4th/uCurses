@@ -26,52 +26,54 @@
 //      STATE_DONE
 //
 // The initial state is STATE_L_BRACE which expects the next token parsed
-// to be the left brace '{' char.  If it is then the current state is
-// incremented to STATE_KEY.
+// to be the left brace '{' char.  If it is then the state is set to
+// STATE_KEY.
 //
-// the handler for STATE_KEY expect to see one of several known tokens
-// which will either be a 'key' token or an 'object' token.  when parsing
-// tokens no C string compare routines are used to recognize them, all
-// tokens are recognized by their 32 bit fnv-1a hash value
+// The handler for STATE_KEY expect to see one of several known tokens
+// which will either be a 'key' token or an 'object' token.  When parsing
+// tokens no C string compare routines are used, all tokens are recognized
+// by their 32 bit fnv-1a hash value.
 //
-// if the parsed token is recognized as a key
+// If the parsed token is recognized as a key
 //
-//      that specified key is handled (see below) and the next state
-//      will be STATE_VALUE where we extract the value to be stored in the
-//      specified key of the parent structure.
+//      That specifv key is handled (see below) and the next state is set
+//      to STATE_VALUE where we extract the value to be stored in the
+//      specified key.
 //
-// if the parsed token is recognized as an object
+// If the parsed token is one of the recognized objects
 //
-//      the next state is set to STATE_L_BRACE.
+//      The state is set once again to STATE_L_BRACE.
 //
-// almost every STATE_L_BRACE indicates a new object and thereby an
-// associated C structure that needs to be populated (not always, see
-// below).
+// Almost every STATE_L_BRACE indicates that a new object and thereby an
+// associated C structure is being created.
 //
-// For every object and every key parsed this state machine will
-// transition into a new state.  If the previous state was an object that
-// object state is pushed onto a state stack.  key states simply replace
-// the previous key state, they are never pushed onto the state stack.
+// For every object and every key the machine will transition into a new
+// state.  If the previous state was an object that object state is
+// pushed onto a state stack.  Key states simply replace the previous key
+// state, they are never pushed onto the state stack.
 //
 // Any time a new object or key token is parsed in we check to see if
-// there is a comma on it.  If there is no comma on it we transition
-// to STATE_R_BRACE which pops the previous state off the stack.
+// there is a comma on it.  If there is no comma the next state will
+// instead be STATE_R_BRACE.  This state pops the previous state off the
+// stack.
 //
-// as key values are parsed we immediately set the specified item in
-// their parents C structure.  when an object is completed and we store
-// the C structure associated with that object in its parents C structure.
+// As key values are parsed we immediately set the specified item in
+// their parents C structure.  When an object is completed and we store
+// the associated C structure within its parents C structure.  The
+// structure types of both specify how and where.
 //
 // When all states have been popped off the stack we transition into
 // STATE_DONE and the state machine terminates.
 //
-// this code also knows what keys may go inside what objects and what
-// objects may go inside what objects.  any time youo try to do something
+// This code also knows what keys may go inside what objects and what
+// objects may go inside what objects.  Any time you try to do something
 // such as define a screen inside a window this code will abort with an
-// error message indicating the offending json line
+// error message indicating the offending json line.
 //
-// as stated above, some object states do not have an associated C
-// structure.  any keys specified within these psudo object will be
-// written instead into the psudo objects parent C structure
+// As stated above, some object states do not have an associated C
+// structure.  Any keys specified within these psudo object will be
+// assigned instead to the psudo objects parent C structure. I.E. the
+// keys grandparent.
 
 // -----------------------------------------------------------------------
 
@@ -80,11 +82,13 @@ size_t json_len;        // total size of json data
 uint32_t json_index;    // parse index into data (current line)
 
 char line_buff[MAX_LINE_LEN];
+
 uint16_t line_no;
 uint16_t line_index;    // line parse location
 uint16_t line_left;     // number of chars left to parse in line
 
 // space delimited token extracted from data - +1 for the null
+
 char json_token[TOKEN_LEN + 1];
 uint32_t json_hash;
 
@@ -96,6 +100,7 @@ uint16_t console_width;
 uint16_t console_height;
 
 // -----------------------------------------------------------------------
+// the current state
 
 j_state_t *j_state;
 
@@ -107,8 +112,9 @@ const uint32_t json_syntax[] =
     0x050c5d25,             // :
     0x050c5d64,             // {
     0x050c5d62,             // }
-    0x050c5d44,             // [
-    0x050c5d42              // ]
+// not using arrays in this UI parser so not needed
+//  0x050c5d44,             // [
+//  0x050c5d42              // ]
 };
 
 // -----------------------------------------------------------------------
@@ -294,8 +300,8 @@ static void populate_window(j_state_t *parent)
     screen_t *scr;
 
     j_state_t *gp = parent->parent;
-    scr         = gp->structure;
-    win         = j_state->structure;
+    scr           = gp->structure;
+    win           = j_state->structure;
 
     scr_win_attach(scr, win);
 }
@@ -464,6 +470,7 @@ static void build_ui(void)
     {
         json_error("Error building UI from JSON data");
     }
+
     if(scr->backdrop != NULL)
     {
         init_backdrop(scr, scr->backdrop);
@@ -537,6 +544,7 @@ int json_create_ui(char *path, fp_finder_t fp)
     {
         build_ui();
     }
+
     return 0;
 }
 

@@ -69,7 +69,6 @@ static void struct_window(void)
     if(j_state->struct_type == STRUCT_WINDOWS)
     {
         json_new_state_struct(sizeof(*win), STRUCT_WINDOW);
-        win = j_state->structure;
         return;
     }
 

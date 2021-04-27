@@ -217,6 +217,7 @@ static void populate_attribs(void *pstruct, uint32_t ptype)
         *(uint64_t *)((menu_bar_t *)pstruct)->normal =
             *(uint64_t *)j_state->structure;
     }
+    free(j_state->structure);
 }
 
 // -----------------------------------------------------------------------
@@ -225,6 +226,8 @@ static void populate_b_attribs(void *pstruct)
 {
     *(uint64_t *)((window_t *)pstruct)->bdr_attrs =
         *(uint64_t *)j_state->structure;
+
+    free(j_state->structure);
 }
 
 // -----------------------------------------------------------------------
@@ -241,6 +244,8 @@ static void populate_s_attribs(void *pstruct, uint32_t ptype)
         *(uint64_t *)((menu_bar_t *)pstruct)->selected =
             *(uint64_t *)j_state->structure;
     }
+
+    free(j_state->structure);
 }
 
 // -----------------------------------------------------------------------
@@ -257,6 +262,8 @@ static void populate_d_attribs(void *pstruct, uint32_t ptype)
         *(uint64_t *)((menu_bar_t *)pstruct)->disabled =
             *(uint64_t *)j_state->structure;
     }
+
+    free(j_state->structure);
 }
 
 // -----------------------------------------------------------------------
@@ -400,6 +407,7 @@ static void json_state_machine(void)
             json_error("Unknown or miss placed token");
         }
     }
+    free(j_state);
 }
 
 // -----------------------------------------------------------------------
@@ -454,7 +462,7 @@ static void build_ui(void)
 
     if(scr_alloc(scr) != 0)
     {
-        goto build_error;
+        json_error("Error building UI from JSON data");
     }
     if(scr->backdrop != NULL)
     {
@@ -475,10 +483,6 @@ static void build_ui(void)
         win_clear(win);
         n = n->next;
     }
-    return;
-
-build_error:
-    json_error("Error building UI from JSON data");
 }
 
 // -----------------------------------------------------------------------

@@ -41,7 +41,7 @@ static void value_fgbg(void)
     uint8_t mask = (uint8_t) ~(BG_RGB | BG_GRAY);
     uint8_t i    = BG;
 
-    if((key_value <= 15) && (key_value > 0))
+    if((key_value <= 15) && (key_value >= 0))
     {
         if(ktype == KEY_FG)
         {
@@ -69,7 +69,7 @@ static void value_gray_fgbg(void)
     uint8_t m1 = BG_GRAY;
     uint8_t m2 = ~BG_RGB;
 
-    if((key_value <= 23) && (key_value > 0))
+    if((key_value <= 23) && (key_value >= 0))
     {
         if(ktype == KEY_GRAY_FG)
         {
@@ -144,7 +144,7 @@ static void value_rgb(void)
     gstruct = gp->structure;    // really a char* of 8 bytes
     ptype   = parent->struct_type;
 
-    if((key_value <= 255) && (key_value > 0))
+    if((key_value <= 255) && (key_value >= 0))
     {
         (ptype == STRUCT_RGB_FG) // or its STRUCT_RGB_BG
             ? value_rgb_fg(gstruct)

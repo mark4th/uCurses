@@ -1,19 +1,24 @@
 {
+    # my json parser is not stupid, it allows for ACTUAL comments
+    # in your json files not comment constructs that add to the
+    # structures being defined which is an utterly moronic idea
+
     "screen" :
     {
         "backdrop" :
         {
             "attribs" :
             {
-                "gray-fg"   : 1,
+                "gray-fg"   : 1,    # gray values from 0 to 23 valid
                 "gray-bg"   : 6
             },
+
             "border-attribs" :
             {
                 "gray-fg"   : 12,
-                "gray-bg"   : 5
+                "gray-bg"   : 3
             },
-            "border-type"   : "BDR_DOUBLE"
+            "border-type"   : "BDR_DOUBLE"   # or BDR_SINGLE or BDR_CURVED
         },
 
         "windows" :
@@ -23,20 +28,20 @@
                 "width"  : 35,
                 "height" : 15,
 
-                "xco"    : 2,
+                "xco"    : 2,               # within bounds of backdrop border
                 "yco"    : 2,
 
                 "border-type" : "BDR_SINGLE",
 
                 "attribs" :
                 {
-                    "fg" : 15,
-                    "bg" : 5
+                    "fg" : "LT_WHITE",
+                    "bg" : "BROWN"
                 },
 
                 "border-attribs" :
                 {
-                    "gray-fg" : 11,
+                    "fg"      : "YELLOW",
                     "gray-bg" : 6
                 },
 
@@ -58,13 +63,13 @@
 
                 "attribs" :
                 {
-                    "fg" : 15,
-                    "bg" : 5
+                    "fg" : "LT_WHITE",
+                    "bg" : "GRAY"
                 },
 
                 "border-attribs" :
                 {
-                    "gray-fg" : 11,
+                    "fg"      : "LT_GREEN",
                     "gray-bg" : 6
                 },
 
@@ -75,4 +80,5 @@
             }
         }
     }
+     # menus will go here
 }

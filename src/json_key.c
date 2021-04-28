@@ -64,11 +64,9 @@ static void struct_windows(void)
 
 static void struct_window(void)
 {
-    window_t *win;
-
     if(j_state->struct_type == STRUCT_WINDOWS)
     {
-        json_new_state_struct(sizeof(*win), STRUCT_WINDOW);
+        json_new_state_struct(sizeof(window_t), STRUCT_WINDOW);
         return;
     }
 
@@ -483,10 +481,12 @@ static const switch_t object_types[] =
 // -----------------------------------------------------------------------
 // a key is a "quoted-name" used to name objects and keys
 
+#include <stdio.h>
 void json_state_key(void)
 {
     int f;
 
+printf("%s : ", json_token);
     size_t len = strlen(json_token);
 
     if((json_token[0]       != '"') ||

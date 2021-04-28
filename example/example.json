@@ -78,7 +78,227 @@
                    "flag" : "WIN_BOXED"
                 }
             }
+        },
+        "menu-bar" :
+        {
+            "attribs" :
+            {
+                "fg"      : 4,
+                "gray-bg" : 3
+            },
+            "selected-attribs" :
+            {
+                "fg"      : 6,
+                "gray-bg" : 1
+            },
+            "disabled-attribs" :
+            {
+                "gray-fg" : 8,
+                "gray-bg" : 4
+            },
+            "pulldowns" :
+            {
+                "pulldown" :
+                {
+                    "name"    : "File",
+                    "attribs" :
+                    {
+                        "fg"      : 4,
+                        "gray-bg" : 3
+                    },
+                    "selected-attribs" :
+                    {
+                        "fg"      : 6,
+                        "gray-bg" : 1
+                    },
+                    "disabled-attribs" :
+                    {
+                        "gray-fg" : 8,
+                        "gray-bg" : 4
+                    },
+                    "menu-items" :
+                    {
+                        "menu-item" :
+                        {
+                            "name"   : "Open File",
+                            "vector" : "open_file"
+                        },
+                        "menu-item" :
+                        {
+                            "name"   : "Close File",
+                            "vector" : "close_file"
+                        },
+                        "menu-item" :
+                        {
+                            "name"   : "Delete Internet",
+                            "vector" : "delete_internet"
+                        },
+                        "menu-item" :
+                        {
+                            "name"   : "Copy Nothing",
+                            "vector" : "copy_nothing"
+                        }
+                    }
+                },
+                "pulldown" :
+                {
+                    "name" : "find",
+                    "attribs" :
+                    {
+                        "fg"      : 4,
+                        "gray-bg" : 3
+                    },
+                    "selected-attribs" :
+                    {
+                        "fg"      : 6,
+                        "gray-bg" : 1
+                    },
+                    "disabled-attribs" :
+                    {
+                        "gray-fg" : 8,
+                        "gray-bg" : 4
+                    },
+                    "menu-items" :
+                    {
+                        "menu-item" :
+                        {
+                            "name"   : "Insert Mode",
+                            "vector" : "insert_mode"
+                        },
+                        "menu-item" :
+                        {
+                            "name"   : "Overwrite Mode",
+                            "vector" : "overwrite_mode"
+                        },
+                        "menu-item" :
+                        {
+                            "name"   : "Delete Line",
+                            "vector" : "delete_file"
+                        },
+                        "menu-item" :
+                        {
+                            "name"   : "Insert Line",
+                            "vector" : "insert_line"
+                        }
+                    }
+                },
+                "pulldown" :
+                {
+                    "name" : "view",
+                    "attribs" :
+                    {
+                        "fg"      : 4,
+                        "gray-bg" : 3
+                    },
+                    "selected-attribs" :
+                    {
+                        "fg"      : 6,
+                        "gray-bg" : 1
+                    },
+                    "disabled-attribs" :
+                    {
+                        "gray-fg" : 8,
+                        "gray-bg" : 4
+                    },
+                    "menu-items" :
+                    {
+                        "menu-item" :
+                        {
+                            "name"   : "View Point",
+                            "vector" : "view_point"
+                        },
+                        "menu-item" :
+                        {
+                            "name"   : "View to a kill",
+                            "vector" : "view_to_a_kill"
+                        },
+                        "menu-item" :
+                        {
+                            "name"   : "Review",
+                            "vector" : "review"
+                        }
+                    }
+                },
+                "pulldown" :
+                {
+                    "name" : "Tools",
+                    "attribs" :
+                    {
+                        "fg"      : 4,
+                        "gray-bg" : 3
+                    },
+                    "selected-attribs" :
+                    {
+                        "fg"      : 6,
+                        "gray-bg" : 1
+                    },
+                    "disabled-attribs" :
+                    {
+                        "gray-fg" : 8,
+                        "gray-bg" : 4
+                    },
+                    "menu-items" :
+                    {
+                        "menu-item" :
+                        {
+                            "name"   : "Manchester Screwdriver",
+                            "vector" : "manchester_screwdriver"
+                        },
+                        "menu-item" :
+                        {
+                            "name"   : "Dentist Drill",
+                            "vector" : "dentists_drill"
+                        },
+                        "menu-item" :
+                        {
+                            "name"   : "Diamond File",
+                            "vector" : "diamond_file"
+                        },
+                        "menu-item" :
+                        {
+                            "name"   : "Shoven",
+                            "vector" : "shovel"
+                        }
+                    }
+                },
+                "pulldown" :
+                {
+                    "name" : "Help",
+                    "attribs" :
+                    {
+                        "fg"      : 4,
+                        "gray-bg" : 3
+                    },
+                    "selected-attribs" :
+                    {
+                        "fg"      : 6,
+                        "gray-bg" : 1
+                    },
+                    "disabled-attribs" :
+                    {
+                        "gray-fg" : 8,
+                        "gray-bg" : 4
+                    },
+                    "menu-items" :
+                    {
+                        "menu-item" :
+                        {
+                            "name"   : "Self Help",
+                            "vector" : "self_help"
+                        },
+                        "menu-item" :
+                        {
+                            "name"   : "Helping Hand",
+                            "vector" : "helping_hand"
+                        },
+                        "menu-item" :
+                        {
+                            "name"   : "Helpless",
+                            "vector" : "helpless"
+                        }
+                    }
+                }
+            }
         }
     }
-     # menus will go here
 }

@@ -13,9 +13,26 @@ extern uint8_t attrs[8];
 // -----------------------------------------------------------------------
 // hard coded attributes for now
 
-#define NORMAL   0x04030000000080
-#define SELECTED 0x01060000000080
-#define DISABLED 0x080400000000c2
+#define NORMAL   0x0004030000000080
+#define SELECTED 0x0001060000000080
+#define DISABLED 0x00080400000000c2
+//                   b f b f f f a
+//                   g g g g g g t
+//                       r b g r t
+//                               r
+//                   b  b
+//                   g  g
+//                   b  g
+
+// attr
+// bit 0 = underline
+//     1 = reverse
+//     2 = bold
+//     3 = blink  # dont use this kthxbai
+//     4 = fg_rgb
+//     5 = bg_rgb
+//     6 = fg_gray
+//     7 = bg_gray
 
 // -----------------------------------------------------------------------
 

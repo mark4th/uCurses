@@ -209,9 +209,9 @@ static void value_name(void)
 
     // copy name token to the name buff minus the quotes
     name = &name_string_buff[nsi];
-    for(i = 0; i < len - 2; i++)
+    for(i = 0; i < len; i++)
     {
-        name_string_buff[nsi++] = json_token[i + 1];
+        name_string_buff[nsi++] = json_token[i];
     }
     name_string_buff[nsi++] = '\0';
 
@@ -325,11 +325,6 @@ static void value_vector(void)
     strip_quotes(len -2);
 
     item->fp = (fp_finder)(json_hash);
-
-    if(item->fp == NULL)
-    {
-        json_error("Unknown function");
-    }
 }
 
 // -----------------------------------------------------------------------
@@ -375,6 +370,7 @@ static uint32_t constant_hash[] =
     // BLACK RED GREEN BROWN BLUE MAGENTA
     // CYAN WHITE GRAY PINK LT_GREEN YELLOW
     // LT_BLUE LT_MAGENTA CYAN LT_WHITE
+
     0xdc51d022, 0x5a235332, 0xe3671392, 0x4ff50adb,
     0xd1e100a9, 0x7dc1a602, 0x7cde54cc, 0xc2f8ecb8,
     0xbabf7ce4, 0xf62236fd, 0x064123b9, 0x4d265959,
@@ -394,7 +390,6 @@ static uint32_t constant_val[] =
 
 // -----------------------------------------------------------------------
 // allowing hex or deciamal. but hex must be stated with lower case chars
-
 
 // todo add percentages
 
@@ -430,11 +425,14 @@ static void parse_number(void)
 
 // -----------------------------------------------------------------------
 
+#include <stdio.h>
 void json_state_value(void)
 {
     uint32_t i;
     uint16_t has_comma = 0;
     uint16_t len;
+
+printf("%s\n", json_token);
 
     key_value = NAN;     // assume NAN
     quoted    = 0;      // true if key value is a string
@@ -448,14 +446,12 @@ void json_state_value(void)
         len--;
     }
 
-    if((json_token[0]       == '"') ||
+    if((json_token[0]       == '"') &&
        (json_token[len - 1] == '"'))
     {
         quoted = 1;
         strip_quotes(len -2);
     }
-
-    json_hash = fnv_hash(json_token);
 
     for(i = 0; i < NUM_CONSTANTS; i++)
     {

@@ -282,14 +282,141 @@ void run_demo(screen_t *scr, window_t *win1, window_t *win2)
 }
 
 // -----------------------------------------------------------------------
-
 // just flipflops the border color of which ever window is on top
 
-static void fake_opem_file(void)
+static void opem_file(void)
 {
     screen_t *scr = active_screen;
     window_t *win = list_scan(&scr->windows);
     win->bdr_attrs[FG] ^= 0x55;
+}
+
+static void close_file(void)
+{
+    return;
+}
+
+static void delete_internet(void)
+{
+    return;
+}
+
+static void copy_nothing(void)
+{
+    return;
+}
+
+static void insert_mode(void)
+{
+    return;
+}
+
+static void overwrite_mode(void)
+{
+    return;
+}
+
+static void delete_line(void)
+{
+    return;
+}
+
+static void insert_line(void)
+{
+    return;
+}
+
+static void view_point(void)
+{
+    return;
+}
+
+static void view_to_a_kill(void)
+{
+    return;
+}
+
+static void review(void)
+{
+    return;
+}
+
+static void manchester_screwdriver(void)
+{
+    return;
+}
+
+static void dentists_drill(void)
+{
+    return;
+}
+
+static void diamond_file(void)
+{
+    return;
+}
+
+static void shovel(void)
+{
+    return;
+}
+
+static void self_help(void)
+{
+    return;
+}
+
+static void helping_hand(void)
+{
+    return;
+}
+
+static void helpless(void)
+{
+    return;
+}
+
+// -----------------------------------------------------------------------
+
+switch_t menu_vectors[] =
+{
+    { 0xa64693a7, opem_file              },
+    { 0x77d55838, close_file             },
+    { 0x3b0b4410, delete_internet        },
+    { 0xf5976bec, copy_nothing           },
+
+    { 0x2f36a87c, insert_mode            },
+    { 0x880a72b2, overwrite_mode         },
+    { 0xc498a8b1, delete_line            },
+    { 0x9f754b9b, insert_line            },
+    { 0xf91bf85d, view_point             },
+    { 0x3d62b4a5, view_to_a_kill         },
+    { 0x01d7329d, review                 },
+    { 0xf67c2cc8, manchester_screwdriver },
+    { 0x42776537, dentists_drill         },
+    { 0x5429e330, diamond_file           },
+    { 0x3e8dbf4c, shovel                 },
+    { 0x935ec77f, self_help              },
+    { 0x5293e60c, helping_hand           },
+    { 0x6131c777, helpless               }
+};
+
+#define num_vectors (sizeof(menu_vectors) / sizeof(menu_vectors[0]))
+
+// -----------------------------------------------------------------------
+
+static opt_t menu_address_cb(uint32_t hash)
+{
+    uint16_t i;
+    switch_t *s = menu_vectors;
+    for(i = 0; i < num_vectors; i++)
+    {
+        if(hash == s->option)
+        {
+            return s->vector;
+        }
+    }
+    return NULL;
 }
 
 // -----------------------------------------------------------------------
@@ -304,48 +431,8 @@ int main(void)
     // initialize menu key handling
     menu_init();
 
-    json_create_ui("example.json", NULL);
+    json_create_ui("example.json", menu_address_cb);
     scr = active_screen;
-
-//    new_pulldown(scr, "File");
-//
-//    new_menu_item(scr, "Open File", fake_opem_file, 0);
-//    new_menu_item(scr, "Close File", NULL, 0);
-//    new_menu_item(scr, "Delete internet", NULL, 0);
-//    new_menu_item(scr, "Copy Nothing", NULL, 0);
-//
-//    new_pulldown(scr, "Edit");
-//
-//    new_menu_item(scr, "Insert Mode", NULL, 0);
-//    new_menu_item(scr, "Overwrite Mode", NULL, 0);
-//    new_menu_item(scr, "Delete Line", NULL, 0);
-//    new_menu_item(scr, "Insert Line", NULL, 0);
-//
-//    new_pulldown(scr, "Find");
-//
-//    new_menu_item(scr, "Search for Gold", NULL, 0);
-//    new_menu_item(scr, "Search and Destroy", NULL, 0);
-//
-//    new_pulldown(scr, "View");
-//
-//    new_menu_item(scr, "View Point", NULL, 0);
-//    new_menu_item(scr, "View to a Kill", NULL, 0);
-//    new_menu_item(scr, "Review", NULL, 0);
-//
-//    new_pulldown(scr, "Tools");
-//
-//    new_menu_item(scr, "Manchester Screwdriver", NULL, 0);
-//    new_menu_item(scr, "Dentists Drill", NULL, 0);
-//    new_menu_item(scr, "Diamond File", NULL, 0);
-//    new_menu_item(scr, "Shovel", NULL, 0);
-//
-//    new_pulldown(scr, "Help");
-//
-//    new_menu_item(scr, "Self Help", NULL, 0);
-//    new_menu_item(scr, "Helping Hand", NULL, 0);
-//    new_menu_item(scr, "Helpless", NULL, 0);
-//
-//    pd_disable(scr, "View");
 
     scr_draw_screen(scr);
 

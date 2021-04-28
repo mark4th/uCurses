@@ -1,9 +1,7 @@
 // json parsing - token extraction and hash calculation
 // -----------------------------------------------------------------------
 
-#include <stdlib.h>
 #include <inttypes.h>
-#include <aio.h>
 #include <string.h>
 
 #include "h/uCurses.h"
@@ -52,7 +50,7 @@ uint32_t fnv_hash(char *s)
 // -----------------------------------------------------------------------
 // strip quotes off of parsed json token and recalculate hash
 
-// the past in length is the length minus the quotes
+// the passed in length is the length minus the quotes
 
 void strip_quotes(uint16_t len)
 {
@@ -157,6 +155,7 @@ void token(void)
 {
     char *s = line_buff;
     uint16_t i, j = 0;
+    uint8_t in_quotes = 0;
     uint8_t l;
 
     // if this call runs out of data before parsing a full token
@@ -172,8 +171,11 @@ void token(void)
 
     skip_white();           // skip leading white space
 
+    // spaces inside quotes do not count as a token delimiter
+    // this allows menu item names such as "Open File"
+
     while((line_left != 0) &&
-          (s[line_index] != 0x20))
+          ((s[line_index] != 0x20) || (in_quotes != 0)))
     {
         // have we been fed a truncated utf8 character ?
         l = utf8_char_length(&s[line_index]);
@@ -183,6 +185,11 @@ void token(void)
             // "warning: truncated utf8 character" ???
             line_left = 0;
             return;
+        }
+
+        if(s[line_index] == '"')
+        {
+            in_quotes ^= 1;
         }
 
        for(i = 0; i < l; i++)

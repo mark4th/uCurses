@@ -7,7 +7,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
-#include <termios.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <sys/ioctl.h>
@@ -228,9 +227,9 @@ static void populate_attribs(void *pstruct, uint32_t ptype)
 
 // -----------------------------------------------------------------------
 
-static void populate_b_attribs(void *pstruct)
+static void populate_b_attribs(window_t *pstruct)
 {
-    *(uint64_t *)((window_t *)pstruct)->bdr_attrs =
+    *(uint64_t *)pstruct->bdr_attrs =
         *(uint64_t *)j_state->structure;
 
     free(j_state->structure);
@@ -274,22 +273,22 @@ static void populate_d_attribs(void *pstruct, uint32_t ptype)
 
 // -----------------------------------------------------------------------
 
-static void populate_pulldown(void *pstruct)
+static void populate_pulldown(menu_bar_t *pstruct)
 {
     uint16_t i;
 
-    i = ((menu_bar_t *)pstruct)->count++;
-    ((menu_bar_t *)pstruct)->items[i] = j_state->structure;
+    i = pstruct->count++;
+    pstruct->items[i] = j_state->structure;
 }
 
 // -----------------------------------------------------------------------
 
-static void populate_menu_item(void *pstruct)
+static void populate_menu_item(pulldown_t *gstruct)
 {
     uint16_t i;
 
-    i = ((pulldown_t *)pstruct)->count++;
-    ((pulldown_t *)pstruct)->items[i] = j_state->structure;
+    i = gstruct->count++;
+    gstruct->items[i] = j_state->structure;
 }
 
 // -----------------------------------------------------------------------
@@ -308,9 +307,17 @@ static void populate_window(j_state_t *parent)
 
 // -----------------------------------------------------------------------
 
-static void populate_backdrop(void *pstruct)
+static void populate_backdrop(screen_t *pstruct)
 {
-    ((screen_t *)pstruct)->backdrop = j_state->structure;
+    pstruct->backdrop = j_state->structure;
+}
+
+// -----------------------------------------------------------------------
+
+static void populate_bar(screen_t *scr)
+{
+    menu_bar_t *bar = j_state->structure;
+    scr->menu_bar = bar;
 }
 
 // -----------------------------------------------------------------------
@@ -321,11 +328,14 @@ static void populate_backdrop(void *pstruct)
 static void populate_parent(void)
 {
     j_state_t *parent = j_state->parent;
+    j_state_t *gp     = parent->parent;
 
     void *pstruct     = parent->structure;
+    void *gstruct     = gp->structure;
+
     uint32_t ptype    = parent->struct_type;
 
-    // whe a psudo structure is completed all of the key values
+    // when a psudo structure is completed all of the key values
     // specified within that psudo structure will have been
     // added to its parent - in this case this function will
     // be called to add that psudo structure to its parent but
@@ -336,14 +346,15 @@ static void populate_parent(void)
 
     switch(j_state->struct_type)
     {
-        case STRUCT_ATTRIBS:    populate_attribs(pstruct, ptype);    break;
-        case STRUCT_B_ATTRIBS:  populate_b_attribs(pstruct);         break;
-        case STRUCT_S_ATTRIBS:  populate_s_attribs(pstruct, ptype);  break;
-        case STRUCT_D_ATTRIBS:  populate_d_attribs(pstruct, ptype);  break;
-        case STRUCT_PULLDOWN:   populate_pulldown(pstruct);          break;
-        case STRUCT_MENU_ITEM:  populate_menu_item(pstruct);         break;
-        case STRUCT_WINDOW:     populate_window(parent);             break;
-        case STRUCT_BACKDROP:   populate_backdrop(pstruct);          break;
+        case STRUCT_ATTRIBS:    populate_attribs(pstruct, ptype);   break;
+        case STRUCT_B_ATTRIBS:  populate_b_attribs(pstruct);        break;
+        case STRUCT_S_ATTRIBS:  populate_s_attribs(pstruct, ptype); break;
+        case STRUCT_D_ATTRIBS:  populate_d_attribs(pstruct, ptype); break;
+        case STRUCT_PULLDOWN:   populate_pulldown(gstruct);         break;
+        case STRUCT_MENU_ITEM:  populate_menu_item(gstruct);        break;
+        case STRUCT_WINDOW:     populate_window(parent);            break;
+        case STRUCT_BACKDROP:   populate_backdrop(pstruct);         break;
+        case STRUCT_MENU_BAR:   populate_bar(pstruct);              break;
     }
 }
 
@@ -372,6 +383,7 @@ static void json_state_r_brace(void)
     populate_parent();
 
     j_state->state = STATE_DONE;
+
     if(j_stack.count != 0)
     {
         j_pop();
@@ -379,7 +391,7 @@ static void json_state_r_brace(void)
         j_state->state = (has_comma != 0)
             ? STATE_KEY
             : STATE_R_BRACE;
-     }
+    }
 }
 
 // -----------------------------------------------------------------------
@@ -407,12 +419,16 @@ static void json_state_machine(void)
         token();
         json_hash = fnv_hash(json_token);
 
+        // the token does not define what the state is
+        // the state defines what the token must be
         f = re_switch(states, NUM_STATES, j_state->state);
+
         if(f == -1)
         {
             json_error("Unknown or miss placed token");
         }
     }
+
     free(j_state);
 }
 
@@ -535,7 +551,7 @@ int json_create_ui(char *path, fp_finder_t fp)
     }
 
     json_de_tab(json_data, json_len);
-
+    line_no = 1;
     json_state_machine();
 
     munmap(json_data, json_len);

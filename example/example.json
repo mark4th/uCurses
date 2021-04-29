@@ -1,7 +1,7 @@
 {
-    # my json parser is not stupid, it allows for ACTUAL comments
-    # in your json files not comment constructs that add to the
-    # structures being defined which is an utterly moronic idea
+    // my json parser is not stupid, it allows for ACTUAL comments
+    // in your json files not comment constructs that add to the
+    // structures being defined which is an utterly moronic idea
 
     "screen" :
     {
@@ -9,7 +9,7 @@
         {
             "attribs" :
             {
-                "gray-fg"   : 1,    # gray values from 0 to 23 valid
+                "gray-fg"   : 1,    // gray values from 0 to 23 valid
                 "gray-bg"   : 6
             },
 
@@ -18,7 +18,7 @@
                 "gray-fg"   : 12,
                 "gray-bg"   : 3
             },
-            "border-type"   : "BDR_DOUBLE"   # or BDR_SINGLE or BDR_CURVED
+            "border-type"   : "BDR_DOUBLE"    // or BDR_SINGLE or BDR_CURVED
         },
 
         "windows" :
@@ -28,7 +28,7 @@
                 "width"  : 35,
                 "height" : 15,
 
-                "xco"    : 2,               # within bounds of backdrop border
+                "xco"    : 2,               // within bounds of backdrop border
                 "yco"    : 2,
 
                 "border-type" : "BDR_SINGLE",

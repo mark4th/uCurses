@@ -129,7 +129,13 @@ static void skip_white(void)
         // why a comment has to take up space in your structure
         // not like its that freeking difficult
 
-        if(c == '#') { line_left = 0; }
+        if((c == '/') && (line_left != 0))
+        {
+            if((line_buff[line_index + 1]) == '/')
+            {
+                line_left = 0;
+            }
+        }
     } while(line_left == 0);
 }
 

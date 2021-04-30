@@ -319,10 +319,8 @@ static void value_vector(void)
 
     if(quoted == 0)
     {
-        json_error("Function name must be quoted");
+        json_error("Vector name must be quoted");
     }
-
-    strip_quotes(len -2);
 
     item->fp = (fp_finder)(json_hash);
 }

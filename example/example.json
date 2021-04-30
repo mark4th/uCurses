@@ -172,13 +172,13 @@
                         },
                         "menu-item" :
                         {
-                            "name"   : "Delete Line",
-                            "vector" : "delete_file"
+                            "name"   : "Insert Line",
+                            "vector" : "insert_line"
                         },
                         "menu-item" :
                         {
-                            "name"   : "Insert Line",
-                            "vector" : "insert_line"
+                            "name"   : "Delete Line",
+                            "vector" : "delete_line"
                         }
                     }
                 },
@@ -256,7 +256,7 @@
                         },
                         "menu-item" :
                         {
-                            "name"   : "Shoven",
+                            "name"   : "Shovel",
                             "vector" : "shovel"
                         }
                     }

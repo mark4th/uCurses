@@ -607,7 +607,7 @@ static const switch_t p_codes[] =
     { 'e', &_e },       { '?', &noop },    { ';', &noop },
 };
 
-#define PCOUNT sizeof(p_codes) / sizeof(p_codes[0])
+#define PCOUNT (sizeof(p_codes) / sizeof(p_codes[0]))
 
 // -----------------------------------------------------------------------
 // parse format string pointed to by f_str

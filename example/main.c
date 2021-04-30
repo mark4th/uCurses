@@ -293,7 +293,7 @@ void run_demo(screen_t *scr, window_t *win1, window_t *win2)
 // -----------------------------------------------------------------------
 // just flipflops the border color of which ever window is on top
 
-static void opem_file(void)
+__attribute__((used)) static void open_file(void)
 {
     screen_t *scr = active_screen;
     window_t *win = list_scan(&scr->windows);
@@ -303,63 +303,63 @@ static void opem_file(void)
 // dummy menu functions for now will add proper demis and proper
 // working menu functions
 
-static void close_file(void)             { return; }
-static void delete_internet(void)        { return; }
-static void copy_nothing(void)           { return; }
-static void insert_mode(void)            { return; }
-static void overwrite_mode(void)         { return; }
-static void delete_line(void)            { return; }
-static void insert_line(void)            { return; }
-static void view_point(void)             { return; }
-static void view_to_a_kill(void)         { return; }
-static void review(void)                 { return; }
-static void manchester_screwdriver(void) { return; }
-static void dentists_drill(void)         { return; }
-static void diamond_file(void)           { return; }
-static void shovel(void)                 { return; }
-static void self_help(void)              { return; }
-static void helping_hand(void)           { return; }
-static void helpless(void)               { return; }
+__attribute__((used)) static void close_file(void)             { return; }
+__attribute__((used)) static void delete_internet(void)        { return; }
+__attribute__((used)) static void copy_nothing(void)           { return; }
+__attribute__((used)) static void insert_mode(void)            { return; }
+__attribute__((used)) static void overwrite_mode(void)         { return; }
+__attribute__((used)) static void delete_line(void)            { return; }
+__attribute__((used)) static void insert_line(void)            { return; }
+__attribute__((used)) static void view_point(void)             { return; }
+__attribute__((used)) static void view_to_a_kill(void)         { return; }
+__attribute__((used)) static void review(void)                 { return; }
+__attribute__((used)) static void manchester_screwdriver(void) { return; }
+__attribute__((used)) static void dentists_drill(void)         { return; }
+__attribute__((used)) static void diamond_file(void)           { return; }
+__attribute__((used)) static void shovel(void)                 { return; }
+__attribute__((used)) static void self_help(void)              { return; }
+__attribute__((used)) static void helping_hand(void)           { return; }
+__attribute__((used)) static void helpless(void)               { return; }
 
 // -----------------------------------------------------------------------
 
 switch_t menu_vectors[] =
 {
-    { 0xa64693a7, opem_file              },
-    { 0x77d55838, close_file             },
-    { 0x3b0b4410, delete_internet        },
-    { 0xf5976bec, copy_nothing           },
-
-    { 0x2f36a87c, insert_mode            },
-    { 0x880a72b2, overwrite_mode         },
-    { 0xc498a8b1, delete_line            },
-    { 0x9f754b9b, insert_line            },
-    { 0xf91bf85d, view_point             },
-    { 0x3d62b4a5, view_to_a_kill         },
-    { 0x01d7329d, review                 },
-    { 0xf67c2cc8, manchester_screwdriver },
-    { 0x42776537, dentists_drill         },
-    { 0x5429e330, diamond_file           },
-    { 0x3e8dbf4c, shovel                 },
-    { 0x935ec77f, self_help              },
-    { 0x5293e60c, helping_hand           },
-    { 0x6131c777, helpless               }
+    { 0x89839cf6,  open_file              },
+    { 0x77d55838,  close_file             },
+    { 0x3b0b4410,  delete_internet        },
+    { 0xf5976bec,  copy_nothing           },
+    { 0x2f36a87c,  insert_mode            },
+    { 0x880a72b2,  overwrite_mode         },
+    { 0xc498a8b1,  delete_line            },
+    { 0x9f754b9b,  insert_line            },
+    { 0xf91bf85d,  view_point             },
+    { 0x3d62b4a5,  view_to_a_kill         },
+    { 0x01d7329d,  review                 },
+    { 0xf67c2cc8,  manchester_screwdriver },
+    { 0x42776537,  dentists_drill         },
+    { 0x5429e330,  diamond_file           },
+    { 0x3e8dbf4c,  shovel                 },
+    { 0x935ec77f,  self_help              },
+    { 0x5293e60c,  helping_hand           },
+    { 0x6131c777,  helpless               }
 };
 
-#define num_vectors (sizeof(menu_vectors) / sizeof(menu_vectors[0]))
+#define VCOUNT sizeof(menu_vectors) / sizeof(menu_vectors[0])
 
 // -----------------------------------------------------------------------
 
 static opt_t menu_address_cb(uint32_t hash)
 {
-    uint16_t i;
+    uint16_t i = VCOUNT;
     switch_t *s = menu_vectors;
-    for(i = 0; i < num_vectors; i++)
+    for(i = 0; i < VCOUNT; i++)
     {
         if(hash == s->option)
         {
             return s->vector;
         }
+        s++;
     }
     return NULL;
 }

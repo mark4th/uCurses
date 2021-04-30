@@ -18,7 +18,8 @@
                 "gray-fg"   : 12,
                 "gray-bg"   : 3
             },
-            "border-type"   : "BDR_DOUBLE"    // or BDR_SINGLE or BDR_CURVED
+            // or BDR_SINGLE or BDR_CURVED
+            "border-type"   : "BDR_DOUBLE"
         },
 
         "windows" :
@@ -83,13 +84,13 @@
         {
             "attribs" :
             {
-                "fg"      : 4,
-                "gray-bg" : 3
+                "fg"      : "BROWN",
+                "gray-bg" : 5
             },
             "selected-attribs" :
             {
-                "fg"      : 6,
-                "gray-bg" : 1
+                "fg"      : "CYAN",
+                "gray-bg" : 8
             },
             "disabled-attribs" :
             {
@@ -103,13 +104,13 @@
                     "name"    : "File",
                     "attribs" :
                     {
-                        "fg"      : 4,
-                        "gray-bg" : 3
+                        "fg"      : "BROWN",
+                        "gray-bg" : 4
                     },
                     "selected-attribs" :
                     {
-                        "fg"      : 6,
-                        "gray-bg" : 1
+                        "fg"      : "CYAN",
+                        "gray-bg" : 8
                     },
                     "disabled-attribs" :
                     {
@@ -145,13 +146,13 @@
                     "name" : "find",
                     "attribs" :
                     {
-                        "fg"      : 4,
-                        "gray-bg" : 3
+                        "fg"      : "BROWN",
+                        "gray-bg" : 4
                     },
                     "selected-attribs" :
                     {
-                        "fg"      : 6,
-                        "gray-bg" : 1
+                        "fg"      : "CYAN",
+                        "gray-bg" : 8
                     },
                     "disabled-attribs" :
                     {
@@ -187,13 +188,13 @@
                     "name" : "view",
                     "attribs" :
                     {
-                        "fg"      : 4,
-                        "gray-bg" : 3
+                        "fg"      : "BROWN",
+                        "gray-bg" : 4
                     },
                     "selected-attribs" :
                     {
-                        "fg"      : 6,
-                        "gray-bg" : 1
+                        "fg"      : "CYAN",
+                        "gray-bg" : 8
                     },
                     "disabled-attribs" :
                     {
@@ -224,13 +225,13 @@
                     "name" : "Tools",
                     "attribs" :
                     {
-                        "fg"      : 4,
-                        "gray-bg" : 3
+                        "fg"      : "BROWN",
+                        "gray-bg" : 4
                     },
                     "selected-attribs" :
                     {
-                        "fg"      : 6,
-                        "gray-bg" : 1
+                        "fg"      : "CYAN",
+                        "gray-bg" : 8
                     },
                     "disabled-attribs" :
                     {
@@ -266,13 +267,13 @@
                     "name" : "Help",
                     "attribs" :
                     {
-                        "fg"      : 4,
-                        "gray-bg" : 3
+                        "fg"      : "BROWN",
+                        "gray-bg" : 4
                     },
                     "selected-attribs" :
                     {
-                        "fg"      : 6,
-                        "gray-bg" : 1
+                        "fg"      : "CYAN",
+                        "gray-bg" : 8
                     },
                     "disabled-attribs" :
                     {

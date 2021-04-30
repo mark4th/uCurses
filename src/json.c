@@ -477,16 +477,9 @@ static void fix_win(screen_t *scr, window_t *win)
 
 // -----------------------------------------------------------------------
 
-static void build_ui(void)
+static void fix_windows(screen_t *scr)
 {
-    screen_t *scr = active_screen;
     window_t *win;
-
-    if(scr_alloc(scr) != 0)
-    {
-        json_error("Error building UI from JSON data");
-    }
-
     if(scr->backdrop != NULL)
     {
         init_backdrop(scr, scr->backdrop);
@@ -506,6 +499,55 @@ static void build_ui(void)
         win_clear(win);
         n = n->next;
     }
+}
+
+// -----------------------------------------------------------------------
+
+static void fix_menus(screen_t *scr)
+{
+    menu_bar_t *bar = scr->menu_bar;
+    pulldown_t *pd;
+    window_t *win;
+
+    uint16_t i, j;
+    uint16_t width;
+
+    win = win_open(scr->width, 1);
+    bar->window = win;
+    win->flags = WIN_LOCKED;
+    win->screen   = scr;
+    scr->menu_bar = bar;
+    bar->xco = 2;
+
+    for(i = 0; i < bar->count; i++)
+    {
+        pd = bar->items[i];
+        pd->xco = bar->xco;
+        bar->xco += strlen(pd->name) + 2;
+
+        for(j = 0; j < pd->count; j++)
+        {
+            width = strlen(pd->items[j]->name);
+            if(pd->width <width)
+            {
+                pd->width = width;
+            }
+        }
+    }
+}
+
+// -----------------------------------------------------------------------
+
+static void build_ui(void)
+{
+    screen_t *scr = active_screen;
+
+    if(scr_alloc(scr) != 0)
+    {
+        json_error("Error building UI from JSON data");
+    }
+    fix_windows(scr);
+    fix_menus(scr);
 }
 
 // -----------------------------------------------------------------------

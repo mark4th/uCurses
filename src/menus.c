@@ -46,11 +46,6 @@ static uint32_t init_bar(screen_t *scr, window_t *win, menu_bar_t *bar)
     win->screen   = scr;
     scr->menu_bar = bar;
 
-    // win_set_gray_fg(win, 8);
-    // win_set_gray_bg(win, 4);
-    // printf("%lx\n", *(long unsigned int *)&win->attrs[0]);
-    // exit(0);
-
     *(uint64_t *)bar->normal   = NORMAL;
     *(uint64_t *)bar->selected = SELECTED;
     *(uint64_t *)bar->disabled = DISABLED;

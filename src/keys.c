@@ -77,12 +77,17 @@ static void read_keys(void)
 }
 
 // -----------------------------------------------------------------------
+
+static void set_esc0(uint8_t c)
+{
+    esc_buff[0] = c;
+    num_esc = 1;
+}
+
+// -----------------------------------------------------------------------
 // ti_kent seems to return 3 bytes for me and none of them are 0x0a
 
-static void kent(void)
-{
-    esc_buff[0] = 0x0a;  num_esc = 1;
-}
+static void kent(void)  { set_esc0(0x0a); }
 
 // -----------------------------------------------------------------------
 // due to "design decisions" made elsewhere your backspace key may return
@@ -96,8 +101,8 @@ static void kent(void)
 // of you who are ranting and raving against TED have picked the wrong
 // target </2c>
 
-static void kbs(void)   { esc_buff[0] = 0x08;  num_esc = 1; }
-static void kbs2(void)  { esc_buff[0] = 0x7f;  num_esc = 1; }
+static void kbs(void)   { set_esc0(0x08); }
+static void kbs2(void)  { set_esc0(0x7f); }
 
 // -----------------------------------------------------------------------
 
@@ -181,21 +186,18 @@ static uint16_t match_key(void)
 }
 
 // -----------------------------------------------------------------------
-// add delete char to keyboard input buffer
 
-static void k_bs(void)
+static void set_kb0(uint8_t c)
 {
-    keybuff[0] = 8;
+    keybuff[0] = c;
     num_k = 1;
 }
 
 // -----------------------------------------------------------------------
+// add delete char to keyboard input buffer
 
-static void k_ent(void)
-{
-    keybuff[0] = 0x0a;
-    num_k = 1;
-}
+static void k_bs(void)  { set_kb0(0x08); }
+static void k_ent(void) { set_kb0(0x0a); }
 
 // -----------------------------------------------------------------------
 // the system indirectly calls the function pointers pointed to by the

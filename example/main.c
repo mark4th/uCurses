@@ -184,23 +184,82 @@ static void flip_flop(window_t *win1, window_t *win2)
 }
 
 // -----------------------------------------------------------------------
+
+uint16_t x1, y1;
+uint16_t x2, y2;
+uint16_t x1i, x2i;
+uint16_t y1i, y2i;
+
+static void do_run_demo(screen_t *scr, window_t *win1, window_t *win2)
+{
+    // write text into each window
+    print_lorem(win1);
+    print_chinese(win2);
+
+    // move each window and refrseh the screen display
+    win_set_pos(win1, x1, y1);
+    win_set_pos(win2, x2, y2);
+    scr_draw_screen(scr);
+
+    // add respective increments to x1, y1, x2, y2
+    x1 += x1i;    y1 += y1i;
+    x2 += x2i;    y2 += y2i;
+
+    // this if / and / but looping makes each window
+    // move around the edge of the screen in one direction
+    // or the other
+
+    // for example initially the x1 increment is 1 and the y1
+    // increment is zero and the window start at top left.
+    // that window will move along the top edge of the screen.
+    // when it gets to its max x the y increment is set to
+    // the x increment and the x increment is set to zero.
+    // the window will now traverse down the right edge of
+    // the screen...
+
+    if(y1i == 0)    // if we are moving hrizontally...
+    {
+        if((x1 == X_END(win1)) || (x1 == 2))
+        {
+            flip_flop(win1, win2);
+            y1i = x1i;    x1i = 0;
+            y2i = x2i;    x2i = 0;
+            return;
+        }
+    }
+
+    // ... once the window reaches its the bottom right of the
+    // window the y increment is set to zero and the x
+    // increment is set to the negative of the y increment.
+    // the window will now move right to left along the
+    // boottom of the window... and so on and so forth
+
+    if(x1i == 0)  // if we are moving vertically
+    {
+        if((y1 == Y_END(win1)) || (y1 == 2))
+        {
+            x1i = -y1i;    y1i = 0;
+            x2i = -y2i;    y2i = 0;
+        }
+    }
+}
+
+// -----------------------------------------------------------------------
 // rotates two windows around the screen in opposite directions
 // can this even be done wtih ncurses?
 
 void run_demo(screen_t *scr, window_t *win1, window_t *win2)
 {
-    uint8_t c;
     uint8_t pause = 0;
-    uint16_t x1 = 2, y1 = 2;
-    uint16_t x2 = X_END(win2);
-    uint16_t y2 = Y_END(win2);
+    uint8_t c;
 
-    uint16_t x1i, x2i;
-    uint16_t y1i, y2i;
+    x1 = 2;
+    y1 = 2;
+    x2 = X_END(win2);
+    y2 = Y_END(win2);
 
     x1i = 1;
     x2i = -1;
-
     y1i = y2i = 0;
 
     for(;;)
@@ -223,57 +282,7 @@ void run_demo(screen_t *scr, window_t *win1, window_t *win2)
 
         if(pause == 0)        // if not paused...
         {
-            // write text into each window
-            print_lorem(win1);
-            print_chinese(win2);
-
-            // move each window and refrseh the screen display
-            win_set_pos(win1, x1, y1);
-            win_set_pos(win2, x2, y2);
-            scr_draw_screen(scr);
-
-            // add respective increments to x1, y1, x2, y2
-            x1 += x1i;    y1 += y1i;
-            x2 += x2i;    y2 += y2i;
-
-            // this if / and / but looping makes each window
-            // move around the edge of the screen in one direction
-            // or the other
-
-            // for example initially the x1 increment is 1 and the y1
-            // increment is zero and the window start at top left.
-            // that window will move along the top edge of the screen.
-            // when it gets to its max x the y increment is set to
-            // the x increment and the x increment is set to zero.
-            // the window will now traverse down the right edge of
-            // the screen...
-
-            if(y1i == 0)    // if we are moving hrizontally...
-            {
-                if((x1 == X_END(win1)) || (x1 == 2))
-                {
-                    flip_flop(win1, win2);
-                    y1i = x1i;    x1i = 0;
-                    y2i = x2i;    x2i = 0;
-                    continue;
-                }
-            }
-
-            // ... once the window reaches its the bottom right of the
-            // window the y increment is set to zero and the x
-            // increment is set to the negative of the y increment.
-            // the window will now move right to left along the
-            // boottom of the window... and so on and so forth
-
-            if(x1i == 0)  // if we are moving vertically
-            {
-                if((y1 == Y_END(win1)) || (y1 == 2))
-                {
-                    x1i = -y1i;    y1i = 0;
-                    x2i = -y2i;    y2i = 0;
-                }
-            }
-
+            do_run_demo(scr, win1, win2);
         }
         // if we did not do this the display would look like its
         // freaking out!
@@ -291,90 +300,26 @@ static void opem_file(void)
     win->bdr_attrs[FG] ^= 0x55;
 }
 
-static void close_file(void)
-{
-    return;
-}
+// dummy menu functions for now will add proper demis and proper
+// working menu functions
 
-static void delete_internet(void)
-{
-    return;
-}
-
-static void copy_nothing(void)
-{
-    return;
-}
-
-static void insert_mode(void)
-{
-    return;
-}
-
-static void overwrite_mode(void)
-{
-    return;
-}
-
-static void delete_line(void)
-{
-    return;
-}
-
-static void insert_line(void)
-{
-    return;
-}
-
-static void view_point(void)
-{
-    return;
-}
-
-static void view_to_a_kill(void)
-{
-    return;
-}
-
-static void review(void)
-{
-    return;
-}
-
-static void manchester_screwdriver(void)
-{
-    return;
-}
-
-static void dentists_drill(void)
-{
-    return;
-}
-
-static void diamond_file(void)
-{
-    return;
-}
-
-static void shovel(void)
-{
-    return;
-}
-
-static void self_help(void)
-{
-    return;
-}
-
-static void helping_hand(void)
-{
-    return;
-}
-
-static void helpless(void)
-{
-    return;
-}
+static void close_file(void)             { return; }
+static void delete_internet(void)        { return; }
+static void copy_nothing(void)           { return; }
+static void insert_mode(void)            { return; }
+static void overwrite_mode(void)         { return; }
+static void delete_line(void)            { return; }
+static void insert_line(void)            { return; }
+static void view_point(void)             { return; }
+static void view_to_a_kill(void)         { return; }
+static void review(void)                 { return; }
+static void manchester_screwdriver(void) { return; }
+static void dentists_drill(void)         { return; }
+static void diamond_file(void)           { return; }
+static void shovel(void)                 { return; }
+static void self_help(void)              { return; }
+static void helping_hand(void)           { return; }
+static void helpless(void)               { return; }
 
 // -----------------------------------------------------------------------
 

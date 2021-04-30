@@ -95,7 +95,7 @@ void make_hash(void)
 
     char **keywords[] =
     {
-        json_syntax, ui_structs, ui_values, ui_constants,
+        json_syntax, ui_structs, ui_values, ui_constants
     };
 
     uint16_t sizes[] =

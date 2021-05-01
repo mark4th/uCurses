@@ -357,7 +357,7 @@ static void populate_parent(void)
 
 // -----------------------------------------------------------------------
 
-static void json_state_r_brace(void)
+void json_state_r_brace(void)
 {
     uint16_t has_comma = 0;
     uint16_t end = strlen(json_token) - 1;

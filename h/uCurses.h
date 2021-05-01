@@ -437,6 +437,7 @@ void json_error(char *s);
 void json_new_state_struct(size_t struct_size, uint32_t struct_type);
 void json_state_value(void);
 void json_state_key(void);
+void json_state_r_brace(void);
 void j_pop(void);
 void strip_quotes(uint16_t len);
 int json_create_ui(char *path, fp_finder_t fp);

@@ -308,14 +308,11 @@ static void value_vector(void)
 {
     j_state_t *parent = j_state->parent;
     menu_item_t *item = parent->structure;
-    uint16_t len;
 
     if(fp_finder == NULL)
     {
         return;
     }
-
-    len = strlen(json_token);
 
     if(quoted == 0)
     {
@@ -423,33 +420,9 @@ static void parse_number(void)
 
 // -----------------------------------------------------------------------
 
-#include <stdio.h>
-void json_state_value(void)
+static void is_constant(void)
 {
-    uint32_t i;
-    uint16_t has_comma = 0;
-    uint16_t len;
-
-printf("%s\n", json_token);
-
-    key_value = NAN;     // assume NAN
-    quoted    = 0;      // true if key value is a string
-
-    len = strlen(json_token);
-
-    if(json_token[len -1] == ',')
-    {
-        json_token[len -1] = '\0';
-        has_comma = 1;
-        len--;
-    }
-
-    if((json_token[0]       == '"') &&
-       (json_token[len - 1] == '"'))
-    {
-        quoted = 1;
-        strip_quotes(len -2);
-    }
+    uint16_t i;
 
     for(i = 0; i < NUM_CONSTANTS; i++)
     {
@@ -459,13 +432,40 @@ printf("%s\n", json_token);
             break;
         }
     }
+}
+
+// -----------------------------------------------------------------------
+
+void json_state_value(void)
+{
+    uint16_t has_comma = 0;
+    uint16_t len;
+
+    key_value = NAN;     // assume NAN
+    quoted    = 0;       // true if key value is a string
+
+    len = strlen(json_token);
+
+    if(json_token[len - 1] == ',')
+    {
+        json_token[--len] = '\0';
+        has_comma = 1;
+    }
+
+    if((json_token[0]       == '"') &&
+       (json_token[len - 1] == '"'))
+    {
+        quoted = 1;
+        strip_quotes(len);
+    }
+
+    is_constant();
 
     if(key_value == NAN)
     {
         parse_number();
     }
 
-    // we got this far, one of these will work
     re_switch(value_types, NUM_KEYS, j_state->struct_type);
 
     if(j_stack.count != 0)

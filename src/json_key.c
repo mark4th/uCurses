@@ -19,7 +19,7 @@ extern screen_t *active_screen;
 // were only referencing this to get its size
 
 extern uint8_t attrs[8];
-extern char json_token[TOKEN_LEN]; // space delimited token extracted from data
+extern char json_token[TOKEN_LEN];
 extern uint16_t console_width;
 extern uint16_t console_height;
 
@@ -157,7 +157,7 @@ static void struct_m_item(void)
         return;
     }
 
-    json_error("requires parent menu-items");
+    json_error("Requires parent menu-items");
 }
 
 // -----------------------------------------------------------------------
@@ -174,7 +174,7 @@ static void struct_attribs(void)
     }
 
     json_error(
-        "Requires parent backdrop, window, pulldown or menu bar");
+        "Requires parent backdrop, window, pulldown or menu-bar");
 }
 
 // -----------------------------------------------------------------------
@@ -203,7 +203,7 @@ static void struct_s_attribs(void)
     }
 
     json_error(
-        "Requires parent backdrop, window, pulldown or menu bar");
+        "Requires parent pulldown or menu-bar");
 }
 
 // -----------------------------------------------------------------------
@@ -218,7 +218,7 @@ static void struct_d_attribs(void)
     }
 
     json_error(
-        "Requires parent backdrop, window, pulldown or menu bar");
+        "Requires parent pulldown or menu bar");
 }
 
 // -----------------------------------------------------------------------
@@ -278,7 +278,7 @@ static void struct_flags(void)
         return;
     }
 
-    json_error("Requires parent backdrop, window, pulldown or menu bar");
+    json_error("Requires parent backdrop, window, pulldown or menu-bar");
 }
 
 // -----------------------------------------------------------------------
@@ -481,12 +481,10 @@ static const switch_t object_types[] =
 // -----------------------------------------------------------------------
 // a key is a "quoted-name" used to name objects and keys
 
-#include <stdio.h>
 void json_state_key(void)
 {
     int f;
 
-printf("%s : ", json_token);
     size_t len = strlen(json_token);
 
     if((json_token[0]       != '"') ||
@@ -496,7 +494,7 @@ printf("%s : ", json_token);
         return;
     }
 
-    strip_quotes(len -2);
+    strip_quotes(len);
 
     // objects are a type of key which are a container for keys
     f = re_switch(object_types, NUM_OBJECTS, json_hash);
@@ -516,7 +514,7 @@ printf("%s : ", json_token);
         }
     }
 
-    // every key must be followed by a colon
+    // every key / object must be followed by a colon
 
     token();
     json_hash = fnv_hash(json_token);

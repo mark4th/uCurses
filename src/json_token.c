@@ -50,13 +50,11 @@ uint32_t fnv_hash(char *s)
 // -----------------------------------------------------------------------
 // strip quotes off of parsed json token and recalculate hash
 
-// the passed in length is the length minus the quotes
-
 void strip_quotes(uint16_t len)
 {
     uint16_t i;
 
-    for(i = 0; i < len; i++)
+    for(i = 0; i < len - 2; i++)
     {
         json_token[i] = json_token[i + 1];
     }

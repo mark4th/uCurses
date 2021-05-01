@@ -369,7 +369,7 @@ static uint32_t bar_create_pd_win(screen_t *scr, pulldown_t *pd)
 
         win->bdr_attrs[ATTR] = FG_GRAY | BG_GRAY | BOLD;
         win->bdr_attrs[FG]   = 11; // pd->attr[FG];
-        win->bdr_attrs[BG]   = 6;  // pd->attr[BG];
+        win->bdr_attrs[BG]   = 4;  // pd->attr[BG];
         win->bdr_type        = BDR_CURVED;
 
         win->screen = scr;

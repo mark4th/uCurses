@@ -111,9 +111,6 @@ const uint32_t json_syntax[] =
     0x050c5d25,             // :
     0x050c5d64,             // {
     0x050c5d62,             // }
-// not using arrays in this UI parser so not needed
-//  0x050c5d44,             // [
-//  0x050c5d42              // ]
 };
 
 // -----------------------------------------------------------------------
@@ -476,6 +473,7 @@ static void fix_win(screen_t *scr, window_t *win)
 }
 
 // -----------------------------------------------------------------------
+// complete init of windows now we know width/height etc
 
 static void fix_windows(screen_t *scr)
 {
@@ -522,9 +520,13 @@ static void fix_menus(screen_t *scr)
     for(i = 0; i < bar->count; i++)
     {
         pd = bar->items[i];
+        // set the x coordinate where the pull down window will be
+        // drawn when activated
         pd->xco = bar->xco;
         bar->xco += strlen(pd->name) + 2;
 
+        // widest menu item in pulldown menu defines the width of
+        // the window
         for(j = 0; j < pd->count; j++)
         {
             width = strlen(pd->items[j]->name);
@@ -544,7 +546,7 @@ static void build_ui(void)
 
     if(scr_alloc(scr) != 0)
     {
-        json_error("Error building UI from JSON data");
+        json_error("Out of memory allocating screen");
     }
     fix_windows(scr);
     fix_menus(scr);

@@ -49,44 +49,60 @@ uint8_t wide;               // numbers item size size shift factor
 
 // -----------------------------------------------------------------------
 
+char *paths[] =
+{
+    "/usr/share/terminfo/", // the RIGHT place for terminfo files
+    "/lib/terminfo/",       // the stupidest place to put it
+    "/etc/terminfo/",       // better than /lib debian idiocy
+};
+
+// -----------------------------------------------------------------------
+
 static void map_tifile(void)
 {
+    uint16_t i;
+    uint16_t len;
     int fd;
-    const uint8_t *term;
-    uint8_t ti_file[128];
+    const char *env_term;
+    char path[128];
     struct stat st;
 
-    term = (uint8_t *)getenv("TERM");
-    if(term == NULL)
+    env_term = getenv("TERM");
+    if(env_term == NULL)
     {
         printf("No TERM variable set\r\n");
         exit(0);
     }
 
-    strcpy((char *)&ti_file[0], "/usr/share/terminfo/x/");
-    ti_file[20] = term[0];
-    // magic numbers ftw
-    strncat((char *)&ti_file[0], (char *)term, 128-21);
-
-    stat((char *)ti_file, &st);
-    ti_size = st.st_size;
-
-    fd = open((char *)ti_file, O_RDONLY, 0);
-    if(fd == -1)
+    for(i = 0; i < 3; i++)
     {
-        printf("No Terminfo File for %s\r\n %d\n", term, fd);
-        exit(1);
+        memset(path, 0, 128);
+        len = strlen(paths[i]);
+        strncpy(path, paths[i], len);
+        path[len++] = env_term[0];
+        path[len]   = '/';
+        len = strlen(env_term);
+        strncat(path, env_term, len);
+
+        stat(path, &st);
+        ti_size = st.st_size;
+
+        fd = open((char *)path, O_RDONLY, 0);
+        if(fd == -1) { continue; }
+
+        ti_map = (uint8_t *)mmap(NULL, ti_size, PROT_READ, MAP_PRIVATE, fd, 0);
+        if(ti_map == MAP_FAILED)
+        {
+            printf("Unable to map Terminfo File\r\n");
+            printf(" - %s\r\n", path);
+            exit(1);
+        }
+        close(fd);
+        return;
     }
 
-    ti_map = (uint8_t *)mmap(NULL, ti_size, PROT_READ, MAP_PRIVATE, fd, 0);
-    if(ti_map == MAP_FAILED)
-    {
-        printf("Unable to map Terminfo File\r\n");
-        printf(" - %s\r\n", ti_file);
-        exit(1);
-    }
-
-    close(fd);
+    printf("No Terminfo File for %s\n", env_term);
+    exit(1);
 }
 
 // -----------------------------------------------------------------------

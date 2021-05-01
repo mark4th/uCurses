@@ -34,37 +34,28 @@ static uint64_t AtoZ[26];
 extern char *ti_table;   // array of offsets within following
 extern uint16_t *ti_strings;
 
+// FILE *log_fp;
+
 // -----------------------------------------------------------------------
 // debug
 
-// void dump_buff(void)
+// void log_dump(void)
 // {
-//     int i = 0;
-
-//     for(i = 0; i != num_esc; i++)
+//     uint16_t i;
+//     char *p = &esc_buff[0];
+//
+//     for(i = 0; i < num_esc; i++)
 //     {
-//         if((i & 7) == 0)
+//         if(*p == 0x1b)
 //         {
-//             printf("\r\n");
+//             fprintf(log_fp, "\n");
 //         }
-//         printf(" %02x ", esc_buff[i]);
-//     }
-//     printf("\r\n");
-// }
-
-// -----------------------------------------------------------------------
-// debug
-
-// void print_format(uint8_t *p)
-// {
-//     while(*p)
-//     {
-//         (*p < 0x20)
-//           ? printf(" %02x ", *p)
-//           : printf("%c", *p);
+//         (*p <= 0x20)
+//             ? fprintf(log_fp, " %02x", (uint8_t)*p)
+//             : fprintf(log_fp, "%c", *p);
 //         p++;
 //     }
-//     printf("\r\n");
+//     fprintf(log_fp, "\n\n");
 // }
 
 // -----------------------------------------------------------------------
@@ -73,6 +64,7 @@ void flush(void)
 {
     ssize_t n;
 
+    // log_dump();=
     n =  write(1, esc_buff, num_esc);
     num_esc = 0;
 

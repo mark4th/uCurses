@@ -486,6 +486,8 @@ void json_state_key(void)
     int f;
     size_t len;
 
+    // allows for syntatically incorrect placement of commas on the last
+    // item within an object
     if (json_token[0] == '}')
     {
         // user put in a trailing comma, hence the unexpected right brace

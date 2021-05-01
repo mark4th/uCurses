@@ -30,6 +30,8 @@ static void do_set_fg(void)
 
     const char * const rgb_seq  =
         "\x1b[38;2;%p1%3d;%p2%3d;%p3%3dm";
+    const char * const fg_seq   =
+        "\x1b[38;5;%p1%3dm";
 
     // the params array is how we pass parameters to the terminfo
     // parsing functions for each format string.  this converts the
@@ -50,9 +52,12 @@ static void do_set_fg(void)
     }
     if(attrs[ATTR] & FG_GRAY)
     {
+        f_str = &fg_seq[0];
         // gray scales are specified as values from 0 to 23 but
         // the escape seaueces use values from 232 to 255
         params[0] += 232;
+        parse_format();
+        return;
     }
     ti_setaf();
 }
@@ -68,6 +73,8 @@ static void do_set_bg(void)
 
     const char * const rgb_seq  =
         "\x1b[48;2;%p1%3d;%p2%3d;%p3%3dm";
+    const char * const bg_seq   =
+        "\x1b[48;5;%p1%3dm";
 
     // the params array is how we pass parameters to the terminfo
     // parsing functions for each format string.  this converts the
@@ -89,9 +96,12 @@ static void do_set_bg(void)
     // are we setting a gray scale foreground?
     if(attrs[ATTR] & BG_GRAY)
     {
+        f_str = &bg_seq[0];
         // gray scales are specified as values from 0 to 23 but
         // the escape seaueces use values from 232 to 255
         params[0] += 232;
+        parse_format();
+        return;
     }
     ti_setab();
 }

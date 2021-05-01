@@ -16,6 +16,8 @@
 
 // -----------------------------------------------------------------------
 
+extern FILE *log_fp;
+
 extern uint8_t *esc_buff;
 struct termios term_save;
 struct termios term;
@@ -98,6 +100,8 @@ static void map_tifile(void)
             exit(1);
         }
         close(fd);
+
+        // log_fp = fopen("log.bin", "w");
         return;
     }
 

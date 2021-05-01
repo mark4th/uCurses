@@ -484,8 +484,17 @@ static const switch_t object_types[] =
 void json_state_key(void)
 {
     int f;
+    size_t len;
 
-    size_t len = strlen(json_token);
+    if (json_token[0] == '}')
+    {
+        // user put in a trailing comma, hence the unexpected right brace
+        // so just handle this as a right brace...
+        json_state_r_brace();
+        return;
+    }
+
+    len = strlen(json_token);
 
     if((json_token[0]       != '"') ||
        (json_token[len - 1] != '"'))

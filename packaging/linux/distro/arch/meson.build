@@ -7,40 +7,12 @@ project(
 )
 project_description = 'TUI app builder for consoles and terminals.'
 
-project_source_files = [
-    'src/border.c',
-    'src/color.c',
-    'src/json.c',
-    'src/json_key.c',
-    'src/json_token.c',
-    'src/json_value.c',
-    'src/keys.c',
-    'src/list.c',
-    'src/menus.c',
-    'src/parse.c',
-    'src/reswitch.c',
-    'src/screen.c',
-    'src/tifile.c',
-    'src/ui_json.c',
-    'src/utf8.c',
-    'src/util.c',
-    'src/window.c',
-    'src/win_printf.c',
-]
-
 build_args = [
-    '-fpic',
     '-fno-inline',
-    '-pedantic',
-    '-Wall',
     '-Werror',
-    '-Wextra',
     '-std=gnu17',
     '-pipe',
-    '-march=native',
-    '-g3',
     '-fno-align-functions',
-    '-m64',
 ]
 
 compiler = meson.get_compiler('c')
@@ -58,9 +30,15 @@ build_args += [
 
 message('@0@: @1@'.format(compiler.get_id(), build_args))
 
-linker_args = [
-    '-Wl,--entry=entry',
-]
+linker_args = ['-Wl,--entry=entry']
+
+sources = run_command('bash', '-c', '''
+    ln -s ${PROJECT_ROOT}/src ${ARCH_MESON}/src
+    ln -s ${PROJECT_ROOT}/h ${ARCH_MESON}/h
+    cd ${ARCH_MESON} && find src/ -name *.c
+''')
+
+project_source_files = sources.stdout().strip().split('\n')
 
 shared_object = shared_library(
     meson.project_name(),

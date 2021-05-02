@@ -29,7 +29,6 @@ project_source_files = [
 ]
 
 build_args = [
-    '-Oz',
     '-fpic',
     '-fno-inline',
     '-pedantic',
@@ -44,10 +43,20 @@ build_args = [
     '-m64',
 ]
 
+compiler = meson.get_compiler('c')
+
+if compiler.get_id() == 'gcc'
+    build_args += ['-Os']
+elif compiler.get_id() == 'clang'
+    build_args += ['-Oz']
+endif
+
 build_args += [
     '-DPROJECT_NAME=' + meson.project_name(),
     '-DPROJECT_VERSION=' + meson.project_version(),
 ]
+
+message('@0@: @1@'.format(compiler.get_id(), build_args))
 
 linker_args = [
     '-Wl,--entry=entry',
@@ -63,9 +72,8 @@ shared_object = shared_library(
     soversion : meson.project_version(),
 )
 
-target_name = (
-    'stripped lib' + meson.project_name() + '.so.' + meson.project_version()
-)
+full_path = run_command('basename', shared_object.full_path()).stdout().strip()
+target_name = 'stripped @0@'.format(full_path)
 
 project_target = custom_target(
     target_name,

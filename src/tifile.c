@@ -3,14 +3,14 @@
 
 #include <fcntl.h>
 #include <inttypes.h>
+#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
-#include <unistd.h>
 #include <termios.h>
-#include <locale.h>
+#include <unistd.h>
 
 #include "h/uCurses.h"
 

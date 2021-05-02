@@ -1,15 +1,15 @@
  // uCurses json parsing for user interface layout
 // -----------------------------------------------------------------------
 
+#include <fcntl.h>
 #include <inttypes.h>
-#include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <sys/mman.h>
 #include <sys/ioctl.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #include "h/uCurses.h"
 

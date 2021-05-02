@@ -3,8 +3,8 @@
 
 #define _XOPEN_SOURCE
 
-#include <string.h>
 #include <inttypes.h>
+#include <string.h>
 #include <unistd.h>
 #include <wchar.h>
 

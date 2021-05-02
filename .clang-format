@@ -1,0 +1,25 @@
+BasedOnStyle: None
+AlignTrailingComments: true
+BreakBeforeBraces: Allman
+ColumnLimit: 0
+IndentWidth: 2
+KeepEmptyLinesAtTheStartOfBlocks: false
+ObjCSpaceAfterProperty: true
+ObjCSpaceBeforeProtocolList: true
+PointerBindsToType: false
+SpacesBeforeTrailingComments: 1
+TabWidth: 2
+UseTab: Never
+
+ConstructorInitializerIndentWidth: 2
+ContinuationIndentWidth: 2
+ColumnLimit: 96
+SortIncludes: true
+AlignEscapedNewlines: false
+AlignConsecutiveAssignments: false
+AlignConsecutiveDeclarations: false
+AllowShortBlocksOnASingleLine: true
+AllowShortCaseLabelsOnASingleLine: true
+AllowShortFunctionsOnASingleLine: All
+AllowShortLoopsOnASingleLine: true
+NamespaceIndentation: All

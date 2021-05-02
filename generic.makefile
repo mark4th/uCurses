@@ -13,18 +13,18 @@ CC_LD := $(shell which lld >/dev/null && CC_LD=$${CC_LLD:-lld}; echo $$CC_LD)
 
 PROJECT_ROOT := $(PWD)
 
-ARCH_MESON := $(PROJECT_ROOT)/arch.meson
-ARCH_BUILD := $(ARCH_MESON)/arch.build
-BUILD_CONFIG := packaging/linux/distro/arch
+MESON := $(PROJECT_ROOT)/meson
+BUILD := $(MESON)/build
+BUILD_CONFIG := .
 MESON_OPT :=
 NINJA_OPT := --verbose
 MESON_BUILD_IN := $(BUILD_CONFIG)/meson.build
-MESON_BUILD := $(ARCH_MESON)/meson.build
+MESON_BUILD := $(MESON)/meson.build
 
 export CC
 export CC_LD
 export PROJECT_ROOT
-export ARCH_MESON
+export MESON
 
 _ = echo '[$@]'; set -euo pipefail;
 
@@ -35,8 +35,8 @@ default: build
 	$_
 	echo CC=$(CC)
 	echo CC_LD=$(CC_LD)
-	echo ARCH_MESON=$(ARCH_MESON)
-	echo ARCH_BUILD=$(ARCH_BUILD)
+	echo MESON=$(MESON)
+	echo BUILD=$(BUILD)
 	echo BUILD_CONFIG=$(BUILD_CONFIG)
 	echo MESON_OPT=$(MESON_OPT)
 	echo NINJA_OPT=$(NINJA_OPT)
@@ -50,19 +50,20 @@ format:
 
 clean:
 	$_
-	rm -rf $(ARCH_MESON)
+	rm -rf $(MESON)
 
 
 $(MESON_BUILD): $(MESON_BUILD_IN)
-	$_
 	make --silent clean
-	cp -av $(BUILD_CONFIG)/ $(ARCH_MESON)/
-	cd $(ARCH_MESON) && meson setup $(ARCH_BUILD) $(MESON_OPT)
+	$_
+	mkdir -p  $(MESON)/
+	cp -av $(MESON_BUILD_IN) $(MESON)/
+	cd $(MESON) && meson setup $(BUILD) $(MESON_OPT)
 
 
 build: $(MESON_BUILD)
 	$_
-	cd $(ARCH_BUILD) && ninja $(NINJA_OPT)
+	cd $(BUILD) && ninja $(NINJA_OPT)
 
 
 rebuild: clean build
@@ -70,7 +71,7 @@ rebuild: clean build
 
 install: $(MESON_BUILD)
 	$_
-	cd $(ARCH_BUILD) && sudo ninja $(NINJA_OPT) install
+	cd $(BUILD) && sudo ninja $(NINJA_OPT) install
 
 
 clean-install: clean install

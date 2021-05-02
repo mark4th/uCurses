@@ -50,6 +50,14 @@ char *next_arg(void)
 
 // -----------------------------------------------------------------------
 
+static void line(void)
+{
+  printf("// -----------------------------------"
+    "------------------------------------\n\n");
+}
+
+// -----------------------------------------------------------------------
+
 void hash_file(const char *p)
 {
     char path[64];
@@ -65,7 +73,8 @@ void hash_file(const char *p)
         printf("Cannot open file: %s", path);
         _exit(1);
     }
-
+    printf("\n");
+    line();
     printf("static switch_t %s\n{\n", path);
 
     while((s = next_arg()) != NULL)
@@ -86,6 +95,7 @@ void hash_file(const char *p)
 
     printf("#define VCOUNT sizeof(%s) / sizeof(%s[0])\n\n", path, path);
 
+    line();
     printf(
         "static opt_t menu_address_cb(uint32_t hash)\n"
         "{\n"
@@ -102,7 +112,8 @@ void hash_file(const char *p)
         "    }\n"
 
         "    return NULL;\n"
-        "}\n", path);
+        "}\n\n", path);
+    line();
 }
 
 // -----------------------------------------------------------------------

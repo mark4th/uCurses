@@ -10,8 +10,7 @@ can have a gray scale background and a RGB foreground for example.
 
 This code can be built with either LLVM or Gcc but IMHO you should
 be using LLVM as it is far superior to gcc, specially at optimizing
-the code.  If I could force you to use LLVM I could set the
-optimization level to -Oz where I would prefer it remain :/
+the code.
 
 Optimizing this codde for speed is not important, even at -O0 this
 code will run perfectly fine so I chose to build it to be as small
@@ -21,14 +20,8 @@ is being built with -Os unless you override it.
 
 To build this, from the root of the source tree do
 
-mkdir build
-autoreconf -iv
-cd build
-../configure
-make -jXXX
+make
 sudo make install
-
-...where xxx is your cpu's core count.
 
 The make install will copy the library files into /usr/local/lib
 after which you should be able to build with your applications
@@ -50,5 +43,3 @@ When running the example code the ESC button exits and the F10 key
 toggles the menus and the cursor keys move you around said menus
 the ENTER key executes the selected pulldown menu item but do not
 expect any of the current menu items to do much :)
-
-

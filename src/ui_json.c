@@ -22,7 +22,7 @@
 const char interp[] __attribute__((section(".interp"))) =
    "/lib64/ld-linux-x86-64.so.2";
 
-char banner[] = "\nlibuCurses v0.0.1\n";
+char banner[] = "\nlibuCurses V" PROJECT_VERSION;
 
 FILE *fp;
 

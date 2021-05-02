@@ -116,7 +116,7 @@ void print_lorem(window_t *win)
     i = (i == 69) ? 0 : i;
 
     // how many character cells will this string use.
-    // this account for double width characters
+    // this accounts for double width characters
     len = utf8_width(&lorem[i][0]);
 
     if((len + win->cx) >= win->width)
@@ -153,10 +153,10 @@ static void print_chinese(window_t *win)
         inc   = -inc;
     }
 
-    win_printf(win, &chinese[line++][0]);
+    win_puts(win, chinese[line++]);
     win_el(win);
 
-    if(line > 24) { line = 0; }
+    if(line > 32) { line = 0; }
 }
 
 // -----------------------------------------------------------------------

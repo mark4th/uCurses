@@ -4,24 +4,26 @@ lib_LTLIBRARIES = libuCurses.la
 
 
 libuCurses_la_SOURCES =  \
-  h/uCurses.h      \
-  src/border.c     \
-  src/color.c      \
-  src/json.c       \
-  src/json_key.c   \
-  src/json_token.c \
-  src/json_value.c \
-  src/keys.c       \
-  src/list.c       \
-  src/menus.c      \
-  src/parse.c      \
-  src/reswitch.c   \
-  src/screen.c     \
-  src/tifile.c     \
-  src/ui_json.c    \
-  src/utf8.c       \
-  src/util.c       \
-  src/window.c     \
+  h/uCurses.h         \
+  src/border.c        \
+  src/color.c         \
+  src/json.c          \
+  src/json_build.c    \
+  src/json_key.c      \
+  src/json_populate.c \
+  src/json_token.c    \
+  src/json_value.c    \
+  src/keys.c          \
+  src/list.c          \
+  src/menus.c         \
+  src/parse.c         \
+  src/reswitch.c      \
+  src/screen.c        \
+  src/tifile.c        \
+  src/ui_json.c       \
+  src/utf8.c          \
+  src/util.c          \
+  src/window.c        \
   src/win_printf.c
 
 CFLAGS = -Os -fpic -fno-inline -pedantic -Wall -Werror \

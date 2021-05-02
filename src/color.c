@@ -31,8 +31,19 @@ static void do_set_fg(void)
     const char * const rgb_seq  =
         "\x1b[38;2;%p1%3d;%p2%3d;%p3%3dm";
 
+    // format string to set gray scales which again might not be
+    // supported by all terminal types.  this has been hard coded
+    // here because for some terminals this is how they encode
+    // their setaf and for others it is their setf (e.g. xterm)
+
     const char * const fg_seq   =
-        "\x1b[38;5;%p1%3dm";
+        "\x1b["
+        "%?%p1%{8}%<"       // if p1 < 8
+        "%t3%p1%d"          //    output '3' followed by p1
+        "%e%p1%{16}%<"      // else  if p1 < 16
+        "%t9%p1%{8}%-%d"    //    output '9' followed by p1 - 8
+        "%e38;5;%p1%d"      // else output '38;5;' followed by p1
+        "%;m";              // last char output is always the m
 
     // the params array is how we pass parameters to the terminfo
     // parsing functions for each format string.  this converts the
@@ -60,6 +71,9 @@ static void do_set_fg(void)
         parse_format();
         return;
     }
+    // would be nice if the people creating terminal emulators understood
+    // the difference between a setaf and a setf.  tho i should probably
+    // be outputting a setf here based on xterms infocmp
     ti_setaf();
 }
 
@@ -76,7 +90,13 @@ static void do_set_bg(void)
         "\x1b[48;2;%p1%3d;%p2%3d;%p3%3dm";
 
     const char * const bg_seq   =
-        "\x1b[48;5;%p1%3dm";
+        "\x1b["
+        "%?%p1%{8}%<"
+        "%t4%p1%d"
+        "%e%p1%{16}%<"
+        "%t10%p1%{8}%-%d"
+        "%e48;5;%p1%d"
+        "%;m";
 
     // the params array is how we pass parameters to the terminfo
     // parsing functions for each format string.  this converts the
@@ -125,7 +145,7 @@ void apply_attribs(void)
         if(attrs[ATTR] & BOLD)     { ti_bold();  }
         if(attrs[ATTR] & REVERSE)  { ti_rev();   }
     }
-    // if underline changed we need to set if.  if it was not changed
+    // if underline changed we need to set it.  if it was not changed
     // we might need to restore it because of the above sgr0
     if((changes & UNDERLINE) ||
        (!(changes & UNDERLINE) && (attrs[ATTR] & UNDERLINE)))
@@ -218,14 +238,6 @@ void set_rgb_fg(uint8_t r, uint8_t g, uint8_t b)
    attrs[FG_B] = b;
 
    set_attr(FG_RGB);
-}
-
-// -----------------------------------------------------------------------
-
-void clr_rgb_fg(uint8_t c)
-{
-    attrs[FG] = c;
-    clr_attr(FG_RGB);
 }
 
 // -----------------------------------------------------------------------

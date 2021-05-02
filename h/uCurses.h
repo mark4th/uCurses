@@ -441,6 +441,8 @@ void json_state_r_brace(void);
 void j_pop(void);
 void strip_quotes(uint16_t len);
 void json_create_ui(char *path, fp_finder_t fp);
+void json_build_ui(void);
+void populate_parent(void);
 
 // -----------------------------------------------------------------------
 

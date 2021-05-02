@@ -137,12 +137,15 @@ static void print_chinese(window_t *win)
     win_set_gray_bg(win, abs(20 - (gray + 10)));
 
     gray += inc;
+
     if((gray == 20) || (gray == 0x0))
     {
         inc   = -inc;
     }
+
     win_printf(win, &chinese[line++][0]);
     win_el(win);
+
     if(line > 24) { line = 0; }
 }
 
@@ -300,7 +303,7 @@ __attribute__((used)) static void open_file(void)
     win->bdr_attrs[FG] ^= 0x55;
 }
 
-// dummy menu functions for now will add proper demis and proper
+// dummy menu functions for now will add proper demos and proper
 // working menu functions
 
 __attribute__((used)) static void close_file(void)             { return; }

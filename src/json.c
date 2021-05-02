@@ -12,7 +12,6 @@
 #include <sys/ioctl.h>
 
 #include "h/uCurses.h"
-#include "h/list.h"
 
 // -----------------------------------------------------------------------
 
@@ -35,7 +34,7 @@
 //
 // If the parsed token is recognized as a key
 //
-//      That specifv key is handled (see below) and the next state is set
+//      That specifc key is handled (see below) and the next state is set
 //      to STATE_VALUE where we extract the value to be stored in the
 //      specified key.
 //
@@ -57,7 +56,7 @@
 // stack.
 //
 // As key values are parsed we immediately set the specified item in
-// their parents C structure.  When an object is completed and we store
+// their parents C structure.  When an object is completed we store
 // the associated C structure within its parents C structure.  The
 // structure types of both specify how and where.
 //
@@ -199,163 +198,6 @@ void json_new_state_struct(size_t struct_size, uint32_t struct_type)
 }
 
 // -----------------------------------------------------------------------
-// this series of IF statements produces significantly smaller code than
-// a switch statement does.   C sucks
-
-static void populate_attribs(void *pstruct, uint32_t ptype)
-{
-    if((ptype == STRUCT_WINDOW) || (ptype == STRUCT_BACKDROP))
-    {
-        *(uint64_t *)((window_t *)pstruct)->attrs =
-            *(uint64_t *)j_state->structure;
-    }
-    else if(ptype == STRUCT_PULLDOWN)
-    {
-        *(uint64_t *)((pulldown_t *)pstruct)->normal =
-            *(uint64_t *)j_state->structure;
-    }
-    else   // ptype == STRUCT_MENU_BAR:
-    {
-        *(uint64_t *)((menu_bar_t *)pstruct)->normal =
-            *(uint64_t *)j_state->structure;
-    }
-    free(j_state->structure);
-}
-
-// -----------------------------------------------------------------------
-
-static void populate_b_attribs(window_t *pstruct)
-{
-    *(uint64_t *)pstruct->bdr_attrs =
-        *(uint64_t *)j_state->structure;
-
-    free(j_state->structure);
-}
-
-// -----------------------------------------------------------------------
-
-static void populate_s_attribs(void *pstruct, uint32_t ptype)
-{
-    if(ptype == STRUCT_PULLDOWN)
-    {
-        *(uint64_t *)((pulldown_t *)pstruct)->selected =
-            *(uint64_t *)j_state->structure;
-    }
-    else   // ptype == STRUCT_MENU_BAR:
-    {
-        *(uint64_t *)((menu_bar_t *)pstruct)->selected =
-            *(uint64_t *)j_state->structure;
-    }
-
-    free(j_state->structure);
-}
-
-// -----------------------------------------------------------------------
-
-static void populate_d_attribs(void *pstruct, uint32_t ptype)
-{
-    if(ptype == STRUCT_PULLDOWN)
-    {
-        *(uint64_t *)((pulldown_t *)pstruct)->disabled =
-            *(uint64_t *)j_state->structure;
-    }
-    else   // ptype == STRUCT_MENU_BAR:
-    {
-        *(uint64_t *)((menu_bar_t *)pstruct)->disabled =
-            *(uint64_t *)j_state->structure;
-    }
-
-    free(j_state->structure);
-}
-
-// -----------------------------------------------------------------------
-
-static void populate_pulldown(menu_bar_t *pstruct)
-{
-    uint16_t i;
-
-    i = pstruct->count++;
-    pstruct->items[i] = j_state->structure;
-}
-
-// -----------------------------------------------------------------------
-
-static void populate_menu_item(pulldown_t *gstruct)
-{
-    uint16_t i;
-
-    i = gstruct->count++;
-    gstruct->items[i] = j_state->structure;
-}
-
-// -----------------------------------------------------------------------
-
-static void populate_window(j_state_t *parent)
-{
-    window_t *win;
-    screen_t *scr;
-
-    j_state_t *gp = parent->parent;
-    scr           = gp->structure;
-    win           = j_state->structure;
-
-    scr_win_attach(scr, win);
-}
-
-// -----------------------------------------------------------------------
-
-static void populate_backdrop(screen_t *pstruct)
-{
-    pstruct->backdrop = j_state->structure;
-}
-
-// -----------------------------------------------------------------------
-
-static void populate_bar(screen_t *scr)
-{
-    menu_bar_t *bar = j_state->structure;
-    scr->menu_bar = bar;
-}
-
-// -----------------------------------------------------------------------
-// an object has been completed and thereby the associated C structure is
-// ready.  add this C structure to its parent objects C structure...
-// or sometimes its grandparents
-
-static void populate_parent(void)
-{
-    j_state_t *parent = j_state->parent;
-    j_state_t *gp     = parent->parent;
-
-    void *pstruct     = parent->structure;
-    void *gstruct     = gp->structure;
-
-    uint32_t ptype    = parent->struct_type;
-
-    // when a psudo structure is completed all of the key values
-    // specified within that psudo structure will have been
-    // added to its parent - in this case this function will
-    // be called to add that psudo structure to its parent but
-    // it will not be any of the types specified below.  this is
-    // an inconseauential waste of time as no action will be
-    // taken below - this entire function becomes a NOP in that
-    // case
-
-    switch(j_state->struct_type)
-    {
-        case STRUCT_ATTRIBS:    populate_attribs(pstruct, ptype);   break;
-        case STRUCT_B_ATTRIBS:  populate_b_attribs(pstruct);        break;
-        case STRUCT_S_ATTRIBS:  populate_s_attribs(pstruct, ptype); break;
-        case STRUCT_D_ATTRIBS:  populate_d_attribs(pstruct, ptype); break;
-        case STRUCT_PULLDOWN:   populate_pulldown(gstruct);         break;
-        case STRUCT_MENU_ITEM:  populate_menu_item(gstruct);        break;
-        case STRUCT_WINDOW:     populate_window(parent);            break;
-        case STRUCT_BACKDROP:   populate_backdrop(pstruct);         break;
-        case STRUCT_MENU_BAR:   populate_bar(pstruct);              break;
-    }
-}
-
-// -----------------------------------------------------------------------
 
 void json_state_r_brace(void)
 {
@@ -406,12 +248,13 @@ static const switch_t states[] =
 static void json_state_machine(void)
 {
     int f;
+
     j_state = j_alloc(sizeof(*j_state));
 
     j_state->struct_type = -1;
     j_state->state = JSON_L_BRACE;
 
-    while(j_state->state != STATE_DONE)
+    do
     {
         token();
         json_hash = fnv_hash(json_token);
@@ -424,141 +267,9 @@ static void json_state_machine(void)
         {
             json_error("Unknown or miss placed token");
         }
-    }
+    } while(j_state->state != STATE_DONE);
 
     free(j_state);
-}
-
-// -----------------------------------------------------------------------
-
-static void bounds_check(window_t *win)
-{
-    uint16_t xco = win->xco;
-    uint16_t yco = win->yco;
-
-    uint16_t z = (win->flags & WIN_BOXED) ? 1 :0;
-
-    if(((xco + win->width  + z) < console_width)  &&
-       ((yco + win->height + z) < console_height) &&
-       ((xco - z) < console_width) &&
-       ((yco - z) < console_height))
-    {
-        return;
-    }
-
-    json_error("Window outside bounds of screen");
-}
-
-// -----------------------------------------------------------------------
-// fix far window position
-
-static void fix_win(screen_t *scr, window_t *win)
-{
-    uint16_t fudge = 1;
-    window_t *bd = scr->backdrop;
-
-    if((bd != NULL) && ((bd->flags & WIN_BOXED) != 0))
-    {
-        fudge++;
-    }
-
-    if(win->xco == FAR)
-    {
-        win->xco = scr->width - (win->width + fudge);
-    }
-
-    if(win->yco == FAR)
-    {
-        win->yco = scr->height - (win->height + fudge);
-    }
-}
-
-// -----------------------------------------------------------------------
-// complete init of windows now we know width/height etc
-
-static void fix_windows(screen_t *scr)
-{
-    window_t *win;
-    if(scr->backdrop != NULL)
-    {
-        init_backdrop(scr, scr->backdrop);
-        win_alloc(scr->backdrop);
-        win_clear(scr->backdrop);
-    }
-
-    node_t *n = scr->windows.head;
-
-    while(n != NULL)
-    {
-        win = n->payload;
-        fix_win(win->screen, win);
-        bounds_check(win);
-        win_alloc(win);
-        win->blank = 0x20;
-        win_clear(win);
-        n = n->next;
-    }
-}
-
-// -----------------------------------------------------------------------
-
-static void fix_menus(screen_t *scr)
-{
-    menu_bar_t *bar = scr->menu_bar;
-    pulldown_t *pd;
-    window_t *win;
-
-    uint16_t i, j;
-    uint16_t width;
-
-    win = win_open(scr->width, 1);
-    if(win == NULL)
-    {
-        json_error("Unable to create window for menu bar");
-    }
-
-    bar->window = win;
-    win->flags = WIN_LOCKED;
-    win->screen   = scr;
-    scr->menu_bar = bar;
-    bar->xco = 2;
-
-    for(i = 0; i < bar->count; i++)
-    {
-        pd = bar->items[i];
-        // set the x coordinate where the pull down window will be
-        // drawn when activated
-        pd->xco = bar->xco;
-        bar->xco += strlen(pd->name) + 2;
-
-        // widest menu item in pulldown menu defines the width of
-        // the window
-        for(j = 0; j < pd->count; j++)
-        {
-            width = strlen(pd->items[j]->name);
-            if(pd->width <width)
-            {
-                pd->width = width;
-            }
-        }
-    }
-}
-
-// -----------------------------------------------------------------------
-
-static void build_ui(void)
-{
-    uint16_t result;
-    screen_t *scr = active_screen;
-
-    result = scr_alloc(scr);
-    if(result != 0)
-    {
-        json_error("Out of memory allocating screen");
-    }
-
-    fix_windows(scr);
-    fix_menus(scr);
 }
 
 // -----------------------------------------------------------------------
@@ -566,11 +277,11 @@ static void build_ui(void)
 // when the state machine parses in the structues that define the app
 // menus it will need to add function pointers to every menu item to be
 // executed when that menu item is selected.  this library can not
-// determine the address of any functions in the application code it is linked against.   said application will need
-// to supply this library with a pointer to a function that will return
-// a pointer to a menu function based off of a string.  The HOW of this
-// needs better documentation than im prepared to put in source file
-// comments :)
+// determine the address of any functions in the application code it is
+// linked against.   said application will need to supply this library
+// with a pointer to a function that will return a pointer to a menu
+// function based off of a string.  The HOW of this needs better
+// documentation than im prepared to put in source file comments :)
 
 void json_create_ui(char *path, fp_finder_t fp)
 {
@@ -615,7 +326,7 @@ void json_create_ui(char *path, fp_finder_t fp)
 
     if(active_screen != NULL)
     {
-        build_ui();
+        json_build_ui();
     }
 }
 

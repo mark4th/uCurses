@@ -33,14 +33,7 @@ message('@0@: @1@'.format(compiler.get_id(), build_args))
 
 linker_args = ['-Wl,--entry=entry']
 
-sources = run_command(
-    'bash', '-c',
-    '''
-        ln -s ${PROJECT_ROOT}/src ${MESON}/src
-        ln -s ${PROJECT_ROOT}/h ${MESON}/h
-        cd ${MESON} && find src/ -name *.c
-    '''
-)
+sources = run_command('bash', '-c', 'find src/ -name *.c')
 
 project_source_files = sources.stdout().strip().split('\n')
 

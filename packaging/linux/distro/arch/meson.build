@@ -66,7 +66,7 @@ shared_object = shared_library(
     meson.project_name(),
     project_source_files,
     install : true,
-    link_args : linker_args ,
+    link_args : linker_args,
     c_args : build_args,
     version : meson.project_version(),
     soversion : meson.project_version(),

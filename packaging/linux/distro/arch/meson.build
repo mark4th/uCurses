@@ -3,7 +3,8 @@ project(
     'uCurses',
     'c',
     version : '0.0.2',
-    default_options : ['warning_level=3']
+    default_options : ['warning_level=3'],
+    license: 'MIT',
 )
 project_description = 'TUI app builder for consoles and terminals.'
 

@@ -323,7 +323,7 @@ __attribute__((used)) static void helpless(void)               { return; }
 
 // -----------------------------------------------------------------------
 
-switch_t menu_vectors[] =
+static switch_t menu_vectors[] =
 {
     { 0x89839cf6,  open_file              },
     { 0x77d55838,  close_file             },
@@ -351,8 +351,9 @@ switch_t menu_vectors[] =
 
 static opt_t menu_address_cb(uint32_t hash)
 {
-    uint16_t i = VCOUNT;
+    uint16_t i;
     switch_t *s = menu_vectors;
+
     for(i = 0; i < VCOUNT; i++)
     {
         if(hash == s->option)
@@ -361,6 +362,7 @@ static opt_t menu_address_cb(uint32_t hash)
         }
         s++;
     }
+
     return NULL;
 }
 

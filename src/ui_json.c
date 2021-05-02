@@ -10,115 +10,12 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
 
 #include "h/uCurses.h"
-
-// -----------------------------------------------------------------------
-// i never do string comparisons on these
-
-static char *json_syntax[] =
-{
-    "#", ":", "{", "}", "[", "]",
-};
-
-// -----------------------------------------------------------------------
-
-static char *ui_structs[] =
-{
-    "screen",
-    "windows",
-    "window",
-    "backdrop",
-    "menu-bar",
-    "pulldowns",
-    "pulldown",
-    "menu-items",
-    "menu-item",
-    "attribs",
-    "border-attribs",
-    "selected-attribs",
-    "disabled-attribs",
-    "rgb-fg",
-    "rgb-bg",
-    "flags"
-};
-
-// -----------------------------------------------------------------------
-
-static char *ui_values[] =
-{
-    "fg",    "gray-fg",
-    "bg",    "gray-bg",
-    "red",   "green",   "blue",
-    "xco",   "yco",
-    "width", "height",
-    "name",  "flags",
-    "border-type",
-    "vector",
-    "shortcut",
-    "flag"
-};
-
-// -----------------------------------------------------------------------
-
-static char *ui_constants[] =
-{
-    "MENU_DISABLED",
-    "BDR_SINGLE",
-    "BDR_DOUBLE",
-    "BDR_CURVED",
-    "WIN_LOCKED",
-    "WIN_FILLED",
-    "WIN_BOXED",
-    "FAR",
-    "BLACK",   "RED",        "GREEN",    "BROWN",
-    "BLUE",    "MAGENTA",    "CYAN",     "WHITE",
-    "GRAY",    "PINK",       "LT_GREEN", "YELLOW",
-    "LT_BLUE", "LT_MAGENTA", "CYAN",     "LT_WHITE"
-};
-
-// -----------------------------------------------------------------------
-
-#define J_SYNTAX        (sizeof(json_syntax)  / sizeof(json_syntax[0]))
-#define UI_STRUCTS      (sizeof(ui_structs)   / sizeof(ui_structs[0]))
-#define UI_VALUES       (sizeof(ui_values)    / sizeof(ui_values[0]))
-#define UI_CONSTANTS    (sizeof(ui_constants) / sizeof(ui_constants[0]))
-
-// -----------------------------------------------------------------------
-
-void make_hash(void)
-{
-    uint16_t i, j;
-    uint32_t key;
-    char *s;
-    char **p;
-
-    char **keywords[] =
-    {
-        json_syntax, ui_structs, ui_values, ui_constants
-    };
-
-    uint16_t sizes[] =
-    {
-        J_SYNTAX, UI_STRUCTS, UI_VALUES, UI_CONSTANTS
-    };
-
-    #define NUMK (sizeof(keywords) / sizeof(keywords[0]))
-
-    for(i = 0; i < NUMK; i++)
-    {
-        p = keywords[i];
-
-        for(j = 0; j < sizes[i]; j++)
-        {
-             s = p[j];
-             key = fnv_hash(s);
-             printf("0x%08x  ", key);
-             printf("%s\n", s);
-        }
-        printf("\n");
-    }
-}
 
 // -----------------------------------------------------------------------
 
@@ -127,17 +24,158 @@ const char interp[] __attribute__((section(".interp"))) =
 
 char banner[] = "\nlibuCurses v0.0.1\n";
 
+FILE *fp;
+
+// -----------------------------------------------------------------------
+
+char *next_arg(void)
+{
+    int i;
+    static char buff[64];
+    char c;
+    i = 0;
+
+    while(fread(&c, 1, sizeof(char), fp) == 1)
+    {
+        if((i == 63) || (c == '\0') ||
+           (c == '\n') || (c == '\r'))
+        {
+            buff[i] = '\0';
+            return buff;
+        }
+        buff[i++] = c;
+    }
+    return NULL;
+}
+
+// -----------------------------------------------------------------------
+
+void hash_file(const char *p)
+{
+    char path[64];
+    char *s;
+    uint32_t hash;
+    char line_buff[64];
+    strcpy(path, p);
+    fclose(fp);
+    fp = fopen(path, "r");
+
+    if(fp == NULL)
+    {
+        printf("Cannot open file: %s", path);
+        _exit(1);
+    }
+
+    printf("static switch_t %s\n{\n", path);
+
+    while((s = next_arg()) != NULL)
+    {
+        memset(line_buff, 0x20, 63);
+        hash = fnv_hash(s);
+        snprintf(line_buff, 63, "    { 0x%08x, %s", hash, s);
+
+        line_buff[strlen(line_buff)] = 0x20;
+
+        line_buff[42] = '\0';
+        strcat(line_buff, "},");
+
+        printf("%s\n", line_buff);
+    }
+
+    printf("};\n\n");
+
+    printf("#define VCOUNT sizeof(%s) / sizeof(%s[0])\n\n", path, path);
+
+    printf(
+        "static opt_t menu_address_cb(uint32_t hash)\n"
+        "{\n"
+        "    uint16_t i = VCOUNT;\n"
+        "    switch_t *s = %s;\n\n"
+
+        "    for(i = 0; i < VCOUNT; i++)\n"
+        "    {\n"
+        "        if(hash == s->option)\n"
+        "        {\n"
+        "            return s->vector;\n"
+        "        }\n"
+        "        s++;\n"
+        "    }\n"
+
+        "    return NULL;\n"
+        "}\n", path);
+}
+
+// -----------------------------------------------------------------------
+
+static void help(void)
+{
+    printf("%s\n", banner);
+    printf("./libuCurses.so [args]\n\n");
+    printf("--help          Get Help (this page)\n");
+    printf("--secret        Get Secrets (you no look!)\n");
+    printf("file            Hash File (as follows)\n\n");
+
+    printf(
+    "The specifid file should contain a list of tags associated\n"
+    "with menu functions within your application.\n\n"
+
+    "You might have a menu function called get_foo() and wish\n"
+    "to call this function when a specific menu item as described\n"
+    "in your json file is selected.\n\n"
+
+    "Invoking the library with a file containing tags for every\n"
+    "menu function will cause it to produce the C code you would\n"
+    "need to add to your application sources in order for the json\n"
+    "parser to associate menu item tags with application functions.\n\n"
+
+    "For example, your json could have an entry such as\n\n"
+
+    "\t\"menu-item\" :\n"
+    "\t{\n"
+    "\t    \"name\"   : \"Get Foo\",\n"
+    "\t    \"vector\" : \"get_foo\"\n"
+    "\t}\n\n"
+
+    "and the json parser would replace the vector name string with\n"
+    "the C runtime address of the associated function.  The vector\n"
+    "string must be identical to the tag specified in the file passed\n"
+    "to the library.\n\n");
+}
+
+// -----------------------------------------------------------------------
+
+static void process_args(void)
+{
+    char *s;
+    uint32_t hash;
+
+    next_arg();
+
+    while((s = next_arg()) != NULL)
+    {
+        hash = fnv_hash(s);
+
+        (hash == 0x24a78f02)
+            ? help()
+            : hash_file(s);
+    }
+
+    fclose(fp);
+}
+
 // -----------------------------------------------------------------------
 
 void entry(void)
 {
-    printf("%s", banner);
+    char path[40];
 
-    printf("\nTop Secret: You No Look!\n\n");
+    sprintf(path, "/proc/%d/cmdline", getpid());
+    fp = fopen((char *)path, "r");
 
-    make_hash();
-
-    printf("\n\n");
+    if(fp != NULL)
+    {
+        process_args();
+    }
     _exit(0);
 }
 

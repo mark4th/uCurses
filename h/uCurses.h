@@ -440,7 +440,7 @@ void json_state_key(void);
 void json_state_r_brace(void);
 void j_pop(void);
 void strip_quotes(uint16_t len);
-int json_create_ui(char *path, fp_finder_t fp);
+void json_create_ui(char *path, fp_finder_t fp);
 
 // -----------------------------------------------------------------------
 

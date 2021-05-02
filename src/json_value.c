@@ -41,7 +41,7 @@ static void value_fgbg(void)
     uint8_t mask = (uint8_t) ~(BG_RGB | BG_GRAY);
     uint8_t i    = BG;
 
-    if((key_value <= 15) && (key_value >= 0))
+    if((key_value & ~255) == 0)
     {
         if(ktype == KEY_FG)
         {

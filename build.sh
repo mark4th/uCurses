@@ -1,5 +1,5 @@
 mkdir build
-autoreconf -fiv
+autoreconf -iv
 cd build
 ../configure
 make

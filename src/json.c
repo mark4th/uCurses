@@ -511,6 +511,11 @@ static void fix_menus(screen_t *scr)
     uint16_t width;
 
     win = win_open(scr->width, 1);
+    if(win == NULL)
+    {
+        json_error("Unable to create window for menu bar");
+    }
+
     bar->window = win;
     win->flags = WIN_LOCKED;
     win->screen   = scr;
@@ -542,12 +547,15 @@ static void fix_menus(screen_t *scr)
 
 static void build_ui(void)
 {
+    uint16_t result;
     screen_t *scr = active_screen;
 
-    if(scr_alloc(scr) != 0)
+    result = scr_alloc(scr);
+    if(result != 0)
     {
         json_error("Out of memory allocating screen");
     }
+
     fix_windows(scr);
     fix_menus(scr);
 }
@@ -563,8 +571,9 @@ static void build_ui(void)
 // needs better documentation than im prepared to put in source file
 // comments :)
 
-int json_create_ui(char *path, fp_finder_t fp)
+void json_create_ui(char *path, fp_finder_t fp)
 {
+    int result;
     struct winsize w;
 
     ioctl(0, TIOCGWINSZ, &w);
@@ -578,20 +587,23 @@ int json_create_ui(char *path, fp_finder_t fp)
 
     if(fd < 0)
     {
-        return -1;
+        json_error("Cannot open JSON file");
     }
 
-    fstat(fd, &st);
+    result = fstat(fd, &st);
+    if(result != 0)
+    {
+        json_error("Cannot stat JSON file");
+    }
     json_len  = st.st_size;
 
     json_data = mmap(NULL, json_len, PROT_READ | PROT_WRITE,
         MAP_PRIVATE, fd, 0);
-
     close(fd);
 
     if(json_data == MAP_FAILED)
     {
-        return -1;
+        json_error("Unable to map JSON file");
     }
 
     json_de_tab(json_data, json_len);
@@ -604,8 +616,6 @@ int json_create_ui(char *path, fp_finder_t fp)
     {
         build_ui();
     }
-
-    return 0;
 }
 
 // =======================================================================

@@ -71,6 +71,6 @@ project_target = custom_target(
     target_name,
     input: shared_object,
     output: 'none',
-    command: ['strip', '-R', 'comment', '@INPUT@'],
+    command: ['strip', '-R', '.comment', '@INPUT@'],
     build_by_default: true,
 )

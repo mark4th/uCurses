@@ -45,6 +45,7 @@ char *next_arg(void)
         }
         buff[i++] = c;
     }
+
     return NULL;
 }
 
@@ -96,6 +97,7 @@ void hash_file(const char *p)
     printf("#define VCOUNT sizeof(%s) / sizeof(%s[0])\n\n", path, path);
 
     separator();
+
     printf(
         "static opt_t menu_address_cb(uint32_t hash)\n"
         "{\n"
@@ -120,7 +122,6 @@ void hash_file(const char *p)
 
 static void help(void)
 {
-    printf("%s\n", banner);
     printf("./libuCurses.so [args]\n\n");
     printf("--help          Get Help (this page)\n");
     printf("--secret        Get Secrets (you no look!)\n");
@@ -160,7 +161,7 @@ static void process_args(void)
     char *s;
     uint32_t hash;
 
-    next_arg();
+    next_arg();   // skip argv[0]
 
     while((s = next_arg()) != NULL)
     {
@@ -178,15 +179,15 @@ static void process_args(void)
 
 void entry(void)
 {
-    char path[40];
+    printf("%s\n", banner);
 
-    sprintf(path, "/proc/%d/cmdline", getpid());
-    fp = fopen((char *)path, "r");
+    fp = fopen("/proc/self/cmdline", "r");
 
     if(fp != NULL)
     {
         process_args();
     }
+
     _exit(0);
 }
 

@@ -49,7 +49,7 @@ uint8_t test_keys(void)
 // -----------------------------------------------------------------------
 // read single keypress
 
-static uint8_t read_key(void)
+static INLINE uint8_t read_key(void)
 {
     uint8_t buffer;
     ssize_t n;
@@ -155,7 +155,7 @@ void (*k_table[])() =
 // compare input key sequence with each key seuence returned by the
 // functions referenced in the above k_table
 
-static uint16_t match_key(void)
+static INLINE uint16_t match_key(void)
 {
     uint64_t i;
     uint16_t q;

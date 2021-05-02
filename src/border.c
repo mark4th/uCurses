@@ -30,11 +30,11 @@ static border_t bdr_single[] =
 
 static border_t bdr_double[] =
 {
-    0x2554,                 // ╔       ╔═══╦═══╗
-    0x2557,                 //  ╗      ║   ║   ║
-    0x255a,                 // ╚       ╠═══╬═══╣
-    0x255d,                 //  ╝      ║   ║   ║
-    0x2550,                 // ═       ╚═══╩═══╝
+    0x2554,                 // ╔        ╔═══╦═══╗
+    0x2557,                 //  ╗       ║   ║   ║
+    0x255a,                 // ╚        ╠═══╬═══╣
+    0x255d,                 //  ╝       ║   ║   ║
+    0x2550,                 // ═        ╚═══╩═══╝
     0x2551,                 //  ║
     0x2560,                 // ╠
     0x2563,                 //  ╣
@@ -47,11 +47,11 @@ static border_t bdr_double[] =
 
 static border_t bdr_curved[] =
 {
-    0x256d,                 // ╭       ╭───┬───╮
-    0x256e,                 //  ╮      │   │   │
-    0x2570,                 // ╰       ├───┼───┤
-    0x256f,                 //  ╯      │   │   │
-    0x2500,                 // ─       ╰───┴───╯
+    0x256d,                 // ╭        ╭───┬───╮
+    0x256e,                 //  ╮       │   │   │
+    0x2570,                 // ╰        ├───┼───┤
+    0x256f,                 //  ╯       │   │   │
+    0x2500,                 // ─        ╰───┴───╯
     0x2502,                 //  │
     0x251c,                 // ├
     0x2524,                 //  ┤
@@ -73,12 +73,21 @@ static void draw_char(window_t *win, uint16_t cx,
 
     *(uint64_t *)&p1->attrs = *(uint64_t *)&win->bdr_attrs;
     p1->code = code;
+
+    // if we just overlayed a double whide character with our single wide
+    // border character then make sure to kill the DEADCODE tag on the
+    // next cell
+
+    if((p1 + 1)->code == DEADCODE)
+    {
+        (p1 + 1)->code = 0x20;
+    }
 }
 
 // -----------------------------------------------------------------------
 // draw one entire row of a border.
 
-static void draw_top_bottom(window_t *win, uint32_t c1,
+static INLINE void draw_top_bottom(window_t *win, uint32_t c1,
     uint32_t c2, uint32_t c3, uint16_t cy)
 {
     uint16_t cx = win->xco - 1;
@@ -95,7 +104,7 @@ static void draw_top_bottom(window_t *win, uint32_t c1,
 
 // -----------------------------------------------------------------------
 
-static void draw_mid_row(window_t *win,
+static INLINE void draw_mid_row(window_t *win,
       uint32_t c1, uint32_t c3, uint16_t cy)
 {
     draw_char(win, win->xco - 1 , cy, c1);

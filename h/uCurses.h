@@ -13,6 +13,9 @@
 
 // -----------------------------------------------------------------------
 
+#define INLINE __attribute__((always_inline))
+// -----------------------------------------------------------------------
+
     #define NAN 0x7fff      // not a number (honest!)
 
     #define MAX_PARAM 9
@@ -248,14 +251,13 @@ typedef enum
 
 enum
 {
-    ATTR,                   // attribute flags
-    FG_R,                   // rgb fg red
-    FG_G,                   // rgb fg green
-    FG_B,                   // rgb fg blue
-    BG_R,                   // rgb bg red
-    FG,    BG_G = 5,        // foreground or rgb bg green
-    BG,    BG_B = 6,        // background or rgb bg blue
-    UNUSED
+    ATTR,
+    FG,     FG_R = 1,
+    BG,     BG_R = 2,
+    FG_G,
+    BG_G,
+    FG_B,
+    BG_B,
 };
 
 // -----------------------------------------------------------------------
@@ -441,6 +443,8 @@ void json_state_r_brace(void);
 void j_pop(void);
 void strip_quotes(uint16_t len);
 void json_create_ui(char *path, fp_finder_t fp);
+void json_build_ui(void);
+void populate_parent(void);
 
 // -----------------------------------------------------------------------
 

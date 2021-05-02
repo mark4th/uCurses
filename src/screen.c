@@ -88,6 +88,7 @@ void scr_win_detach(window_t *win)
 }
 
 // -----------------------------------------------------------------------
+// deallocate all structures attached to screen
 
 void scr_close(screen_t *scr)
 {
@@ -125,29 +126,30 @@ static void scr_draw_win(window_t *win)
 {
     uint16_t i;
     cell_t *src, *dst;
-    uint32_t q;
+    uint32_t width;
+    screen_t *scr;
 
     if(win != NULL)
     {
-        screen_t *scr = win->screen;
-
-        dst = scr_line_addr(scr, win->yco);
-        dst = &dst[win->xco];
-        src = win->buffer;
-
-        q = win->width * sizeof(cell_t);
-
-        for(i = 0; i < win->height; i++)
-        {
-            memcpy(dst, src, q);
-            dst += scr->width;
-            src += win->width;
-        }
-
         // draw windows border if it has one
         if(win->flags & WIN_BOXED)
         {
             win_draw_borders(win);
+        }
+
+        scr = win->screen;
+
+        dst = scr_line_addr(scr, win->yco);
+        dst += win->xco;
+        src = win->buffer;
+
+        width = win->width * sizeof(cell_t);
+
+        for(i = 0; i < win->height; i++)
+        {
+            memcpy(dst, src, width);
+            src += win->width;
+            dst += scr->width;
         }
     }
 }
@@ -174,80 +176,14 @@ static void scr_draw_windows(screen_t *scr)
 
 void scr_cup(screen_t *scr, uint16_t x, uint16_t y)
 {
+    // would a single hpa / vpa be faster than a cup ?
+
     if((x != scr->cx) || (y != scr->cy))
     {
         cup(y, x);
     }
     scr->cx = x;
     scr->cy = y;
-}
-
-// -----------------------------------------------------------------------
-
-static uint16_t scr_is_modified(screen_t *scr, uint16_t index)
-{
-    uint16_t result;
-
-    cell_t *p1 = &scr->buffer1[index];
-    cell_t *p2 = &scr->buffer2[index];
-
-    // if attrs of this cell in buffer1 are different from the attrs
-    // in buffer 2 or if the characters in those cells are different
-    // then this cell needs updating
-
-    result = (*(uint64_t *)&p1->attrs != *(uint64_t *)p2->attrs);
-    result |= (p1->code != p2->code);
-
-    return result;
-}
-
-// -----------------------------------------------------------------------
-// emits a charcter in the screen buffer1 out to the console
-
-static void scr_emit(screen_t *scr, uint16_t index)
-{
-    uint16_t x, y;
-    cell_t *p1, *p2;
-
-    p1 = &scr->buffer1[index];
-    p2 = &scr->buffer2[index];
-
-    *p2 = *p1;               // mark cell as no longer needing update
-
-    y = index / scr->width;  // convert index to coordinates
-    x = index % scr->width;
-
-    scr_cup(scr, x, y);      // hopefylly only sets x or y if not correct
-
-    // this horrendous code ensures that any double wide character such
-    // as a chinese character that is not immediately followed by another
-    // double wide character is not drawn.  if it were drawn it would then
-    // overwrite the single wide char that follows it and that char would
-    // then not be redrawn because as far as the system is concerned
-    // that cell never changed
-
-    if(is_wide(p1->code) == 1)
-    {
-        if(is_wide((p1 + 1)->code) == 0)
-        {
-            utf8_emit(0x20);
-            scr->cx++;
-            (p2+1)->code = 0;
-            *(uint64_t *)&(p2+1)->attrs = 0;
-            goto skip;
-        }
-    }
-
-    utf8_emit(p1->code);     // output utf-8 codepoint to terminal
-
-skip:
-    scr->cx++;
-
-    if(scr->cx == scr->width)
-    {
-        scr->cx = 0;
-        scr->cy++;
-    }
 }
 
 // -----------------------------------------------------------------------
@@ -285,9 +221,74 @@ void scr_add_backdrop(screen_t *scr)
 }
 
 // -----------------------------------------------------------------------
+
+static INLINE uint16_t scr_is_modified(screen_t *scr, uint16_t index)
+{
+    uint16_t result;
+
+    cell_t *p1 = &scr->buffer1[index];
+    cell_t *p2 = &scr->buffer2[index];
+
+    // if attrs of this cell in buffer1 are different from the attrs
+    // in buffer 2 or if the characters in those cells are different
+    // then this cell needs updating
+
+    result = (*(uint64_t *)&p1->attrs != *(uint64_t *)p2->attrs);
+    result |= (p1->code != p2->code);
+
+    return result;
+}
+
+// -----------------------------------------------------------------------
+// emits a charcter in the screen buffer1 out to the console
+
+static INLINE void scr_emit(screen_t *scr, uint16_t index)
+{
+    uint16_t x, y;
+    cell_t *p1, *p2;
+
+    p1 = &scr->buffer1[index];
+    p2 = &scr->buffer2[index];
+
+    *p2 = *p1;               // mark cell as no longer needing update
+
+    if(p1->code == DEADCODE)
+    {
+        return;
+    }
+
+    // convert index to coordinates and reposition the cursor in the
+    // terminal unless it is already there
+    y = index / scr->width;
+    x = index % scr->width;
+    scr_cup(scr, x, y);
+
+    // if the current character is double width but there is a single
+    // wide character overlapping it to the right then force update of
+    // overlapping single width char
+    if((is_wide(p1->code) == 1) &&
+      ((p1 + 1)->code != DEADCODE))
+    {
+        (p2 + 1)->code = 0;
+        *(uint64_t *)(p2 + 1)->attrs = 0;
+    }
+
+    // output utf-8 codepoint to terminal
+    utf8_emit(p1->code);
+
+    scr->cx++;
+
+    if(scr->cx == scr->width)
+    {
+        scr->cx = 0;
+        scr->cy++;
+    }
+}
+
+// -----------------------------------------------------------------------
 // inner loop of screen update
 
-static uint32_t inner_update(screen_t *scr, uint16_t index,
+static INLINE uint32_t inner_update(screen_t *scr, uint16_t index,
     uint16_t end)
 {
     cell_t *p1;
@@ -337,7 +338,7 @@ static void outer_update(screen_t *scr)
         // screen that shares its attributes.
         if(scr_is_modified(scr, index) != 0)
         {
-            index = inner_update(scr, index, end) - 1;
+            index = inner_update(scr, index, end);
 
             // the return value is the index of the first character
             // that update found that had different atributes to the
@@ -355,7 +356,7 @@ static void outer_update(screen_t *scr)
 
 // -----------------------------------------------------------------------
 
-static void scr_update_menus(screen_t *scr)
+static INLINE void scr_update_menus(screen_t *scr)
 {
     menu_bar_t *bar;
     pulldown_t *pd;

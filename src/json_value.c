@@ -399,6 +399,7 @@ static uint32_t constant_val[] =
 {
     MENU_DISABLED, BDR_SINGLE, BDR_DOUBLE, BDR_CURVED,
     WIN_LOCKED,    WIN_FILLED, WIN_BOXED,  FAR,
+
     // color values
     0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
     0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f
@@ -409,7 +410,7 @@ static uint32_t constant_val[] =
 
 // todo add percentages
 
-static void parse_number(void)
+static INLINE void parse_number(void)
 {
     uint8_t c;
     uint8_t radix   = 10;
@@ -448,7 +449,7 @@ static void parse_number(void)
 
 // -----------------------------------------------------------------------
 
-static void is_constant(void)
+static INLINE void is_constant(void)
 {
     uint16_t i;
 

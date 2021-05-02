@@ -567,7 +567,7 @@ static void _p(void)
 
 // -----------------------------------------------------------------------
 
-static uint8_t next_c(void)
+static INLINE uint8_t next_c(void)
 {
     char c1;
     digits = 1;

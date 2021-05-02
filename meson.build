@@ -2,7 +2,7 @@
 project(
     'uCurses',
     'c',
-    version : '0.0.2',
+    version : '0.0.1',
     default_options : ['warning_level=3'],
     license: 'MIT',
 )
@@ -25,22 +25,15 @@ elif compiler.get_id() == 'clang'
 endif
 
 build_args += [
-    '-DPROJECT_NAME=' + meson.project_name(),
-    '-DPROJECT_VERSION=' + meson.project_version(),
+    '-DPROJECT_NAME="@0@"'.format(meson.project_name()),
+    '-DPROJECT_VERSION="@0@"'.format(meson.project_version()),
 ]
 
 message('@0@: @1@'.format(compiler.get_id(), build_args))
 
 linker_args = ['-Wl,--entry=entry']
 
-sources = run_command(
-    'bash', '-c',
-    '''
-        ln -s ${PROJECT_ROOT}/src ${ARCH_MESON}/src
-        ln -s ${PROJECT_ROOT}/h ${ARCH_MESON}/h
-        cd ${ARCH_MESON} && find src/ -name *.c
-    '''
-)
+sources = run_command('bash', '-c', 'find src/ -name *.c')
 
 project_source_files = sources.stdout().strip().split('\n')
 

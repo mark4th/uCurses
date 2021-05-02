@@ -12,7 +12,7 @@ extern j_state_t *j_state;
 // this series of IF statements produces significantly smaller code than
 // a switch statement does.   C sucks
 
-static void populate_attribs(void *pstruct, uint32_t ptype)
+static INLINE void populate_attribs(void *pstruct, uint32_t ptype)
 {
     if((ptype == STRUCT_WINDOW) || (ptype == STRUCT_BACKDROP))
     {
@@ -34,7 +34,7 @@ static void populate_attribs(void *pstruct, uint32_t ptype)
 
 // -----------------------------------------------------------------------
 
-static void populate_b_attribs(window_t *pstruct)
+static INLINE void populate_b_attribs(window_t *pstruct)
 {
     *(uint64_t *)pstruct->bdr_attrs =
         *(uint64_t *)j_state->structure;
@@ -44,7 +44,7 @@ static void populate_b_attribs(window_t *pstruct)
 
 // -----------------------------------------------------------------------
 
-static void populate_s_attribs(void *pstruct, uint32_t ptype)
+static INLINE void populate_s_attribs(void *pstruct, uint32_t ptype)
 {
     if(ptype == STRUCT_PULLDOWN)
     {
@@ -62,7 +62,7 @@ static void populate_s_attribs(void *pstruct, uint32_t ptype)
 
 // -----------------------------------------------------------------------
 
-static void populate_d_attribs(void *pstruct, uint32_t ptype)
+static INLINE void populate_d_attribs(void *pstruct, uint32_t ptype)
 {
     if(ptype == STRUCT_PULLDOWN)
     {
@@ -80,7 +80,7 @@ static void populate_d_attribs(void *pstruct, uint32_t ptype)
 
 // -----------------------------------------------------------------------
 
-static void populate_pulldown(menu_bar_t *pstruct)
+static INLINE void populate_pulldown(menu_bar_t *pstruct)
 {
     uint16_t i;
 
@@ -90,7 +90,7 @@ static void populate_pulldown(menu_bar_t *pstruct)
 
 // -----------------------------------------------------------------------
 
-static void populate_menu_item(pulldown_t *gstruct)
+static INLINE void populate_menu_item(pulldown_t *gstruct)
 {
     uint16_t i;
 
@@ -100,7 +100,7 @@ static void populate_menu_item(pulldown_t *gstruct)
 
 // -----------------------------------------------------------------------
 
-static void populate_window(j_state_t *parent)
+static INLINE void populate_window(j_state_t *parent)
 {
     window_t *win;
     screen_t *scr;
@@ -114,14 +114,14 @@ static void populate_window(j_state_t *parent)
 
 // -----------------------------------------------------------------------
 
-static void populate_backdrop(screen_t *pstruct)
+static INLINE  void populate_backdrop(screen_t *pstruct)
 {
     pstruct->backdrop = j_state->structure;
 }
 
 // -----------------------------------------------------------------------
 
-static void populate_bar(screen_t *scr)
+static INLINE void populate_bar(screen_t *scr)
 {
     menu_bar_t *bar = j_state->structure;
     scr->menu_bar = bar;

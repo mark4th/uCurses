@@ -14,7 +14,7 @@ extern uint16_t console_height;
 // -----------------------------------------------------------------------
 // vereify window is within bounds of screen
 
-static void bounds_check(window_t *win)
+static void INLINE bounds_check(window_t *win)
 {
     uint16_t xco = win->xco;
     uint16_t yco = win->yco;
@@ -35,7 +35,7 @@ static void bounds_check(window_t *win)
 // -----------------------------------------------------------------------
 // fix far window position
 
-static void fix_win(screen_t *scr, window_t *win)
+static void INLINE fix_win(screen_t *scr, window_t *win)
 {
     uint16_t fudge = 1;
     window_t *bd = scr->backdrop;
@@ -59,7 +59,7 @@ static void fix_win(screen_t *scr, window_t *win)
 // -----------------------------------------------------------------------
 // complete init of windows now we know width/height etc
 
-static void fix_windows(screen_t *scr)
+static void INLINE fix_windows(screen_t *scr)
 {
     window_t *win;
     if(scr->backdrop != NULL)
@@ -85,7 +85,7 @@ static void fix_windows(screen_t *scr)
 
 // -----------------------------------------------------------------------
 
-static void fix_menus(screen_t *scr)
+static void INLINE fix_menus(screen_t *scr)
 {
     menu_bar_t *bar = scr->menu_bar;
     pulldown_t *pd;

@@ -1,4 +1,4 @@
-// uCurses json parsing for user interface layout
+ // uCurses json parsing for user interface layout
 // -----------------------------------------------------------------------
 
 #include <inttypes.h>
@@ -245,7 +245,7 @@ static const switch_t states[] =
 
 // -----------------------------------------------------------------------
 
-static void json_state_machine(void)
+static INLINE void json_state_machine(void)
 {
     int f;
 

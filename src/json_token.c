@@ -66,7 +66,7 @@ void strip_quotes(uint16_t len)
 // -----------------------------------------------------------------------
 // copy next line of soruce out of json data into line_buff
 
-static void refill(void)
+static INLINE void refill(void)
 {
     uint16_t i = 0;
 
@@ -95,7 +95,7 @@ static void refill(void)
 // -----------------------------------------------------------------------
 // skip leasing white space prior to parsing next space delimited token
 
-static void skip_white(void)
+static INLINE void skip_white(void)
 {
     char c;
 

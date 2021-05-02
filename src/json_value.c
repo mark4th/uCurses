@@ -410,7 +410,7 @@ static uint32_t constant_val[] =
 
 // todo add percentages
 
-static void parse_number(void)
+static INLINE void parse_number(void)
 {
     uint8_t c;
     uint8_t radix   = 10;
@@ -449,7 +449,7 @@ static void parse_number(void)
 
 // -----------------------------------------------------------------------
 
-static void is_constant(void)
+static INLINE void is_constant(void)
 {
     uint16_t i;
 

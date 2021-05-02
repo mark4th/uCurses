@@ -16,13 +16,13 @@ extern uint8_t attrs[8];
 #define NORMAL   0x0004030000000080
 #define SELECTED 0x0001060000000080
 #define DISABLED 0x00080400000000c2
-//                   b f b f f f a
-//                   g g g g g g t
-//                       r b g r t
-//                               r
-//                   b  b
-//                   g  g
-//                   b  g
+//                 r b f b f f f a
+//                 e g g g g g g t
+//                 s     r b g r t
+//                 e             r
+//                 r b b
+//                 v g g
+//                   b g
 
 // attr
 // bit 0 = underline
@@ -36,7 +36,7 @@ extern uint8_t attrs[8];
 
 // -----------------------------------------------------------------------
 
-static uint32_t init_bar(screen_t *scr, window_t *win, menu_bar_t *bar)
+static INLINE uint32_t init_bar(screen_t *scr, window_t *win, menu_bar_t *bar)
 {
     bar->window = win;
 
@@ -114,8 +114,8 @@ uint32_t new_pulldown(screen_t *scr, char *name)
 
 // -----------------------------------------------------------------------
 
-static uint32_t init_item(pulldown_t *pd, menu_item_t *item, char *name,
-    menu_fp_t fp, uint16_t shortcut)
+static INLINE uint32_t init_item(pulldown_t *pd, menu_item_t *item,
+    char *name, menu_fp_t fp, uint16_t shortcut)
 {
     uint16_t width;
 
@@ -140,7 +140,7 @@ static uint32_t init_item(pulldown_t *pd, menu_item_t *item, char *name,
 
 // -----------------------------------------------------------------------
 
-static uint32_t new_item(pulldown_t *pd, char *name,
+static INLINE uint32_t new_item(pulldown_t *pd, char *name,
     menu_fp_t fp, uint16_t shortcut)
 {
     uint32_t result = -1;
@@ -352,7 +352,7 @@ void pd_enable(screen_t *scr, char *name)
 // -----------------------------------------------------------------------
 // create a new window for the pulldown menu we are about to display
 
-static uint32_t bar_create_pd_win(screen_t *scr, pulldown_t *pd)
+static INLINE uint32_t bar_create_pd_win(screen_t *scr, pulldown_t *pd)
 {
     window_t *win;
     uint32_t result = 1;
@@ -418,7 +418,7 @@ static void menu_activate(void)
 
 // -----------------------------------------------------------------------
 
-static void prev_item(pulldown_t *pd)
+static INLINE void prev_item(pulldown_t *pd)
 {
     pd->which = (pd->which != 0)
         ? pd->which - 1
@@ -427,7 +427,7 @@ static void prev_item(pulldown_t *pd)
 
 // -----------------------------------------------------------------------
 
-static void next_item(pulldown_t *pd)
+static INLINE void next_item(pulldown_t *pd)
 {
     pd->which = (pd->which != pd->count -1)
         ? pd->which + 1
@@ -436,7 +436,7 @@ static void next_item(pulldown_t *pd)
 
 // -----------------------------------------------------------------------
 
-static void next_pd(menu_bar_t *bar)
+static INLINE void next_pd(menu_bar_t *bar)
 {
     bar->which = (bar->which != bar->count -1)
        ? bar->which + 1
@@ -445,7 +445,7 @@ static void next_pd(menu_bar_t *bar)
 
 // -----------------------------------------------------------------------
 
-static void prev_pd(menu_bar_t *bar)
+static INLINE void prev_pd(menu_bar_t *bar)
 {
     bar->which = (bar->which != 0)
        ? bar->which - 1

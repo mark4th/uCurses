@@ -26,8 +26,8 @@
         {
             "window" :
             {
-                "width"  : 35,
-                "height" : 15,
+                "width"  : 35%,
+                "height" : 55%,
 
                 "xco"    : 2,               // within bounds of backdrop border
                 "yco"    : 2,
@@ -54,8 +54,8 @@
 
             "window" :
             {
-                "width"  : 35,
-                "height" : 15,
+                "width"  : 35%,
+                "height" : 55%,
 
                 "xco" : "FAR",
                 "yco" : "FAR",

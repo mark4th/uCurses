@@ -50,7 +50,7 @@ char *next_arg(void)
 
 // -----------------------------------------------------------------------
 
-static void line(void)
+static void separator(void)
 {
   printf("// -----------------------------------"
     "------------------------------------\n\n");
@@ -74,7 +74,7 @@ void hash_file(const char *p)
         _exit(1);
     }
     printf("\n");
-    line();
+    separator();
     printf("static switch_t %s\n{\n", path);
 
     while((s = next_arg()) != NULL)
@@ -95,7 +95,7 @@ void hash_file(const char *p)
 
     printf("#define VCOUNT sizeof(%s) / sizeof(%s[0])\n\n", path, path);
 
-    line();
+    separator();
     printf(
         "static opt_t menu_address_cb(uint32_t hash)\n"
         "{\n"
@@ -113,7 +113,7 @@ void hash_file(const char *p)
 
         "    return NULL;\n"
         "}\n\n", path);
-    line();
+    separator();
 }
 
 // -----------------------------------------------------------------------

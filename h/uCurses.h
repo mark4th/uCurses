@@ -27,7 +27,7 @@
     #define MENU_DISABLED 1
     #define MAX_MENU_ITEMS 10
     #define DEADCODE 0xdeadc0de
-    #define FAR 8000
+    #define FAR 0x7fff
 
 // -----------------------------------------------------------------------
 

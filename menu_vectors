@@ -1,0 +1,39 @@
+this file contains a list of menu function vector tags. create
+a file with tags for your own menu functions and copy it into 
+the build directory and execute a make followed by 
+
+	.libs/libuCurses.so menu_vectors
+
+(assuming your file has the same name as this one).
+
+The library will then produce the C code you will need to add 
+to your application in order to integrate the meny functions 
+specified in your json file.
+
+Each menu item specified in your json file will have a name
+which is displayed in the menus and a vector tag.  the
+vector tags specified in your json must match the tags
+you give here.  the functions should also share the same
+name.
+
+these are the tags currently used in the example program
+but none of the menus there actually do mutch :)
+
+open_file
+close_file
+delete_internet
+copy_nothing
+insert_mode
+overwrite_mode
+delete_line
+insert_line
+view_point
+view_to_a_kill
+review
+manchester_screwdriver
+dentists_drill
+diamond_file
+shovel
+self_help
+helping_hand
+helpless

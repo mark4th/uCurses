@@ -18,6 +18,7 @@ extern uint32_t json_hash;
 extern uint16_t console_width;
 extern uint16_t console_height;
 
+static uint16_t percent;
 int32_t key_value;
 uint16_t quoted;
 
@@ -164,10 +165,20 @@ static void value_xy(void)
 
     if(j_state->struct_type == KEY_XCO)
     {
+        if(percent != 0)
+        {
+            key_value *= console_width;
+            key_value /= 100;
+        }
         win->xco = key_value;
     }
     else
     {
+        if(percent != 0)
+        {
+            key_value *= console_height;
+            key_value /= 100;
+        }
         win->yco = key_value;
     }
 }
@@ -181,10 +192,20 @@ static void value_wh(void)
 
     if(j_state->struct_type == KEY_WIDTH)
     {
+        if(percent != 0)
+        {
+            key_value *= console_width;
+            key_value /= 100;
+        }
         win->width = key_value;
     }
     else  // KEY_HEIGHT
     {
+        if(percent != 0)
+        {
+            key_value *= console_height;
+            key_value /= 100;
+        }
         win->height = key_value;
     }
 }
@@ -395,6 +416,8 @@ static void parse_number(void)
     uint16_t i      = 0;
     uint32_t result = 0;
 
+    percent = 0;
+
     if((json_token[0] == '0') && (json_token[1] == 'x'))
     {
         radix = 16;
@@ -403,6 +426,11 @@ static void parse_number(void)
 
     while((c = json_token[i++]) != '\0')
     {
+        if(c == '%')
+        {
+            percent = 1;
+            break;
+        }
         c -= '0';
         if(c > 9)
         {

@@ -435,12 +435,13 @@ static void bounds_check(window_t *win)
 {
     uint16_t xco = win->xco;
     uint16_t yco = win->yco;
+
     uint16_t z = (win->flags & WIN_BOXED) ? 1 :0;
 
-    if(((xco + win->width  + z) <= console_width)  &&
-       ((yco + win->height + z) <= console_height) &&
-       ((xco - z) <= console_width) &&
-       ((yco - z) <= console_height))
+    if(((xco + win->width  + z) < console_width)  &&
+       ((yco + win->height + z) < console_height) &&
+       ((xco - z) < console_width) &&
+       ((yco - z) < console_height))
     {
         return;
     }

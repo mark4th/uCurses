@@ -348,6 +348,7 @@ static switch_t menu_vectors[] =
 #define VCOUNT sizeof(menu_vectors) / sizeof(menu_vectors[0])
 
 // -----------------------------------------------------------------------
+// json parsing calls this to get the address of a specified menu function
 
 static opt_t menu_address_cb(uint32_t hash)
 {

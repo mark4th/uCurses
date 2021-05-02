@@ -1,9 +1,9 @@
 // win_printf.c  printf strings into window_t
 // -----------------------------------------------------------------------
 
-#include <stdio.h>
-#include <stdarg.h>
 #include <inttypes.h>
+#include <stdarg.h>
+#include <stdio.h>
 
 #include "h/uCurses.h"
 

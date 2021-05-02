@@ -6,8 +6,8 @@
 
 // -----------------------------------------------------------------------
 
-#include <inttypes.h>
 #include <aio.h>
+#include <inttypes.h>
 
 #include "list.h"
 

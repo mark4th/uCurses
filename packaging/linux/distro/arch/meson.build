@@ -33,11 +33,14 @@ message('@0@: @1@'.format(compiler.get_id(), build_args))
 
 linker_args = ['-Wl,--entry=entry']
 
-sources = run_command('bash', '-c', '''
-    ln -s ${PROJECT_ROOT}/src ${ARCH_MESON}/src
-    ln -s ${PROJECT_ROOT}/h ${ARCH_MESON}/h
-    cd ${ARCH_MESON} && find src/ -name *.c
-''')
+sources = run_command(
+    'bash', '-c',
+    '''
+        ln -s ${PROJECT_ROOT}/src ${ARCH_MESON}/src
+        ln -s ${PROJECT_ROOT}/h ${ARCH_MESON}/h
+        cd ${ARCH_MESON} && find src/ -name *.c
+    '''
+)
 
 project_source_files = sources.stdout().strip().split('\n')
 
@@ -54,10 +57,19 @@ shared_object = shared_library(
 full_path = run_command('basename', shared_object.full_path()).stdout().strip()
 target_name = 'stripped @0@'.format(full_path)
 
+dot_stripped = '.stripped'
 project_target = custom_target(
     target_name,
     input: shared_object,
-    output: 'none',
-    command: ['strip', '-R', '.comment', '@INPUT@'],
+    output: dot_stripped,
+    command: [
+        'bash', '-c',
+        '''
+            strip -R .comment @INPUT@
+            touch @0@
+            file @INPUT@ > /proc/$PPID/fd/1
+            du -h @INPUT@ > /proc/$PPID/fd/1
+        '''.format(dot_stripped)
+    ],
     build_by_default: true,
 )

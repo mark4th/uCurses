@@ -19,7 +19,7 @@ build_args = [
 compiler = meson.get_compiler('c')
 
 if compiler.get_id() == 'gcc'
-    build_args += ['-Os']
+    build_args += ['-Os', '-Wno-error=attributes']
 elif compiler.get_id() == 'clang'
     build_args += ['-Oz']
 endif

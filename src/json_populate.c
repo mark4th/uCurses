@@ -132,7 +132,7 @@ static INLINE void populate_bar(screen_t *scr)
 // ready.  add this C structure to its parent objects C structure...
 // or sometimes its grandparents
 
-void populate_parent(void)
+void INLINE populate_parent(void)
 {
     j_state_t *parent = j_state->parent;
     j_state_t *gp     = parent->parent;

@@ -233,7 +233,7 @@ void bar_draw_text(screen_t *scr)
     {
         win = bar->window;
 
-        *(uint64_t *)&win->attrs[0] = *(uint64_t *)&bar->normal[0];
+        *(uint64_t *)win->attrs = *(uint64_t *)bar->normal;
 
         win_clear(win);
         win_emit(win, win->blank);
@@ -242,7 +242,7 @@ void bar_draw_text(screen_t *scr)
         {
             pd = bar->items[i];
 
-            *(uint64_t *)&win->attrs[0] =
+            *(uint64_t *)win->attrs =
                 ((i == bar->which) && (bar->active != 0))
                      ? *(uint64_t *)bar->selected
                      : (pd->flags & MENU_DISABLED)
@@ -254,7 +254,7 @@ void bar_draw_text(screen_t *scr)
             win_emit(win, win->blank);
         }
 
-        *(uint64_t *)&win->attrs[0] = *(uint64_t *)bar->normal;
+        *(uint64_t *)win->attrs = *(uint64_t *)bar->normal;
 
         while((win->cx != win->width) && (win->cx != 0))
         {

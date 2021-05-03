@@ -98,13 +98,14 @@ static void INLINE fix_menus(screen_t *scr)
     if(win == NULL)
     {
         json_error("Unable to create window for menu bar");
+        return;  // prevent scan-build make error
     }
 
-    bar->window = win;
-    win->flags = WIN_LOCKED;
+    bar->window   = win;
     win->screen   = scr;
+    win->flags    = WIN_LOCKED;
     scr->menu_bar = bar;
-    bar->xco = 2;
+    bar->xco      = 2;
 
     for(i = 0; i < bar->count; i++)
     {
@@ -114,11 +115,11 @@ static void INLINE fix_menus(screen_t *scr)
         pd->xco = bar->xco;
         bar->xco += strlen(pd->name) + 2;
 
-        // widest menu item in pulldown menu defines the width of
-        // the window
+        // widest item in pulldown defines the width of the window
         for(j = 0; j < pd->count; j++)
         {
             width = strlen(pd->items[j]->name);
+
             if(pd->width <width)
             {
                 pd->width = width;
@@ -129,7 +130,7 @@ static void INLINE fix_menus(screen_t *scr)
 
 // -----------------------------------------------------------------------
 
-void json_build_ui(void)
+void INLINE json_build_ui(void)
 {
     uint16_t result;
     screen_t *scr = active_screen;

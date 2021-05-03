@@ -7,7 +7,6 @@
 #include <string.h>
 
 #include "h/uCurses.h"
-//#include "h/color.h"
 
 extern uint8_t default_bg;
 extern uint8_t default_fg;
@@ -275,20 +274,20 @@ void win_scroll_dn(window_t *win)
 void win_scroll_lt(window_t *win)
 {
     uint16_t i;
-    cell_t *s;
-    cell_t *d;
+    cell_t *src;
+    cell_t *dst;
     cell_t cell;
 
-    *(uint64_t *)&cell.attrs = *(uint64_t *)&win->attrs;
+    *(uint64_t *)&cell.attrs = *(uint64_t *)win->attrs;
 
     cell.code = win->blank;
 
     for(i = 0; i < win->width; i++)
     {
-        s = d = win_line_addr(win, i);
-        s++;
-        memcpy(d, s, (win->width - 1) * sizeof(cell_t));
-        d[win->width -1 ] = cell;
+        src = dst = win_line_addr(win, i);
+        src++;
+        memcpy(dst, src, (win->width - 1) * sizeof(cell_t));
+        dst[win->width -1 ] = cell;
     }
 }
 
@@ -297,19 +296,19 @@ void win_scroll_lt(window_t *win)
 void win_scroll_rt(window_t *win)
 {
     uint8_t i;
-    cell_t *s;
-    cell_t *d;
+    cell_t *src;
+    cell_t *dst;
     cell_t cell;
 
-    *(uint64_t *)&cell.attrs = *(uint64_t *)&win->attrs;
+    *(uint64_t *)&cell.attrs = *(uint64_t *)win->attrs;
     cell.code = win->blank;
 
     for(i = win->width -1; i != 0; i--)
     {
-        s = d = win_line_addr(win, i);
-        d++;
-        memmove(&d[1], s, (win->width - 1) * sizeof(cell_t));
-        s[0] = cell;
+        src = dst = win_line_addr(win, i);
+        dst++;
+        memmove(&dst[1], src, (win->width - 1) * sizeof(cell_t));
+        src[0] = cell;
     }
 }
 
@@ -436,7 +435,7 @@ void win_emit(window_t *win, uint32_t c)
             {
                 win_cr(win);
             }
-            *(uint64_t *)&cell.attrs = *(uint64_t *)&win->attrs;
+            *(uint64_t *)&cell.attrs = *(uint64_t *)win->attrs;
             cell.code = c;
 
             p = win_line_addr(win, win->cy);

@@ -24,7 +24,7 @@ export CC_LD
 
 _ = echo '[$@]'; set -euo pipefail;
 
-default: build
+default: .build
 	$_
 
 .vars:
@@ -54,15 +54,15 @@ $(BUILD_TOUCHED): $(MESON_BUILD) generic.makefile makefile
 	touch $(BUILD_TOUCHED)
 
 
-build: $(BUILD_TOUCHED)
+.build: $(BUILD_TOUCHED)
 	$_
 	cd $(BUILD) && ninja $(NINJA_OPT)
 
 
-rebuild: clean build
+rebuild: clean .build
 	$_
 
-install: build
+install: .build
 	$_
 	cd $(BUILD) && sudo ninja $(NINJA_OPT) install
 

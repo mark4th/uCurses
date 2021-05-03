@@ -98,8 +98,8 @@ static INLINE void draw_top_bottom(window_t *win, uint32_t c1,
 static INLINE void draw_mid_row(window_t *win,
       uint32_t c1, uint32_t c3, uint16_t cy)
 {
-    draw_char(win, win->xco - 1 , cy, c1);
-    draw_char(win, win->xco + win->width , cy, c3);
+    draw_char(win, win->xco - 1, cy, c1);
+    draw_char(win, win->xco + win->width, cy, c3);
 }
 
 // -----------------------------------------------------------------------

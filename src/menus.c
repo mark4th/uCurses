@@ -36,7 +36,8 @@ extern uint8_t attrs[8];
 
 // -----------------------------------------------------------------------
 
-static INLINE uint32_t init_bar(screen_t *scr, window_t *win, menu_bar_t *bar)
+static INLINE uint32_t init_bar(screen_t *scr, window_t *win,
+    menu_bar_t *bar)
 {
     bar->window = win;
 

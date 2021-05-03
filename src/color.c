@@ -61,13 +61,13 @@ static INLINE void do_set_fg(void)
         // there is no format string for this within the terminfo
         // string section
 
-        f_str = &rgb_seq[0];
+        f_str = rgb_seq;
         parse_format();
         return;
     }
     if(attrs[ATTR] & FG_GRAY)
     {
-        f_str = &fg_seq[0];
+        f_str = fg_seq;
 
         // gray scales are specified as values from 0 to 23 but
         // the escape seaueces use values from 232 to 255

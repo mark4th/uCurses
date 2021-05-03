@@ -236,24 +236,25 @@ static INLINE uint16_t scr_is_modified(screen_t *scr, uint16_t index)
 }
 
 // -----------------------------------------------------------------------
-// emits a charcter in the screen buffer1 out to the console
+// emits charcter from screen buffer1 to the console
 
 static INLINE void scr_emit(screen_t *scr, uint16_t index)
 {
     uint16_t x, y;
     cell_t *p1, *p2;
+    uint16_t wide;
 
     p1 = &scr->buffer1[index];
     p2 = &scr->buffer2[index];
 
     *p2 = *p1;               // mark cell as no longer needing update
 
-    // if char in cell to left of us is double wide and this cell has
-    // not been overwritten with a different char then skip this cell
     if(p1->code == DEADCODE)
     {
         return;
     }
+    // are we about to write a wide character here..
+    wide = is_wide(p1->code);
 
     // convert index to coordinates and reposition the cursor in the
     // terminal unless it is already there
@@ -264,13 +265,21 @@ static INLINE void scr_emit(screen_t *scr, uint16_t index)
     // if the current character is double width but there is a single
     // wide character overlapping it to the right then force update of
     // overlapping single width char
-    if((is_wide(p1->code) == 1) &&
-      ((p1 + 1)->code != DEADCODE))
+    if((wide == 1) && ((p1 + 1)->code != DEADCODE))
     {
         (p2 + 1)->code = 0;
     }
 
-    // output utf-8 codepoint to terminal
+    // if we are about to overwrite the left edge of a double wide
+    // character we need to later output a blank over the
+    // associated DEADCODE slot
+
+    if((wide == 0) && ((p1 + 1)->code == DEADCODE))
+    {
+        (p1 + 1)->code = 0x20;
+        (p2 + 1)->code = 0;
+    }
+
     utf8_emit(p1->code);
 
     scr->cx++;

@@ -453,6 +453,12 @@ void win_emit(window_t *win, uint32_t c)
             if(encoded->width != 1)
             {
                 cell.code = DEADCODE;
+
+                // if the left edge of this double wide character is
+                // later overwritten with a single wide character
+                // we will need to draw a space over the deadcode
+                // with the same attributes as the doube wide char
+
                 p[win->cx] = cell;
                 win_crsr_rt(win);
             }

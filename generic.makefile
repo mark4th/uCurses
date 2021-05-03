@@ -48,7 +48,7 @@ clean:
 
 
 $(BUILD_TOUCHED): $(MESON_BUILD) generic.makefile makefile
-	make --silent clean
+	make clean
 	$_
 	meson setup $(BUILD) $(MESON_OPT)
 	touch $(BUILD_TOUCHED)
@@ -69,3 +69,7 @@ install: .build
 
 clean-install: clean install
 	$_
+
+scan:
+	rm -f $(BUILD_TOUCHED)
+	scan-build --use-cc=$(CC) make .build

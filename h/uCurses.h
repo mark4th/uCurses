@@ -378,7 +378,6 @@ screen_t *scr_open(uint16_t width, uint16_t height);
 void scr_close(screen_t *scr);
 void scr_win_attach(screen_t *scr, window_t *win);
 void scr_win_detach(window_t *win);
-void scr_cup(screen_t *scr, uint16_t x, uint16_t y);
 void scr_draw_screen(screen_t *scr);
 void scr_add_backdrop(screen_t *scr);
 uint16_t scr_alloc(screen_t *scr);

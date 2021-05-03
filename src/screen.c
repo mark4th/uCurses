@@ -174,7 +174,7 @@ static void scr_draw_windows(screen_t *scr)
 
 // unless it is already there :)
 
-void scr_cup(screen_t *scr, uint16_t x, uint16_t y)
+static INLINE void scr_cup(screen_t *scr, uint16_t x, uint16_t y)
 {
     // would a single hpa / vpa be faster than a cup ?
 
@@ -243,44 +243,73 @@ static INLINE void scr_emit(screen_t *scr, uint16_t index)
     uint16_t x, y;
     cell_t *p1, *p2;
     uint16_t wide;
+    uint16_t force = 0;
 
     p1 = &scr->buffer1[index];
     p2 = &scr->buffer2[index];
 
-    *p2 = *p1;               // mark cell as no longer needing update
+    *p2 = *p1;               // mark cell as updated
 
-    if(p1->code == DEADCODE)
-    {
-        return;
-    }
+    // is this the second cell of a double wide character?
+    // no write to console!
+//    if(p1->code == DEADCODE)
+//    {
+//        return;
+//    }
+
     // are we about to write a wide character here..
+
     wide = is_wide(p1->code);
+
+    // if the character we are about to write is double width but there
+    // is a single width character overlapping it to the right then force
+    // an update of the overlapping single width char
+
+    if(wide == 1)
+    {
+        if((p1 + 1)->code != DEADCODE)
+        {
+            force = 1;
+        }
+    }
+
+    // if we are about to overwrite the left edge of a double wide
+    // character with a single width char then we need to later
+    // output a blank over the associated DEADCODE slot
+
+    else if((p1 + 1)->code == DEADCODE)
+    {
+        force = 2;
+    }
 
     // convert index to coordinates and reposition the cursor in the
     // terminal unless it is already there
+
     y = index / scr->width;
     x = index % scr->width;
     scr_cup(scr, x, y);
 
-    // if the current character is double width but there is a single
-    // wide character overlapping it to the right then force update of
-    // overlapping single width char
-    if((wide == 1) && ((p1 + 1)->code != DEADCODE))
-    {
-        (p2 + 1)->code = 0;
-    }
-
-    // if we are about to overwrite the left edge of a double wide
-    // character we need to later output a blank over the
-    // associated DEADCODE slot
-
-    if((wide == 0) && ((p1 + 1)->code == DEADCODE))
-    {
-        (p1 + 1)->code = 0x20;
-        (p2 + 1)->code = 0;
-    }
-
     utf8_emit(p1->code);
+
+    if(force != 0)
+    {
+        scr_cup(scr, x + 1, y);
+    }
+    if(force == 1)
+    {
+        *(uint64_t *)attrs = *(uint64_t *)(p1 + 1)->attrs;
+        utf8_emit((p1 + 1)->code);
+    }
+    else if(force == 2)
+    {
+        *(uint64_t *)attrs = *(uint64_t *)(p1 + 1)->attrs;
+        utf8_emit(0x20);
+    }
+    else if(wide == 1)
+    {
+        *(uint64_t *)(p1 + 1)->attrs = *(uint64_t *)(p1)->attrs;
+    }
+    *(uint64_t *)attrs = *(uint64_t *)p1->attrs;
 
     scr->cx++;
 

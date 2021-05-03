@@ -71,17 +71,8 @@ static void draw_char(window_t *win, uint16_t cx,
 
     cell_t *p1 = &scr->buffer1[index];
 
-    *(uint64_t *)&p1->attrs = *(uint64_t *)&win->bdr_attrs;
+    *(uint64_t *)p1->attrs = *(uint64_t *)win->bdr_attrs;
     p1->code = code;
-
-    // if we just overlayed a double whide character with our single wide
-    // border character then make sure to kill the DEADCODE tag on the
-    // next cell
-
-    if((p1 + 1)->code == DEADCODE)
-    {
-        (p1 + 1)->code = 0x20;
-    }
 }
 
 // -----------------------------------------------------------------------

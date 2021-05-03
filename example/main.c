@@ -125,9 +125,9 @@ void print_lorem(window_t *win)
         r2 = r1 + 128;
         g2 = g1 + 128;
         b2 = b1 + 128;
-        win_printf(win, "%rf%rb",
-            sintab[r1], sintab[g1], sintab[b1],    // foreground
-            sintab[r2], sintab[g2], sintab[b2]);   // background
+
+        win_set_rgb_fg(win, sintab[r1], sintab[g1], sintab[b1]);
+        win_set_rgb_bg(win, sintab[r2], sintab[g2], sintab[b2]);
 
         r1 += 7; g1 += 5; b1 += 6;
     }
@@ -150,7 +150,7 @@ static void print_chinese(window_t *win)
 
     if((gray == 23) || (gray == 0x0))
     {
-        inc   = -inc;
+        inc = -inc;
     }
 
     win_puts(win, chinese[line++]);
@@ -235,8 +235,10 @@ static void do_run_demo(screen_t *scr, window_t *win1, window_t *win2)
         if((x1 == X_END(win1)) || (x1 == 2))
         {
             flip_flop(win1, win2);
+
             y1i = x1i;    x1i = 0;
             y2i = x2i;    x2i = 0;
+
             return;
         }
     }

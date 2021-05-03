@@ -131,12 +131,6 @@ static void scr_draw_win(window_t *win)
 
     if(win != NULL)
     {
-        // draw windows border if it has one
-        if(win->flags & WIN_BOXED)
-        {
-            win_draw_borders(win);
-        }
-
         scr = win->screen;
 
         dst = scr_line_addr(scr, win->yco);
@@ -150,6 +144,12 @@ static void scr_draw_win(window_t *win)
             memcpy(dst, src, width);
             src += win->width;
             dst += scr->width;
+        }
+
+         // draw windows border if it has one
+        if(win->flags & WIN_BOXED)
+        {
+            win_draw_borders(win);
         }
     }
 }
@@ -181,9 +181,9 @@ void scr_cup(screen_t *scr, uint16_t x, uint16_t y)
     if((x != scr->cx) || (y != scr->cy))
     {
         cup(y, x);
+        scr->cx = x;
+        scr->cy = y;
     }
-    scr->cx = x;
-    scr->cy = y;
 }
 
 // -----------------------------------------------------------------------
@@ -224,19 +224,15 @@ void scr_add_backdrop(screen_t *scr)
 
 static INLINE uint16_t scr_is_modified(screen_t *scr, uint16_t index)
 {
-    uint16_t result;
-
     cell_t *p1 = &scr->buffer1[index];
     cell_t *p2 = &scr->buffer2[index];
 
     // if attrs of this cell in buffer1 are different from the attrs
-    // in buffer 2 or if the characters in those cells are different
+    // in buffer2 or if the characters in those cells are different
     // then this cell needs updating
 
-    result = (*(uint64_t *)&p1->attrs != *(uint64_t *)p2->attrs);
-    result |= (p1->code != p2->code);
-
-    return result;
+    return (*(uint64_t *)p1->attrs != *(uint64_t *)p2->attrs) ||
+             (p1->code != p2->code);
 }
 
 // -----------------------------------------------------------------------
@@ -252,6 +248,8 @@ static INLINE void scr_emit(screen_t *scr, uint16_t index)
 
     *p2 = *p1;               // mark cell as no longer needing update
 
+    // if char in cell to left of us is double wide and this cell has
+    // not been overwritten with a different char then skip this cell
     if(p1->code == DEADCODE)
     {
         return;
@@ -270,7 +268,6 @@ static INLINE void scr_emit(screen_t *scr, uint16_t index)
       ((p1 + 1)->code != DEADCODE))
     {
         (p2 + 1)->code = 0;
-        *(uint64_t *)(p2 + 1)->attrs = 0;
     }
 
     // output utf-8 codepoint to terminal
@@ -296,7 +293,7 @@ static INLINE uint32_t inner_update(screen_t *scr, uint16_t index,
 
     p1 = &scr->buffer1[index];
 
-    *(uint64_t *)&attrs = *(uint64_t *)&p1->attrs;
+    *(uint64_t *)attrs = *(uint64_t *)p1->attrs;
 
     apply_attribs();
 
@@ -304,9 +301,12 @@ static INLINE uint32_t inner_update(screen_t *scr, uint16_t index,
 
     do
     {
-        if(*(uint64_t *)&attrs == *(uint64_t *)&p1->attrs)
+        if(*(uint64_t *)attrs == *(uint64_t *)p1->attrs)
         {
-            scr_emit(scr, index);
+            if(scr_is_modified(scr, index) != 0)
+            {
+                scr_emit(scr, index);
+            }
         }
         else if(indx == 0)
         {

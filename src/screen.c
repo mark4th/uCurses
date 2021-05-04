@@ -236,6 +236,14 @@ static INLINE uint16_t scr_is_modified(screen_t *scr, uint16_t index)
 }
 
 // -----------------------------------------------------------------------
+
+static void new_attrs(uint64_t a)
+{
+    *(uint64_t *)attrs = a;
+    apply_attribs();
+}
+
+// -----------------------------------------------------------------------
 // emits charcter from screen buffer1 to the console
 
 static INLINE void scr_emit(screen_t *scr, uint16_t index)
@@ -249,13 +257,6 @@ static INLINE void scr_emit(screen_t *scr, uint16_t index)
     p2 = &scr->buffer2[index];
 
     *p2 = *p1;               // mark cell as updated
-
-    // is this the second cell of a double wide character?
-    // no write to console!
-//    if(p1->code == DEADCODE)
-//    {
-//        return;
-//    }
 
     // are we about to write a wide character here..
 
@@ -274,8 +275,8 @@ static INLINE void scr_emit(screen_t *scr, uint16_t index)
     }
 
     // if we are about to overwrite the left edge of a double wide
-    // character with a single width char then we need to later
-    // output a blank over the associated DEADCODE slot
+    // character with a single width char then we need to output a
+    // blank over the associated DEADCODE slot (see below)
 
     else if((p1 + 1)->code == DEADCODE)
     {
@@ -291,25 +292,23 @@ static INLINE void scr_emit(screen_t *scr, uint16_t index)
 
     utf8_emit(p1->code);
 
-    if(force != 0)
+    // are we overlaying either the left or right edge of a double
+    // width char with a single width char?
+
+    if(force == 1)  // left ?
     {
         scr_cup(scr, x + 1, y);
-    }
-    if(force == 1)
-    {
-        *(uint64_t *)attrs = *(uint64_t *)(p1 + 1)->attrs;
+        new_attrs(*(uint64_t *)(p1 + 1)->attrs);
         utf8_emit((p1 + 1)->code);
     }
-    else if(force == 2)
+    else if(force == 2) // right?
     {
-        *(uint64_t *)attrs = *(uint64_t *)(p1 + 1)->attrs;
+        new_attrs(*(uint64_t *)(p1 + 1)->attrs);
         utf8_emit(0x20);
     }
-    else if(wide == 1)
-    {
-        *(uint64_t *)(p1 + 1)->attrs = *(uint64_t *)(p1)->attrs;
-    }
-    *(uint64_t *)attrs = *(uint64_t *)p1->attrs;
+
+    // restore working attributes after the above detour
+    new_attrs(*(uint64_t *)p1->attrs);
 
     scr->cx++;
 
@@ -331,11 +330,7 @@ static INLINE uint32_t inner_update(screen_t *scr, uint16_t index,
 
     p1 = &scr->buffer1[index];
 
-    *(uint64_t *)attrs = *(uint64_t *)p1->attrs;
-
-    apply_attribs();
-
-    p1 = &scr->buffer1[index];
+    new_attrs(*(uint64_t *)p1->attrs);
 
     do
     {

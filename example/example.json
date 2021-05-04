@@ -105,7 +105,7 @@
                     "attribs" :
                     {
                         "fg"      : "BROWN",
-                        "gray-bg" : 4
+                        "gray-bg" : 5
                     },
                     "selected-attribs" :
                     {
@@ -147,7 +147,7 @@
                     "attribs" :
                     {
                         "fg"      : "BROWN",
-                        "gray-bg" : 4
+                        "gray-bg" : 5
                     },
                     "selected-attribs" :
                     {
@@ -189,7 +189,7 @@
                     "attribs" :
                     {
                         "fg"      : "BROWN",
-                        "gray-bg" : 4
+                        "gray-bg" : 5
                     },
                     "selected-attribs" :
                     {
@@ -226,7 +226,7 @@
                     "attribs" :
                     {
                         "fg"      : "BROWN",
-                        "gray-bg" : 4
+                        "gray-bg" : 5
                     },
                     "selected-attribs" :
                     {
@@ -268,7 +268,7 @@
                     "attribs" :
                     {
                         "fg"      : "BROWN",
-                        "gray-bg" : 4
+                        "gray-bg" : 5
                     },
                     "selected-attribs" :
                     {

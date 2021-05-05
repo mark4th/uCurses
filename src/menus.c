@@ -11,6 +11,11 @@
 extern uint8_t attrs[8];
 
 // -----------------------------------------------------------------------
+// user application allocatted
+
+char *status_line;
+
+// -----------------------------------------------------------------------
 // hard coded attributes for now
 
 #define NORMAL   0x0004030000000080
@@ -33,6 +38,57 @@ extern uint8_t attrs[8];
 //     5 = bg_rgb
 //     6 = fg_gray
 //     7 = bg_gray
+
+// -----------------------------------------------------------------------
+
+#include <string.h>
+
+#define MAX_STATUS 40
+
+void bar_set_status(char *string)
+{
+    if(status_line != NULL)
+    {
+        if(strlen(string) < MAX_STATUS -1)
+        {
+            memset(status_line, 0x20, MAX_STATUS);
+            memcpy(status_line, string, strlen(string));
+        }
+    }
+}
+
+// -----------------------------------------------------------------------
+
+void bar_clr_status(void)
+{
+    if(status_line != NULL)
+    {
+        memset(status_line, 0x20, MAX_STATUS -1);
+    }
+}
+
+// -----------------------------------------------------------------------
+
+void alloc_status(void)
+{
+    status_line = calloc(MAX_STATUS, 1);
+    bar_clr_status();
+}
+
+// -----------------------------------------------------------------------
+
+void bar_draw_status(menu_bar_t *bar)
+{
+    if((bar != NULL) && (status_line != NULL))
+    {
+        window_t *win = bar->window;
+        win_cup(win, bar->xco + 3, 0);
+        win_emit(win, '[');
+        win_emit(win, ' ');
+        win_puts(win, status_line);
+        win_emit(win, ']');
+    }
+}
 
 // -----------------------------------------------------------------------
 
@@ -214,7 +270,6 @@ void bar_populdate_pd(pulldown_t *pd)
             {
                 win_emit(win, win->blank);
             }
-            win->cx = 0;
         }
     }
 }

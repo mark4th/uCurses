@@ -308,8 +308,9 @@ void run_demo(screen_t *scr, window_t *win1, window_t *win2)
 // -----------------------------------------------------------------------
 // just flipflops the border color of which ever window is on top
 
-__attribute__((used)) static void open_file(void)
+static void open_file(void)
 {
+    bar_set_status("You Selected Open File");
     screen_t *scr = active_screen;
     window_t *win = list_scan(&scr->windows);
     win->bdr_attrs[FG] ^= 0x55;
@@ -318,23 +319,74 @@ __attribute__((used)) static void open_file(void)
 // dummy menu functions for now will add proper demos and proper
 // working menu functions
 
-__attribute__((used)) static void close_file(void)             { return; }
-__attribute__((used)) static void delete_internet(void)        { return; }
-__attribute__((used)) static void copy_nothing(void)           { return; }
-__attribute__((used)) static void insert_mode(void)            { return; }
-__attribute__((used)) static void overwrite_mode(void)         { return; }
-__attribute__((used)) static void delete_line(void)            { return; }
-__attribute__((used)) static void insert_line(void)            { return; }
-__attribute__((used)) static void view_point(void)             { return; }
-__attribute__((used)) static void view_to_a_kill(void)         { return; }
-__attribute__((used)) static void review(void)                 { return; }
-__attribute__((used)) static void manchester_screwdriver(void) { return; }
-__attribute__((used)) static void dentists_drill(void)         { return; }
-__attribute__((used)) static void diamond_file(void)           { return; }
-__attribute__((used)) static void shovel(void)                 { return; }
-__attribute__((used)) static void self_help(void)              { return; }
-__attribute__((used)) static void helping_hand(void)           { return; }
-__attribute__((used)) static void helpless(void)               { return; }
+static void close_file(void)
+{
+    bar_set_status("You Selected Close File");
+}
+static void delete_internet(void)
+{
+    bar_set_status("You Selected Delete File");
+}
+static void copy_nothing(void)
+{
+    bar_set_status("You Selected Copy Cat");
+}
+static void insert_mode(void)
+{
+    bar_set_status("You Selected Insert Mode");
+}
+static void overwrite_mode(void)
+{
+    bar_set_status("You Selected Overwrite Mode");
+}
+static void delete_line(void)
+{
+    bar_set_status("You Selected Delete Line");
+}
+static void insert_line(void)
+{
+    bar_set_status("You Selected Insert Line");
+}
+static void view_point(void)
+{
+    bar_set_status("You Selected View Point");
+}
+static void view_to_a_kill(void)
+{
+    bar_set_status("You Selected View To a Kill");
+}
+static void review(void)
+{
+    bar_set_status("You Selected Review");
+}
+static void manchester_screwdriver(void)
+{
+    bar_set_status("You Selected Manchester Screwdriver");
+}
+static void dentists_drill(void)
+{
+    bar_set_status("You Selected Dentists Drill");
+}
+static void diamond_file(void)
+{
+    bar_set_status("You Selected Diamond File");
+}
+static void shovel(void)
+{
+    bar_set_status("You Selected Shovel");
+}
+static void self_help(void)
+{
+    bar_set_status("You Selected Self help");
+}
+static void helping_hand(void)
+{
+    bar_set_status("You Selected Helping hand");
+}
+static void helpless(void)
+{
+    bar_set_status("You Selected Helpless");
+}
 
 // -----------------------------------------------------------------------
 
@@ -388,6 +440,8 @@ int main(void)
 {
     screen_t *scr;
     window_t *win1, *win2;
+
+    alloc_status();
 
     uCurses_init();
 

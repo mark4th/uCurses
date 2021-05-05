@@ -59,12 +59,12 @@ static void separator(void)
 
 // -----------------------------------------------------------------------
 
+static char line_buff[64];
 void hash_file(const char *p)
 {
     char path[64];
     char *s;
     uint32_t hash;
-    char line_buff[64];
     strcpy(path, p);
     fclose(fp);
     fp = fopen(path, "r");

@@ -401,6 +401,7 @@ static INLINE void scr_update_menus(screen_t *scr)
         // draw all text into memu bar window then write that to
         // the screen buffer
         bar_draw_text(scr);
+        bar_draw_status(scr->menu_bar);
         scr_draw_win(bar->window);
 
         if(bar->active != 0)
@@ -423,11 +424,18 @@ void scr_draw_screen(screen_t *scr)
 
     *(uint64_t *)&old_attrs[0] = 0;
 
-    // backdrop if it exists is always the first window to be drawn into
-    // the screen
+    // the backdrop if it exists is always the first window
+    // to be drawn into the screen. its sole purpose is to
+    // allow for moveable windows which would leave trails
+    // behind if there was no backdrop.
+    // it also gives you the ability to set the screen
+    // background color which is not a screen attribute
+    // normally
+
     scr_draw_win((window_t *)scr->backdrop);
 
     scr_draw_windows(scr);
+
     scr_update_menus(scr);
 
     outer_update(scr);

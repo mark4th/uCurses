@@ -385,6 +385,8 @@ void init_backdrop(screen_t *scr, window_t *win);
 
 // -----------------------------------------------------------------------
 
+extern char *status_line;
+
 void menu_init(void);
 uint32_t bar_open(screen_t *scr);
 void bar_close(screen_t *scr);
@@ -399,6 +401,10 @@ void pd_disable(screen_t *scr, char *name);
 void init_key_handlers(void);
 key_handler_t *set_key_action(key_index_t index, key_handler_t* action);
 void stuff_key(uint8_t c);
+void bar_set_status(char *string);
+void bar_clr_status(void);
+void bar_draw_status(menu_bar_t *bar);
+void alloc_status(void);
 
 // -----------------------------------------------------------------------
 

@@ -415,53 +415,54 @@ void win_cr(window_t *win)
 
 // -----------------------------------------------------------------------
 
-// should i add tab output processing to windows?
-// add a tab width to structure and move cursor to next tab stop?
-// p.s. i hate tabs
-
-void win_emit(window_t *win, uint32_t c)
+static void _win_emit(window_t *win, uint32_t c)
 {
     cell_t cell;
     cell_t *p;
     utf8_encode_t *encoded;
 
-    switch(c)
+    if(win->cx == win->width)
     {
-        case     0x0d: win_cr(win);   break;
-        case     0x0a: win_cr(win);   break;
-        case     0x09:                break;
-        default:
-            if(win->cx == win->width)
-            {
-                win_cr(win);
-            }
-            *(uint64_t *)&cell.attrs = *(uint64_t *)win->attrs;
-            cell.code = c;
+        win_cr(win);
+    }
 
-            p = win_line_addr(win, win->cy);
-            p[win->cx] = cell;
+    *(uint64_t *)&cell.attrs = *(uint64_t *)win->attrs;
+    cell.code = c;
 
-            win_crsr_rt(win);
+    p = win_line_addr(win, win->cy);
+    p[win->cx] = cell;
 
-            // need to mark the next cell as used by this character too
-            // if this character is double width.  when this is all
-            // written to the console later the cell_t's after any wide
-            // character are skipped
+    win_crsr_rt(win);
 
-            encoded = utf8_encode(c);
+    // need to mark the next cell as used by this character too
+    // if this character is double width.  when this is all
+    // written to the console later the cell_t's after any wide
+    // character are skipped
 
-            if(encoded->width != 1)
-            {
-                cell.code = DEADCODE;
+    encoded = utf8_encode(c);
 
-                // if the left edge of this double wide character is
-                // later overwritten with a single wide character
-                // we will need to draw a space over the deadcode
-                // with the same attributes as the doube wide char
+    if(encoded->width != 1)
+    {
+        // if the left edge of this double wide character is
+        // later overwritten with a single wide character
+        // we will need to draw a space over the DEADCODE
+        // with the same attributes
 
-                p[win->cx] = cell;
-                win_crsr_rt(win);
-            }
+        cell.code = DEADCODE;
+        p[win->cx] = cell;
+        win_crsr_rt(win);
+    }
+}
+
+// -----------------------------------------------------------------------
+
+void win_emit(window_t *win, uint32_t c)
+{
+    if(c != 0x09)    // tabs are evil kthxbai
+    {
+        ((c == 0x0d) || (c == 0x0a))
+            ? win_cr(win)
+            : _win_emit(win, c);
     }
 }
 

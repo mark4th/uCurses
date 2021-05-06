@@ -3,7 +3,7 @@
 
 #include <inttypes.h>
 #include <stdlib.h>
-//#include <stdio.h>
+#include <string.h>
 
 #include "h/list.h"
 #include "h/uCurses.h"
@@ -41,19 +41,14 @@ char *status_line;
 
 // -----------------------------------------------------------------------
 
-#include <string.h>
-
-#define MAX_STATUS 40
-
 void bar_set_status(char *string)
 {
-    if(status_line != NULL)
+    uint16_t len = strlen(string);
+
+    if((status_line != NULL) && (len <= MAX_STATUS))
     {
-        if(strlen(string) < MAX_STATUS -1)
-        {
-            memset(status_line, 0x20, MAX_STATUS);
-            memcpy(status_line, string, strlen(string));
-        }
+        memset(status_line, 0x20, MAX_STATUS);
+        memcpy(status_line, string, strlen(string));
     }
 }
 
@@ -63,7 +58,7 @@ void bar_clr_status(void)
 {
     if(status_line != NULL)
     {
-        memset(status_line, 0x20, MAX_STATUS -1);
+        memset(status_line, 0x20, MAX_STATUS);
     }
 }
 
@@ -71,18 +66,35 @@ void bar_clr_status(void)
 
 void alloc_status(void)
 {
-    status_line = calloc(MAX_STATUS, 1);
-    bar_clr_status();
+    status_line = calloc(MAX_STATUS + 1, 1);
+
+    if(status_line != NULL)
+    {
+        bar_clr_status();
+    }
+}
+
+static void free_status(void)
+{
+    if(status_line != NULL)
+    {
+        free(status_line);
+    }
 }
 
 // -----------------------------------------------------------------------
 
 void bar_draw_status(menu_bar_t *bar)
 {
+    uint16_t x;
+    screen_t *scr;
+
     if((bar != NULL) && (status_line != NULL))
     {
         window_t *win = bar->window;
-        win_cup(win, bar->xco + 3, 0);
+        scr = win->screen;
+        x = (scr->width - MAX_STATUS) - 6;
+        win_cup(win, x, 0);
         win_emit(win, '[');
         win_emit(win, ' ');
         win_puts(win, status_line);
@@ -323,29 +335,36 @@ void bar_draw_text(screen_t *scr)
 
 void bar_close(screen_t *scr)
 {
-    menu_bar_t *bar = scr->menu_bar;
-    pulldown_t *pd;
     uint16_t i, j;
+    menu_bar_t *bar;
+    pulldown_t *pd;
 
-    if(bar == NULL)
+    if(scr != NULL)
     {
-        return;
-    }
-    for(i = 0; i != bar->count; i++)
-    {
-        pd = bar->items[i];
+        bar = scr->menu_bar;
 
-        for(j = 0; j != pd->count; j++)
+        if(bar != NULL)
         {
-            free(pd->items[j]);
+            for(i = 0; i != bar->count; i++)
+            {
+                pd = bar->items[i];
+                if(pd != NULL)
+                {
+                    for(j = 0; j != pd->count; j++)
+                    {
+                        free(pd->items[j]);
+                    }
+
+                    win_close(pd->window);
+                    free(pd);
+                }
+            }
+
+            win_close(bar->window);
+            free_status();
+            free(bar);
         }
-
-        win_close(pd->window);
-        free(pd);
     }
-
-    win_close(bar->window);
-    free(bar);
 }
 
 // -----------------------------------------------------------------------
@@ -363,9 +382,16 @@ pulldown_t *pd_find(screen_t *scr, char *name)
     {
         pd = bar->items[i];
 
-        if(utf8_strncmp(name, pd->name, len) == 0)
+        if(pd != NULL)
         {
-            break;
+            if(utf8_strncmp(name, pd->name, len) == 0)
+            {
+               break;
+            }
+            else
+            {
+                pd = NULL;
+            }
         }
     }
     return pd;

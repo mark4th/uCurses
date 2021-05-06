@@ -6,6 +6,9 @@
 
 #include "h/uCurses.h"
 
+#define NO_FORCE 0
+#define FORCE 1
+
 // -----------------------------------------------------------------------
 // these three borders give the outer edge characters for a window
 // border plus the characters that you would use to segment up that window
@@ -64,15 +67,30 @@ static border_t bdr_curved[] =
 // draw border character directly into screen buffer 1
 
 static void draw_char(window_t *win, uint16_t cx,
-    uint16_t cy, uint32_t code)
+    uint16_t cy, uint32_t code, uint16_t force)
 {
     screen_t *scr = win->screen;
     uint16_t index = (cy * scr->width) + cx;
 
     cell_t *p1 = &scr->buffer1[index];
+    cell_t *p2 = &scr->buffer2[index];
 
     *(uint64_t *)p1->attrs = *(uint64_t *)win->bdr_attrs;
     p1->code = code;
+
+    // when a double width character is drawn underneath a pulled down
+    // menu window such that the menu window overwrites the left edge
+    // of said double width character we must force an update of the
+    // meny character as this will also cause us to write a space into
+    // the DEADCODE slot of the covered double wide char.
+    // if we did not foce the right edge of the pulldown menus to be
+    // updated we would get glitches in the following DEAD slot
+    // as it would not be updated.
+
+    if(force == FORCE)
+    {
+        p2->code = DEADCODE;
+    }
 }
 
 // -----------------------------------------------------------------------
@@ -83,14 +101,14 @@ static INLINE void draw_top_bottom(window_t *win, uint32_t c1,
 {
     uint16_t cx = win->xco - 1;
 
-    draw_char(win, cx, cy, c1);
+    draw_char(win, cx, cy, c1, FORCE);
 
     for(cx = win->xco; cx < win->xco + win->width; cx++)
     {
-        draw_char(win, cx, cy, c2);
+        draw_char(win, cx, cy, c2, NO_FORCE);
     }
 
-    draw_char(win, cx, cy, c3);
+    draw_char(win, cx, cy, c3, FORCE);
 }
 
 // -----------------------------------------------------------------------
@@ -98,8 +116,8 @@ static INLINE void draw_top_bottom(window_t *win, uint32_t c1,
 static INLINE void draw_mid_row(window_t *win,
       uint32_t c1, uint32_t c3, uint16_t cy)
 {
-    draw_char(win, win->xco - 1, cy, c1);
-    draw_char(win, win->xco + win->width, cy, c3);
+    draw_char(win, win->xco - 1, cy, c1, NO_FORCE);
+    draw_char(win, win->xco + win->width, cy, c3, FORCE);
 }
 
 // -----------------------------------------------------------------------

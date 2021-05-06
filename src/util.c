@@ -4,6 +4,8 @@
 #include <inttypes.h>
 #include <termios.h>
 #include <unistd.h>
+#include <time.h>
+#include <errno.h>
 
 #include "h/uCurses.h"
 
@@ -16,6 +18,23 @@ uint16_t height;
 
 extern uint64_t params[MAX_PARAM];
 extern struct termios term_save;
+
+// -----------------------------------------------------------------------
+
+void clock_sleep(uint32_t when)
+{
+    struct timespec tv;
+    struct timespec remain;
+    uint32_t rv;
+
+    do
+    {
+        tv.tv_sec  = 0;
+        tv.tv_nsec = when;
+        rv = clock_nanosleep(CLOCK_MONOTONIC, 0, &tv, &remain);
+        tv = remain;
+    } while(EINTR == rv);
+}
 
 // -----------------------------------------------------------------------
 // turn cursor off

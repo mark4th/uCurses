@@ -94,21 +94,26 @@ void scr_close(screen_t *scr)
 {
     window_t *win;
 
-    free(scr->buffer1);
-    free(scr->buffer2);
-
-    scr->buffer1 = NULL;
-    scr->buffer2 = NULL;
-
-    win_close(scr->backdrop);
-
-    while((win = list_pop(&scr->windows)) != NULL)
+    if(scr != NULL)
     {
-        win_close(win);
-    }
-    bar_close(scr);
+        free(scr->buffer1);
+        free(scr->buffer2);
 
-    free(scr);
+        scr->buffer1 = NULL;
+        scr->buffer2 = NULL;
+
+        win_close(scr->backdrop);
+
+        do
+        {
+            win = list_pop(&scr->windows);
+            win_close(win);
+        } while(win != NULL);
+
+        bar_close(scr);
+
+        free(scr);
+    }
 }
 
 // -----------------------------------------------------------------------
@@ -133,6 +138,12 @@ static void scr_draw_win(window_t *win)
     {
         scr = win->screen;
 
+         // draw windows border if it has one
+        if(win->flags & WIN_BOXED)
+        {
+            win_draw_borders(win);
+        }
+
         dst = scr_line_addr(scr, win->yco);
         dst += win->xco;
         src = win->buffer;
@@ -144,12 +155,6 @@ static void scr_draw_win(window_t *win)
             memcpy(dst, src, width);
             src += win->width;
             dst += scr->width;
-        }
-
-         // draw windows border if it has one
-        if(win->flags & WIN_BOXED)
-        {
-            win_draw_borders(win);
         }
     }
 }
@@ -190,13 +195,16 @@ static INLINE void scr_cup(screen_t *scr, uint16_t x, uint16_t y)
 
 void init_backdrop(screen_t *scr, window_t *win)
 {
-    win->xco    = 1;
-    win->yco    = 1;
-    win->width  = scr->width  - 2;
-    win->height = scr->height - 2;
-    win->flags  = WIN_BOXED | WIN_LOCKED;
-    win->blank  = SOLID;
-    win->screen = scr;
+    if((win != NULL) && (scr != NULL))
+    {
+        win->xco    = 1;
+        win->yco    = 1;
+        win->width  = scr->width  - 2;
+        win->height = scr->height - 2;
+        win->flags  = WIN_BOXED | WIN_LOCKED;
+        win->blank  = SOLID;
+        win->screen = scr;
+    }
 }
 
 // -----------------------------------------------------------------------
@@ -204,19 +212,24 @@ void init_backdrop(screen_t *scr, window_t *win)
 
 void scr_add_backdrop(screen_t *scr)
 {
-    window_t *win = win_open(scr->width  - 2, scr->height - 2);
+    window_t *win;
 
-    if(win != NULL)
+    if(scr != NULL)
     {
-        win->bdr_attrs[ATTR] = FG_GRAY | BG_GRAY | BOLD;
-        win->bdr_attrs[FG] = 13;
-        win->bdr_attrs[BG] = 0;
-        win->bdr_type = BDR_SINGLE;
+        win = win_open(scr->width  - 2, scr->height - 2);
 
-        win_set_gray_fg(win, 12);
-        init_backdrop(scr, win);
-        scr->backdrop = win;
-        win_clear(win);
+        if(win != NULL)
+        {
+            win->bdr_attrs[ATTR] = FG_GRAY | BG_GRAY | BOLD;
+            win->bdr_attrs[FG] = 13;
+            win->bdr_attrs[BG] = 0;
+            win->bdr_type = BDR_SINGLE;
+
+            win_set_gray_fg(win, 12);
+            init_backdrop(scr, win);
+            scr->backdrop = win;
+            win_clear(win);
+        }
     }
 }
 
@@ -246,7 +259,7 @@ static void new_attrs(uint64_t a)
 // -----------------------------------------------------------------------
 // emits charcter from screen buffer1 to the console
 
-static INLINE void scr_emit(screen_t *scr, uint16_t index)
+static void scr_emit(screen_t *scr, uint16_t index)
 {
     uint16_t x, y;
     cell_t *p1, *p2;
@@ -255,8 +268,6 @@ static INLINE void scr_emit(screen_t *scr, uint16_t index)
 
     p1 = &scr->buffer1[index];
     p2 = &scr->buffer2[index];
-
-    *p2 = *p1;               // mark cell as updated
 
     // are we about to write a wide character here..
 
@@ -295,16 +306,16 @@ static INLINE void scr_emit(screen_t *scr, uint16_t index)
     // are we overlaying either the left or right edge of a double
     // width char with a single width char?
 
-    if(force == 1)  // left ?
+    if(force == 1)      // right?
     {
         scr_cup(scr, x + 1, y);
         new_attrs(*(uint64_t *)(p1 + 1)->attrs);
         utf8_emit((p1 + 1)->code);
     }
-    else if(force == 2) // right?
+    else if(force == 2) // left?
     {
         new_attrs(*(uint64_t *)(p1 + 1)->attrs);
-        utf8_emit(0x20);
+        utf8_emit('.');
     }
 
     // restore working attributes after the above detour
@@ -317,6 +328,8 @@ static INLINE void scr_emit(screen_t *scr, uint16_t index)
         scr->cx = 0;
         scr->cy++;
     }
+
+    *p2 = *p1;               // mark cell as updated
 }
 
 // -----------------------------------------------------------------------
@@ -378,7 +391,7 @@ static void outer_update(screen_t *scr)
             // ones it was setting.  this is our new scan point
             // if indx is zero then update scanned to the end of the
             // screen and found no characters that that it did not
-            // already update so we can exit early too
+            // already update so we can exit early.
 
             if(index == 0) { break; }
             continue;  // skip the ++
@@ -401,7 +414,7 @@ static INLINE void scr_update_menus(screen_t *scr)
         // draw all text into memu bar window then write that to
         // the screen buffer
         bar_draw_text(scr);
-        bar_draw_status(scr->menu_bar);
+        bar_draw_status(bar);
         scr_draw_win(bar->window);
 
         if(bar->active != 0)
@@ -420,27 +433,29 @@ static INLINE void scr_update_menus(screen_t *scr)
 
 void scr_draw_screen(screen_t *scr)
 {
-    active_screen = scr;
+    if(scr != NULL)
+    {
+        active_screen = scr;
 
-    *(uint64_t *)&old_attrs[0] = 0;
+        *(uint64_t *)&old_attrs[0] = 0;
 
-    // the backdrop if it exists is always the first window
-    // to be drawn into the screen. its sole purpose is to
-    // allow for moveable windows which would leave trails
-    // behind if there was no backdrop.
-    // it also gives you the ability to set the screen
-    // background color which is not a screen attribute
-    // normally
+        // the backdrop if it exists is always the first window
+        // to be drawn into the screen. its sole purpose is to
+        // allow for moveable windows which would leave trails
+        // behind if there was no backdrop.
+        // it also gives you the ability to set the screen
+        // background color which is not a screen attribute
+        // normally
 
-    scr_draw_win((window_t *)scr->backdrop);
+        scr_draw_win((window_t *)scr->backdrop);
 
-    scr_draw_windows(scr);
+        scr_draw_windows(scr);
+        scr_update_menus(scr);
 
-    scr_update_menus(scr);
+        outer_update(scr);
 
-    outer_update(scr);
-
-    flush();
+        flush();
+    }
 }
 
 // =======================================================================

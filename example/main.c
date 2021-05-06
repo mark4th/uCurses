@@ -10,7 +10,6 @@
 #include <stdlib.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
-#include <time.h>
 #include <errno.h>
 #include <string.h>
 
@@ -83,24 +82,29 @@ char lorem[69][14] =
 
 char *chinese[] =
 {
-    "我住长江头，", "君住长江尾。",
-    "日日思君不见君，", "共饮长江水。",
-    "此水几时休，", "此恨何时已。",
-    "只愿君心似我心，", "定不负相思意。",
+    "我住长江头，君住长江尾。",
+    "日日思君不见君，共饮长江水。",
+    "此水几时休，此恨何时已。",
+    "只愿君心似我心，定不负相思意。",
     " ",
-    "击鼓其镗，踊跃用兵。", "土国城漕，我独南行。",
+    "击鼓其镗，踊跃用兵。",
+    "土国城漕，我独南行。",
     " ",
-    "从孙子仲，平陈与宋。", "不我以归，忧心有忡。",
+    "从孙子仲，平陈与宋。",
+    "不我以归，忧心有忡。",
     " ",
-    "爰居爰处，爰丧其马，", "于以求之，于林之下。",
+    "爰居爰处，爰丧其马，",
+    "于以求之，于林之下。",
     " ",
-    "死生契阔，与子成说。", "执子之手，与子偕老。",
+    "死生契阔，与子成说。",
+    "执子之手，与子偕老。",
     " ",
-    "于嗟阔兮，不我活兮。", "于嗟洵兮，不我信兮。",
+    "于嗟阔兮，不我活兮。",
+    "于嗟洵兮，不我信兮。",
     " ",
-    "我欲与君相知，", "长命无绝衰。",
-    "山无陵，", "江水为竭，", "冬雷震震，",
-    "夏雨雪 ，", "天地合，", "乃敢与君绝！",
+    "我欲与君相知， 长命无绝衰。",
+    "山无陵，江水为竭，冬雷震震，",
+    "夏雨雪，天地合，乃敢与君绝！",
     " ",
 };
 
@@ -141,14 +145,14 @@ static void print_chinese(window_t *win)
 {
     static uint8_t inc = 1;
     static uint8_t line = 0;
-    static uint8_t gray = 0;
+    static uint8_t gray = 1;
 
     win_set_gray_fg(win, gray);
     win_set_gray_bg(win, abs(20 - (gray + 10)));
 
     gray += inc;
 
-    if((gray == 23) || (gray == 0x0))
+    if((gray == 23) || (gray == 0x1))
     {
         inc = -inc;
     }
@@ -156,24 +160,7 @@ static void print_chinese(window_t *win)
     win_puts(win, chinese[line++]);
     win_el(win);
 
-    if(line > 32) { line = 0; }
-}
-
-// -----------------------------------------------------------------------
-
-void clock_sleep(uint32_t when)
-{
-    struct timespec tv;
-    struct timespec remain;
-    uint32_t rv;
-
-    do
-    {
-        tv.tv_sec  = 0;
-        tv.tv_nsec = when;
-        rv = clock_nanosleep(CLOCK_MONOTONIC, 0, &tv, &remain);
-        tv = remain;
-    } while(EINTR == rv);
+    if(line > 23) { line = 0; }
 }
 
 // -----------------------------------------------------------------------
@@ -323,66 +310,82 @@ static void close_file(void)
 {
     bar_set_status("You Selected Close File");
 }
+
 static void delete_internet(void)
 {
     bar_set_status("You Selected Delete File");
 }
+
 static void copy_nothing(void)
 {
     bar_set_status("You Selected Copy Cat");
 }
+
 static void insert_mode(void)
 {
     bar_set_status("You Selected Insert Mode");
 }
+
 static void overwrite_mode(void)
 {
     bar_set_status("You Selected Overwrite Mode");
 }
+
 static void delete_line(void)
 {
     bar_set_status("You Selected Delete Line");
 }
+
 static void insert_line(void)
 {
     bar_set_status("You Selected Insert Line");
 }
+
 static void view_point(void)
 {
     bar_set_status("You Selected View Point");
 }
+
 static void view_to_a_kill(void)
 {
     bar_set_status("You Selected View To a Kill");
 }
+
 static void review(void)
 {
     bar_set_status("You Selected Review");
 }
+
 static void manchester_screwdriver(void)
 {
     bar_set_status("You Selected Manchester Screwdriver");
 }
+
 static void dentists_drill(void)
 {
     bar_set_status("You Selected Dentists Drill");
 }
+
 static void diamond_file(void)
 {
     bar_set_status("You Selected Diamond File");
 }
+
 static void shovel(void)
 {
     bar_set_status("You Selected Shovel");
 }
+
 static void self_help(void)
 {
     bar_set_status("You Selected Self help");
 }
+
 static void helping_hand(void)
 {
     bar_set_status("You Selected Helping hand");
 }
+
 static void helpless(void)
 {
     bar_set_status("You Selected Helpless");

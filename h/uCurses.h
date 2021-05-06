@@ -386,6 +386,7 @@ void init_backdrop(screen_t *scr, window_t *win);
 // -----------------------------------------------------------------------
 
 extern char *status_line;
+#define MAX_STATUS (40 - 1)
 
 void menu_init(void);
 uint32_t bar_open(screen_t *scr);
@@ -476,6 +477,8 @@ void set_norm(void);
 
 // -----------------------------------------------------------------------
 // wrappers for terminfo cursor handling etc
+
+void clock_sleep(uint32_t when);
 
 void curoff(void);
 void curon(void);

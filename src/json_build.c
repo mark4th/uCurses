@@ -19,12 +19,11 @@ static void INLINE bounds_check(window_t *win)
     uint16_t xco = win->xco;
     uint16_t yco = win->yco;
 
-    uint16_t z = (win->flags & WIN_BOXED) ? 1 :0;
+    uint16_t z = (win->flags & WIN_BOXED) ? 1 : 0;
 
-    if(((xco + win->width  + z) < console_width)  &&
+    if(((xco + win->width + z) < console_width) &&
        ((yco + win->height + z) < console_height) &&
-       ((xco - z) < console_width) &&
-       ((yco - z) < console_height))
+       ((xco - z) < console_width) && ((yco - z) < console_height))
     {
         return;
     }
@@ -98,14 +97,14 @@ static void INLINE fix_menus(screen_t *scr)
     if(win == NULL)
     {
         json_error("Unable to create window for menu bar");
-        return;  // prevent scan-build make error
+        return; // prevent scan-build make error
     }
 
-    bar->window   = win;
-    win->screen   = scr;
-    win->flags    = WIN_LOCKED;
+    bar->window = win;
+    win->screen = scr;
+    win->flags = WIN_LOCKED;
     scr->menu_bar = bar;
-    bar->xco      = 2;
+    bar->xco = 2;
 
     for(i = 0; i < bar->count; i++)
     {
@@ -120,7 +119,7 @@ static void INLINE fix_menus(screen_t *scr)
         {
             width = strlen(pd->items[j]->name);
 
-            if(pd->width <width)
+            if(pd->width < width)
             {
                 pd->width = width;
             }

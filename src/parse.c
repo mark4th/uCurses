@@ -11,7 +11,7 @@
 // -----------------------------------------------------------------------
 // for format string % commands that dont actually need to do anything
 
-static void noop(void){;}
+static void noop(void) { ; }
 
 // -----------------------------------------------------------------------
 
@@ -19,19 +19,19 @@ char *esc_buff;             // format string compilation output buffer
 uint32_t num_esc;           // max of 64k of compiled escape seq bytes
 uint64_t params[MAX_PARAM]; // format string parametesr
 
-static uint8_t fsp;         // stack pointer for ...
-static uint64_t fstack[5];  // format string stack
+static uint8_t fsp;        // stack pointer for ...
+static uint64_t fstack[5]; // format string stack
 
-const char *f_str;          // pointer to next character of format string
-static uint8_t digits;      // number of digits for %d (2 or 3)
+const char *f_str;     // pointer to next character of format string
+static uint8_t digits; // number of digits for %d (2 or 3)
 
-static uint64_t atoz[26];   // named format string variables
+static uint64_t atoz[26]; // named format string variables
 static uint64_t AtoZ[26];
 
 // -----------------------------------------------------------------------
 // addresses within memory mapped terminfo file
 
-extern char *ti_table;   // array of offsets within following
+extern char *ti_table; // array of offsets within following
 extern uint16_t *ti_strings;
 
 // FILE *log_fp;
@@ -65,7 +65,7 @@ void flush(void)
     ssize_t n;
 
     // log_dump();=
-    n =  write(1, esc_buff, num_esc);
+    n = write(1, esc_buff, num_esc);
     num_esc = 0;
 
     if(n < 0)
@@ -110,9 +110,7 @@ static void fs_push(uint64_t n)
 
 static uint64_t fs_pop(void)
 {
-    return (0 != fsp)
-        ? fstack[--fsp] :
-        0;                  // also an internal error?
+    return (0 != fsp) ? fstack[--fsp] : 0; // also an internal error?
 }
 
 // -----------------------------------------------------------------------
@@ -122,10 +120,7 @@ static uint64_t fs_pop(void)
 // -----------------------------------------------------------------------
 // format = %%
 
-static void _percent(void)
-{
-    c_emit('%');
-}
+static void _percent(void) { c_emit('%'); }
 
 // -----------------------------------------------------------------------
 // format = %A or %&
@@ -240,9 +235,7 @@ static void _slash(void)
     n1 = fs_pop();
     n2 = fs_pop();
 
-    (n1 != 0)
-       ? fs_push(n2 / n1)
-       : fs_push(0);
+    (n1 != 0) ? fs_push(n2 / n1) : fs_push(0);
 }
 
 // -----------------------------------------------------------------------
@@ -255,9 +248,7 @@ static void _mod(void)
     n1 = fs_pop();
     n2 = fs_pop();
 
-    (n1 != 0)
-       ? fs_push(n2 % n1)
-       : fs_push(0);
+    (n1 != 0) ? fs_push(n2 % n1) : fs_push(0);
 }
 
 // -----------------------------------------------------------------------
@@ -322,8 +313,8 @@ static void _tick(void)
 
 static void _i(void)
 {
-    params[0]++;            // increment first two parameters
-    params[1]++;            // for ansi terminals
+    params[0]++; // increment first two parameters
+    params[1]++; // for ansi terminals
 }
 
 // -----------------------------------------------------------------------
@@ -375,9 +366,7 @@ static uint64_t *get_var_addr(void)
     // this assumes that if it is not within the range 'a' to 'z'
     // then it is within the range 'A' to 'Z'
 
-    p = ((c1 >= 'a') && (c1 <= 'z'))
-        ? &atoz[c1 - 'a']
-        : &AtoZ[c1 - 'A'];
+    p = ((c1 >= 'a') && (c1 <= 'z')) ? &atoz[c1 - 'a'] : &AtoZ[c1 - 'A'];
 
     return p;
 }
@@ -416,7 +405,7 @@ static void _brace(void)
 
     n1 = 0;
 
-    while ((c1 = *f_str++) != '}')
+    while((c1 = *f_str++) != '}')
     {
         n1 *= 10;
         n1 += (c1 - '0');
@@ -431,23 +420,23 @@ static void _brace(void)
 static void to_cmd(void)
 {
     while('%' != *f_str++)
-      ;
+        ;
 }
 
 // -----------------------------------------------------------------------
 // format = %t
 
-static void _t(void)        // too much if/and/but loop nesting
+static void _t(void) // too much if/and/but loop nesting
 {
     uint64_t f1;
     char c1;
-    uint8_t nest;           // not sure if any terminfo has nested %?
+    uint8_t nest; // not sure if any terminfo has nested %?
 
     nest = 0;
 
-    f1 = fs_pop();          // if this is non 0 we dont do anything
+    f1 = fs_pop(); // if this is non 0 we dont do anything
 
-    if(f1 == 0)             // if it is 0 we skip past then part
+    if(f1 == 0) // if it is 0 we skip past then part
     {
         for(;;)
         {
@@ -464,8 +453,8 @@ static void _t(void)        // too much if/and/but loop nesting
             // if we are at the else or endif....
             if((c1 == 'e') || (c1 == ';'))
             {
-                if(0 == nest)  // break out of loop if at else or endif
-                {              // and we have scanned past all nested %?
+                if(0 == nest) // break out of loop if at else or endif
+                {             // and we have scanned past all nested %?
                     break;
                 }
                 // we are within a nested %? -
@@ -485,7 +474,7 @@ static void _t(void)        // too much if/and/but loop nesting
 static void _e(void)
 {
     char c1;
-    uint8_t nest=0;
+    uint8_t nest = 0;
 
     for(;;)
     {
@@ -533,7 +522,7 @@ static void _d(void)
         case 3:
             n2 = snprintf(&esc_buff[num_esc], available, "%03" PRIu64, n1);
             break;
-        default :
+        default:
             n2 = snprintf(&esc_buff[num_esc], available, "%" PRIu64, n1);
     }
 
@@ -558,9 +547,9 @@ static void _p(void)
 {
     uint8_t c1;
 
-    c1 = *f_str++;          // get parameter number from format string
-    c1 &= 0x0f;             // '1' to '9'
-    c1--;                   // 0 to 8
+    c1 = *f_str++; // get parameter number from format string
+    c1 &= 0x0f;    // '1' to '9'
+    c1--;          // 0 to 8
     c1 = params[c1];
     fs_push(c1);
 }
@@ -585,8 +574,7 @@ static INLINE uint8_t next_c(void)
 // -----------------------------------------------------------------------
 // terminfo format string % codes
 
-static const switch_t p_codes[] =
-{
+static const switch_t p_codes[] = {
     { '%', &_percent }, { 'p', &_p },      { 'd', &_d },
     { 'c', &_c },       { 'i', &_i },      { 's', &_s },
     { 'l', &_l },       { 'A', &_and },    { '&', &_and },

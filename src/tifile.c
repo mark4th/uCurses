@@ -36,23 +36,22 @@ typedef struct
 
 // -----------------------------------------------------------------------
 
-uint8_t *ti_map;            // memory mapped address of terminfo file
-uint8_t ti_size;            // size of memory mapping
+uint8_t *ti_map; // memory mapped address of terminfo file
+uint8_t ti_size; // size of memory mapping
 
 // -----------------------------------------------------------------------
 
-uint8_t *ti_names;          // pointer to term names
-uint8_t *ti_bool;           // pointer to terminfo flags
-uint8_t *ti_numbers;        // pointer to terminfo numbers
+uint8_t *ti_names;   // pointer to term names
+uint8_t *ti_bool;    // pointer to terminfo flags
+uint8_t *ti_numbers; // pointer to terminfo numbers
 uint16_t *ti_strings;
 char *ti_table;
 
-uint8_t wide;               // numbers item size size shift factor
+uint8_t wide; // numbers item size size shift factor
 
 // -----------------------------------------------------------------------
 
-char *paths[] =
-{
+char *paths[] = {
     "/usr/share/terminfo/", // the RIGHT place for terminfo files
     "/lib/terminfo/",       // the stupidest place to put it
     "/etc/terminfo/",       // better than /lib debian idiocy
@@ -82,7 +81,7 @@ static void map_tifile(void)
         len = strlen(paths[i]);
         strncpy(path, paths[i], len);
         path[len++] = env_term[0];
-        path[len]   = '/';
+        path[len] = '/';
         len = strlen(env_term);
         strncat(path, env_term, len);
 
@@ -90,9 +89,13 @@ static void map_tifile(void)
         ti_size = st.st_size;
 
         fd = open((char *)path, O_RDONLY, 0);
-        if(fd == -1) { continue; }
+        if(fd == -1)
+        {
+            continue;
+        }
 
-        ti_map = (uint8_t *)mmap(NULL, ti_size, PROT_READ, MAP_PRIVATE, fd, 0);
+        ti_map =
+            (uint8_t *)mmap(NULL, ti_size, PROT_READ, MAP_PRIVATE, fd, 0);
         if(ti_map == MAP_FAILED)
         {
             printf("Unable to map Terminfo File\r\n");
@@ -120,19 +123,19 @@ void init_info()
 
     offset = sizeof(ti_hdr_t);
 
-    p = (ti_hdr_t *) &ti_map[0];
+    p = (ti_hdr_t *)&ti_map[0];
 
     ti_names = &ti_map[offset];
     z = p->ti_names;
     offset += z;
 
-    ti_bool  = &ti_map[offset];
+    ti_bool = &ti_map[offset];
     z = (uint16_t)p->ti_bool;
     offset += z;
     offset += (offset & 1);
 
     ti_numbers = &ti_map[offset];
-    z = (uint16_t)p-> ti_numbers;
+    z = (uint16_t)p->ti_numbers;
     offset += (z << wide);
 
     ti_strings = (uint16_t *)&ti_map[offset];
@@ -160,8 +163,8 @@ void q_valid(void)
 
 void uCurses_init(void)
 {
-    map_tifile();           // memory map correct terminfo file
-    q_valid();              // verify its magic is correct
+    map_tifile(); // memory map correct terminfo file
+    q_valid();    // verify its magic is correct
 
     // allocate 64k for compiled escape sequences
     esc_buff = calloc(1, 65535);

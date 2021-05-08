@@ -24,7 +24,7 @@ static cell_t *win_line_addr(window_t *win, uint16_t line)
 
 uint16_t win_alloc(window_t *win)
 {
-    uint16_t rv = -1;   // assume failure
+    uint16_t rv = -1; // assume failure
     cell_t *p;
 
     if(win != NULL)
@@ -62,8 +62,8 @@ window_t *win_open(uint16_t width, uint16_t height)
 
     if(win != NULL)
     {
-        win->width   = width;
-        win->height  = height;
+        win->width = width;
+        win->height = height;
 
         // win_alloc() uses width/height to determine how much
         // space needs to be allocated
@@ -72,7 +72,7 @@ window_t *win_open(uint16_t width, uint16_t height)
         {
             win->attrs[FG] = default_fg;
             win->attrs[BG] = default_bg;
-            win->blank     = 0x20;
+            win->blank = 0x20;
             win_clear(win);
         }
         else
@@ -111,23 +111,23 @@ uint16_t win_set_pos(window_t *win, uint16_t x, uint16_t y)
     {
         screen_t *scr = win->screen;
 
-        win_width  = win->width;
+        win_width = win->width;
         win_height = win->height;
-        win_x      = x;
-        win_y      = y;
-        scr_width  = scr->width;
+        win_x = x;
+        win_y = y;
+        scr_width = scr->width;
         scr_height = scr->height;
 
         // if window is boxed account for border
         if(win->flags & WIN_BOXED)
         {
-            win_width  += 2;
+            win_width += 2;
             win_height += 2;
             win_x--;
             win_y--;
         }
 
-        if((win_x + win_width  < scr_width) &&
+        if((win_x + win_width < scr_width) &&
            (win_y + win_height < scr_height))
         {
             win->xco = x;
@@ -146,10 +146,22 @@ static void win_set_attr(window_t *win, ti_attrib_t attr)
     win->attrs[ATTR] |= attr;
 
     // gray scales and rgb are mutually exclusive
-    if(attr == FG_RGB)   { win->attrs[ATTR] &= ~FG_GRAY; }
-    if(attr == BG_RGB)   { win->attrs[ATTR] &= ~BG_GRAY; }
-    if(attr == FG_GRAY)  { win->attrs[ATTR] &= ~FG_RGB;  }
-    if(attr == BG_GRAY)  { win->attrs[ATTR] &= ~BG_RGB;  }
+    if(attr == FG_RGB)
+    {
+        win->attrs[ATTR] &= ~FG_GRAY;
+    }
+    if(attr == BG_RGB)
+    {
+        win->attrs[ATTR] &= ~BG_GRAY;
+    }
+    if(attr == FG_GRAY)
+    {
+        win->attrs[ATTR] &= ~FG_RGB;
+    }
+    if(attr == BG_GRAY)
+    {
+        win->attrs[ATTR] &= ~BG_RGB;
+    }
 }
 
 // -----------------------------------------------------------------------
@@ -282,12 +294,12 @@ void win_scroll_up(window_t *win)
 
     if(win != NULL)
     {
-        for(i = 0; i < win->height -1; i++)
+        for(i = 0; i < win->height - 1; i++)
         {
             win_copy_line(win, i + 1, i);
         }
 
-        win_erase_line(win, win->height -1);
+        win_erase_line(win, win->height - 1);
     }
 }
 
@@ -328,7 +340,7 @@ void win_scroll_lt(window_t *win)
             src = dst = win_line_addr(win, i);
             src++;
             memcpy(dst, src, (win->width - 1) * sizeof(cell_t));
-            dst[win->width -1 ] = cell;
+            dst[win->width - 1] = cell;
         }
     }
 }
@@ -347,7 +359,7 @@ void win_scroll_rt(window_t *win)
         *(uint64_t *)&cell.attrs = *(uint64_t *)win->attrs;
         cell.code = win->blank;
 
-        for(i = win->width -1; i != 0; i--)
+        for(i = win->width - 1; i != 0; i--)
         {
             src = dst = win_line_addr(win, i);
             dst++;
@@ -516,11 +528,9 @@ void win_emit(window_t *win, uint32_t c)
 {
     if(win != NULL)
     {
-        if(c != 0x09)    // tabs are evil kthxbai
+        if(c != 0x09) // tabs are evil kthxbai
         {
-            ((c == 0x0d) || (c == 0x0a))
-                ? win_cr(win)
-                : _win_emit(win, c);
+            ((c == 0x0d) || (c == 0x0a)) ? win_cr(win) : _win_emit(win, c);
         }
     }
 }

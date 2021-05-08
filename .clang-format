@@ -1,25 +1,47 @@
-BasedOnStyle: None
+BasedOnStyle: LLVM
 AlignTrailingComments: true
-BreakBeforeBraces: Allman
-ColumnLimit: 0
-IndentWidth: 2
+IndentWidth: 4
 KeepEmptyLinesAtTheStartOfBlocks: false
 ObjCSpaceAfterProperty: true
 ObjCSpaceBeforeProtocolList: true
 PointerBindsToType: false
 SpacesBeforeTrailingComments: 1
-TabWidth: 2
+TabWidth: 4
 UseTab: Never
 
-ConstructorInitializerIndentWidth: 2
-ContinuationIndentWidth: 2
-ColumnLimit: 96
+Standard: Cpp11
+AllowAllArgumentsOnNextLine: true
+AllowShortIfStatementsOnASingleLine: Never
+AlwaysBreakBeforeMultilineStrings: true
+Cpp11BracedListStyle: false
+Language: Cpp
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeParens: Never
+IndentCaseLabels: true
+
+BreakBeforeBraces: Custom
+BraceWrapping: 
+    AfterCaseLabel: true
+    AfterClass: true
+    AfterControlStatement: true
+    AfterObjCDeclaration: true
+    AfterEnum: true
+    AfterFunction: true
+    AfterStruct: true
+    AfterUnion: true
+    BeforeElse: true
+    IndentBraces: false
+
+BreakBeforeTernaryOperators: true
+ConstructorInitializerIndentWidth: 4
+ContinuationIndentWidth: 4
+ColumnLimit: 75
 SortIncludes: true
 AlignEscapedNewlines: false
 AlignConsecutiveAssignments: false
 AlignConsecutiveDeclarations: false
 AllowShortBlocksOnASingleLine: true
-AllowShortCaseLabelsOnASingleLine: true
-AllowShortFunctionsOnASingleLine: All
-AllowShortLoopsOnASingleLine: true
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: true
+AllowShortLoopsOnASingleLine: false
 NamespaceIndentation: All

@@ -19,18 +19,18 @@ utf8_encode_t *utf8_encode(uint32_t cp)
 
     *(uint32_t *)&encoded.str[0] = 0;
 
-    if (cp < 0x80)
+    if(cp < 0x80)
     {
         encoded.str[0] = cp;
         encoded.len = 1;
     }
-    else if (cp < 0x0800)
+    else if(cp < 0x0800)
     {
         encoded.str[0] = 0xc0 | (cp >> 6);
         encoded.str[1] = 0x80 | (cp & 0x3f);
         encoded.len = 2;
     }
-    else if (cp < 0x10000)
+    else if(cp < 0x10000)
     {
         encoded.str[0] = 0xe0 | (cp >> 12);
         encoded.str[1] = 0x80 | ((cp >> 6) & 0x3f);
@@ -47,11 +47,11 @@ utf8_encode_t *utf8_encode(uint32_t cp)
     }
     memcpy(&c, &encoded.str[0], encoded.len);
 
-    // the following is tribal knowledge.  when these characters are written
-    // into a window the windows curor x is incremented by 1 spot. if nowever
-    // the character we are going to write is wide we need to bump the
-    // windows curosr by two slots and mark the following cell in the window
-    // as being dead (0xDEADC0DE)
+    // the following is tribal knowledge.  when these characters are
+    // written into a window the windows curor x is incremented by 1 spot.
+    // if nowever the character we are going to write is wide we need to
+    // bump the windows curosr by two slots and mark the following cell in
+    // the window as being dead (0xDEADC0DE)
 
     encoded.width = wcwidth(c);
 
@@ -64,7 +64,7 @@ uint16_t is_wide(uint32_t code)
 {
     uint16_t result;
     result = (wcwidth(code) == 1) ? 0 : 1;
-    return(result);
+    return (result);
 }
 
 // --------------------------------------------------------------------------
@@ -96,14 +96,14 @@ void utf8_emit(uint32_t cp)
 uint8_t utf8_decode(uint32_t *cp, char *s)
 {
     // 0xxxxxxx
-    if ((uint8_t)s[0] < 0x80)
+    if((uint8_t)s[0] < 0x80)
     {
         *cp = *s;
         return 1;
     }
 
-     // 110xxxxx  10xxxxxx
-    if (((uint8_t)s[0] >= 0xc0) && ((uint8_t)s[0] < 0xe0))
+    // 110xxxxx  10xxxxxx
+    if(((uint8_t)s[0] >= 0xc0) && ((uint8_t)s[0] < 0xe0))
     {
         // TODO: if(0x80 == s[1] & 0xc0) { yay }
         *cp = (((uint8_t)s[0] & 0x1f) << 6) | ((uint8_t)s[1] & 0x3f);
@@ -111,17 +111,18 @@ uint8_t utf8_decode(uint32_t *cp, char *s)
     }
 
     // 1110xxxx 10xxxxxx 10xxxxxx
-    if (((uint8_t)s[0] >= 0xe0) && ((uint8_t)s[0] < 0xf0))
+    if(((uint8_t)s[0] >= 0xe0) && ((uint8_t)s[0] < 0xf0))
     {
-        *cp = (((uint8_t)s[0] & 0x1f) << 12) | (((uint8_t)s[1] & 0x3f) << 6) |
-               ((uint8_t)s[2] & 0x3f);
+        *cp = (((uint8_t)s[0] & 0x1f) << 12) |
+              (((uint8_t)s[1] & 0x3f) << 6) | ((uint8_t)s[2] & 0x3f);
         return 3;
     }
 
     // 11110xxx 10xxxxx 10xxxxx 10xxxxx
-    if ((uint8_t)s[0] > 0xef)
+    if((uint8_t)s[0] > 0xef)
     {
-        *cp = (((uint8_t)s[0] & 0x7) << 18) | (((uint8_t)s[1] & 0x3f) << 12) |
+        *cp = (((uint8_t)s[0] & 0x7) << 18) |
+              (((uint8_t)s[1] & 0x3f) << 12) |
               (((uint8_t)s[2] & 0x3f) << 6) | ((uint8_t)s[3] & 0x3f);
         return 4;
     }
@@ -136,18 +137,30 @@ uint8_t utf8_char_length(char *s)
 {
     uint8_t c = *(uint8_t *)s;
 
-    if ((c <  0x80))                { return 1; }
-    if ((c >= 0xc0) && (c < 0xe0))  { return 2; }
-    if ((c >= 0xe0) && (c < 0xf0))  { return 3; }
-    if ((c >  0xef))                { return 4; }
+    if((c < 0x80))
+    {
+        return 1;
+    }
+    if((c >= 0xc0) && (c < 0xe0))
+    {
+        return 2;
+    }
+    if((c >= 0xe0) && (c < 0xf0))
+    {
+        return 3;
+    }
+    if((c > 0xef))
+    {
+        return 4;
+    }
 
     return -1;
 }
 
 // --------------------------------------------------------------------------
-// gets number of console character cells the string will use. this accounts
-// for characters such as chinese which take up two cells worth of space in
-// the console when displayed.
+// gets number of console character cells the string will use. this
+// accounts for characters such as chinese which take up two cells worth of
+// space in the console when displayed.
 
 uint16_t utf8_width(char *s)
 {

@@ -9,9 +9,9 @@
 // -----------------------------------------------------------------------
 
 uint8_t attrs[8];
-uint8_t old_attrs[8];        // to test for changes
+uint8_t old_attrs[8]; // to test for changes
 
-extern const char *f_str;    // terminfo format string pointer
+extern const char *f_str; // terminfo format string pointer
 
 // -----------------------------------------------------------------------
 // users can change their default fg and bg (make black on white? ICK!!)
@@ -28,8 +28,7 @@ static INLINE void do_set_fg(void)
     // supported by any current terminfo files that I know of and may
     // not be supported by all terminal types
 
-    const char * const rgb_seq  =
-        "\x1b[38;2;%p1%3d;%p2%3d;%p3%3dm";
+    const char *const rgb_seq = "\x1b[38;2;%p1%3d;%p2%3d;%p3%3dm";
 
     // format string to set gray scales which again might not be
     // supported by all terminal types.  this has been hard coded
@@ -37,14 +36,14 @@ static INLINE void do_set_fg(void)
     // the setaf and for others it is how they encide the setf
     // (e.g. xterm)
 
-    const char * const fg_seq   =
+    const char *const fg_seq =
         "\x1b["
-        "%?%p1%{8}%<"       // if p1 < 8
-        "%t3%p1%d"          //    output '3' followed by p1
-        "%e%p1%{16}%<"      // else  if p1 < 16
-        "%t9%p1%{8}%-%d"    //    output '9' followed by p1 - 8
-        "%e38;5;%p1%d"      // else output '38;5;' followed by p1
-        "%;m";              // last char output is always the m
+        "%?%p1%{8}%<"    // if p1 < 8
+        "%t3%p1%d"       //    output '3' followed by p1
+        "%e%p1%{16}%<"   // else  if p1 < 16
+        "%t9%p1%{8}%-%d" //    output '9' followed by p1 - 8
+        "%e38;5;%p1%d"   // else output '38;5;' followed by p1
+        "%;m";           // last char output is always the m
 
     // the params array is how we pass parameters to the terminfo
     // parsing functions for each format string.  this converts the
@@ -93,10 +92,9 @@ static INLINE void do_set_bg(void)
     // supported by any current terminfo files that I know of and may
     // not be supported by all terminal types
 
-    const char * const rgb_seq  =
-        "\x1b[48;2;%p1%3d;%p2%3d;%p3%3dm";
+    const char *const rgb_seq = "\x1b[48;2;%p1%3d;%p2%3d;%p3%3dm";
 
-    const char * const bg_seq   =
+    const char *const bg_seq =
         "\x1b["
         "%?%p1%{8}%<"
         "%t4%p1%d"
@@ -151,9 +149,18 @@ void apply_attribs(void)
     {
         ti_sgr0();
 
-        if(attrs[ATTR] & BLINK)    { ti_blink(); }
-        if(attrs[ATTR] & BOLD)     { ti_bold();  }
-        if(attrs[ATTR] & REVERSE)  { ti_rev();   }
+        if(attrs[ATTR] & BLINK)
+        {
+            ti_blink();
+        }
+        if(attrs[ATTR] & BOLD)
+        {
+            ti_bold();
+        }
+        if(attrs[ATTR] & REVERSE)
+        {
+            ti_rev();
+        }
     }
     // if underline changed we need to set it.  if it was not changed
     // we might need to restore it because of the above sgr0
@@ -163,20 +170,18 @@ void apply_attribs(void)
         (attrs[ATTR] & UNDERLINE) ? ti_smul() : ti_rmul();
     }
 
-    if((attrs[BG]   != old_attrs[BG]) ||
-       (attrs[BG_R] != old_attrs[BG_R]) ||
+    if((attrs[BG] != old_attrs[BG]) || (attrs[BG_R] != old_attrs[BG_R]) ||
        (attrs[BG_G] != old_attrs[BG_G]) ||
-       (attrs[BG_B] != old_attrs[BG_B]) ||
-       (changes & BG_GRAY) || (changes & BG_RGB))
+       (attrs[BG_B] != old_attrs[BG_B]) || (changes & BG_GRAY) ||
+       (changes & BG_RGB))
     {
         do_set_bg();
     }
 
-    if((attrs[FG]   != old_attrs[FG]) ||
-       (attrs[FG_R] != old_attrs[FG_R]) ||
+    if((attrs[FG] != old_attrs[FG]) || (attrs[FG_R] != old_attrs[FG_R]) ||
        (attrs[FG_G] != old_attrs[FG_G]) ||
-       (attrs[FG_B] != old_attrs[FG_B]) ||
-       (changes & FG_GRAY) || (changes & FG_RGB))
+       (attrs[FG_B] != old_attrs[FG_B]) || (changes & FG_GRAY) ||
+       (changes & FG_RGB))
     {
         do_set_fg();
     }
@@ -191,10 +196,22 @@ static void set_attr(ti_attrib_t attr)
     attrs[ATTR] |= attr;
 
     // gray scale and rgb color settngs are mutually exclusive
-    if(FG_RGB  & attr)  { attrs[ATTR] &= ~FG_GRAY; }
-    if(BG_RGB  & attr)  { attrs[ATTR] &= ~BG_GRAY; }
-    if(FG_GRAY & attr)  { attrs[ATTR] &= ~FG_RGB;  }
-    if(BG_GRAY & attr)  { attrs[ATTR] &= ~BG_RGB;  }
+    if(FG_RGB & attr)
+    {
+        attrs[ATTR] &= ~FG_GRAY;
+    }
+    if(BG_RGB & attr)
+    {
+        attrs[ATTR] &= ~BG_GRAY;
+    }
+    if(FG_GRAY & attr)
+    {
+        attrs[ATTR] &= ~FG_RGB;
+    }
+    if(BG_GRAY & attr)
+    {
+        attrs[ATTR] &= ~BG_RGB;
+    }
 
     apply_attribs();
 }
@@ -210,18 +227,18 @@ static void clr_attr(ti_attrib_t attr)
 // -----------------------------------------------------------------------
 // set individual attribs
 
-void set_ul(void)    { set_attr(UNDERLINE); }
-void set_rev(void)   { set_attr(REVERSE);   }
-void set_bold(void)  { set_attr(BOLD);      }
-void set_blink(void) { set_attr(BLINK);     }
+void set_ul(void) { set_attr(UNDERLINE); }
+void set_rev(void) { set_attr(REVERSE); }
+void set_bold(void) { set_attr(BOLD); }
+void set_blink(void) { set_attr(BLINK); }
 
 // -----------------------------------------------------------------------
 // clear individual attribs
 
-void clr_ul(void)    { clr_attr(UNDERLINE); }
-void clr_rev(void)   { clr_attr(REVERSE);   }
-void clr_bold(void)  { clr_attr(BOLD);      }
-void clr_blink(void) { clr_attr(BLINK);     }
+void clr_ul(void) { clr_attr(UNDERLINE); }
+void clr_rev(void) { clr_attr(REVERSE); }
+void clr_bold(void) { clr_attr(BOLD); }
+void clr_blink(void) { clr_attr(BLINK); }
 
 // -----------------------------------------------------------------------
 
@@ -243,22 +260,22 @@ void set_gray_bg(uint8_t c)
 
 void set_rgb_fg(uint8_t r, uint8_t g, uint8_t b)
 {
-   attrs[FG_R] = r;
-   attrs[FG_G] = g;
-   attrs[FG_B] = b;
+    attrs[FG_R] = r;
+    attrs[FG_G] = g;
+    attrs[FG_B] = b;
 
-   set_attr(FG_RGB);
+    set_attr(FG_RGB);
 }
 
 // -----------------------------------------------------------------------
 
 void set_rgb_bg(uint8_t r, uint8_t g, uint8_t b)
 {
-   attrs[BG_R] = r;
-   attrs[BG_G] = g;
-   attrs[BG_B] = b;
+    attrs[BG_R] = r;
+    attrs[BG_G] = g;
+    attrs[BG_B] = b;
 
-   set_attr(BG_RGB);
+    set_attr(BG_RGB);
 }
 
 // -----------------------------------------------------------------------

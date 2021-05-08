@@ -35,7 +35,7 @@ void win_puts(window_t *win, char *p)
 
 // NOTE: some of the format specifiers require more than one parameter
 
-void win_printf(window_t *win, char* format, ...)
+void win_printf(window_t *win, char *format, ...)
 {
     char *p;
     va_list arg;
@@ -54,10 +54,16 @@ void win_printf(window_t *win, char* format, ...)
             skip = utf8_decode(&codepoint, p);
             win_emit(win, codepoint);
             p += skip;
-            if(*p == '\0') { break; }
+            if(*p == '\0')
+            {
+                break;
+            }
         }
 
-        if(*p == '\0') { break; }
+        if(*p == '\0')
+        {
+            break;
+        }
 
         p++;
 
@@ -70,19 +76,19 @@ void win_printf(window_t *win, char* format, ...)
 
                 switch(p[1])
                 {
-                    case 'f':    // %fg = set foreground color
-                       win_set_rgb_fg(win, r, g, b);
-                       p++;
-                       break;
-                    case 'b':   // %of = set grayscale foreground color
-                       win_set_rgb_bg(win, r, g, b);
-                       p++;
-                       break;
+                    case 'f': // %fg = set foreground color
+                        win_set_rgb_fg(win, r, g, b);
+                        p++;
+                        break;
+                    case 'b': // %of = set grayscale foreground color
+                        win_set_rgb_bg(win, r, g, b);
+                        p++;
+                        break;
                     default:
-                       // must specify %Rf or %Rb
-                       // what do do if f/b missing?
-                       // silently aborting printf here
-                       return;
+                        // must specify %Rf or %Rb
+                        // what do do if f/b missing?
+                        // silently aborting printf here
+                        return;
                 }
                 break;
 
@@ -91,11 +97,11 @@ void win_printf(window_t *win, char* format, ...)
 
                 switch(p[1])
                 {
-                    case 'c':      // %fc set foreground color
+                    case 'c': // %fc set foreground color
                         win_set_fg(win, f % 16);
                         p++;
                         break;
-                    case 's':      // set foreground grayscale
+                    case 's': // set foreground grayscale
                         win_set_gray_fg(win, f % 21);
                         p++;
                         break;
@@ -109,11 +115,11 @@ void win_printf(window_t *win, char* format, ...)
 
                 switch(p[1])
                 {
-                    case 'c':       // %bc set background color
+                    case 'c': // %bc set background color
                         win_set_bg(win, b % 16);
                         p++;
                         break;
-                    case 's':       // %bs set background gray scale
+                    case 's': // %bs set background gray scale
                         win_set_bg(win, b % 21);
                         p++;
                         break;
@@ -122,7 +128,7 @@ void win_printf(window_t *win, char* format, ...)
                 }
                 break;
 
-            case '@':    // set cursor X/Y
+            case '@': // set cursor X/Y
                 x = va_arg(arg, int);
                 y = va_arg(arg, int);
 

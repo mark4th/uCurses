@@ -15,16 +15,14 @@ static INLINE void node_insert(node_t *n1, node_t *n2)
     node_t *t;
     list_t *l;
 
-    l = (list_t *) n1->parent;
+    l = (list_t *)n1->parent;
     n2->parent = l;
 
     t = (node_t *)(n1->next);
 
     n2->next = t;
 
-    (t == NULL)
-        ? (l->tail = n2)
-        : (t->prev = n2);
+    (t == NULL) ? (l->tail = n2) : (t->prev = n2);
 
     n1->next = n2;
     n2->prev = n1;
@@ -43,11 +41,23 @@ static void node_remove(node_t *n1)
     t1 = (node_t *)(n1->prev);
     t2 = (node_t *)(n1->next);
 
-    if(l->head == n1) { l->head = t2; }
-    if(l->tail == n1) { l->tail = t1; }
+    if(l->head == n1)
+    {
+        l->head = t2;
+    }
+    if(l->tail == n1)
+    {
+        l->tail = t1;
+    }
 
-    if(t1 != NULL) { t1->next = t2; }
-    if(t2 != NULL) { t2->prev = t1; }
+    if(t1 != NULL)
+    {
+        t1->next = t2;
+    }
+    if(t2 != NULL)
+    {
+        t2->prev = t1;
+    }
 
     n1->next = n1->prev = NULL;
     n1->parent = NULL;
@@ -133,9 +143,9 @@ void *list_scan(list_t *l)
 {
     static node_t *node;
 
-    void *x = NULL;         // the unknown factor
+    void *x = NULL; // the unknown factor
 
-    if(l != NULL)           // initiating scan?
+    if(l != NULL) // initiating scan?
     {
         node = l->head;
     }

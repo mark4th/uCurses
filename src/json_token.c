@@ -13,14 +13,15 @@
 
 extern j_state_t *j_state;
 
-extern char *json_data;        // pointer to json data to be parsed
-extern size_t json_len;        // total size of json data
-extern uint32_t json_index;    // parse index into data (current line)
+extern char *json_data;     // pointer to json data to be parsed
+extern size_t json_len;     // total size of json data
+extern uint32_t json_index; // parse index into data (current line)
 extern char line_buff[MAX_LINE_LEN];
 extern uint16_t line_no;
-extern uint16_t line_index;    // line parse location
-extern uint16_t line_left;     // number of chars left to parse in line
-extern char json_token[TOKEN_LEN];    // space delimited token extracted from data
+extern uint16_t line_index; // line parse location
+extern uint16_t line_left;  // number of chars left to parse in line
+extern char
+    json_token[TOKEN_LEN]; // space delimited token extracted from data
 extern uint32_t json_hash;
 
 // -----------------------------------------------------------------------
@@ -77,8 +78,7 @@ static INLINE void refill(void)
         json_index++;
     }
 
-    while((json_index != json_len) &&
-          (json_data[json_index] != 0x0a))
+    while((json_index != json_len) && (json_data[json_index] != 0x0a))
     {
         line_buff[i++] = json_data[json_index++];
         if(i == MAX_LINE_LEN)
@@ -87,9 +87,9 @@ static INLINE void refill(void)
         }
     }
 
-    line_left    = i;       // how much of current line is left to parse
-    line_buff[i] = '\0';    // make line_buff asciiz
-    line_index   = 0;       // reset current parse index
+    line_left = i;       // how much of current line is left to parse
+    line_buff[i] = '\0'; // make line_buff asciiz
+    line_index = 0;      // reset current parse index
 }
 
 // -----------------------------------------------------------------------
@@ -103,7 +103,7 @@ static INLINE void skip_white(void)
     {
         if(json_index == json_len)
         {
-             return;        // out of data
+            return; // out of data
         }
 
         // refill line buffer if it is empty
@@ -148,7 +148,8 @@ void json_de_tab(char *s, size_t len)
         {
             *s = 0x20;
         }
-        s++; len--;
+        s++;
+        len--;
     }
 }
 
@@ -173,7 +174,7 @@ void token(void)
         return;
     }
 
-    skip_white();           // skip leading white space
+    skip_white(); // skip leading white space
 
     // spaces inside quotes do not count as a token delimiter
     // this allows menu item names such as "Open File"
@@ -196,20 +197,20 @@ void token(void)
             in_quotes ^= 1;
         }
 
-       for(i = 0; i < l; i++)
-       {
+        for(i = 0; i < l; i++)
+        {
             json_token[j++] = s[line_index + i];
 
             if(j == TOKEN_LEN)
             {
                 // error/warning token too long ?
                 line_index += l;
-                line_left  -= l;
+                line_left -= l;
                 return;
             }
         }
         line_index += l;
-        line_left  -= l;
+        line_left -= l;
     }
 }
 

@@ -1,19 +1,19 @@
 // util.c
 // -----------------------------------------------------------------------
 
+#include <errno.h>
 #include <inttypes.h>
 #include <termios.h>
-#include <unistd.h>
 #include <time.h>
-#include <errno.h>
+#include <unistd.h>
 
 #include "h/uCurses.h"
 
 // -----------------------------------------------------------------------
 
-uint16_t cx;                // current cursor position in screen
+uint16_t cx; // current cursor position in screen
 uint16_t cy;
-uint16_t width;             // width and height of screen
+uint16_t width; // width and height of screen
 uint16_t height;
 
 extern uint64_t params[MAX_PARAM];
@@ -29,7 +29,7 @@ void clock_sleep(uint32_t when)
 
     do
     {
-        tv.tv_sec  = 0;
+        tv.tv_sec = 0;
         tv.tv_nsec = when;
         rv = clock_nanosleep(CLOCK_MONOTONIC, 0, &tv, &remain);
         tv = remain;
@@ -41,24 +41,21 @@ void clock_sleep(uint32_t when)
 
 void curoff(void)
 {
-    ti_civis();             // what you cant read this ?
+    ti_civis(); // what you cant read this ?
 }
 
 // -----------------------------------------------------------------------
 // turn cursor on
 
-void curon(void)
-{
-    ti_cnorm();
-}
+void curon(void) { ti_cnorm(); }
 
 // -----------------------------------------------------------------------
 // clear screen
 
 void clear(void)
 {
-    cx = cy = 0;            // remember position of cursor
-    ti_clear();             // wipe display
+    cx = cy = 0; // remember position of cursor
+    ti_clear();  // wipe display
 }
 
 // -----------------------------------------------------------------------
@@ -66,7 +63,7 @@ void clear(void)
 
 void hpa(uint16_t x)
 {
-    params[0] = cx = x;     // horizontal position absolute
+    params[0] = cx = x; // horizontal position absolute
     ti_hpa();
 }
 
@@ -125,7 +122,7 @@ void cuf1(void)
     }
     else
     {
-       cx++;
+        cx++;
     }
     cup(cx, cy);
 }

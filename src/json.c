@@ -1,4 +1,4 @@
- // uCurses json parsing for user interface layout
+// uCurses json parsing for user interface layout
 // -----------------------------------------------------------------------
 
 #include <fcntl.h>
@@ -12,6 +12,11 @@
 #include <unistd.h>
 
 #include "h/uCurses.h"
+
+// -----------------------------------------------------------------------
+// memory map flags
+
+#define MAP_FLAGS PROT_READ | PROT_WRITE
 
 // -----------------------------------------------------------------------
 
@@ -75,15 +80,15 @@
 
 // -----------------------------------------------------------------------
 
-char *json_data;        // pointer to json data to be parsed
-size_t json_len;        // total size of json data
-uint32_t json_index;    // parse index into data (current line)
+char *json_data;     // pointer to json data to be parsed
+size_t json_len;     // total size of json data
+uint32_t json_index; // parse index into data (current line)
 
 char line_buff[MAX_LINE_LEN];
 
 uint16_t line_no;
-uint16_t line_index;    // line parse location
-uint16_t line_left;     // number of chars left to parse in line
+uint16_t line_index; // line parse location
+uint16_t line_left;  // number of chars left to parse in line
 
 // space delimited token extracted from data - +1 for the null
 
@@ -105,11 +110,10 @@ j_state_t *j_state;
 // -----------------------------------------------------------------------
 // fnv-1a hash values for various json syntax chars
 
-const uint32_t json_syntax[] =
-{
-    0x050c5d25,             // :
-    0x050c5d64,             // {
-    0x050c5d62,             // }
+const uint32_t json_syntax[] = {
+    0x050c5d25, // :
+    0x050c5d64, // {
+    0x050c5d62, // }
 };
 
 // -----------------------------------------------------------------------
@@ -185,12 +189,10 @@ void json_new_state_struct(size_t struct_size, uint32_t struct_type)
     // if there is one allocate buffer for C structure for subseqeuent
     // keys to populate
 
-    structure = (struct_size != 0)
-        ? j_alloc(struct_size)
-        : NULL;
+    structure = (struct_size != 0) ? j_alloc(struct_size) : NULL;
 
-    j->parent      = j_state;
-    j->structure   = structure;
+    j->parent = j_state;
+    j->structure = structure;
     j->struct_type = struct_type;
 
     // push previous state and make new state the current state
@@ -199,17 +201,27 @@ void json_new_state_struct(size_t struct_size, uint32_t struct_type)
 
 // -----------------------------------------------------------------------
 
-void json_state_r_brace(void)
+static INLINE uint16_t check_comma(void)
 {
-    uint16_t has_comma = 0;
+    uint16_t rv = 0;
     uint16_t end = strlen(json_token) - 1;
 
     if(json_token[end] == ',')
     {
         json_token[end] = '\0';
         json_hash = fnv_hash(json_token);
-        has_comma = 1;
+        rv = 1;
     }
+    return rv;
+}
+
+// -----------------------------------------------------------------------
+
+void json_state_r_brace(void)
+{
+    uint16_t has_comma;
+
+    has_comma = check_comma();
 
     if(json_hash != json_syntax[JSON_R_BRACE])
     {
@@ -217,7 +229,8 @@ void json_state_r_brace(void)
     }
 
     // a right brace terminates a json object.  we need to add
-    // the current object to its parents structure
+    // the current object to its parents structure (or in some cases
+    // to its grandparent as its dirce parent is a dummy object)
 
     populate_parent();
 
@@ -227,20 +240,17 @@ void json_state_r_brace(void)
     {
         j_pop();
 
-        j_state->state = (has_comma != 0)
-            ? STATE_KEY
-            : STATE_R_BRACE;
+        j_state->state = (has_comma != 0) ? STATE_KEY : STATE_R_BRACE;
     }
 }
 
 // -----------------------------------------------------------------------
 
-static const switch_t states[] =
-{
-    { STATE_L_BRACE,  json_state_l_brace },
-    { STATE_KEY,      json_state_key     },
-    { STATE_VALUE,    json_state_value   },
-    { STATE_R_BRACE,  json_state_r_brace },
+static const switch_t states[] = {
+    { STATE_L_BRACE, json_state_l_brace },
+    { STATE_KEY, json_state_key },
+    { STATE_VALUE, json_state_value },
+    { STATE_R_BRACE, json_state_r_brace },
 };
 
 // -----------------------------------------------------------------------
@@ -289,7 +299,7 @@ void json_create_ui(char *path, fp_finder_t fp)
     struct winsize w;
 
     ioctl(0, TIOCGWINSZ, &w);
-    console_width  = w.ws_col;
+    console_width = w.ws_col;
     console_height = w.ws_row;
 
     struct stat st;
@@ -307,10 +317,10 @@ void json_create_ui(char *path, fp_finder_t fp)
     {
         json_error("Cannot stat JSON file");
     }
-    json_len  = st.st_size;
+    json_len = st.st_size;
 
-    json_data = mmap(NULL, json_len, PROT_READ | PROT_WRITE,
-        MAP_PRIVATE, fd, 0);
+    json_data =
+        mmap(NULL, json_len, MAP_FLAGS, MAP_PRIVATE, fd, 0);
     close(fd);
 
     if(json_data == MAP_FAILED)

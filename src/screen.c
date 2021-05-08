@@ -47,7 +47,7 @@ screen_t *scr_open(uint16_t width, uint16_t height)
 
     if(scr != NULL)
     {
-        scr->width  = width;
+        scr->width = width;
         scr->height = height;
 
         if(scr_alloc(scr) != 0)
@@ -138,7 +138,7 @@ static void scr_draw_win(window_t *win)
     {
         scr = win->screen;
 
-         // draw windows border if it has one
+        // draw windows border if it has one
         if(win->flags & WIN_BOXED)
         {
             win_draw_borders(win);
@@ -197,12 +197,12 @@ void init_backdrop(screen_t *scr, window_t *win)
 {
     if((win != NULL) && (scr != NULL))
     {
-        win->xco    = 1;
-        win->yco    = 1;
-        win->width  = scr->width  - 2;
+        win->xco = 1;
+        win->yco = 1;
+        win->width = scr->width - 2;
         win->height = scr->height - 2;
-        win->flags  = WIN_BOXED | WIN_LOCKED;
-        win->blank  = SOLID;
+        win->flags = WIN_BOXED | WIN_LOCKED;
+        win->blank = SOLID;
         win->screen = scr;
     }
 }
@@ -216,7 +216,7 @@ void scr_add_backdrop(screen_t *scr)
 
     if(scr != NULL)
     {
-        win = win_open(scr->width  - 2, scr->height - 2);
+        win = win_open(scr->width - 2, scr->height - 2);
 
         if(win != NULL)
         {
@@ -245,7 +245,7 @@ static INLINE uint16_t scr_is_modified(screen_t *scr, uint16_t index)
     // then this cell needs updating
 
     return (*(uint64_t *)p1->attrs != *(uint64_t *)p2->attrs) ||
-             (p1->code != p2->code);
+           (p1->code != p2->code);
 }
 
 // -----------------------------------------------------------------------
@@ -261,8 +261,9 @@ static void new_attrs(uint64_t a)
 
 static void scr_emit(screen_t *scr, uint16_t index)
 {
-    uint16_t x, y;
     cell_t *p1, *p2;
+
+    uint16_t x, y;
     uint16_t wide;
     uint16_t force = 0;
 
@@ -279,7 +280,7 @@ static void scr_emit(screen_t *scr, uint16_t index)
 
     if(wide == 1)
     {
-        if((p1 + 1)->code != DEADCODE)
+        if(p1[1].code != DEADCODE)
         {
             force = 1;
         }
@@ -289,7 +290,7 @@ static void scr_emit(screen_t *scr, uint16_t index)
     // character with a single width char then we need to output a
     // blank over the associated DEADCODE slot (see below)
 
-    else if((p1 + 1)->code == DEADCODE)
+    else if(p1[1].code == DEADCODE)
     {
         force = 2;
     }
@@ -306,15 +307,15 @@ static void scr_emit(screen_t *scr, uint16_t index)
     // are we overlaying either the left or right edge of a double
     // width char with a single width char?
 
-    if(force == 1)      // right?
+    if(force == 1) // right?
     {
         scr_cup(scr, x + 1, y);
-        new_attrs(*(uint64_t *)(p1 + 1)->attrs);
-        utf8_emit((p1 + 1)->code);
+        new_attrs(*(uint64_t *)p1[1].attrs);
+        utf8_emit(p1[1].code);
     }
     else if(force == 2) // left?
     {
-        new_attrs(*(uint64_t *)(p1 + 1)->attrs);
+        new_attrs(*(uint64_t *)p1[1].attrs);
         utf8_emit('.');
     }
 
@@ -329,14 +330,14 @@ static void scr_emit(screen_t *scr, uint16_t index)
         scr->cy++;
     }
 
-    *p2 = *p1;               // mark cell as updated
+    *p2 = *p1; // mark cell as updated
 }
 
 // -----------------------------------------------------------------------
 // inner loop of screen update
 
 static INLINE uint32_t inner_update(screen_t *scr, uint16_t index,
-    uint16_t end)
+                                    uint16_t end)
 {
     cell_t *p1;
     int indx = 0;
@@ -360,7 +361,7 @@ static INLINE uint32_t inner_update(screen_t *scr, uint16_t index,
         }
         index++;
         p1++;
-    } while (index != end);
+    } while(index != end);
 
     // return index of first char that had different attributes to the
     // ones we were updating
@@ -393,8 +394,11 @@ static void outer_update(screen_t *scr)
             // screen and found no characters that that it did not
             // already update so we can exit early.
 
-            if(index == 0) { break; }
-            continue;  // skip the ++
+            if(index == 0)
+            {
+                break;
+            }
+            continue; // skip the ++
         }
         index++;
     } while(index != end);

@@ -10,7 +10,8 @@
 
 extern list_t j_stack;
 extern j_state_t *j_state;
-extern char json_token[TOKEN_LEN]; // space delimited token extracted from data
+extern char
+    json_token[TOKEN_LEN]; // space delimited token extracted from data
 extern fp_finder_t fp_finder;
 extern j_state_t *j_state;
 extern uint32_t json_hash;
@@ -33,24 +34,24 @@ uint16_t nsi;
 
 static void value_fgbg(void)
 {
-    uint16_t ktype     = j_state->struct_type;
-    j_state_t *parent  = j_state->parent;
-    uint8_t *pstruct   = parent->structure;
+    uint16_t ktype = j_state->struct_type;
+    j_state_t *parent = j_state->parent;
+    uint8_t *pstruct = parent->structure;
 
     // assume setting bg
 
     uint8_t mask = (uint8_t) ~(BG_RGB | BG_GRAY);
-    uint8_t i    = BG;
+    uint8_t i = BG;
 
     if((key_value & ~255) == 0)
     {
         if(ktype == KEY_FG)
         {
-            i    = FG;
+            i = FG;
             mask = ~(FG_RGB | FG_GRAY);
         }
 
-        pstruct[i]     = key_value;
+        pstruct[i] = key_value;
         pstruct[ATTR] &= mask;
 
         return;
@@ -63,10 +64,10 @@ static void value_fgbg(void)
 
 static void value_gray_fgbg(void)
 {
-    uint16_t ktype     = j_state->struct_type;
-    j_state_t *parent  = j_state->parent;
-    uint8_t *pstruct   = parent->structure;
-    uint8_t i  = BG;
+    uint16_t ktype = j_state->struct_type;
+    j_state_t *parent = j_state->parent;
+    uint8_t *pstruct = parent->structure;
+    uint8_t i = BG;
     uint8_t m1 = BG_GRAY;
     uint8_t m2 = ~BG_RGB;
 
@@ -74,13 +75,13 @@ static void value_gray_fgbg(void)
     {
         if(ktype == KEY_GRAY_FG)
         {
-            i  = FG;
+            i = FG;
             m1 = FG_GRAY;
             m2 = ~FG_RGB;
         }
 
-        pstruct[i]     =  key_value;
-        pstruct[ATTR] |=  m1;
+        pstruct[i] = key_value;
+        pstruct[ATTR] |= m1;
         pstruct[ATTR] &= m2;
 
         return;
@@ -93,7 +94,7 @@ static void value_gray_fgbg(void)
 
 static void value_rgb_fg(char *gstruct)
 {
-    gstruct[ATTR] |=  FG_RGB;
+    gstruct[ATTR] |= FG_RGB;
     gstruct[ATTR] &= ~FG_GRAY;
 
     if(j_state->struct_type == KEY_RED)
@@ -114,7 +115,7 @@ static void value_rgb_fg(char *gstruct)
 
 static void value_rgb_bg(char *gstruct)
 {
-    gstruct[ATTR] |=  BG_RGB;
+    gstruct[ATTR] |= BG_RGB;
     gstruct[ATTR] &= ~BG_GRAY;
 
     if(j_state->struct_type == KEY_RED)
@@ -140,10 +141,10 @@ static void value_rgb(void)
     uint16_t ptype;
     char *gstruct;
 
-    parent  = j_state->parent;  // rgb psudo structure
-    gp      = parent->parent;   // attribs structure
-    gstruct = gp->structure;    // really a char* of 8 bytes
-    ptype   = parent->struct_type;
+    parent = j_state->parent; // rgb psudo structure
+    gp = parent->parent;      // attribs structure
+    gstruct = gp->structure;  // really a char* of 8 bytes
+    ptype = parent->struct_type;
 
     if((key_value <= 255) && (key_value >= 0))
     {
@@ -161,7 +162,7 @@ static void value_rgb(void)
 static void value_xy(void)
 {
     j_state_t *parent = j_state->parent;
-    window_t *win     = parent->structure;
+    window_t *win = parent->structure;
 
     if(j_state->struct_type == KEY_XCO)
     {
@@ -188,7 +189,7 @@ static void value_xy(void)
 static void value_wh(void)
 {
     j_state_t *parent = j_state->parent;
-    window_t *win     = parent->structure;
+    window_t *win = parent->structure;
 
     if(j_state->struct_type == KEY_WIDTH)
     {
@@ -199,7 +200,7 @@ static void value_wh(void)
         }
         win->width = key_value;
     }
-    else  // KEY_HEIGHT
+    else // KEY_HEIGHT
     {
         if(percent != 0)
         {
@@ -218,12 +219,12 @@ static void value_name(void)
     char *name;
 
     j_state_t *parent = j_state->parent;
-    void *structure   = parent->structure;
-    uint32_t ptype    = parent->struct_type;
+    void *structure = parent->structure;
+    uint32_t ptype = parent->struct_type;
 
     size_t len = strlen(json_token);
 
-    if(quoted == 0)  // was token quoted?
+    if(quoted == 0) // was token quoted?
     {
         json_error("String key values must be quoted");
     }
@@ -240,7 +241,7 @@ static void value_name(void)
     {
         ((menu_item_t *)structure)->name = name;
     }
-    else  // ptype == STRUCT_PULLDOWN:
+    else // ptype == STRUCT_PULLDOWN:
     {
         ((pulldown_t *)structure)->name = name;
     }
@@ -273,10 +274,7 @@ static void val_pd_flag(pulldown_t *pd)
 
 // -----------------------------------------------------------------------
 
-static void val_win_flag(window_t *win)
-{
-    win->flags |= key_value;
-}
+static void val_win_flag(window_t *win) { win->flags |= key_value; }
 
 // -----------------------------------------------------------------------
 
@@ -286,10 +284,10 @@ static void value_flag(void)
     void *structure;
     uint32_t gtype;
 
-    gp        = j_state->parent;
-    gp        = gp->parent;
+    gp = j_state->parent;
+    gp = gp->parent;
     structure = gp->structure;
-    gtype     = gp->struct_type;
+    gtype = gp->struct_type;
 
     if(gtype == STRUCT_MENU_ITEM)
     {
@@ -299,7 +297,7 @@ static void value_flag(void)
     {
         val_pd_flag(structure);
     }
-    else   // gtype == STRUCT_WINDOW:
+    else // gtype == STRUCT_WINDOW:
     {
         val_win_flag(structure);
     }
@@ -310,10 +308,9 @@ static void value_flag(void)
 static void value_border_type(void)
 {
     j_state_t *parent = j_state->parent;
-    window_t *win     = parent->structure;
+    window_t *win = parent->structure;
 
-    if((key_value == BDR_SINGLE) ||
-       (key_value == BDR_DOUBLE) ||
+    if((key_value == BDR_SINGLE) || (key_value == BDR_DOUBLE) ||
        (key_value == BDR_CURVED))
     {
         win->bdr_type = key_value;
@@ -346,63 +343,60 @@ static void value_vector(void)
 // -----------------------------------------------------------------------
 // how == tbd
 
-static void value_shortcut(void)
-{
-    ;
-}
+static void value_shortcut(void) { ; }
 
 // -----------------------------------------------------------------------
 
-static const switch_t value_types[] =
-{
-    { KEY_FG,           value_fgbg        },
-    { KEY_BG,           value_fgbg        },
-    { KEY_GRAY_FG,      value_gray_fgbg   },
-    { KEY_GRAY_BG,      value_gray_fgbg   },
-    { KEY_RED,          value_rgb         },
-    { KEY_GREEN,        value_rgb         },
-    { KEY_BLUE,         value_rgb         },
-    { KEY_XCO,          value_xy          },
-    { KEY_YCO,          value_xy          },
-    { KEY_WIDTH,        value_wh          },
-    { KEY_HEIGHT,       value_wh          },
-    { KEY_NAME,         value_name        },
-    { KEY_FLAGS,        value_flag        },
-    { KEY_BORDER_TYPE,  value_border_type },
-    { KEY_VECTOR,       value_vector      },
-    { KEY_SHORTCUT,     value_shortcut    },
-    { KEY_FLAG,         value_flag        }
+static const switch_t value_types[] = {
+    // this comment is to resoluve a bug in clang-format
+    // that would push everything in here out to column 41
+    { KEY_FG, value_fgbg },
+    { KEY_BG, value_fgbg },
+    { KEY_GRAY_FG, value_gray_fgbg },
+    { KEY_GRAY_BG, value_gray_fgbg },
+    { KEY_RED, value_rgb },
+    { KEY_GREEN, value_rgb },
+    { KEY_BLUE, value_rgb },
+    { KEY_XCO, value_xy },
+    { KEY_YCO, value_xy },
+    { KEY_WIDTH, value_wh },
+    { KEY_HEIGHT, value_wh },
+    { KEY_NAME, value_name },
+    { KEY_FLAGS, value_flag },
+    { KEY_BORDER_TYPE, value_border_type },
+    { KEY_VECTOR, value_vector },
+    { KEY_SHORTCUT, value_shortcut },
+    { KEY_FLAG, value_flag }
 };
 
 #define NUM_KEYS (sizeof(value_types) / sizeof(value_types[0]))
 
 // -----------------------------------------------------------------------
 
-static uint32_t constant_hash[] =
-{
-    0x0ed8a8cf, 0xfa264646, 0x4e4f416d, 0x8cb49b59,
-    0x901cbb7a, 0xd6b11d20, 0x6f7f7df8, 0x264116fc,
+static uint32_t constant_hash[] = {
+    0x0ed8a8cf, 0xfa264646, 0x4e4f416d, 0x8cb49b59, 0x901cbb7a, 0xd6b11d20,
+    0x6f7f7df8, 0x264116fc,
 
     // BLACK RED GREEN BROWN BLUE MAGENTA
     // CYAN WHITE GRAY PINK LT_GREEN YELLOW
     // LT_BLUE LT_MAGENTA CYAN LT_WHITE
 
-    0xdc51d022, 0x5a235332, 0xe3671392, 0x4ff50adb,
-    0xd1e100a9, 0x7dc1a602, 0x7cde54cc, 0xc2f8ecb8,
-    0xbabf7ce4, 0xf62236fd, 0x064123b9, 0x4d265959,
+    0xdc51d022, 0x5a235332, 0xe3671392, 0x4ff50adb, 0xd1e100a9, 0x7dc1a602,
+    0x7cde54cc, 0xc2f8ecb8, 0xbabf7ce4, 0xf62236fd, 0x064123b9, 0x4d265959,
     0x2805c15c, 0x186aeb45, 0x7cde54cc, 0x060a9a87
 };
 
 #define NUM_CONSTANTS (sizeof(constant_hash) / sizeof(constant_hash[0]))
 
-static uint32_t constant_val[] =
-{
-    MENU_DISABLED, BDR_SINGLE, BDR_DOUBLE, BDR_CURVED,
-    WIN_LOCKED,    WIN_FILLED, WIN_BOXED,  FAR,
+static uint32_t constant_val[] = {
+    // this comment is to resoluve a bug in clang-format
+
+    MENU_DISABLED, BDR_SINGLE, BDR_DOUBLE, BDR_CURVED, WIN_LOCKED,
+    WIN_FILLED, WIN_BOXED, FAR,
 
     // color values
-    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
-    0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f
+    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b,
+    0x0c, 0x0d, 0x0e, 0x0f
 };
 
 // -----------------------------------------------------------------------
@@ -413,8 +407,8 @@ static uint32_t constant_val[] =
 static INLINE void parse_number(void)
 {
     uint8_t c;
-    uint8_t radix   = 10;
-    uint16_t i      = 0;
+    uint8_t radix = 10;
+    uint16_t i = 0;
     uint32_t result = 0;
 
     percent = 0;
@@ -437,7 +431,7 @@ static INLINE void parse_number(void)
         {
             if(c > 17)
             {
-                return;  // key_value still == NAN
+                return; // key_value still == NAN
             }
             c -= 7;
         }
@@ -465,13 +459,26 @@ static INLINE void is_constant(void)
 
 // -----------------------------------------------------------------------
 
+static INLINE uint16_t chk_quotes(uint16_t len)
+{
+    uint16_t rv = 0;
+
+    if((json_token[0] == '"') && (json_token[len - 1] == '"'))
+    {
+        rv = 1;
+        strip_quotes(len);
+    }
+    return rv;
+}
+
+// -----------------------------------------------------------------------
+
 void json_state_value(void)
 {
     uint16_t has_comma = 0;
     uint16_t len;
 
-    key_value = NAN;     // assume NAN
-    quoted    = 0;       // true if key value is a string
+    key_value = NAN; // assume NAN
 
     len = strlen(json_token);
 
@@ -481,12 +488,7 @@ void json_state_value(void)
         has_comma = 1;
     }
 
-    if((json_token[0]       == '"') &&
-       (json_token[len - 1] == '"'))
-    {
-        quoted = 1;
-        strip_quotes(len);
-    }
+    quoted = chk_quotes(len);
 
     is_constant();
 
@@ -500,11 +502,10 @@ void json_state_value(void)
     if(j_stack.count != 0)
     {
         j_pop();
-        j_state->state = (has_comma != 0)
-            ? STATE_KEY
-            : STATE_R_BRACE;
+
+        j_state->state = (has_comma != 0) ? STATE_KEY : STATE_R_BRACE;
     }
-    else  // dont think this is possible but.... ya. this is C so it is
+    else // dont think this is possible but.... ya. this is C so it is
     {
         json_error("Whiskey Tango Foxtrot!");
     }

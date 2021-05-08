@@ -15,7 +15,8 @@ int re_switch(const switch_t *s, size_t size, uint32_t option)
 
     while((size != 0) && (option != s->option))
     {
-       s++; size--;
+        s++;
+        size--;
     }
     if((size != 0) && (option == s->option))
     {

@@ -21,7 +21,7 @@
 #define NAN 0x7fff // not a number (honest!)
 
 #define MAX_PARAM 9
-extern uint64_t params[MAX_PARAM];
+extern int64_t params[MAX_PARAM];
 
 // -----------------------------------------------------------------------
 // utf-8 codepoint for 'blank' char used in screen backdrop windows
@@ -40,7 +40,7 @@ typedef void (*opt_t)(void);     // re_switch vectors
 typedef void (*menu_fp_t)(void); // menu option vectors
 typedef void (*fp_t)(void *x);
 
-typedef menu_fp_t (*fp_finder_t)(uint32_t hash);
+typedef menu_fp_t (*fp_finder_t)(int32_t hash);
 
 // -----------------------------------------------------------------------
 
@@ -80,7 +80,7 @@ typedef enum
 
 typedef struct
 {
-    uint32_t option;
+    int32_t option;
     opt_t vector;
 } switch_t;
 
@@ -145,8 +145,8 @@ typedef enum
 
 typedef struct
 {
-    uint8_t len;
-    uint8_t str[4];
+    int8_t len;
+    int8_t str[4];
     int width;
 } utf8_encode_t;
 
@@ -155,8 +155,8 @@ typedef struct
 
 typedef struct
 {
-    uint8_t attrs[8]; // bold, blink, underline, gray scale, rgb
-    uint32_t code;    // utf-8 codepoint
+    int8_t attrs[8]; // bold, blink, underline, gray scale, rgb
+    int32_t code;    // utf-8 codepoint
 } cell_t;
 
 // -----------------------------------------------------------------------
@@ -164,43 +164,43 @@ typedef struct
 typedef struct
 {
     char *name;
-    uint16_t flags;    // disable flags etc
-    menu_fp_t fp;      // function to execute
-    uint16_t shortcut; // keyboard shortcut
+    int16_t flags;    // disable flags etc
+    menu_fp_t fp;     // function to execute
+    int16_t shortcut; // keyboard shortcut
 } menu_item_t;
 
 // -----------------------------------------------------------------------
 
 typedef struct
 {
-    char *name;     // menu bar name for this pulldown menu
-    uint16_t width; // width of widest item in pulldown menu
-    uint16_t flags; // masks for enabled/disabled etc
-    uint16_t which; // current selected item
-    uint16_t xco;   // x coordinate of menu window
-    uint16_t count;
+    char *name;    // menu bar name for this pulldown menu
+    int16_t width; // width of widest item in pulldown menu
+    int16_t flags; // masks for enabled/disabled etc
+    int16_t which; // current selected item
+    int16_t xco;   // x coordinate of menu window
+    int16_t count;
     // not a linked list of sub items. max 10
     menu_item_t *items[MAX_MENU_ITEMS];
-    void *window;        // this is a window_t honest!
-    uint8_t attr[8];     // attribs for pulldown menu border
-    uint8_t normal[8];   // attribs for non selected menu items
-    uint8_t selected[8]; // atrribs for selected menu item
-    uint8_t disabled[8]; // attribs for disabled meny items
+    void *window;       // this is a window_t honest!
+    int8_t attr[8];     // attribs for pulldown menu border
+    int8_t normal[8];   // attribs for non selected menu items
+    int8_t selected[8]; // atrribs for selected menu item
+    int8_t disabled[8]; // attribs for disabled meny items
 } pulldown_t;
 
 // -----------------------------------------------------------------------
 
 typedef struct
 {
-    void *window;    // fwd ref to window_t * grrr (c sucks)
-    uint16_t xco;    // x coordinate of next pulldown
-    uint16_t active; // 0 = not active
-    uint16_t which;  // which pulldown item is active
-    uint16_t count;  // number of pulldowns defined
+    void *window;   // fwd ref to window_t * grrr (c sucks)
+    int16_t xco;    // x coordinate of next pulldown
+    int16_t active; // 0 = not active
+    int16_t which;  // which pulldown item is active
+    int16_t count;  // number of pulldowns defined
     pulldown_t *items[MAX_MENU_ITEMS];
-    uint8_t normal[8];   // attribs for non selected menu bar items
-    uint8_t selected[8]; // attribs for selected menu bar items
-    uint8_t disabled[8]; // attribs for disabled menu bar items
+    int8_t normal[8];   // attribs for non selected menu bar items
+    int8_t selected[8]; // attribs for selected menu bar items
+    int8_t disabled[8]; // attribs for disabled menu bar items
 } menu_bar_t;
 
 // -----------------------------------------------------------------------
@@ -211,17 +211,17 @@ typedef struct
     cell_t *buffer;
     void *screen;
     win_flags_t flags;
-    uint32_t blank; // window fill character for backdrop windows
-    uint16_t width; // window dimensions
-    uint16_t height;
-    uint16_t xco; // window x/y coordinat within screen
-    uint16_t yco;
-    uint16_t cx; // cursor position within window
-    uint16_t cy;
-    uint16_t bdr_type;
-    uint8_t attrs[8];     // bold blink underline, gray scale, rgb etc
-    uint8_t old_attrs[8]; // previous state..
-    uint8_t bdr_attrs[8]; // likewise for the windows border if it has
+    int32_t blank; // window fill character for backdrop windows
+    int16_t width; // window dimensions
+    int16_t height;
+    int16_t xco; // window x/y coordinat within screen
+    int16_t yco;
+    int16_t cx; // cursor position within window
+    int16_t cy;
+    int16_t bdr_type;
+    int8_t attrs[8];     // bold blink underline, gray scale, rgb etc
+    int8_t old_attrs[8]; // previous state..
+    int8_t bdr_attrs[8]; // likewise for the windows border if it has
 } window_t;
 
 // -----------------------------------------------------------------------
@@ -233,10 +233,10 @@ typedef struct
     cell_t *buffer1; // screen buffer 1 and 2
     cell_t *buffer2;
     window_t *backdrop;
-    uint16_t width; // screen dimensions
-    uint16_t height;
-    uint16_t cx; // cursor corrdinates within screen
-    uint16_t cy;
+    int16_t width; // screen dimensions
+    int16_t height;
+    int16_t cx; // cursor corrdinates within screen
+    int16_t cy;
 } screen_t;
 
 extern screen_t *active_screen;
@@ -376,54 +376,54 @@ typedef enum
 
 typedef struct
 {
-    uint16_t state;       // current state
-    void *parent;         // pointer to parent j_state_t
-    void *structure;      // pointer to structure being populated
-    uint16_t struct_type; // type of structure being populated
+    int16_t state;       // current state
+    void *parent;        // pointer to parent j_state_t
+    void *structure;     // pointer to structure being populated
+    int16_t struct_type; // type of structure being populated
 } j_state_t;
 
 // -----------------------------------------------------------------------
 
-uint16_t win_alloc(window_t *win);
+int16_t win_alloc(window_t *win);
 void win_pop(window_t *win);
 void win_close(window_t *win);
-window_t *win_open(uint16_t width, uint16_t height);
-uint16_t win_set_pos(window_t *win, uint16_t x, uint16_t y);
-void win_set_gray_fg(window_t *win, uint8_t c);
-void win_set_gray_bg(window_t *win, uint8_t c);
-void win_set_rgb_fg(window_t *win, uint8_t r, uint8_t g, uint8_t b);
-void win_set_rgb_bg(window_t *win, uint8_t r, uint8_t g, uint8_t b);
-void win_set_fg(window_t *win, uint8_t color);
-void win_set_bg(window_t *win, uint8_t color);
+window_t *win_open(int16_t width, int16_t height);
+int16_t win_set_pos(window_t *win, int16_t x, int16_t y);
+void win_set_gray_fg(window_t *win, int8_t c);
+void win_set_gray_bg(window_t *win, int8_t c);
+void win_set_rgb_fg(window_t *win, int8_t r, int8_t g, int8_t b);
+void win_set_rgb_bg(window_t *win, int8_t r, int8_t g, int8_t b);
+void win_set_fg(window_t *win, int8_t color);
+void win_set_bg(window_t *win, int8_t color);
 void win_scroll_up(window_t *win);
 void win_scroll_dn(window_t *win);
 void win_scroll_lt(window_t *win);
 void win_scroll_rt(window_t *win);
-void win_cup(window_t *win, uint16_t x, uint16_t y);
-void win_set_cx(window_t *win, uint16_t x);
-void win_set_cy(window_t *win, uint16_t y);
+void win_cup(window_t *win, int16_t x, int16_t y);
+void win_set_cx(window_t *win, int16_t x);
+void win_set_cy(window_t *win, int16_t y);
 void win_crsr_up(window_t *win);
 void win_crsr_dn(window_t *win);
 void win_crsr_lt(window_t *win);
 void win_crsr_rt(window_t *win);
 void win_cr(window_t *win);
-void win_emit(window_t *win, uint32_t c);
+void win_emit(window_t *win, int32_t c);
 void win_clear(window_t *win);
 void win_draw_borders(window_t *win);
 void win_el(window_t *win);
-void win_erase_line(window_t *win, uint16_t line);
+void win_erase_line(window_t *win, int16_t line);
 void win_printf(window_t *win, char *format, ...);
 void win_puts(window_t *win, char *s);
 
 // -----------------------------------------------------------------------
 
-screen_t *scr_open(uint16_t width, uint16_t height);
+screen_t *scr_open(int16_t width, int16_t height);
 void scr_close(screen_t *scr);
 void scr_win_attach(screen_t *scr, window_t *win);
 void scr_win_detach(window_t *win);
 void scr_draw_screen(screen_t *scr);
 void scr_add_backdrop(screen_t *scr);
-uint16_t scr_alloc(screen_t *scr);
+int16_t scr_alloc(screen_t *scr);
 void init_backdrop(screen_t *scr, window_t *win);
 
 // -----------------------------------------------------------------------
@@ -432,11 +432,11 @@ extern char *status_line;
 #define MAX_STATUS (40 - 1)
 
 void menu_init(void);
-uint32_t bar_open(screen_t *scr);
+int32_t bar_open(screen_t *scr);
 void bar_close(screen_t *scr);
-uint32_t new_pulldown(screen_t *scr, char *name);
-uint32_t new_menu_item(screen_t *scr, char *name, menu_fp_t fp,
-                       uint16_t shortcut);
+int32_t new_pulldown(screen_t *scr, char *name);
+int32_t new_menu_item(screen_t *scr, char *name, menu_fp_t fp,
+                      int16_t shortcut);
 void bar_draw_text(screen_t *scr);
 void bar_populdate_pd(pulldown_t *pd);
 void pd_enable(screen_t *scr, char *name);
@@ -444,7 +444,7 @@ void pd_disable(screen_t *scr, char *name);
 
 void init_key_handlers(void);
 key_handler_t *set_key_action(key_index_t index, key_handler_t *action);
-void stuff_key(uint8_t c);
+void stuff_key(int8_t c);
 void bar_set_status(char *string);
 void bar_clr_status(void);
 void bar_draw_status(menu_bar_t *bar);
@@ -452,7 +452,7 @@ void alloc_status(void);
 
 // -----------------------------------------------------------------------
 
-int re_switch(const switch_t *s, size_t size, uint32_t option);
+int re_switch(const switch_t *s, size_t size, int32_t option);
 uint8_t key(void);
 
 // -----------------------------------------------------------------------
@@ -463,34 +463,34 @@ void restore_term(void);
 
 // -----------------------------------------------------------------------
 
-uint16_t is_wide(uint32_t code);
+int16_t is_wide(int32_t code);
 void utf8_emit(uint32_t cp);
-utf8_encode_t *utf8_encode(uint32_t cp);
-uint8_t utf8_decode(uint32_t *cp, char *s);
-uint16_t utf8_width(char *s);
-uint16_t utf8_strlen(char *s);
-uint16_t utf8_strncmp(char *s1, char *s2, uint16_t len);
+utf8_encode_t *utf8_encode(int32_t cp);
+int8_t utf8_decode(int32_t *cp, char *s);
+int16_t utf8_width(char *s);
+int16_t utf8_strlen(char *s);
+int16_t utf8_strncmp(char *s1, char *s2, int16_t len);
 uint8_t utf8_char_length(char *s);
 
 void flush(void);
-void c_emit(uint8_t c1);
-void format(uint16_t i);
+void c_emit(char c1);
+void format(int16_t i);
 void parse_format(void);
 
 void apply_attribs(void);
 
-uint32_t fnv_hash(char *s);
-uint16_t is_keyword(uint32_t *table, size_t size, uint32_t hash);
+int32_t fnv_hash(char *s);
+uint16_t is_keyword(int32_t *table, size_t size, int32_t hash);
 void token(void);
-uint16_t is_token(uint32_t *table, size_t size, char *s);
+int16_t is_token(int32_t *table, size_t size, char *s);
 void json_de_tab(char *s, size_t len);
 void json_error(char *s);
-void json_new_state_struct(size_t struct_size, uint32_t struct_type);
+void json_new_state_struct(size_t struct_size, int32_t struct_type);
 void json_state_value(void);
 void json_state_key(void);
 void json_state_r_brace(void);
 void j_pop(void);
-void strip_quotes(uint16_t len);
+void strip_quotes(int16_t len);
 void json_create_ui(char *path, fp_finder_t fp);
 void json_build_ui(void);
 void populate_parent(void);
@@ -507,39 +507,39 @@ void clr_rev(void);
 void clr_bold(void);
 void clr_blink(void);
 
-void set_gray_fg(uint8_t c);
-void set_gray_bg(uint8_t c);
+void set_gray_fg(int8_t c);
+void set_gray_bg(int8_t c);
 
-void set_rgb_fg(uint8_t r, uint8_t g, uint8_t b);
-void set_rgb_bg(uint8_t r, uint8_t g, uint8_t b);
+void set_rgb_fg(int8_t r, int8_t g, int8_t b);
+void set_rgb_bg(int8_t r, int8_t g, int8_t b);
 
-void set_fg(uint8_t c);
-void set_bg(uint8_t c);
+void set_fg(int8_t c);
+void set_bg(int8_t c);
 
 void set_norm(void);
 
 // -----------------------------------------------------------------------
 // wrappers for terminfo cursor handling etc
 
-void clock_sleep(uint32_t when);
+void clock_sleep(int32_t when);
 
 void curoff(void);
 void curon(void);
 void clear(void);
-void hpa(uint16_t x);
-void cup(uint16_t x, uint16_t y);
+void hpa(int16_t x);
+void cup(int16_t x, int16_t y);
 void cud1(void);
 void home(void);
 void cub1(void);
 void cuf1(void);
 void cuu1(void);
 void dch1(void);
-void cud(uint16_t n1);
+void cud(int16_t n1);
 void ich(void);
-void cub(uint16_t n1);
-void cuf(uint16_t n1);
-void cuu(uint16_t n1);
-void vpa(uint16_t n1);
+void cub(int16_t n1);
+void cuf(int16_t n1);
+void cuu(int16_t n1);
+void vpa(int16_t n1);
 void cr(void);
 
 // -----------------------------------------------------------------------

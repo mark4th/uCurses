@@ -12,22 +12,22 @@ extern j_state_t *j_state;
 // this series of IF statements produces significantly smaller code than
 // a switch statement does.   C sucks
 
-static INLINE void populate_attribs(void *pstruct, uint32_t ptype)
+static INLINE void populate_attribs(void *pstruct, int32_t ptype)
 {
     if((ptype == STRUCT_WINDOW) || (ptype == STRUCT_BACKDROP))
     {
-        *(uint64_t *)((window_t *)pstruct)->attrs =
-            *(uint64_t *)j_state->structure;
+        *(int64_t *)((window_t *)pstruct)->attrs =
+            *(int64_t *)j_state->structure;
     }
     else if(ptype == STRUCT_PULLDOWN)
     {
-        *(uint64_t *)((pulldown_t *)pstruct)->normal =
-            *(uint64_t *)j_state->structure;
+        *(int64_t *)((pulldown_t *)pstruct)->normal =
+            *(int64_t *)j_state->structure;
     }
     else // ptype == STRUCT_MENU_BAR:
     {
-        *(uint64_t *)((menu_bar_t *)pstruct)->normal =
-            *(uint64_t *)j_state->structure;
+        *(int64_t *)((menu_bar_t *)pstruct)->normal =
+            *(int64_t *)j_state->structure;
     }
 
     free(j_state->structure);
@@ -37,24 +37,24 @@ static INLINE void populate_attribs(void *pstruct, uint32_t ptype)
 
 static INLINE void populate_b_attribs(window_t *pstruct)
 {
-    *(uint64_t *)pstruct->bdr_attrs = *(uint64_t *)j_state->structure;
+    *(int64_t *)pstruct->bdr_attrs = *(int64_t *)j_state->structure;
 
     free(j_state->structure);
 }
 
 // -----------------------------------------------------------------------
 
-static INLINE void populate_s_attribs(void *pstruct, uint32_t ptype)
+static INLINE void populate_s_attribs(void *pstruct, int32_t ptype)
 {
     if(ptype == STRUCT_PULLDOWN)
     {
-        *(uint64_t *)((pulldown_t *)pstruct)->selected =
-            *(uint64_t *)j_state->structure;
+        *(int64_t *)((pulldown_t *)pstruct)->selected =
+            *(int64_t *)j_state->structure;
     }
     else // ptype == STRUCT_MENU_BAR:
     {
-        *(uint64_t *)((menu_bar_t *)pstruct)->selected =
-            *(uint64_t *)j_state->structure;
+        *(int64_t *)((menu_bar_t *)pstruct)->selected =
+            *(int64_t *)j_state->structure;
     }
 
     free(j_state->structure);
@@ -62,17 +62,17 @@ static INLINE void populate_s_attribs(void *pstruct, uint32_t ptype)
 
 // -----------------------------------------------------------------------
 
-static INLINE void populate_d_attribs(void *pstruct, uint32_t ptype)
+static INLINE void populate_d_attribs(void *pstruct, int32_t ptype)
 {
     if(ptype == STRUCT_PULLDOWN)
     {
-        *(uint64_t *)((pulldown_t *)pstruct)->disabled =
-            *(uint64_t *)j_state->structure;
+        *(int64_t *)((pulldown_t *)pstruct)->disabled =
+            *(int64_t *)j_state->structure;
     }
     else // ptype == STRUCT_MENU_BAR:
     {
-        *(uint64_t *)((menu_bar_t *)pstruct)->disabled =
-            *(uint64_t *)j_state->structure;
+        *(int64_t *)((menu_bar_t *)pstruct)->disabled =
+            *(int64_t *)j_state->structure;
     }
 
     free(j_state->structure);
@@ -134,7 +134,7 @@ static INLINE void populate_bar(screen_t *scr)
 
 void INLINE populate_parent(void)
 {
-    uint32_t ptype;
+    int32_t ptype;
 
     void *pstruct;
     void *gstruct;

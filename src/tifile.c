@@ -18,7 +18,7 @@
 
 extern FILE *log_fp;
 
-extern uint8_t *esc_buff;
+extern int8_t *esc_buff;
 struct termios term_save;
 struct termios term;
 
@@ -36,18 +36,18 @@ typedef struct
 
 // -----------------------------------------------------------------------
 
-uint8_t *ti_map; // memory mapped address of terminfo file
-uint8_t ti_size; // size of memory mapping
+int8_t *ti_map;  // memory mapped address of terminfo file
+int16_t ti_size; // size of memory mapping
 
 // -----------------------------------------------------------------------
 
-uint8_t *ti_names;   // pointer to term names
-uint8_t *ti_bool;    // pointer to terminfo flags
-uint8_t *ti_numbers; // pointer to terminfo numbers
-uint16_t *ti_strings;
+char *ti_names;      // pointer to term names
+int8_t *ti_bool;     // pointer to terminfo flags
+int16_t *ti_numbers; // pointer to terminfo numbers
+int16_t *ti_strings;
 char *ti_table;
 
-uint8_t wide; // numbers item size size shift factor
+int8_t wide; // numbers item size size shift factor
 
 // -----------------------------------------------------------------------
 
@@ -61,8 +61,8 @@ char *paths[] = {
 
 static void map_tifile(void)
 {
-    uint16_t i;
-    uint16_t len;
+    int16_t i;
+    int16_t len;
     int fd;
     const char *env_term;
     char path[128];
@@ -95,20 +95,20 @@ static void map_tifile(void)
         }
 
         ti_map =
-            (uint8_t *)mmap(NULL, ti_size, PROT_READ, MAP_PRIVATE, fd, 0);
+            (int8_t *)mmap(NULL, ti_size, PROT_READ, MAP_PRIVATE, fd, 0);
+        close(fd);
         if(ti_map == MAP_FAILED)
         {
-            printf("Unable to map Terminfo File\r\n");
-            printf(" - %s\r\n", path);
-            exit(1);
+            continue;
         }
-        close(fd);
 
-        // log_fp = fopen("log.bin", "w");
+        // only if you want HUGE logs of every single character
+        // written to the console :)
+        // log_fp = fopen("log", "w");
         return;
     }
 
-    printf("No Terminfo File for %s\n", env_term);
+    printf("No Terminfo File found for %s\n", env_term);
     exit(1);
 }
 
@@ -117,31 +117,33 @@ static void map_tifile(void)
 void init_info()
 {
     ti_hdr_t *p;
-    uint16_t z;
 
-    uint32_t offset;
+    int16_t offset;
 
     offset = sizeof(ti_hdr_t);
 
-    p = (ti_hdr_t *)&ti_map[0];
+    p = (ti_hdr_t *)ti_map;
 
-    ti_names = &ti_map[offset];
-    z = p->ti_names;
-    offset += z;
+    // set pointer to names section
+    ti_names = (char *)&ti_map[offset];
+    offset += p->ti_names;
 
+    // set pointer to bool section (align if odd length)
     ti_bool = &ti_map[offset];
-    z = (uint16_t)p->ti_bool;
-    offset += z;
+    offset += p->ti_bool;
     offset += (offset & 1);
 
-    ti_numbers = &ti_map[offset];
-    z = (uint16_t)p->ti_numbers;
-    offset += (z << wide);
+    // set pointer to numbers section which can have 16 or 32 it items
+    ti_numbers = (int16_t *)&ti_map[offset];
+    offset += (p->ti_numbers << wide);
 
-    ti_strings = (uint16_t *)&ti_map[offset];
+    // set pointer to strings section which is an array of 16 bit offstts
+    // into the table section (below)
+    ti_strings = (int16_t *)&ti_map[offset];
+    offset += (p->ti_strings << 1);
 
-    z = (uint16_t)p->ti_strings;
-    offset += (z << 1);
+    // set address of table section which is a table of escape sequence
+    // format strings
     ti_table = (char *)&ti_map[offset];
 }
 
@@ -149,12 +151,14 @@ void init_info()
 
 void q_valid(void)
 {
-    uint16_t magic;
+    int16_t magic;
 
     magic = ((ti_hdr_t *)ti_map)->ti_magic;
 
     if((magic == 0x011a) || (magic == 0x021e))
     {
+        // shift value used to calculate offset to end of tables
+        // in init_info() above
         wide = (magic == 0x021e) ? 2 : 1;
     }
 }

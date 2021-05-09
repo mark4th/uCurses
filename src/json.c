@@ -80,27 +80,27 @@
 
 // -----------------------------------------------------------------------
 
-char *json_data;     // pointer to json data to be parsed
-size_t json_len;     // total size of json data
-uint32_t json_index; // parse index into data (current line)
+char *json_data;    // pointer to json data to be parsed
+size_t json_len;    // total size of json data
+int32_t json_index; // parse index into data (current line)
 
 char line_buff[MAX_LINE_LEN];
 
-uint16_t line_no;
-uint16_t line_index; // line parse location
-uint16_t line_left;  // number of chars left to parse in line
+int16_t line_no;
+int16_t line_index; // line parse location
+int16_t line_left;  // number of chars left to parse in line
 
 // space delimited token extracted from data - +1 for the null
 
 char json_token[TOKEN_LEN + 1];
-uint32_t json_hash;
+int32_t json_hash;
 
 list_t j_stack;
 
 fp_finder_t fp_finder;
 
-uint16_t console_width;
-uint16_t console_height;
+int16_t console_width;
+int16_t console_height;
 
 // -----------------------------------------------------------------------
 // the current state
@@ -110,7 +110,7 @@ j_state_t *j_state;
 // -----------------------------------------------------------------------
 // fnv-1a hash values for various json syntax chars
 
-const uint32_t json_syntax[] = {
+const int32_t json_syntax[] = {
     0x050c5d25, // :
     0x050c5d64, // {
     0x050c5d62, // }
@@ -178,7 +178,7 @@ static void json_state_l_brace(void)
 // previous object states are pushed onto the json parse stack. key value
 // states are never pushed onto the state stack
 
-void json_new_state_struct(size_t struct_size, uint32_t struct_type)
+void json_new_state_struct(size_t struct_size, int32_t struct_type)
 {
     j_state_t *j;
     void *structure;
@@ -203,8 +203,8 @@ void json_new_state_struct(size_t struct_size, uint32_t struct_type)
 
 static INLINE uint16_t check_comma(void)
 {
-    uint16_t rv = 0;
-    uint16_t end = strlen(json_token) - 1;
+    int16_t rv = 0;
+    int16_t end = strlen(json_token) - 1;
 
     if(json_token[end] == ',')
     {
@@ -219,7 +219,7 @@ static INLINE uint16_t check_comma(void)
 
 void json_state_r_brace(void)
 {
-    uint16_t has_comma;
+    int16_t has_comma;
 
     has_comma = check_comma();
 
@@ -319,8 +319,7 @@ void json_create_ui(char *path, fp_finder_t fp)
     }
     json_len = st.st_size;
 
-    json_data =
-        mmap(NULL, json_len, MAP_FLAGS, MAP_PRIVATE, fd, 0);
+    json_data = mmap(NULL, json_len, MAP_FLAGS, MAP_PRIVATE, fd, 0);
     close(fd);
 
     if(json_data == MAP_FAILED)

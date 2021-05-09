@@ -8,18 +8,18 @@
 
 // -----------------------------------------------------------------------
 
-extern uint16_t console_width;
-extern uint16_t console_height;
+extern int16_t console_width;
+extern int16_t console_height;
 
 // -----------------------------------------------------------------------
 // vereify window is within bounds of screen
 
 static void INLINE bounds_check(window_t *win)
 {
-    uint16_t xco = win->xco;
-    uint16_t yco = win->yco;
+    int16_t xco = win->xco;
+    int16_t yco = win->yco;
 
-    uint16_t z = (win->flags & WIN_BOXED) ? 1 : 0;
+    int16_t z = (win->flags & WIN_BOXED) ? 1 : 0;
 
     if(((xco + win->width + z) < console_width) &&
        ((yco + win->height + z) < console_height) &&
@@ -36,7 +36,7 @@ static void INLINE bounds_check(window_t *win)
 
 static void INLINE fix_win(screen_t *scr, window_t *win)
 {
-    uint16_t fudge = 1;
+    int16_t fudge = 1;
     window_t *bd = scr->backdrop;
 
     if((bd != NULL) && ((bd->flags & WIN_BOXED) != 0))
@@ -90,8 +90,8 @@ static void INLINE fix_menus(screen_t *scr)
     pulldown_t *pd;
     window_t *win;
 
-    uint16_t i, j;
-    uint16_t width;
+    int16_t i, j;
+    int16_t width;
 
     win = win_open(scr->width, 1);
     if(win == NULL)
@@ -131,7 +131,7 @@ static void INLINE fix_menus(screen_t *scr)
 
 void INLINE json_build_ui(void)
 {
-    uint16_t result;
+    int16_t result;
     screen_t *scr = active_screen;
 
     result = scr_alloc(scr);

@@ -9,7 +9,7 @@
 // structure contains a option and a function vector.  for example
 // see parse.c
 
-int re_switch(const switch_t *s, size_t size, uint32_t option)
+int re_switch(const switch_t *s, size_t size, int32_t option)
 {
     int result = -1;
 

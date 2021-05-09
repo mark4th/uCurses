@@ -17,21 +17,21 @@ extern char *json_data;     // pointer to json data to be parsed
 extern size_t json_len;     // total size of json data
 extern uint32_t json_index; // parse index into data (current line)
 extern char line_buff[MAX_LINE_LEN];
-extern uint16_t line_no;
-extern uint16_t line_index; // line parse location
-extern uint16_t line_left;  // number of chars left to parse in line
-extern char
-    json_token[TOKEN_LEN]; // space delimited token extracted from data
-extern uint32_t json_hash;
+extern int16_t line_no;
+extern int16_t line_index; // line parse location
+extern int16_t line_left;  // number of chars left to parse in line
+// space delimited token extracted from data
+extern char json_token[TOKEN_LEN];
+extern int32_t json_hash;
 
 // -----------------------------------------------------------------------
 // FNV-1a on utf8 strings
 
-uint32_t fnv_hash(char *s)
+int32_t fnv_hash(char *s)
 {
-    uint32_t hash = FNV_BASIS;
+    int32_t hash = FNV_BASIS;
 
-    uint8_t len;
+    int16_t len;
 
     while(*s != '\0')
     {
@@ -51,9 +51,9 @@ uint32_t fnv_hash(char *s)
 // -----------------------------------------------------------------------
 // strip quotes off of parsed json token and recalculate hash
 
-void strip_quotes(uint16_t len)
+void strip_quotes(int16_t len)
 {
-    uint16_t i;
+    int16_t i;
 
     for(i = 0; i < len - 2; i++)
     {
@@ -69,7 +69,7 @@ void strip_quotes(uint16_t len)
 
 static INLINE void refill(void)
 {
-    uint16_t i = 0;
+    int16_t i = 0;
 
     // line number only needed for error printf
     if(json_data[json_index] == 0x0a)
@@ -159,9 +159,9 @@ void json_de_tab(char *s, size_t len)
 void token(void)
 {
     char *s = line_buff;
-    uint16_t i, j = 0;
-    uint8_t in_quotes = 0;
-    uint8_t l;
+    int16_t i, j = 0;
+    int16_t in_quotes = 0;
+    int16_t l;
 
     // if this call runs out of data before parsing a full token
     // then the hash value for what was parsed would be unknown

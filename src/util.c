@@ -11,21 +11,20 @@
 
 // -----------------------------------------------------------------------
 
-uint16_t cx; // current cursor position in screen
-uint16_t cy;
-uint16_t width; // width and height of screen
-uint16_t height;
+int16_t cx; // current cursor position in screen
+int16_t cy;
+int16_t width; // width and height of screen
+int16_t height;
 
-extern uint64_t params[MAX_PARAM];
 extern struct termios term_save;
 
 // -----------------------------------------------------------------------
 
-void clock_sleep(uint32_t when)
+void clock_sleep(int32_t when)
 {
     struct timespec tv;
     struct timespec remain;
-    uint32_t rv;
+    int rv;
 
     do
     {
@@ -61,7 +60,7 @@ void clear(void)
 // -----------------------------------------------------------------------
 // set cursor position on current line
 
-void hpa(uint16_t x)
+void hpa(int16_t x)
 {
     params[0] = cx = x; // horizontal position absolute
     ti_hpa();
@@ -70,7 +69,7 @@ void hpa(uint16_t x)
 // -----------------------------------------------------------------------
 // set cursor x/y position in console
 
-void cup(uint16_t x, uint16_t y)
+void cup(int16_t x, int16_t y)
 {
     params[0] = cx = x;
     params[1] = cy = y;
@@ -154,7 +153,7 @@ void dch1(void)
 // -----------------------------------------------------------------------
 // cursor down multiple lines (this can be done better)
 
-void cud(uint16_t n1)
+void cud(int16_t n1)
 {
     while(n1)
     {
@@ -175,7 +174,7 @@ void ich(void)
 // -----------------------------------------------------------------------
 // cursor back multiple (this can be done better)
 
-void cub(uint16_t n1)
+void cub(int16_t n1)
 {
     while(n1)
     {
@@ -187,7 +186,7 @@ void cub(uint16_t n1)
 // -----------------------------------------------------------------------
 // cursor forward (this can be done better)
 
-void cuf(uint16_t n1)
+void cuf(int16_t n1)
 {
     while(n1)
     {
@@ -198,7 +197,7 @@ void cuf(uint16_t n1)
 
 // -----------------------------------------------------------------------
 
-void cuu(uint16_t n1)
+void cuu(int16_t n1)
 {
     while(n1)
     {
@@ -210,7 +209,7 @@ void cuu(uint16_t n1)
 // -----------------------------------------------------------------------
 // vertical position absolute
 
-void vpa(uint16_t y1)
+void vpa(int16_t y1)
 {
     params[0] = cy = y1;
     ti_vpa();

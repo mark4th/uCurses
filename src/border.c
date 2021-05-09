@@ -63,16 +63,16 @@ static border_t bdr_curved[] = {
 // -----------------------------------------------------------------------
 // draw border character directly into screen buffer 1
 
-static void draw_char(window_t *win, uint16_t cx, uint16_t cy,
-                      uint32_t code, uint16_t force)
+static void draw_char(window_t *win, int16_t cx, int16_t cy, int32_t code,
+                      int16_t force)
 {
     screen_t *scr = win->screen;
-    uint16_t index = (cy * scr->width) + cx;
+    int16_t index = (cy * scr->width) + cx;
 
     cell_t *p1 = &scr->buffer1[index];
     cell_t *p2 = &scr->buffer2[index];
 
-    *(uint64_t *)p1->attrs = *(uint64_t *)win->bdr_attrs;
+    *(int64_t *)p1->attrs = *(int64_t *)win->bdr_attrs;
     p1->code = code;
 
     // when a double width character is drawn underneath a pulled down
@@ -93,10 +93,10 @@ static void draw_char(window_t *win, uint16_t cx, uint16_t cy,
 // -----------------------------------------------------------------------
 // draw one entire row of a border.
 
-static INLINE void draw_top_bottom(window_t *win, uint32_t c1, uint32_t c2,
-                                   uint32_t c3, uint16_t cy)
+static INLINE void draw_top_bottom(window_t *win, int32_t c1, int32_t c2,
+                                   int32_t c3, int16_t cy)
 {
-    uint16_t cx = win->xco;
+    int16_t cx = win->xco;
 
     draw_char(win, cx - 1, cy, c1, FORCE);
 
@@ -111,8 +111,8 @@ static INLINE void draw_top_bottom(window_t *win, uint32_t c1, uint32_t c2,
 
 // -----------------------------------------------------------------------
 
-static INLINE void draw_mid_row(window_t *win, uint32_t c1, uint32_t c3,
-                                uint16_t cy)
+static INLINE void draw_mid_row(window_t *win, int32_t c1, int32_t c3,
+                                int16_t cy)
 {
     draw_char(win, win->xco - 1, cy, c1, NO_FORCE);
     draw_char(win, win->xco + win->width, cy, c3, FORCE);
@@ -123,8 +123,8 @@ static INLINE void draw_mid_row(window_t *win, uint32_t c1, uint32_t c3,
 
 void win_draw_borders(window_t *win)
 {
-    uint16_t height;
-    uint16_t cy;
+    int16_t height;
+    int16_t cy;
 
     border_t *borders[] = { &bdr_single[0], &bdr_double[0],
                             &bdr_curved[0] };

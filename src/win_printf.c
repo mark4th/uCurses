@@ -12,7 +12,7 @@
 void win_puts(window_t *win, char *p)
 {
     uint8_t skip;
-    uint32_t codepoint;
+    int32_t codepoint;
 
     while(*p != '\0')
     {
@@ -40,10 +40,10 @@ void win_printf(window_t *win, char *format, ...)
     char *p;
     va_list arg;
 
-    uint32_t codepoint;
-    uint8_t skip;
+    int32_t codepoint;
+    int8_t skip;
 
-    uint8_t r, g, b, f, x, y;
+    int8_t r, g, b, f, x, y;
 
     va_start(arg, format);
 

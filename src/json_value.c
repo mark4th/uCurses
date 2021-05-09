@@ -10,38 +10,38 @@
 
 extern list_t j_stack;
 extern j_state_t *j_state;
-extern char
-    json_token[TOKEN_LEN]; // space delimited token extracted from data
+extern char json_token[TOKEN_LEN];
 extern fp_finder_t fp_finder;
 extern j_state_t *j_state;
-extern uint32_t json_hash;
+extern int32_t json_hash;
 
-extern uint16_t console_width;
-extern uint16_t console_height;
+extern int16_t console_width;
+extern int16_t console_height;
 
-static uint16_t percent;
+static int16_t percent;
+
 int32_t key_value;
-uint16_t quoted;
+int16_t quoted;
 
 // -----------------------------------------------------------------------
 // with a max menu item/bar name of 32 chars (way too long) this gives
 // you a max of 64 items at full length (dont do it!)
 
 char name_string_buff[2048];
-uint16_t nsi;
+int16_t nsi;
 
 // -----------------------------------------------------------------------
 
 static void value_fgbg(void)
 {
-    uint16_t ktype = j_state->struct_type;
+    int16_t ktype = j_state->struct_type;
     j_state_t *parent = j_state->parent;
-    uint8_t *pstruct = parent->structure;
+    int8_t *pstruct = parent->structure;
 
     // assume setting bg
 
-    uint8_t mask = (uint8_t) ~(BG_RGB | BG_GRAY);
-    uint8_t i = BG;
+    int8_t mask = (int8_t) ~(BG_RGB | BG_GRAY);
+    int8_t i = BG;
 
     if((key_value & ~255) == 0)
     {
@@ -64,10 +64,10 @@ static void value_fgbg(void)
 
 static void value_gray_fgbg(void)
 {
-    uint16_t ktype = j_state->struct_type;
+    int16_t ktype = j_state->struct_type;
     j_state_t *parent = j_state->parent;
-    uint8_t *pstruct = parent->structure;
-    uint8_t i = BG;
+    int8_t *pstruct = parent->structure;
+    int8_t i = BG;
     uint8_t m1 = BG_GRAY;
     uint8_t m2 = ~BG_RGB;
 
@@ -138,7 +138,7 @@ static void value_rgb_bg(char *gstruct)
 static void value_rgb(void)
 {
     j_state_t *parent, *gp;
-    uint16_t ptype;
+    int16_t ptype;
     char *gstruct;
 
     parent = j_state->parent; // rgb psudo structure
@@ -220,7 +220,7 @@ static void value_name(void)
 
     j_state_t *parent = j_state->parent;
     void *structure = parent->structure;
-    uint32_t ptype = parent->struct_type;
+    int32_t ptype = parent->struct_type;
 
     size_t len = strlen(json_token);
 
@@ -282,7 +282,7 @@ static void value_flag(void)
 {
     j_state_t *gp;
     void *structure;
-    uint32_t gtype;
+    int32_t gtype;
 
     gp = j_state->parent;
     gp = gp->parent;
@@ -373,7 +373,7 @@ static const switch_t value_types[] = {
 
 // -----------------------------------------------------------------------
 
-static uint32_t constant_hash[] = {
+static int32_t constant_hash[] = {
     0x0ed8a8cf, 0xfa264646, 0x4e4f416d, 0x8cb49b59, 0x901cbb7a, 0xd6b11d20,
     0x6f7f7df8, 0x264116fc,
 
@@ -388,7 +388,7 @@ static uint32_t constant_hash[] = {
 
 #define NUM_CONSTANTS (sizeof(constant_hash) / sizeof(constant_hash[0]))
 
-static uint32_t constant_val[] = {
+static int32_t constant_val[] = {
     // this comment is to resoluve a bug in clang-format
 
     MENU_DISABLED, BDR_SINGLE, BDR_DOUBLE, BDR_CURVED, WIN_LOCKED,
@@ -461,7 +461,7 @@ static INLINE void is_constant(void)
 
 static INLINE uint16_t chk_quotes(uint16_t len)
 {
-    uint16_t rv = 0;
+    int16_t rv = 0;
 
     if((json_token[0] == '"') && (json_token[len - 1] == '"'))
     {
@@ -475,8 +475,8 @@ static INLINE uint16_t chk_quotes(uint16_t len)
 
 void json_state_value(void)
 {
-    uint16_t has_comma = 0;
-    uint16_t len;
+    int16_t has_comma = 0;
+    size_t len;
 
     key_value = NAN; // assume NAN
 

@@ -15,34 +15,34 @@ static void noop(void) { ; }
 
 // -----------------------------------------------------------------------
 
-char *esc_buff;             // format string compilation output buffer
-uint32_t num_esc;           // max of 64k of compiled escape seq bytes
-uint64_t params[MAX_PARAM]; // format string parametesr
+char *esc_buff;            // format string compilation output buffer
+uint16_t num_esc;           // max of 64k of compiled escape seq bytes
+int64_t params[MAX_PARAM]; // format string parametesr
 
-static uint8_t fsp;        // stack pointer for ...
-static uint64_t fstack[5]; // format string stack
+static int8_t fsp;        // stack pointer for ...
+static int64_t fstack[5]; // format string stack
 
-const char *f_str;     // pointer to next character of format string
-static uint8_t digits; // number of digits for %d (2 or 3)
+const char *f_str;    // pointer to next character of format string
+static int8_t digits; // number of digits for %d (2 or 3)
 
-static uint64_t atoz[26]; // named format string variables
-static uint64_t AtoZ[26];
+static int64_t atoz[26]; // named format string variables
+static int64_t AtoZ[26];
 
 // -----------------------------------------------------------------------
 // addresses within memory mapped terminfo file
 
 extern char *ti_table; // array of offsets within following
-extern uint16_t *ti_strings;
-
-// FILE *log_fp;
+extern int16_t *ti_strings;
 
 // -----------------------------------------------------------------------
 // debug
 
+// FILE *log_fp;
+//
 // void log_dump(void)
 // {
-//     uint16_t i;
-//     char *p = &esc_buff[0];
+//     int16_t i;
+//     char *p = esc_buff;
 //
 //     for(i = 0; i < num_esc; i++)
 //     {
@@ -50,8 +50,8 @@ extern uint16_t *ti_strings;
 //         {
 //             fprintf(log_fp, "\n");
 //         }
-//         (*p <= 0x20)
-//             ? fprintf(log_fp, " %02x", (uint8_t)*p)
+//         (*p <= 0x1f)
+//             ? fprintf(log_fp, "。%02x", (uint8_t)*p)
 //             : fprintf(log_fp, "%c", *p);
 //         p++;
 //     }
@@ -64,7 +64,8 @@ void flush(void)
 {
     ssize_t n;
 
-    // log_dump();=
+    // log_dump();
+
     n = write(1, esc_buff, num_esc);
     num_esc = 0;
 
@@ -77,7 +78,7 @@ void flush(void)
 // -----------------------------------------------------------------------
 // write one character of escape sequence out to compilation buffer
 
-void c_emit(uint8_t c1)
+void c_emit(char c1)
 {
     esc_buff[num_esc++] = c1;
 
@@ -94,7 +95,7 @@ void c_emit(uint8_t c1)
 // -----------------------------------------------------------------------
 // push item onto format string stack (terminfo is RPN!!)
 
-static void fs_push(uint64_t n)
+static void fs_push(int64_t n)
 {
     if(fsp != 5)
     {
@@ -102,19 +103,30 @@ static void fs_push(uint64_t n)
         return;
     }
     // methinks this might could be an internal error
-    // abort "uCurses format string stack overflow"
+    // abort" uCurses format string stack overflow"
 }
 
 // -----------------------------------------------------------------------
 // pop item off of format string stack
 
-static uint64_t fs_pop(void)
+static int64_t fs_pop(void)
 {
-    return (0 != fsp) ? fstack[--fsp] : 0; // also an internal error?
+    int16_t rv;
+
+    rv = (fsp != 0) //
+             ? fstack[--fsp]
+             : 0; // also an internal error?
+
+    return rv;
 }
 
 // -----------------------------------------------------------------------
 // terminfo format string operators
+// -----------------------------------------------------------------------
+
+// -----------------------------------------------------------------------
+// as a hardcore forth programmer i cannot help but notice how all of the
+// primitves in here have forth counterparts.  RPN ftw!
 // -----------------------------------------------------------------------
 
 // -----------------------------------------------------------------------
@@ -123,11 +135,11 @@ static uint64_t fs_pop(void)
 static void _percent(void) { c_emit('%'); }
 
 // -----------------------------------------------------------------------
-// format = %A or %&
+// format = %&   bitwise and
 
 static void _and(void)
 {
-    uint64_t n1, n2;
+    int64_t n1, n2;
 
     n1 = fs_pop();
     n2 = fs_pop();
@@ -136,14 +148,40 @@ static void _and(void)
 }
 
 // -----------------------------------------------------------------------
-// format = %O or %|
+// format = %A  logical and
+
+static void _andl(void)
+{
+    int64_t n1, n2;
+
+    n1 = (fs_pop() != 0) ? 1 : 0;
+    n2 = (fs_pop() != 0) ? 1 : 0;
+
+    fs_push(n1 & n2);
+}
+
+// -----------------------------------------------------------------------
+// format = %|    bitwise or
 
 static void _or(void)
 {
-    uint64_t n1, n2;
+    int64_t n1, n2;
 
     n1 = fs_pop();
     n2 = fs_pop();
+
+    fs_push(n1 | n2);
+}
+
+// -----------------------------------------------------------------------
+// format = %O    logical or
+
+static void _orl(void)
+{
+    int64_t n1, n2;
+
+    n1 = (fs_pop() != 0) ? 1 : 0;
+    n2 = (fs_pop() != 0) ? 1 : 0;
 
     fs_push(n1 | n2);
 }
@@ -153,7 +191,7 @@ static void _or(void)
 
 static void _bang(void)
 {
-    uint64_t n1;
+    int64_t n1;
 
     n1 = fs_pop();
     n1 = (0 == n1) ? 1 : 0;
@@ -166,7 +204,7 @@ static void _bang(void)
 
 static void _tilde(void)
 {
-    uint64_t n1;
+    int64_t n1;
 
     n1 = fs_pop();
 
@@ -178,7 +216,7 @@ static void _tilde(void)
 
 static void _caret(void)
 {
-    uint64_t n1, n2;
+    int64_t n1, n2;
 
     n1 = fs_pop();
     n2 = fs_pop();
@@ -191,7 +229,7 @@ static void _caret(void)
 
 static void _plus(void)
 {
-    uint64_t n1, n2;
+    int64_t n1, n2;
 
     n1 = fs_pop();
     n2 = fs_pop();
@@ -204,7 +242,7 @@ static void _plus(void)
 
 static void _minus(void)
 {
-    uint64_t n1, n2;
+    int64_t n1, n2;
 
     n1 = fs_pop();
     n2 = fs_pop();
@@ -217,7 +255,7 @@ static void _minus(void)
 
 static void _star(void)
 {
-    uint64_t n1, n2;
+    int64_t n1, n2;
 
     n1 = fs_pop();
     n2 = fs_pop();
@@ -230,12 +268,14 @@ static void _star(void)
 
 static void _slash(void)
 {
-    uint64_t n1, n2;
+    int64_t n1, n2;
 
     n1 = fs_pop();
     n2 = fs_pop();
 
-    (n1 != 0) ? fs_push(n2 / n1) : fs_push(0);
+    (n1 != 0) //
+        ? fs_push(n2 / n1)
+        : fs_push(0);
 }
 
 // -----------------------------------------------------------------------
@@ -243,12 +283,14 @@ static void _slash(void)
 
 static void _mod(void)
 {
-    uint64_t n1, n2;
+    int64_t n1, n2;
 
     n1 = fs_pop();
     n2 = fs_pop();
 
-    (n1 != 0) ? fs_push(n2 % n1) : fs_push(0);
+    (n1 != 0) //
+        ? fs_push(n2 % n1)
+        : fs_push(0);
 }
 
 // -----------------------------------------------------------------------
@@ -256,7 +298,7 @@ static void _mod(void)
 
 static void _equals(void)
 {
-    uint64_t n1, n2;
+    int64_t n1, n2;
 
     n1 = fs_pop();
     n2 = fs_pop();
@@ -271,7 +313,7 @@ static void _equals(void)
 
 static void _greater(void)
 {
-    uint64_t n1, n2;
+    int64_t n1, n2;
 
     n1 = fs_pop();
     n2 = fs_pop();
@@ -286,7 +328,7 @@ static void _greater(void)
 
 static void _less(void)
 {
-    uint64_t n1, n2;
+    int64_t n1, n2;
 
     n1 = fs_pop();
     n2 = fs_pop();
@@ -305,11 +347,14 @@ static void _tick(void)
 
     c1 = *f_str++;
     c_emit(c1);
-    f_str++;
+    f_str++; // scan past terminating tick
 }
 
 // -----------------------------------------------------------------------
 // format = %i
+
+// for ansi terminals the first two parameters are ONE based not zero
+// based so x/y oordinates start at 1 not 0
 
 static void _i(void)
 {
@@ -342,13 +387,13 @@ static void _s(void)
 static void _l(void)
 {
     char *s;
-    uint16_t len;
+    int16_t len;
 
     s = (char *)fs_pop();
-    len = utf8_strlen(s);
 
     if(s != NULL)
     {
+        len = utf8_strlen(s);
         fs_push(len);
     }
 }
@@ -356,9 +401,9 @@ static void _l(void)
 // -----------------------------------------------------------------------
 // return address of named variable
 
-static uint64_t *get_var_addr(void)
+static int64_t *get_var_addr(void)
 {
-    uint64_t *p;
+    int64_t *p;
     char c1;
 
     c1 = *f_str++;
@@ -366,7 +411,9 @@ static uint64_t *get_var_addr(void)
     // this assumes that if it is not within the range 'a' to 'z'
     // then it is within the range 'A' to 'Z'
 
-    p = ((c1 >= 'a') && (c1 <= 'z')) ? &atoz[c1 - 'a'] : &AtoZ[c1 - 'A'];
+    p = ((c1 >= 'a') && (c1 <= 'z')) //
+            ? &atoz[c1 - 'a']
+            : &AtoZ[c1 - 'A'];
 
     return p;
 }
@@ -376,7 +423,7 @@ static uint64_t *get_var_addr(void)
 
 static void _P(void)
 {
-    uint64_t *s;
+    int64_t *s;
 
     s = get_var_addr();
 
@@ -388,7 +435,7 @@ static void _P(void)
 
 static void _g(void)
 {
-    uint64_t *s;
+    int64_t *s;
 
     s = get_var_addr();
 
@@ -400,7 +447,7 @@ static void _g(void)
 
 static void _brace(void)
 {
-    uint64_t n1;
+    int64_t n1;
     char c1;
 
     n1 = 0;
@@ -428,9 +475,9 @@ static void to_cmd(void)
 
 static void _t(void) // too much if/and/but loop nesting
 {
-    uint64_t f1;
+    int64_t f1;
     char c1;
-    uint8_t nest; // not sure if any terminfo has nested %?
+    int8_t nest; // not sure if any terminfo has nested %?
 
     nest = 0;
 
@@ -474,7 +521,7 @@ static void _t(void) // too much if/and/but loop nesting
 static void _e(void)
 {
     char c1;
-    uint8_t nest = 0;
+    int8_t nest = 0;
 
     for(;;)
     {
@@ -503,27 +550,26 @@ static void _e(void)
 
 static void _d(void)
 {
-    uint64_t n1, n2;
+    int64_t n1, n2;
     n1 = fs_pop();
 
-    uint16_t available = 0xffff - num_esc;
-
-    if(available <= n1)
+    // this is a bug, if we are mid escape sequence we cant flush
+    // a partial now then the rest later
+    if((0xffff - num_esc) < 4)
     {
         flush();
-        available = 0xffff;
     }
 
     switch(digits)
     {
         case 2:
-            n2 = snprintf(&esc_buff[num_esc], available, "%02" PRIu64, n1);
+            n2 = snprintf(&esc_buff[num_esc], 4, "%02" PRIu64, n1);
             break;
         case 3:
-            n2 = snprintf(&esc_buff[num_esc], available, "%03" PRIu64, n1);
+            n2 = snprintf(&esc_buff[num_esc], 4, "%03" PRIu64, n1);
             break;
         default:
-            n2 = snprintf(&esc_buff[num_esc], available, "%" PRIu64, n1);
+            n2 = snprintf(&esc_buff[num_esc], 4, "%" PRIu64, n1);
     }
 
     num_esc += n2;
@@ -534,7 +580,7 @@ static void _d(void)
 
 static void _c(void)
 {
-    uint64_t c1;
+    int64_t c1;
 
     c1 = fs_pop();
     c_emit(c1);
@@ -545,20 +591,21 @@ static void _c(void)
 
 static void _p(void)
 {
-    uint8_t c1;
+    int8_t c1;
 
     c1 = *f_str++; // get parameter number from format string
-    c1 &= 0x0f;    // '1' to '9'
+    c1 &= 0x0f;    // 1' to '9'
     c1--;          // 0 to 8
-    c1 = params[c1];
-    fs_push(c1);
+
+    fs_push(params[c1]);
 }
 
 // -----------------------------------------------------------------------
 
-static INLINE uint8_t next_c(void)
+static INLINE char next_c(void)
 {
     char c1;
+
     digits = 1;
     c1 = *f_str++;
 
@@ -577,8 +624,8 @@ static INLINE uint8_t next_c(void)
 static const switch_t p_codes[] = {
     { '%', &_percent }, { 'p', &_p },      { 'd', &_d },
     { 'c', &_c },       { 'i', &_i },      { 's', &_s },
-    { 'l', &_l },       { 'A', &_and },    { '&', &_and },
-    { 'O', &_or },      { '|', &_or },     { '!', &_bang },
+    { 'l', &_l },       { 'A', &_andl },   { '&', &_and },
+    { 'O', &_orl },     { '|', &_or },     { '!', &_bang },
     { '~', &_tilde },   { '^', &_caret },  { '+', &_plus },
     { '-', &_minus },   { '*', &_star },   { '/', &_slash },
     { 'm', &_mod },     { '=', &_equals }, { '>', &_greater },
@@ -588,6 +635,14 @@ static const switch_t p_codes[] = {
 };
 
 #define PCOUNT (sizeof(p_codes) / sizeof(p_codes[0]))
+
+// -----------------------------------------------------------------------
+// silly inlined wrapper function to allow use of ternary below (ftw)
+
+static INLINE void wrapper(const switch_t *s, size_t size, int32_t c)
+{
+    re_switch(s, size, c);
+}
 
 // -----------------------------------------------------------------------
 // parse format string pointed to by f_str
@@ -601,26 +656,21 @@ void parse_format(void)
 
     while((c1 = *f_str++))
     {
-        if(c1 == '%')
-        {
-            re_switch(p_codes, PCOUNT, next_c());
-        }
-        else
-        {
-            c_emit(c1);
-        }
+        (c1 == '%') //
+            ? wrapper(p_codes, PCOUNT, next_c())
+            : c_emit(c1);
     }
 }
 
 // -----------------------------------------------------------------------
 // parse a terminfo format string from the terminfo files strings section
 
-void format(uint16_t i)
+void format(int16_t i)
 {
     i = ti_strings[i];
 
     // it is not an error for a format string to be blank
-    if(i != 0xffff)
+    if(i != -1)
     {
         f_str = &ti_table[i];
         parse_format();

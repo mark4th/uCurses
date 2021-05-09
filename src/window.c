@@ -8,23 +8,23 @@
 
 #include "h/uCurses.h"
 
-extern uint8_t default_bg;
-extern uint8_t default_fg;
+extern int8_t default_bg;
+extern int8_t default_fg;
 
 // -----------------------------------------------------------------------
 
-static cell_t *win_line_addr(window_t *win, uint16_t line)
+static cell_t *win_line_addr(window_t *win, int16_t line)
 {
-    uint16_t index = (win->width) * line;
+    int16_t index = (win->width) * line;
     return &win->buffer[index];
 }
 
 // -----------------------------------------------------------------------
 // allocate buffer for window contents
 
-uint16_t win_alloc(window_t *win)
+int16_t win_alloc(window_t *win)
 {
-    uint16_t rv = -1; // assume failure
+    int16_t rv = -1; // assume failure
     cell_t *p;
 
     if(win != NULL)
@@ -37,6 +37,7 @@ uint16_t win_alloc(window_t *win)
             rv = 0;
         }
     }
+
     return rv;
 }
 
@@ -56,7 +57,7 @@ void win_close(window_t *win)
 
 // -----------------------------------------------------------------------
 
-window_t *win_open(uint16_t width, uint16_t height)
+window_t *win_open(int16_t width, int16_t height)
 {
     window_t *win = calloc(1, sizeof(*win));
 
@@ -100,12 +101,12 @@ void win_pop(window_t *win)
 // -----------------------------------------------------------------------
 // set new x/y position of window within parent screen
 
-uint16_t win_set_pos(window_t *win, uint16_t x, uint16_t y)
+int16_t win_set_pos(window_t *win, int16_t x, int16_t y)
 {
-    uint16_t scr_width, scr_height;
-    uint16_t win_width, win_height;
-    uint16_t win_x, win_y;
-    uint16_t rv = -1;
+    int16_t scr_width, scr_height;
+    int16_t win_width, win_height;
+    int16_t win_x, win_y;
+    int16_t rv = -1;
 
     if(win != NULL)
     {
@@ -146,19 +147,22 @@ static void win_set_attr(window_t *win, ti_attrib_t attr)
     win->attrs[ATTR] |= attr;
 
     // gray scales and rgb are mutually exclusive
-    if(attr == FG_RGB)
+    if((attr & FG_RGB) != 0)
     {
         win->attrs[ATTR] &= ~FG_GRAY;
     }
-    if(attr == BG_RGB)
+
+    if((attr & BG_RGB) != 0)
     {
         win->attrs[ATTR] &= ~BG_GRAY;
     }
-    if(attr == FG_GRAY)
+
+    if((attr & FG_GRAY) != 0)
     {
         win->attrs[ATTR] &= ~FG_RGB;
     }
-    if(attr == BG_GRAY)
+
+    if((attr & BG_GRAY) != 0)
     {
         win->attrs[ATTR] &= ~BG_RGB;
     }
@@ -166,7 +170,7 @@ static void win_set_attr(window_t *win, ti_attrib_t attr)
 
 // -----------------------------------------------------------------------
 
-void win_set_gray_fg(window_t *win, uint8_t c)
+void win_set_gray_fg(window_t *win, int8_t c)
 {
     if(win != NULL)
     {
@@ -177,7 +181,7 @@ void win_set_gray_fg(window_t *win, uint8_t c)
 
 // -----------------------------------------------------------------------
 
-void win_set_gray_bg(window_t *win, uint8_t c)
+void win_set_gray_bg(window_t *win, int8_t c)
 {
     if(win != NULL)
     {
@@ -188,7 +192,7 @@ void win_set_gray_bg(window_t *win, uint8_t c)
 
 // -----------------------------------------------------------------------
 
-void win_set_rgb_fg(window_t *win, uint8_t r, uint8_t g, uint8_t b)
+void win_set_rgb_fg(window_t *win, int8_t r, int8_t g, int8_t b)
 {
     if(win != NULL)
     {
@@ -202,7 +206,7 @@ void win_set_rgb_fg(window_t *win, uint8_t r, uint8_t g, uint8_t b)
 
 // -----------------------------------------------------------------------
 
-void win_set_rgb_bg(window_t *win, uint8_t r, uint8_t g, uint8_t b)
+void win_set_rgb_bg(window_t *win, int8_t r, int8_t g, int8_t b)
 {
     if(win != NULL)
     {
@@ -216,7 +220,7 @@ void win_set_rgb_bg(window_t *win, uint8_t r, uint8_t g, uint8_t b)
 
 // -----------------------------------------------------------------------
 
-void win_set_fg(window_t *win, uint8_t color)
+void win_set_fg(window_t *win, int8_t color)
 {
     if(win != NULL)
     {
@@ -227,7 +231,7 @@ void win_set_fg(window_t *win, uint8_t color)
 
 // -----------------------------------------------------------------------
 
-void win_set_bg(window_t *win, uint8_t color)
+void win_set_bg(window_t *win, int8_t color)
 {
     if(win != NULL)
     {
@@ -238,9 +242,9 @@ void win_set_bg(window_t *win, uint8_t color)
 
 // -----------------------------------------------------------------------
 
-void win_erase_line(window_t *win, uint16_t line)
+void win_erase_line(window_t *win, int16_t line)
 {
-    uint16_t i;
+    int16_t i;
     cell_t cell;
     cell_t *p;
 
@@ -248,7 +252,7 @@ void win_erase_line(window_t *win, uint16_t line)
     {
         p = win_line_addr(win, line);
 
-        *(uint64_t *)&cell.attrs = *(uint64_t *)win->attrs;
+        *(int64_t *)&cell.attrs = *(int64_t *)win->attrs;
         cell.code = win->blank;
 
         for(i = 0; i < win->width; i++)
@@ -265,7 +269,7 @@ void win_clear(window_t *win)
 {
     if(win != NULL)
     {
-        uint16_t i;
+        int16_t i;
 
         for(i = 0; i != win->height; i++)
         {
@@ -278,7 +282,7 @@ void win_clear(window_t *win)
 
 // -----------------------------------------------------------------------
 
-static void win_copy_line(window_t *win, uint16_t src, uint16_t dst)
+static void win_copy_line(window_t *win, int16_t src, int16_t dst)
 {
     cell_t *s = win_line_addr(win, src);
     cell_t *d = win_line_addr(win, dst);
@@ -290,7 +294,7 @@ static void win_copy_line(window_t *win, uint16_t src, uint16_t dst)
 
 void win_scroll_up(window_t *win)
 {
-    uint16_t i;
+    int16_t i;
 
     if(win != NULL)
     {
@@ -307,7 +311,7 @@ void win_scroll_up(window_t *win)
 
 void win_scroll_dn(window_t *win)
 {
-    uint16_t i;
+    int16_t i;
 
     if(win != NULL)
     {
@@ -324,14 +328,15 @@ void win_scroll_dn(window_t *win)
 
 void win_scroll_lt(window_t *win)
 {
-    uint16_t i;
+    int16_t i;
+
     cell_t *src;
     cell_t *dst;
     cell_t cell;
 
     if(win != NULL)
     {
-        *(uint64_t *)&cell.attrs = *(uint64_t *)win->attrs;
+        *(int64_t *)cell.attrs = *(int64_t *)win->attrs;
 
         cell.code = win->blank;
 
@@ -349,14 +354,15 @@ void win_scroll_lt(window_t *win)
 
 void win_scroll_rt(window_t *win)
 {
-    uint8_t i;
+    int8_t i;
+
     cell_t *src;
     cell_t *dst;
     cell_t cell;
 
     if(win != NULL)
     {
-        *(uint64_t *)&cell.attrs = *(uint64_t *)win->attrs;
+        *(int64_t *)&cell.attrs = *(int64_t *)win->attrs;
         cell.code = win->blank;
 
         for(i = win->width - 1; i != 0; i--)
@@ -372,7 +378,7 @@ void win_scroll_rt(window_t *win)
 // -----------------------------------------------------------------------
 // set cursor position within window
 
-void win_cup(window_t *win, uint16_t x, uint16_t y)
+void win_cup(window_t *win, int16_t x, int16_t y)
 {
     if(win != NULL)
     {
@@ -386,7 +392,7 @@ void win_cup(window_t *win, uint16_t x, uint16_t y)
 
 // -----------------------------------------------------------------------
 
-void win_set_cx(window_t *win, uint16_t x)
+void win_set_cx(window_t *win, int16_t x)
 {
     if((win != NULL) && (x < win->width))
     {
@@ -396,7 +402,7 @@ void win_set_cx(window_t *win, uint16_t x)
 
 // -----------------------------------------------------------------------
 
-void win_set_cy(window_t *win, uint16_t y)
+void win_set_cy(window_t *win, int16_t y)
 {
     if((win != NULL) && (y < win->height))
     {
@@ -524,13 +530,15 @@ static void _win_emit(window_t *win, uint32_t c)
 
 // -----------------------------------------------------------------------
 
-void win_emit(window_t *win, uint32_t c)
+void win_emit(window_t *win, int32_t c)
 {
     if(win != NULL)
     {
         if(c != 0x09) // tabs are evil kthxbai
         {
-            ((c == 0x0d) || (c == 0x0a)) ? win_cr(win) : _win_emit(win, c);
+            ((c == 0x0d) || (c == 0x0a)) //
+                ? win_cr(win)
+                : _win_emit(win, c);
         }
     }
 }

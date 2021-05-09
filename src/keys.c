@@ -10,10 +10,10 @@
 
 // -----------------------------------------------------------------------
 
-extern uint8_t *esc_buff;
-extern uint16_t num_esc;
-static uint8_t keybuff[32];
-static uint16_t num_k;
+extern int8_t *esc_buff;
+extern int16_t num_esc;
+static int8_t keybuff[32];
+static int16_t num_k;
 
 #define KEY_COUNT (sizeof(k_table) / sizeof(k_table[0]))
 
@@ -46,9 +46,9 @@ uint8_t test_keys(void)
 // -----------------------------------------------------------------------
 // read single keypress
 
-static INLINE uint8_t read_key(void)
+static INLINE int8_t read_key(void)
 {
-    uint8_t buffer;
+    int8_t buffer;
     ssize_t n;
 
     do
@@ -149,10 +149,10 @@ void (*k_table[])() = { kent,  kcuu1, kcud1, kcub1, kcuf1, kbs, kbs2,
 // compare input key sequence with each key seuence returned by the
 // functions referenced in the above k_table
 
-static INLINE uint16_t match_key(void)
+static INLINE int16_t match_key(void)
 {
-    uint64_t i;
-    uint16_t q;
+    uint16_t i;
+    int16_t q;
 
     for(i = 0; i < KEY_COUNT; i++)
     {
@@ -181,7 +181,7 @@ static INLINE uint16_t match_key(void)
 
 // -----------------------------------------------------------------------
 
-static void set_kb0(uint8_t c)
+static void set_kb0(int8_t c)
 {
     keybuff[0] = c;
     num_k = 1;
@@ -228,7 +228,7 @@ key_handler_t *set_key_action(key_index_t index, key_handler_t *action)
 
 uint8_t key(void)
 {
-    uint16_t c;
+    int16_t c;
 
     do
     {
@@ -236,7 +236,7 @@ uint8_t key(void)
 
         c = match_key(); // compare input with all handled escapes
 
-        if(c != 0xffff)  // if escape sequence is one we handle
+        if(c != -1)      // if escape sequence is one we handle
         {                // internally
             num_esc = 0; // flush the escape buffer
             (user_key_actions[c])();
@@ -256,7 +256,7 @@ uint8_t key(void)
 
 // -----------------------------------------------------------------------
 
-void stuff_key(uint8_t c)
+void stuff_key(int8_t c)
 {
     keybuff[0] = c;
     num_k = 1;

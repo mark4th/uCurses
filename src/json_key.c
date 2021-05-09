@@ -11,17 +11,17 @@
 
 extern list_t j_stack;
 extern j_state_t *j_state;
-extern uint32_t json_hash;
-extern const uint32_t json_syntax[];
+extern int32_t json_hash;
+extern const int32_t json_syntax[];
 extern screen_t *active_screen;
 
 // -----------------------------------------------------------------------
 // were only referencing this to get its size
 
-extern uint8_t attrs[8];
+extern int8_t attrs[8];
 extern char json_token[TOKEN_LEN];
-extern uint16_t console_width;
-extern uint16_t console_height;
+extern int16_t console_width;
+extern int16_t console_height;
 
 // -----------------------------------------------------------------------
 // must be the first object specified
@@ -466,7 +466,7 @@ static const switch_t object_types[] = {
 
 // -----------------------------------------------------------------------
 
-static INLINE void must_quote(uint16_t len)
+static INLINE void must_quote(int16_t len)
 {
     if((json_token[0] != '"') || (json_token[len - 1] != '"'))
     {

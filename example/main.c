@@ -112,20 +112,22 @@ char *chinese[] =
 
 void print_lorem(window_t *win)
 {
-    static uint16_t i = 0;
+    int16_t len;
+    static int16_t i = 0;
     static uint8_t r1 = 105, g1 = 100, b1 = 45;
     static uint8_t r2, g2, b2;
 
-    uint8_t len;
-    i = (i == 69) ? 0 : i;
+    if(i == 70) { i = 0; }
 
     // how many character cells will this string use.
     // this accounts for double width characters
-    len = utf8_width(&lorem[i][0]);
 
-    if((len + win->cx) >= win->width)
+    len = utf8_width(lorem[i]);
+
+    if((len + win->cx) > win->width)
     {
         win_el(win);   // this also effects a win_cr()
+
         r2 = r1 + 128;
         g2 = g1 + 128;
         b2 = b1 + 128;
@@ -135,7 +137,7 @@ void print_lorem(window_t *win)
 
         r1 += 7; g1 += 5; b1 += 6;
     }
-    win_puts(win, &lorem[i][0]);
+    win_puts(win, lorem[i]);
     i++;
 }
 
@@ -143,9 +145,9 @@ void print_lorem(window_t *win)
 
 static void print_chinese(window_t *win)
 {
-    static uint8_t inc = 1;
-    static uint8_t line = 0;
-    static uint8_t gray = 1;
+    static int8_t inc = 1;
+    static int8_t line = 0;
+    static int8_t gray = 1;
 
     win_set_gray_fg(win, gray);
     win_set_gray_bg(win, abs(20 - (gray + 10)));
@@ -185,10 +187,10 @@ static void flip_flop(window_t *win1, window_t *win2)
 
 // -----------------------------------------------------------------------
 
-uint16_t x1, y1;
-uint16_t x2, y2;
-uint16_t x1i, x2i;
-uint16_t y1i, y2i;
+int16_t x1, y1;
+int16_t x2, y2;
+int16_t x1i, x2i;
+int16_t y1i, y2i;
 
 static void do_run_demo(screen_t *scr, window_t *win1, window_t *win2)
 {
@@ -252,8 +254,8 @@ static void do_run_demo(screen_t *scr, window_t *win1, window_t *win2)
 
 void run_demo(screen_t *scr, window_t *win1, window_t *win2)
 {
-    uint8_t pause = 0;
-    uint8_t c;
+    int8_t pause = 0;
+    int8_t c;
 
     x1 = 2;
     y1 = 2;
@@ -420,9 +422,9 @@ static switch_t menu_vectors[] =
 // -----------------------------------------------------------------------
 // json parsing calls this to get the address of a specified menu function
 
-static opt_t menu_address_cb(uint32_t hash)
+static opt_t menu_address_cb(int32_t hash)
 {
-    uint16_t i;
+    int16_t i;
     switch_t *s = menu_vectors;
 
     for(i = 0; i < VCOUNT; i++)

@@ -12,12 +12,12 @@
 
 // --------------------------------------------------------------------------
 
-utf8_encode_t *utf8_encode(uint32_t cp)
+utf8_encode_t *utf8_encode(int32_t cp)
 {
     wchar_t c = '\0';
     static utf8_encode_t encoded;
 
-    *(uint32_t *)&encoded.str[0] = 0;
+    *(int32_t *)encoded.str = 0;
 
     if(cp < 0x80)
     {
@@ -45,7 +45,7 @@ utf8_encode_t *utf8_encode(uint32_t cp)
         encoded.str[3] = 0x80 | (cp & 0x3f);
         encoded.len = 4;
     }
-    memcpy(&c, &encoded.str[0], encoded.len);
+    memcpy(&c, encoded.str, encoded.len);
 
     // the following is tribal knowledge.  when these characters are
     // written into a window the windows curor x is incremented by 1 spot.
@@ -60,18 +60,13 @@ utf8_encode_t *utf8_encode(uint32_t cp)
 
 // --------------------------------------------------------------------------
 
-uint16_t is_wide(uint32_t code)
-{
-    uint16_t result;
-    result = (wcwidth(code) == 1) ? 0 : 1;
-    return (result);
-}
+int16_t is_wide(int32_t code) { return ((wcwidth(code) == 1) ? 0 : 1); }
 
 // --------------------------------------------------------------------------
 
 void utf8_emit(uint32_t cp)
 {
-    uint8_t i;
+    int8_t i;
     utf8_encode_t *encoded;
 
     // double wide characters such as chinese use up two cells in the
@@ -93,7 +88,7 @@ void utf8_emit(uint32_t cp)
 
 // --------------------------------------------------------------------------
 
-uint8_t utf8_decode(uint32_t *cp, char *s)
+int8_t utf8_decode(int32_t *cp, char *s)
 {
     // 0xxxxxxx
     if((uint8_t)s[0] < 0x80)
@@ -162,10 +157,10 @@ uint8_t utf8_char_length(char *s)
 // accounts for characters such as chinese which take up two cells worth of
 // space in the console when displayed.
 
-uint16_t utf8_width(char *s)
+int16_t utf8_width(char *s)
 {
     utf8_encode_t *encode;
-    uint16_t width = 0;
+    int16_t width = 0;
 
     while(*s != '\0')
     {
@@ -181,10 +176,10 @@ uint16_t utf8_width(char *s)
 // calcuate the string length of a utf8 string.  characters in utf8 strings
 // can be 1, 2, 3 or 4 bytes long
 
-uint16_t utf8_strlen(char *s)
+int16_t utf8_strlen(char *s)
 {
     utf8_encode_t *encode;
-    uint16_t len = 0;
+    int16_t len = 0;
 
     while(*s != '\0')
     {
@@ -198,7 +193,7 @@ uint16_t utf8_strlen(char *s)
 
 // --------------------------------------------------------------------------
 
-uint16_t utf8_strncmp(char *s1, char *s2, uint16_t len)
+int16_t utf8_strncmp(char *s1, char *s2, int16_t len)
 {
     utf8_encode_t e1, e2;
 
@@ -207,7 +202,7 @@ uint16_t utf8_strncmp(char *s1, char *s2, uint16_t len)
         e1 = *utf8_encode(*s1);
         e2 = *utf8_encode(*s2);
         if((e1.len == e2.len) &&
-           (*(uint64_t *)&e1.str == *(uint64_t *)&e2.str))
+           (*(int64_t *)&e1.str == *(int64_t *)&e2.str))
         {
             s1 += e1.len;
             s2 += e2.len;
@@ -215,7 +210,7 @@ uint16_t utf8_strncmp(char *s1, char *s2, uint16_t len)
         }
         else
         {
-            return *(uint64_t *)&e1.str - *(uint64_t *)&e2.str;
+            return *(int64_t *)&e1.str - *(int64_t *)&e2.str;
         }
     }
 

@@ -13,12 +13,12 @@
 
 screen_t *active_screen;
 
-extern uint8_t attrs[8];
-extern uint8_t old_attrs[8];
+extern int8_t attrs[8];
+extern int8_t old_attrs[8];
 
 // -----------------------------------------------------------------------
 
-uint16_t scr_alloc(screen_t *scr)
+int16_t scr_alloc(screen_t *scr)
 {
     cell_t *p1, *p2;
 
@@ -41,7 +41,7 @@ uint16_t scr_alloc(screen_t *scr)
 
 // -----------------------------------------------------------------------
 
-screen_t *scr_open(uint16_t width, uint16_t height)
+screen_t *scr_open(int16_t width, int16_t height)
 {
     screen_t *scr = calloc(1, sizeof(*scr));
 
@@ -118,9 +118,9 @@ void scr_close(screen_t *scr)
 
 // -----------------------------------------------------------------------
 
-static cell_t *scr_line_addr(screen_t *scr, uint16_t line)
+static cell_t *scr_line_addr(screen_t *scr, int16_t line)
 {
-    uint16_t index = (scr->width) * line;
+    int16_t index = (scr->width) * line;
     return &scr->buffer1[index];
 }
 
@@ -129,9 +129,9 @@ static cell_t *scr_line_addr(screen_t *scr, uint16_t line)
 
 static void scr_draw_win(window_t *win)
 {
-    uint16_t i;
+    int16_t i;
+    int16_t width;
     cell_t *src, *dst;
-    uint32_t width;
     screen_t *scr;
 
     if(win != NULL)
@@ -179,7 +179,7 @@ static void scr_draw_windows(screen_t *scr)
 
 // unless it is already there :)
 
-static INLINE void scr_cup(screen_t *scr, uint16_t x, uint16_t y)
+static INLINE void scr_cup(screen_t *scr, int16_t x, int16_t y)
 {
     // would a single hpa / vpa be faster than a cup ?
 
@@ -220,7 +220,7 @@ void scr_add_backdrop(screen_t *scr)
 
         if(win != NULL)
         {
-            win->bdr_attrs[ATTR] = FG_GRAY | BG_GRAY | BOLD;
+            win->bdr_attrs[ATTR] = (int8_t)(FG_GRAY | BG_GRAY | BOLD);
             win->bdr_attrs[FG] = 13;
             win->bdr_attrs[BG] = 0;
             win->bdr_type = BDR_SINGLE;
@@ -250,22 +250,22 @@ static INLINE uint16_t scr_is_modified(screen_t *scr, uint16_t index)
 
 // -----------------------------------------------------------------------
 
-static void new_attrs(uint64_t a)
+static void new_attrs(int64_t a)
 {
-    *(uint64_t *)attrs = a;
+    *(int64_t *)attrs = a;
     apply_attribs();
 }
 
 // -----------------------------------------------------------------------
 // emits charcter from screen buffer1 to the console
 
-static void scr_emit(screen_t *scr, uint16_t index)
+static void scr_emit(screen_t *scr, int16_t index)
 {
     cell_t *p1, *p2;
 
-    uint16_t x, y;
-    uint16_t wide;
-    uint16_t force = 0;
+    int16_t x, y;
+    int16_t wide;
+    int16_t force = 0;
 
     p1 = &scr->buffer1[index];
     p2 = &scr->buffer2[index];
@@ -280,7 +280,7 @@ static void scr_emit(screen_t *scr, uint16_t index)
 
     if(wide == 1)
     {
-        if(p1[1].code != DEADCODE)
+        if(p1[1].code != (int32_t)DEADCODE)
         {
             force = 1;
         }
@@ -290,7 +290,7 @@ static void scr_emit(screen_t *scr, uint16_t index)
     // character with a single width char then we need to output a
     // blank over the associated DEADCODE slot (see below)
 
-    else if(p1[1].code == DEADCODE)
+    else if(p1[1].code == (int32_t)DEADCODE)
     {
         force = 2;
     }
@@ -336,19 +336,19 @@ static void scr_emit(screen_t *scr, uint16_t index)
 // -----------------------------------------------------------------------
 // inner loop of screen update
 
-static INLINE uint32_t inner_update(screen_t *scr, uint16_t index,
-                                    uint16_t end)
+static INLINE int16_t inner_update(screen_t *scr, int16_t index,
+                                   int16_t end)
 {
     cell_t *p1;
     int indx = 0;
 
     p1 = &scr->buffer1[index];
 
-    new_attrs(*(uint64_t *)p1->attrs);
+    new_attrs(*(int64_t *)p1->attrs);
 
     do
     {
-        if(*(uint64_t *)attrs == *(uint64_t *)p1->attrs)
+        if(*(int64_t *)attrs == *(int64_t *)p1->attrs)
         {
             if(scr_is_modified(scr, index) != 0)
             {
@@ -373,8 +373,8 @@ static INLINE uint32_t inner_update(screen_t *scr, uint16_t index,
 
 static void outer_update(screen_t *scr)
 {
-    uint16_t index = 0;
-    uint16_t end = scr->width * scr->height;
+    int16_t index = 0;
+    int16_t end = scr->width * scr->height;
 
     // force a screen cursor position update
     scr->cx = scr->cy = -1;

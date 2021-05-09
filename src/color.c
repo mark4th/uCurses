@@ -8,16 +8,16 @@
 
 // -----------------------------------------------------------------------
 
-uint8_t attrs[8];
-uint8_t old_attrs[8]; // to test for changes
+int8_t attrs[8];
+int8_t old_attrs[8]; // to test for changes
 
 extern const char *f_str; // terminfo format string pointer
 
 // -----------------------------------------------------------------------
 // users can change their default fg and bg (make black on white? ICK!!)
 
-uint8_t default_bg = BLACK;
-uint8_t default_fg = WHITE;
+int8_t default_bg = BLACK;
+int8_t default_fg = WHITE;
 
 // -----------------------------------------------------------------------
 // fg can be a normal color, a gray scale or an RGB value
@@ -53,9 +53,9 @@ static INLINE void do_set_fg(void)
 
     if(attrs[ATTR] & FG_RGB)
     {
-        params[0] = attrs[FG_R];
-        params[1] = attrs[FG_G];
-        params[2] = attrs[FG_B];
+        params[0] = (uint8_t)attrs[FG_R];
+        params[1] = (uint8_t)attrs[FG_G];
+        params[2] = (uint8_t)attrs[FG_B];
 
         // there is no format string for this within the terminfo
         // string section
@@ -112,9 +112,9 @@ static INLINE void do_set_bg(void)
     // are we setting a rgb background?
     if(attrs[ATTR] & BG_RGB)
     {
-        params[0] = attrs[BG_R];
-        params[1] = attrs[BG_G];
-        params[2] = attrs[BG_B];
+        params[0] = (uint8_t)attrs[BG_R];
+        params[1] = (uint8_t)attrs[BG_G];
+        params[2] = (uint8_t)attrs[BG_B];
 
         f_str = &rgb_seq[0];
         parse_format();
@@ -242,7 +242,7 @@ void clr_blink(void) { clr_attr(BLINK); }
 
 // -----------------------------------------------------------------------
 
-void set_gray_fg(uint8_t c)
+void set_gray_fg(int8_t c)
 {
     attrs[FG] = c;
     set_attr(FG_GRAY);
@@ -250,7 +250,7 @@ void set_gray_fg(uint8_t c)
 
 // -----------------------------------------------------------------------
 
-void set_gray_bg(uint8_t c)
+void set_gray_bg(int8_t c)
 {
     attrs[BG] = c;
     set_attr(BG_GRAY);
@@ -258,7 +258,7 @@ void set_gray_bg(uint8_t c)
 
 // -----------------------------------------------------------------------
 
-void set_rgb_fg(uint8_t r, uint8_t g, uint8_t b)
+void set_rgb_fg(int8_t r, int8_t g, int8_t b)
 {
     attrs[FG_R] = r;
     attrs[FG_G] = g;
@@ -269,7 +269,7 @@ void set_rgb_fg(uint8_t r, uint8_t g, uint8_t b)
 
 // -----------------------------------------------------------------------
 
-void set_rgb_bg(uint8_t r, uint8_t g, uint8_t b)
+void set_rgb_bg(int8_t r, int8_t g, int8_t b)
 {
     attrs[BG_R] = r;
     attrs[BG_G] = g;
@@ -281,7 +281,7 @@ void set_rgb_bg(uint8_t r, uint8_t g, uint8_t b)
 // -----------------------------------------------------------------------
 // calling this resets the fg to the usual 16 pre-set color palette
 
-void set_fg(uint8_t c)
+void set_fg(int8_t c)
 {
     attrs[FG] = c;
     clr_attr(FG_RGB | FG_GRAY);
@@ -290,7 +290,7 @@ void set_fg(uint8_t c)
 // -----------------------------------------------------------------------
 // calling this resets the bg to the usual 16 pre-set color palette
 
-void set_bg(uint8_t c)
+void set_bg(int8_t c)
 {
     attrs[BG] = c;
     clr_attr(BG_RGB | BG_GRAY);

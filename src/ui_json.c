@@ -180,7 +180,7 @@ static void help(void)
 static void process_args(void)
 {
     char *s;
-    uint32_t hash;
+    int32_t hash;
 
     next_arg(); // skip argv[0]
 
@@ -199,8 +199,7 @@ static void process_args(void)
 
 void entry(void)
 {
-    printf("%s\n", banner);
-
+    printf("%s\n\n", banner);
     fp = fopen("/proc/self/cmdline", "r");
 
     if(fp != NULL)

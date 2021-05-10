@@ -259,10 +259,10 @@ void run_demo(screen_t *scr, window_t *win1, window_t *win2)
     int8_t pause = 0;
     int8_t c;
 
-    uint32_t max;
-    uint32_t total;
+    uint32_t max = 0;
+    uint32_t total = 0;
     uint32_t frames = 0;
-    uint32_t average;
+    uint32_t average = 0;
 
     char foo[MAX_STATUS];
 
@@ -322,7 +322,7 @@ static void open_file(void)
     bar_set_status("You Selected Open File");
     screen_t *scr = active_screen;
     window_t *win = list_scan(&scr->windows);
-    win->bdr_attrs[FG] ^= 0x55;
+    win->bdr_attrs.bytes[FG] ^= 0x55;
 }
 
 // dummy menu functions for now will add proper demos and proper

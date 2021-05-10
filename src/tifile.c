@@ -68,6 +68,11 @@ static void map_tifile(void)
     char path[128];
     struct stat st;
 
+    // only if you want HUGE logs of every single character
+    // written to the console :)
+
+    // log_fp = fopen("log", "w");
+
     env_term = getenv("TERM");
     if(env_term == NULL)
     {
@@ -97,15 +102,11 @@ static void map_tifile(void)
         ti_map =
             (int8_t *)mmap(NULL, ti_size, PROT_READ, MAP_PRIVATE, fd, 0);
         close(fd);
-        if(ti_map == MAP_FAILED)
-        {
-            continue;
-        }
 
-        // only if you want HUGE logs of every single character
-        // written to the console :)
-        // log_fp = fopen("log", "w");
-        return;
+        if(ti_map != MAP_FAILED)
+        {
+            return;
+        }
     }
 
     printf("No Terminfo File found for %s\n", env_term);

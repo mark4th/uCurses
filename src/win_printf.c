@@ -47,7 +47,9 @@ void win_printf(window_t *win, char *format, ...)
 
     va_start(arg, format);
 
-    for(p = format; *p != '\0'; p++)
+    p = format;
+
+    while(*p != '\0')
     {
         while(*p != '%')
         {
@@ -196,7 +198,9 @@ void win_printf(window_t *win, char *format, ...)
                         p++;
                         break;
                 }
+                break;
         }
+        p++;
     }
 
     va_end(arg);

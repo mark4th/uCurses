@@ -64,7 +64,7 @@ int16_t is_wide(int32_t code) { return ((wcwidth(code) == 1) ? 0 : 1); }
 
 // --------------------------------------------------------------------------
 
-void utf8_emit(uint32_t cp)
+void utf8_emit(int32_t cp)
 {
     int8_t i;
     utf8_encode_t *encoded;
@@ -73,7 +73,7 @@ void utf8_emit(uint32_t cp)
     // console display so must also take up two cells in the window
     // the second sell is marked as dead - this is not an error
 
-    if(cp != DEADCODE)
+    if(cp != (int32_t)DEADCODE)
     {
         encoded = utf8_encode(cp);
 
@@ -201,6 +201,7 @@ int16_t utf8_strncmp(char *s1, char *s2, int16_t len)
     {
         e1 = *utf8_encode(*s1);
         e2 = *utf8_encode(*s2);
+
         if((e1.len == e2.len) &&
            (*(int64_t *)&e1.str == *(int64_t *)&e2.str))
         {

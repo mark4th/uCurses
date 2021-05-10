@@ -565,7 +565,12 @@ static void _d(void)
     n1 = fs_pop();
     digits--;
 
-    const char widths[3][6] = { "%" PRIu64, "%02" PRIu64, "%03" PRIu64 };
+    const char widths[3][6] = //
+        {                     //
+          "%" PRIu64,         //
+          "%02" PRIu64,       //
+          "%03" PRIu64
+        };
 
     // this is a bug, if we are mid escape sequence we cant flush
     // a partial now then the rest later p.s. i know a fix but

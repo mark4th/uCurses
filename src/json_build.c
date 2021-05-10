@@ -22,8 +22,8 @@ static void INLINE bounds_check(window_t *win)
     int16_t z = (win->flags & WIN_BOXED) ? 1 : 0;
 
     if(((xco + win->width + z) < console_width) &&
-       ((yco + win->height + z) < console_height) &&
-       ((xco - z) < console_width) && ((yco - z) < console_height))
+       ((yco + win->height + z) < console_height) && ((xco - z) > 0) &&
+       ((yco - z) > 0))
     {
         return;
     }
@@ -61,6 +61,7 @@ static void INLINE fix_win(screen_t *scr, window_t *win)
 static void INLINE fix_windows(screen_t *scr)
 {
     window_t *win;
+
     if(scr->backdrop != NULL)
     {
         init_backdrop(scr, scr->backdrop);

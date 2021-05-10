@@ -110,11 +110,12 @@ j_state_t *j_state;
 // -----------------------------------------------------------------------
 // fnv-1a hash values for various json syntax chars
 
-const int32_t json_syntax[] = {
-    0x050c5d25, // :
-    0x050c5d64, // {
-    0x050c5d62, // }
-};
+const int32_t json_syntax[] = //
+    {
+        0x050c5d25, // :
+        0x050c5d64, // {
+        0x050c5d62, // }
+    };
 
 // -----------------------------------------------------------------------
 // push current state onto end of state stack
@@ -246,12 +247,13 @@ void json_state_r_brace(void)
 
 // -----------------------------------------------------------------------
 
-static const switch_t states[] = {
-    { STATE_L_BRACE, json_state_l_brace },
-    { STATE_KEY, json_state_key },
-    { STATE_VALUE, json_state_value },
-    { STATE_R_BRACE, json_state_r_brace },
-};
+static const switch_t states[] = //
+    {
+        { STATE_L_BRACE, json_state_l_brace },
+        { STATE_KEY, json_state_key },
+        { STATE_VALUE, json_state_value },
+        { STATE_R_BRACE, json_state_r_brace },
+    };
 
 // -----------------------------------------------------------------------
 

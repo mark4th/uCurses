@@ -52,7 +52,6 @@ void win_close(window_t *win)
             free(win->buffer);
         }
         free(win);
-        win = NULL;
     }
 }
 

@@ -272,27 +272,34 @@ static void scr_emit(screen_t *scr, int16_t index)
 
     // are we about to write a wide character here..
 
-    wide = is_wide(p1->code);
 
-    // if the character we are about to write is double width but there
-    // is a single width character overlapping it to the right then force
-    // an update of the overlapping single width char
+    // mental note to self.  If you are about to read p1[1] make sure
+    // p1 is not pointing to the last element of the array
 
-    if(wide == 1)
+    if(index != (scr->width * scr->height) - 1)
     {
-        if(p1[1].code != (int32_t)DEADCODE)
+        wide = is_wide(p1->code);
+
+        // if the character we are about to write is double width but there
+        // is a single width character overlapping it to the right then
+        // force an update of the overlapping single width char
+
+        if(wide == 1)
         {
-            force = 1;
+            if(p1[1].code != (int32_t)DEADCODE)
+            {
+                force = 1;
+            }
         }
-    }
 
-    // if we are about to overwrite the left edge of a double wide
-    // character with a single width char then we need to output a
-    // blank over the associated DEADCODE slot (see below)
+        // if we are about to overwrite the left edge of a double wide
+        // character with a single width char then we need to output a
+        // blank over the associated DEADCODE slot (see below)
 
-    else if(p1[1].code == (int32_t)DEADCODE)
-    {
-        force = 2;
+        else if(p1[1].code == (int32_t)DEADCODE)
+        {
+            force = 2;
+        }
     }
 
     // convert index to coordinates and reposition the cursor in the

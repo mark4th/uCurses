@@ -478,7 +478,7 @@ void restore_term(void);
 // -----------------------------------------------------------------------
 
 int16_t is_wide(int32_t code);
-void utf8_emit(uint32_t cp);
+void utf8_emit(int32_t cp);
 utf8_encode_t *utf8_encode(int32_t cp);
 int8_t utf8_decode(int32_t *cp, char *s);
 int16_t utf8_width(char *s);

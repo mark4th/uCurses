@@ -23,9 +23,12 @@ static void noop(void) { ; }
 
 // -----------------------------------------------------------------------
 
-static struct pollfd pfd = { 0,      // stdin
-                             POLLIN, // want to know when data is available
-                             0 };
+static struct pollfd pfd = //
+    {                      //
+        0,                 // stdin
+        POLLIN,            // want to know when data is available
+        0
+    };
 
 // -----------------------------------------------------------------------
 // returns 0 = no keys available, 1 = keys available
@@ -139,10 +142,12 @@ static void kf12(void) { ti_kf12(); }
 
 // order of items is important here
 
-void (*k_table[])() = { kent,  kcuu1, kcud1, kcub1, kcuf1, kbs, kbs2,
-                        kdch1, kich1, khome, kend,  knp,   kpp, kf1,
-                        kf2,   kf3,   kf4,   kf5,   kf6,   kf7, kf8,
-                        kf9,   kf10,  kf11,  kf12 };
+void (*k_table[])() = //
+    {                 //
+        kent,  kcuu1, kcud1, kcub1, kcuf1, kbs,  kbs2, kdch1, kich1,
+        khome, kend,  knp,   kpp,   kf1,   kf2,  kf3,  kf4,   kf5,
+        kf6,   kf7,   kf8,   kf9,   kf10,  kf11, kf12
+    };
 
 // -----------------------------------------------------------------------
 
@@ -198,16 +203,17 @@ static void k_ent(void) { set_kb0(0x0a); }
 // items in this array.  the end user does not get to modify this array as
 // the order of items within it is critical
 
-static key_handler_t *default_key_actions[] = {
-    //  ENTER   UP     DOWN   LEFT   RIGHT   BS     BS2
-    k_ent, noop, noop, noop, noop, k_bs, k_bs,
-    //  DEL     INSERT HOME   END    PDN     PUP    F1
-    noop, noop, noop, noop, noop, noop, noop,
-    //  F2      F3     F4     F5     F6      F7     F8
-    noop, noop, noop, noop, noop, noop, noop,
-    //  F9      F10    F11    F12
-    noop, noop, noop, noop
-};
+static key_handler_t *default_key_actions[] = //
+    {                                         //
+      //  ENTER   UP     DOWN   LEFT   RIGHT   BS     BS2
+        k_ent, noop, noop, noop, noop, k_bs, k_bs,
+        //  DEL     INSERT HOME   END    PDN     PUP    F1
+        noop, noop, noop, noop, noop, noop, noop,
+        //  F2      F3     F4     F5     F6      F7     F8
+        noop, noop, noop, noop, noop, noop, noop,
+        //  F9      F10    F11    F12
+        noop, noop, noop, noop
+    };
 
 // -----------------------------------------------------------------------
 

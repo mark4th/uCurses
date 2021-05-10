@@ -65,7 +65,11 @@ void alloc_status(void)
 // -----------------------------------------------------------------------
 // i knew i forgot something!
 
-static void free_status(void) { free(status_line); }
+static void free_status(void)
+{
+    free(status_line);
+    status_line = NULL;
+}
 
 // -----------------------------------------------------------------------
 
@@ -332,17 +336,16 @@ void bar_draw_text(screen_t *scr)
 
 static INLINE void pd_close(pulldown_t *pd)
 {
-    int16_t i;
-
     if(pd != NULL)
     {
-        for(i = 0; i != pd->count; i++)
+        while(pd->count-- != 0)
         {
-            free(pd->items[i]);
+            free(pd->items[pd->count]);
         }
 
         // window only exists if this pulldown is currently active
         win_close(pd->window);
+        pd->window = NULL;
         free(pd);
     }
 }
@@ -352,12 +355,11 @@ static INLINE void pd_close(pulldown_t *pd)
 
 static INLINE void bar_close_pds(menu_bar_t *bar)
 {
-    int16_t i;
     pulldown_t *pd;
 
-    for(i = 0; i != bar->count; i++)
+    while(bar->count-- != 0)
     {
-        pd = bar->items[i];
+        pd = bar->items[bar->count];
         pd_close(pd);
     }
 }
@@ -376,8 +378,10 @@ void bar_close(screen_t *scr)
         {
             bar_close_pds(bar);
             win_close(bar->window);
+            bar->window = NULL;
             free_status();
             free(bar);
+            scr->menu_bar = NULL;
         }
     }
 }
@@ -500,9 +504,13 @@ static void menu_activate(void)
     bar->active ^= 1;
     pd = bar->items[bar->which];
 
-    (bar->active != 0) //
-        ? redraw_pulldown(bar)
-        : win_close(pd->window);
+    if(bar->active != 0)
+    {
+        redraw_pulldown(bar);
+        return;
+    }
+    win_close(pd->window);
+    pd->window = NULL;
 }
 
 // -----------------------------------------------------------------------
@@ -561,7 +569,9 @@ static void menu_up_down(int dir)
 
         while(n != 0)
         {
-            (dir > 0) ? prev_item(pd) : next_item(pd);
+            (dir > 0) //
+                ? prev_item(pd)
+                : next_item(pd);
 
             n--;
 
@@ -577,73 +587,47 @@ static void menu_up_down(int dir)
 
 // -----------------------------------------------------------------------
 
+static void menu_l_r(int dir)
+{
+    menu_bar_t *bar = active_screen->menu_bar;
+    pulldown_t *pd;
+    int16_t n;
+
+    if((bar != NULL) && (bar->active != 0))
+    {
+        n = bar->count;
+
+        pd = bar->items[bar->which];
+        win_close(pd->window);
+        pd->window = NULL;
+
+        while(n != 0)
+        {
+            (dir > 0) ? prev_pd(bar) : next_pd(bar);
+
+            n--;
+            pd = bar->items[bar->which];
+
+            if((pd->flags & MENU_DISABLED) == 0)
+            {
+                redraw_pulldown(bar);
+                break;
+            }
+        }
+    }
+}
+
+// -----------------------------------------------------------------------
+
 #define MENU_UP 1
 #define MENU_DOWN -1
+#define MENU_LEFT 1
+#define MENU_RIGHT -1
 
 static INLINE void menu_up(void) { menu_up_down(MENU_UP); }
 static INLINE void menu_down(void) { menu_up_down(MENU_DOWN); }
-
-// -----------------------------------------------------------------------
-
-static void menu_left(void)
-{
-    menu_bar_t *bar = active_screen->menu_bar;
-    pulldown_t *pd;
-    int16_t n;
-
-    if((bar != NULL) && (bar->active != 0))
-    {
-        n = bar->count;
-
-        pd = bar->items[bar->which];
-        win_close(pd->window);
-        pd->window = NULL;
-
-        while(n != 0)
-        {
-            prev_pd(bar);
-            n--;
-            pd = bar->items[bar->which];
-
-            if((pd->flags & MENU_DISABLED) == 0)
-            {
-                redraw_pulldown(bar);
-                break;
-            }
-        }
-    }
-}
-
-// -----------------------------------------------------------------------
-
-static void menu_right(void)
-{
-    menu_bar_t *bar = active_screen->menu_bar;
-    pulldown_t *pd;
-    int16_t n;
-
-    if((bar != NULL) && (bar->active != 0))
-    {
-        n = bar->count;
-
-        pd = bar->items[bar->which];
-        win_close(pd->window);
-        pd->window = NULL;
-
-        while(n != 0)
-        {
-            next_pd(bar);
-            n--;
-            pd = bar->items[bar->which];
-
-            if((pd->flags & MENU_DISABLED) == 0)
-            {
-                redraw_pulldown(bar);
-                break;
-            }
-        }
-    }
-}
+static INLINE void menu_left(void) { menu_l_r(MENU_LEFT); }
+static INLINE void menu_right(void) { menu_l_r(MENU_RIGHT); }
 
 // -----------------------------------------------------------------------
 
@@ -655,14 +639,14 @@ static void menu_cr(void)
 
     if((bar != NULL) && (bar->active != 0))
     {
-        stuff_key(0xff);
+        stuff_key(-1);
 
         bar->active = 0;
         pd = bar->items[bar->which];
 
         win_close(pd->window);
-
         pd->window = NULL;
+
         item = pd->items[pd->which];
         if(item->fp != NULL)
         {

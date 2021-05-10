@@ -229,19 +229,38 @@ void json_state_r_brace(void)
         json_error("Closing brace missing");
     }
 
-    // a right brace terminates a json object.  we need to add
-    // the current object to its parents structure (or in some cases
-    // to its grandparent as its dirce parent is a dummy object)
+    // thanks username234 for helping me find this!!!
+    // if the current structures parent is null then the current structure is
+    // the screen that has no parent so dont try to populate the non existant
+    // parent with the screen structure!
+    // the real question here is how the hell did this code work when compiled
+    // with clang? :)
+    if(j_state->struct_type != STRUCT_SCREEN)
+    {
+        // a right brace terminates a json object.  we need to add
+        // the current object to its parents structure (or in some cases
+        // to its grandparent as its dirce parent is a dummy object)
 
-    populate_parent();
+        populate_parent();
+    }
+    else
+    {
+        printf("foo\n");
+    }
 
     j_state->state = STATE_DONE;
 
     if(j_stack.count != 0)
     {
-        j_pop();
+        if(j_state->struct_type != STRUCT_SCREEN)
+        {
+            j_pop();
 
-        j_state->state = (has_comma != 0) ? STATE_KEY : STATE_R_BRACE;
+            if(j_state != NULL)
+            {
+                j_state->state = (has_comma != 0) ? STATE_KEY : STATE_R_BRACE;
+            }
+        }
     }
 }
 
@@ -280,6 +299,9 @@ static INLINE void json_state_machine(void)
             json_error("Unknown or miss placed token");
         }
     } while(j_state->state != STATE_DONE);
+
+    j_pop();
+    printf("fud\n");
 
     free(j_state);
 }

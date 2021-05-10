@@ -144,13 +144,6 @@ void populate_parent(void)
 
     parent = j_state->parent;
 
-    // thanks username234 for helping me find this!!!
-    // if the current structures parent is null then the current structure is
-    // the screen that has no parent so dont try to populate the non existant
-    // parent with the screen structure!
-    // the real question here is how the hell did this code work when compiled
-    // with clang? :)
-    if(parent == NULL) { return; }
     gp = parent->parent;
     pstruct = parent->structure;
     gstruct = gp->structure;

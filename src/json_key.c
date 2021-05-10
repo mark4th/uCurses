@@ -16,9 +16,7 @@ extern const int32_t json_syntax[];
 extern screen_t *active_screen;
 
 // -----------------------------------------------------------------------
-// were only referencing this to get its size
 
-extern int8_t attrs[8];
 extern char json_token[TOKEN_LEN];
 extern int16_t console_width;
 extern int16_t console_height;
@@ -169,7 +167,7 @@ static void struct_attribs(void)
        (j_state->struct_type == STRUCT_PULLDOWN) ||
        (j_state->struct_type == STRUCT_MENU_BAR))
     {
-        json_new_state_struct(sizeof(attrs), STRUCT_ATTRIBS);
+        json_new_state_struct(sizeof(attribs_t), STRUCT_ATTRIBS);
         return;
     }
 
@@ -183,7 +181,7 @@ static void struct_b_attribs(void)
     if((j_state->struct_type == STRUCT_BACKDROP) ||
        (j_state->struct_type == STRUCT_WINDOW))
     {
-        json_new_state_struct(sizeof(attrs), STRUCT_B_ATTRIBS);
+        json_new_state_struct(sizeof(attribs_t), STRUCT_B_ATTRIBS);
         return;
     }
 
@@ -197,7 +195,7 @@ static void struct_s_attribs(void)
     if((j_state->struct_type == STRUCT_PULLDOWN) ||
        (j_state->struct_type == STRUCT_MENU_BAR))
     {
-        json_new_state_struct(sizeof(attrs), STRUCT_S_ATTRIBS);
+        json_new_state_struct(sizeof(attribs_t), STRUCT_S_ATTRIBS);
         return;
     }
 
@@ -211,7 +209,7 @@ static void struct_d_attribs(void)
     if((j_state->struct_type == STRUCT_PULLDOWN) ||
        (j_state->struct_type == STRUCT_MENU_BAR))
     {
-        json_new_state_struct(sizeof(attrs), STRUCT_D_ATTRIBS);
+        json_new_state_struct(sizeof(attribs_t), STRUCT_D_ATTRIBS);
         return;
     }
 

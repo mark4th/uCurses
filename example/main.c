@@ -19,6 +19,8 @@
 
 #define SLEEP 15000000
 
+extern uint32_t flush_size;
+
 // -----------------------------------------------------------------------
 
 uint8_t sintab[] =
@@ -257,6 +259,13 @@ void run_demo(screen_t *scr, window_t *win1, window_t *win2)
     int8_t pause = 0;
     int8_t c;
 
+    uint32_t max;
+    uint32_t total;
+    uint32_t frames = 0;
+    uint32_t average;
+
+    char foo[MAX_STATUS];
+
     x1 = 2;
     y1 = 2;
     x2 = X_END(win2);
@@ -265,6 +274,7 @@ void run_demo(screen_t *scr, window_t *win1, window_t *win2)
     x1i = 1;
     x2i = -1;
     y1i = y2i = 0;
+
 
     for(;;)
     {
@@ -286,6 +296,16 @@ void run_demo(screen_t *scr, window_t *win1, window_t *win2)
 
         if(pause == 0)        // if not paused...
         {
+            frames++;
+
+            if(max < flush_size) { max = flush_size; }
+            total += flush_size;
+            average = total / frames;
+
+            sprintf(foo, "Frame: %06d Max: %04x Avg: %04x", frames, max, average);
+            flush_size = 0;
+            bar_set_status(foo);
+
             do_run_demo(scr, win1, win2);
         }
         // if we did not do this the display would look like its

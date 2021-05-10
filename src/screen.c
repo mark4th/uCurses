@@ -13,8 +13,8 @@
 
 screen_t *active_screen;
 
-extern int8_t attrs[8];
-extern int8_t old_attrs[8];
+extern attribs_t attrs;
+extern attribs_t old_attrs;
 
 // -----------------------------------------------------------------------
 
@@ -220,9 +220,10 @@ void scr_add_backdrop(screen_t *scr)
 
         if(win != NULL)
         {
-            win->bdr_attrs[ATTR] = (int8_t)(FG_GRAY | BG_GRAY | BOLD);
-            win->bdr_attrs[FG] = 13;
-            win->bdr_attrs[BG] = 0;
+            win->bdr_attrs.bytes[ATTR] =
+                (int8_t)(FG_GRAY | BG_GRAY | BOLD);
+            win->bdr_attrs.bytes[FG] = 13;
+            win->bdr_attrs.bytes[BG] = 0;
             win->bdr_type = BDR_SINGLE;
 
             win_set_gray_fg(win, 12);
@@ -244,15 +245,14 @@ static INLINE uint16_t scr_is_modified(screen_t *scr, uint16_t index)
     // in buffer2 or if the characters in those cells are different
     // then this cell needs updating
 
-    return (*(uint64_t *)p1->attrs != *(uint64_t *)p2->attrs) ||
-           (p1->code != p2->code);
+    return (p1->attrs.chunk != p2->attrs.chunk) || (p1->code != p2->code);
 }
 
 // -----------------------------------------------------------------------
 
 static void new_attrs(int64_t a)
 {
-    *(int64_t *)attrs = a;
+    attrs.chunk = a;
     apply_attribs();
 }
 
@@ -310,17 +310,17 @@ static void scr_emit(screen_t *scr, int16_t index)
     if(force == 1) // right?
     {
         scr_cup(scr, x + 1, y);
-        new_attrs(*(uint64_t *)p1[1].attrs);
+        new_attrs(p1[1].attrs.chunk);
         utf8_emit(p1[1].code);
     }
     else if(force == 2) // left?
     {
-        new_attrs(*(uint64_t *)p1[1].attrs);
+        new_attrs(p1[1].attrs.chunk);
         utf8_emit('.');
     }
 
     // restore working attributes after the above detour
-    new_attrs(*(uint64_t *)p1->attrs);
+    new_attrs(p1->attrs.chunk);
 
     scr->cx++;
 
@@ -344,11 +344,11 @@ static INLINE int16_t inner_update(screen_t *scr, int16_t index,
 
     p1 = &scr->buffer1[index];
 
-    new_attrs(*(int64_t *)p1->attrs);
+    new_attrs(p1->attrs.chunk);
 
     do
     {
-        if(*(int64_t *)attrs == *(int64_t *)p1->attrs)
+        if(attrs.chunk == p1->attrs.chunk)
         {
             if(scr_is_modified(scr, index) != 0)
             {
@@ -441,7 +441,7 @@ void scr_draw_screen(screen_t *scr)
     {
         active_screen = scr;
 
-        *(uint64_t *)&old_attrs[0] = 0;
+        old_attrs.chunk = 0;
 
         // the backdrop if it exists is always the first window
         // to be drawn into the screen. its sole purpose is to

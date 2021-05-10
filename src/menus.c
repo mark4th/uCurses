@@ -8,7 +8,7 @@
 #include "h/list.h"
 #include "h/uCurses.h"
 
-extern int8_t attrs[8];
+extern attribs_t attrs;
 
 // -----------------------------------------------------------------------
 // user application allocatted
@@ -79,6 +79,7 @@ void bar_draw_status(menu_bar_t *bar)
         window_t *win = bar->window;
         scr = win->screen;
         x = (scr->width - MAX_STATUS) - 6;
+        win->attrs.chunk = bar->selected.chunk;
         win_cup(win, x, 0);
         win_emit(win, '[');
         win_emit(win, ' ');
@@ -99,9 +100,9 @@ static INLINE void init_bar(screen_t *scr, window_t *win, menu_bar_t *bar)
     win->screen = scr;
     scr->menu_bar = bar;
 
-    *(uint64_t *)bar->normal = NORMAL;
-    *(uint64_t *)bar->selected = SELECTED;
-    *(uint64_t *)bar->disabled = DISABLED;
+    bar->attrs.chunk = NORMAL;
+    bar->selected.chunk = SELECTED;
+    bar->disabled.chunk = DISABLED;
 
     bar->xco = 2; // x coordinate of first pulldown menu window
 }
@@ -152,9 +153,9 @@ int32_t new_pulldown(screen_t *scr, char *name)
 
             bar->xco += utf8_strlen(name) + 2;
 
-            *(int64_t *)pd->normal = NORMAL;
-            *(int64_t *)pd->selected = SELECTED;
-            *(int64_t *)pd->disabled = DISABLED;
+            pd->attrs.chunk = NORMAL;
+            pd->selected.chunk = SELECTED;
+            pd->disabled.chunk = DISABLED;
 
             result = 0;
         }
@@ -180,7 +181,6 @@ static INLINE void init_item(pulldown_t *pd, menu_item_t *item, char *name,
     // determine the width of the pulldown window
 
     width = utf8_strlen(name);
-
     if(width > pd->width)
     {
         pd->width = width;
@@ -233,6 +233,22 @@ int32_t new_menu_item(screen_t *scr, char *name, menu_fp_t fp,
 }
 
 // -----------------------------------------------------------------------
+
+static INLINE void pd_set_attr(int16_t i, pulldown_t *pd, uint64_t *p,
+                               menu_item_t *item)
+{
+    if(i == pd->which)
+    {
+        *p = pd->selected.chunk;
+        return;
+    }
+    *p =                                     //
+        ((item->flags & MENU_DISABLED) != 0) //
+            ? pd->disabled.chunk
+            : pd->attrs.chunk;
+}
+
+// -----------------------------------------------------------------------
 // populate pulldown window with menu items
 
 void bar_populdate_pd(pulldown_t *pd)
@@ -250,17 +266,8 @@ void bar_populdate_pd(pulldown_t *pd)
         {
             item = pd->items[i];
 
-            if(i == pd->which)
-            {
-                *(int64_t *)win->attrs = *(int64_t *)pd->selected;
-            }
-            else
-            {
-                *(int64_t *)win->attrs =
-                    ((item->flags & MENU_DISABLED) != 0)
-                        ? *(int64_t *)pd->disabled
-                        : *(int64_t *)pd->normal;
-            }
+            pd_set_attr(i, pd, &win->attrs.chunk, item);
+
             win_cup(win, 0, i);
             win_puts(win, item->name);
 
@@ -270,6 +277,22 @@ void bar_populdate_pd(pulldown_t *pd)
             }
         }
     }
+}
+
+// -----------------------------------------------------------------------
+
+static INLINE void bar_set_attrs(int16_t i, menu_bar_t *bar, uint64_t *p,
+                                 pulldown_t *pd)
+{
+    if((i == bar->which) && (bar->active != 0))
+    {
+        *p = bar->selected.chunk;
+        return;
+    }
+    *p =                                   //
+        ((pd->flags & MENU_DISABLED) != 0) //
+            ? bar->disabled.chunk
+            : bar->attrs.chunk;
 }
 
 // -----------------------------------------------------------------------
@@ -287,7 +310,7 @@ void bar_draw_text(screen_t *scr)
     {
         win = bar->window;
 
-        *(int64_t *)win->attrs = *(int64_t *)bar->normal;
+        win->attrs.chunk = bar->attrs.chunk;
 
         win_clear(win);
         win_emit(win, win->blank);
@@ -296,31 +319,10 @@ void bar_draw_text(screen_t *scr)
         {
             pd = bar->items[i];
 
-            if((i == bar->which) && (bar->active != 0))
-            {
-                *(int64_t *)win->attrs = *(int64_t *)bar->selected;
-            }
-            else
-            {
-                // the 0x00 below is simply to force clang-format
-                // to NOT screw up the formatting here by pushing
-                // everyhing off to the right edge of the window
-                // this is a fugly fix
-                *(int64_t *)win->attrs =
-                    ((pd->flags & MENU_DISABLED) != 0x00)
-                        ? *(int64_t *)bar->disabled
-                        : *(int64_t *)bar->normal;
-            }
+            bar_set_attrs(i, bar, &win->attrs.chunk, pd);
 
             win_emit(win, win->blank);
             win_puts(win, pd->name);
-            win_emit(win, win->blank);
-        }
-
-        *(int64_t *)win->attrs = *(int64_t *)bar->normal;
-
-        while((win->cx != win->width) && (win->cx != 0))
-        {
             win_emit(win, win->blank);
         }
     }
@@ -401,8 +403,7 @@ static pulldown_t *pd_find(screen_t *scr, char *name)
             {
                 break;
             }
-            // affects a continue and leaves pd = NULL
-            // if we reached the end of the loop
+            // leaves pd = NULL if we reached the end of the loop
             pd = NULL;
         }
     }
@@ -461,9 +462,9 @@ static INLINE int32_t bar_create_pd_win(screen_t *scr, pulldown_t *pd)
         win->flags = WIN_BOXED | WIN_LOCKED;
         win->blank = 0x20;
 
-        win->bdr_attrs[ATTR] = (int8_t)(FG_GRAY | BG_GRAY | BOLD);
-        win->bdr_attrs[FG] = 11; // pd->attr[FG];
-        win->bdr_attrs[BG] = 4;  // pd->attr[BG];
+        win->bdr_attrs.bytes[ATTR] = (int8_t)(FG_GRAY | BG_GRAY | BOLD);
+        win->bdr_attrs.bytes[FG] = 11; // pd->attr[FG];
+        win->bdr_attrs.bytes[BG] = 4;  // pd->attr[BG];
         win->bdr_type = BDR_CURVED;
 
         win->screen = scr;
@@ -499,48 +500,54 @@ static void menu_activate(void)
     bar->active ^= 1;
     pd = bar->items[bar->which];
 
-    if(bar->active != 0)
-    {
-        redraw_pulldown(bar);
-    }
-    else
-    {
-        win_close(pd->window);
-        pd->window = NULL;
-    }
+    (bar->active != 0) //
+        ? redraw_pulldown(bar)
+        : win_close(pd->window);
 }
 
 // -----------------------------------------------------------------------
 
 static INLINE void prev_item(pulldown_t *pd)
 {
-    pd->which = (pd->which != 0) ? pd->which - 1 : pd->count - 1;
+    pd->which =          //
+        (pd->which != 0) //
+            ? pd->which - 1
+            : pd->count - 1;
 }
 
 // -----------------------------------------------------------------------
 
 static INLINE void next_item(pulldown_t *pd)
 {
-    pd->which = (pd->which != pd->count - 1) ? pd->which + 1 : 0;
+    pd->which =                      //
+        (pd->which != pd->count - 1) //
+            ? pd->which + 1
+            : 0;
 }
 
 // -----------------------------------------------------------------------
 
 static INLINE void next_pd(menu_bar_t *bar)
 {
-    bar->which = (bar->which != bar->count - 1) ? bar->which + 1 : 0;
+    bar->which =                       //
+        (bar->which != bar->count - 1) //
+            ? bar->which + 1
+            : 0;
 }
 
 // -----------------------------------------------------------------------
 
 static INLINE void prev_pd(menu_bar_t *bar)
 {
-    bar->which = (bar->which != 0) ? bar->which - 1 : bar->count - 1;
+    bar->which =          //
+        (bar->which != 0) //
+            ? bar->which - 1
+            : bar->count - 1;
 }
 
 // -----------------------------------------------------------------------
 
-static void menu_up(void)
+static void menu_up_down(int dir)
 {
     menu_bar_t *bar = active_screen->menu_bar;
     pulldown_t *pd;
@@ -554,9 +561,12 @@ static void menu_up(void)
 
         while(n != 0)
         {
-            prev_item(pd);
+            (dir > 0) ? prev_item(pd) : next_item(pd);
+
             n--;
+
             item = pd->items[pd->which];
+
             if((item->flags & MENU_DISABLED) == 0)
             {
                 break;
@@ -567,31 +577,11 @@ static void menu_up(void)
 
 // -----------------------------------------------------------------------
 
-static void menu_down(void)
-{
-    menu_bar_t *bar = active_screen->menu_bar;
-    pulldown_t *pd;
-    int16_t n;
-    menu_item_t *item;
+#define MENU_UP 1
+#define MENU_DOWN -1
 
-    if((bar != NULL) && (bar->active != 0))
-    {
-        pd = bar->items[bar->which];
-        n = bar->count;
-
-        while(n != 0)
-        {
-            next_item(pd);
-            n--;
-            item = pd->items[pd->which];
-
-            if((item->flags & MENU_DISABLED) == 0)
-            {
-                break;
-            }
-        }
-    }
-}
+static INLINE void menu_up(void) { menu_up_down(MENU_UP); }
+static INLINE void menu_down(void) { menu_up_down(MENU_DOWN); }
 
 // -----------------------------------------------------------------------
 
@@ -679,7 +669,7 @@ static void menu_cr(void)
             (item->fp)();
         }
     }
-    else
+    else // make inactive menus not eat the new line char
     {
         stuff_key(0x0a);
     }

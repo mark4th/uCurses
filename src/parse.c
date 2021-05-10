@@ -16,7 +16,7 @@ static void noop(void) { ; }
 // -----------------------------------------------------------------------
 
 char *esc_buff;            // format string compilation output buffer
-uint16_t num_esc;           // max of 64k of compiled escape seq bytes
+uint16_t num_esc;          // max of 64k of compiled escape seq bytes
 int64_t params[MAX_PARAM]; // format string parametesr
 
 static int8_t fsp;        // stack pointer for ...
@@ -28,6 +28,8 @@ static int8_t digits; // number of digits for %d (2 or 3)
 static int64_t atoz[26]; // named format string variables
 static int64_t AtoZ[26];
 
+uint32_t flush_size = 0;
+
 // -----------------------------------------------------------------------
 // addresses within memory mapped terminfo file
 
@@ -37,26 +39,33 @@ extern int16_t *ti_strings;
 // -----------------------------------------------------------------------
 // debug
 
-// FILE *log_fp;
-//
-// void log_dump(void)
-// {
-//     int16_t i;
-//     char *p = esc_buff;
-//
-//     for(i = 0; i < num_esc; i++)
-//     {
-//         if(*p == 0x1b)
-//         {
-//             fprintf(log_fp, "\n");
-//         }
-//         (*p <= 0x1f)
-//             ? fprintf(log_fp, "。%02x", (uint8_t)*p)
-//             : fprintf(log_fp, "%c", *p);
-//         p++;
-//     }
-//     fprintf(log_fp, "\n\n");
-// }
+// static FILE *log_fp;
+
+void log_dump(void)
+{
+    //   int16_t i;
+    //   char *p = esc_buff;
+
+    //   for(i = 0; i < num_esc; i++)
+    //   {
+    //       if(*p == 0x1b)
+    //       {
+    //           fprintf(log_fp, "\n");
+    //       }
+    //       (*p <= 0x1f)
+    //           ? fprintf(log_fp, "。%02x", (uint8_t)*p)
+    //           : fprintf(log_fp, "%c", *p);
+    //       p++;
+    //   }
+    //   fprintf(log_fp, "\n\n");
+}
+
+// -----------------------------------------------------------------------
+
+void open_log_file(void)
+{
+    //   log_fp = fopen("log", "w");
+}
 
 // -----------------------------------------------------------------------
 
@@ -64,7 +73,10 @@ void flush(void)
 {
     ssize_t n;
 
-    // log_dump();
+    log_dump();
+
+    // for profiling
+    flush_size = num_esc;
 
     n = write(1, esc_buff, num_esc);
     num_esc = 0;
@@ -421,7 +433,7 @@ static int64_t *get_var_addr(void)
 // -----------------------------------------------------------------------
 // format = %P
 
-static void _P(void)
+static void _P(void) // store top item of stack into specified variable
 {
     int64_t *s;
 
@@ -433,7 +445,7 @@ static void _P(void)
 // -----------------------------------------------------------------------
 // format = &g
 
-static void _g(void)
+static void _g(void) // push specified variables value onto stack
 {
     int64_t *s;
 
@@ -445,8 +457,8 @@ static void _g(void)
 // -----------------------------------------------------------------------
 // format = %{
 
-static void _brace(void)
-{
+static void _brace(void) // parse number between { and } in decimal
+{                        // put its value on the stack
     int64_t n1;
     char c1;
 
@@ -533,8 +545,7 @@ static void _e(void)
         {
             nest++;
         }
-
-        if(c1 == ';')
+        else if(c1 == ';')
         {
             if(nest == 0)
             {
@@ -550,29 +561,22 @@ static void _e(void)
 
 static void _d(void)
 {
-    int64_t n1, n2;
+    int64_t n1;
     n1 = fs_pop();
+    digits--;
+
+    const char widths[3][6] = { "%" PRIu64, "%02" PRIu64, "%03" PRIu64 };
 
     // this is a bug, if we are mid escape sequence we cant flush
-    // a partial now then the rest later
-    if((0xffff - num_esc) < 4)
+    // a partial now then the rest later p.s. i know a fix but
+    // i dont know if i need it or not
+
+    if((0xffff - num_esc) < 6)
     {
         flush();
     }
 
-    switch(digits)
-    {
-        case 2:
-            n2 = snprintf(&esc_buff[num_esc], 4, "%02" PRIu64, n1);
-            break;
-        case 3:
-            n2 = snprintf(&esc_buff[num_esc], 4, "%03" PRIu64, n1);
-            break;
-        default:
-            n2 = snprintf(&esc_buff[num_esc], 4, "%" PRIu64, n1);
-    }
-
-    num_esc += n2;
+    num_esc += snprintf(&esc_buff[num_esc], 4, widths[digits], n1);
 }
 
 // -----------------------------------------------------------------------
@@ -630,8 +634,8 @@ static const switch_t p_codes[] = {
     { '-', &_minus },   { '*', &_star },   { '/', &_slash },
     { 'm', &_mod },     { '=', &_equals }, { '>', &_greater },
     { '<', &_less },    { 0x27, &_tick },  { '{', &_brace },
-    { 'P', &_P },       { 'g', &_g },      { 't', &_t },
-    { 'e', &_e },       { '?', &noop },    { ';', &noop },
+    { 'P', &_P },       { 'g', &_g },      { '?', &noop },
+    { 't', &_t },       { 'e', &_e },      { ';', &noop },
 };
 
 #define PCOUNT (sizeof(p_codes) / sizeof(p_codes[0]))

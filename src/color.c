@@ -8,8 +8,8 @@
 
 // -----------------------------------------------------------------------
 
-int8_t attrs[8];
-int8_t old_attrs[8]; // to test for changes
+attribs_t attrs;
+attribs_t old_attrs; // to test for changes
 
 extern const char *f_str; // terminfo format string pointer
 
@@ -49,13 +49,13 @@ static INLINE void do_set_fg(void)
     // parsing functions for each format string.  this converts the
     // given format string into an escape sequence for the terminal
 
-    params[0] = attrs[FG];
+    params[0] = attrs.bytes[FG];
 
-    if(attrs[ATTR] & FG_RGB)
+    if(attrs.bytes[ATTR] & FG_RGB)
     {
-        params[0] = (uint8_t)attrs[FG_R];
-        params[1] = (uint8_t)attrs[FG_G];
-        params[2] = (uint8_t)attrs[FG_B];
+        params[0] = attrs.bytes[FG_R];
+        params[1] = attrs.bytes[FG_G];
+        params[2] = attrs.bytes[FG_B];
 
         // there is no format string for this within the terminfo
         // string section
@@ -64,7 +64,7 @@ static INLINE void do_set_fg(void)
         parse_format();
         return;
     }
-    if(attrs[ATTR] & FG_GRAY)
+    if(attrs.bytes[ATTR] & FG_GRAY)
     {
         f_str = fg_seq;
 
@@ -107,14 +107,14 @@ static INLINE void do_set_bg(void)
     // parsing functions for each format string.  this converts the
     // given format string into an escape sequence for the terminal
 
-    params[0] = attrs[BG];
+    params[0] = attrs.bytes[BG];
 
     // are we setting a rgb background?
-    if(attrs[ATTR] & BG_RGB)
+    if(attrs.bytes[ATTR] & BG_RGB)
     {
-        params[0] = (uint8_t)attrs[BG_R];
-        params[1] = (uint8_t)attrs[BG_G];
-        params[2] = (uint8_t)attrs[BG_B];
+        params[0] = (uint8_t)attrs.bytes[BG_R];
+        params[1] = (uint8_t)attrs.bytes[BG_G];
+        params[2] = (uint8_t)attrs.bytes[BG_B];
 
         f_str = &rgb_seq[0];
         parse_format();
@@ -123,7 +123,7 @@ static INLINE void do_set_bg(void)
 
     // are we setting a gray scale foreground?
 
-    if(attrs[ATTR] & BG_GRAY)
+    if(attrs.bytes[ATTR] & BG_GRAY)
     {
         f_str = &bg_seq[0];
         // gray scales are specified as values from 0 to 23 but
@@ -143,21 +143,21 @@ void apply_attribs(void)
 {
     uint8_t changes;
 
-    changes = attrs[ATTR] ^ old_attrs[ATTR];
+    changes = attrs.bytes[ATTR] ^ old_attrs.bytes[ATTR];
 
     if((changes & BLINK) || (changes & BOLD) || (changes & REVERSE))
     {
         ti_sgr0();
 
-        if(attrs[ATTR] & BLINK)
+        if(attrs.bytes[ATTR] & BLINK)
         {
             ti_blink();
         }
-        if(attrs[ATTR] & BOLD)
+        if(attrs.bytes[ATTR] & BOLD)
         {
             ti_bold();
         }
-        if(attrs[ATTR] & REVERSE)
+        if(attrs.bytes[ATTR] & REVERSE)
         {
             ti_rev();
         }
@@ -165,52 +165,54 @@ void apply_attribs(void)
     // if underline changed we need to set it.  if it was not changed
     // we might need to restore it because of the above sgr0
     if((changes & UNDERLINE) ||
-       (!(changes & UNDERLINE) && (attrs[ATTR] & UNDERLINE)))
+       (!(changes & UNDERLINE) && (attrs.bytes[ATTR] & UNDERLINE)))
     {
-        (attrs[ATTR] & UNDERLINE) ? ti_smul() : ti_rmul();
+        (attrs.bytes[ATTR] & UNDERLINE) ? ti_smul() : ti_rmul();
     }
 
-    if((attrs[BG] != old_attrs[BG]) || (attrs[BG_R] != old_attrs[BG_R]) ||
-       (attrs[BG_G] != old_attrs[BG_G]) ||
-       (attrs[BG_B] != old_attrs[BG_B]) || (changes & BG_GRAY) ||
-       (changes & BG_RGB))
+    if((attrs.bytes[BG] != old_attrs.bytes[BG]) ||
+       (attrs.bytes[BG_R] != old_attrs.bytes[BG_R]) ||
+       (attrs.bytes[BG_G] != old_attrs.bytes[BG_G]) ||
+       (attrs.bytes[BG_B] != old_attrs.bytes[BG_B]) ||
+       (changes & BG_GRAY) || (changes & BG_RGB))
     {
         do_set_bg();
     }
 
-    if((attrs[FG] != old_attrs[FG]) || (attrs[FG_R] != old_attrs[FG_R]) ||
-       (attrs[FG_G] != old_attrs[FG_G]) ||
-       (attrs[FG_B] != old_attrs[FG_B]) || (changes & FG_GRAY) ||
-       (changes & FG_RGB))
+    if((attrs.bytes[FG] != old_attrs.bytes[FG]) ||
+       (attrs.bytes[FG_R] != old_attrs.bytes[FG_R]) ||
+       (attrs.bytes[FG_G] != old_attrs.bytes[FG_G]) ||
+       (attrs.bytes[FG_B] != old_attrs.bytes[FG_B]) ||
+       (changes & FG_GRAY) || (changes & FG_RGB))
     {
         do_set_fg();
     }
 
-    *(uint64_t *)&old_attrs = *(uint64_t *)&attrs;
+    old_attrs.chunk = attrs.chunk;
 }
 
 // -----------------------------------------------------------------------
 
 static void set_attr(ti_attrib_t attr)
 {
-    attrs[ATTR] |= attr;
+    attrs.bytes[ATTR] |= attr;
 
     // gray scale and rgb color settngs are mutually exclusive
     if(FG_RGB & attr)
     {
-        attrs[ATTR] &= ~FG_GRAY;
+        attrs.bytes[ATTR] &= ~FG_GRAY;
     }
     if(BG_RGB & attr)
     {
-        attrs[ATTR] &= ~BG_GRAY;
+        attrs.bytes[ATTR] &= ~BG_GRAY;
     }
     if(FG_GRAY & attr)
     {
-        attrs[ATTR] &= ~FG_RGB;
+        attrs.bytes[ATTR] &= ~FG_RGB;
     }
     if(BG_GRAY & attr)
     {
-        attrs[ATTR] &= ~BG_RGB;
+        attrs.bytes[ATTR] &= ~BG_RGB;
     }
 
     apply_attribs();
@@ -220,7 +222,7 @@ static void set_attr(ti_attrib_t attr)
 
 static void clr_attr(ti_attrib_t attr)
 {
-    attrs[ATTR] &= ~attr;
+    attrs.bytes[ATTR] &= ~attr;
     apply_attribs();
 }
 
@@ -244,7 +246,7 @@ void clr_blink(void) { clr_attr(BLINK); }
 
 void set_gray_fg(int8_t c)
 {
-    attrs[FG] = c;
+    attrs.bytes[FG] = c;
     set_attr(FG_GRAY);
 }
 
@@ -252,7 +254,7 @@ void set_gray_fg(int8_t c)
 
 void set_gray_bg(int8_t c)
 {
-    attrs[BG] = c;
+    attrs.bytes[BG] = c;
     set_attr(BG_GRAY);
 }
 
@@ -260,9 +262,9 @@ void set_gray_bg(int8_t c)
 
 void set_rgb_fg(int8_t r, int8_t g, int8_t b)
 {
-    attrs[FG_R] = r;
-    attrs[FG_G] = g;
-    attrs[FG_B] = b;
+    attrs.bytes[FG_R] = r;
+    attrs.bytes[FG_G] = g;
+    attrs.bytes[FG_B] = b;
 
     set_attr(FG_RGB);
 }
@@ -271,9 +273,9 @@ void set_rgb_fg(int8_t r, int8_t g, int8_t b)
 
 void set_rgb_bg(int8_t r, int8_t g, int8_t b)
 {
-    attrs[BG_R] = r;
-    attrs[BG_G] = g;
-    attrs[BG_B] = b;
+    attrs.bytes[BG_R] = r;
+    attrs.bytes[BG_G] = g;
+    attrs.bytes[BG_B] = b;
 
     set_attr(BG_RGB);
 }
@@ -283,7 +285,7 @@ void set_rgb_bg(int8_t r, int8_t g, int8_t b)
 
 void set_fg(int8_t c)
 {
-    attrs[FG] = c;
+    attrs.bytes[FG] = c;
     clr_attr(FG_RGB | FG_GRAY);
 }
 
@@ -292,7 +294,7 @@ void set_fg(int8_t c)
 
 void set_bg(int8_t c)
 {
-    attrs[BG] = c;
+    attrs.bytes[BG] = c;
     clr_attr(BG_RGB | BG_GRAY);
 }
 
@@ -301,10 +303,10 @@ void set_bg(int8_t c)
 
 void set_norm(void)
 {
-    attrs[FG] = default_fg;
-    attrs[BG] = default_bg;
+    attrs.bytes[FG] = default_fg;
+    attrs.bytes[BG] = default_bg;
 
-    attrs[ATTR] = 0;
+    attrs.bytes[ATTR] = 0;
     apply_attribs();
 }
 

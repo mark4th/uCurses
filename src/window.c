@@ -52,6 +52,7 @@ void win_close(window_t *win)
             free(win->buffer);
         }
         free(win);
+        win = NULL;
     }
 }
 
@@ -71,8 +72,8 @@ window_t *win_open(int16_t width, int16_t height)
 
         if(win_alloc(win) == 0)
         {
-            win->attrs[FG] = default_fg;
-            win->attrs[BG] = default_bg;
+            win->attrs.bytes[FG] = default_fg;
+            win->attrs.bytes[BG] = default_bg;
             win->blank = 0x20;
             win_clear(win);
         }
@@ -144,27 +145,27 @@ int16_t win_set_pos(window_t *win, int16_t x, int16_t y)
 
 static void win_set_attr(window_t *win, ti_attrib_t attr)
 {
-    win->attrs[ATTR] |= attr;
+    win->attrs.bytes[ATTR] |= attr;
 
     // gray scales and rgb are mutually exclusive
     if((attr & FG_RGB) != 0)
     {
-        win->attrs[ATTR] &= ~FG_GRAY;
+        win->attrs.bytes[ATTR] &= ~FG_GRAY;
     }
 
     if((attr & BG_RGB) != 0)
     {
-        win->attrs[ATTR] &= ~BG_GRAY;
+        win->attrs.bytes[ATTR] &= ~BG_GRAY;
     }
 
     if((attr & FG_GRAY) != 0)
     {
-        win->attrs[ATTR] &= ~FG_RGB;
+        win->attrs.bytes[ATTR] &= ~FG_RGB;
     }
 
     if((attr & BG_GRAY) != 0)
     {
-        win->attrs[ATTR] &= ~BG_RGB;
+        win->attrs.bytes[ATTR] &= ~BG_RGB;
     }
 }
 
@@ -174,7 +175,7 @@ void win_set_gray_fg(window_t *win, int8_t c)
 {
     if(win != NULL)
     {
-        win->attrs[FG] = c;
+        win->attrs.bytes[FG] = c;
         win_set_attr(win, FG_GRAY);
     }
 }
@@ -185,7 +186,7 @@ void win_set_gray_bg(window_t *win, int8_t c)
 {
     if(win != NULL)
     {
-        win->attrs[BG] = c;
+        win->attrs.bytes[BG] = c;
         win_set_attr(win, BG_GRAY);
     }
 }
@@ -196,9 +197,9 @@ void win_set_rgb_fg(window_t *win, int8_t r, int8_t g, int8_t b)
 {
     if(win != NULL)
     {
-        win->attrs[FG_R] = r;
-        win->attrs[FG_G] = g;
-        win->attrs[FG_B] = b;
+        win->attrs.bytes[FG_R] = r;
+        win->attrs.bytes[FG_G] = g;
+        win->attrs.bytes[FG_B] = b;
 
         win_set_attr(win, FG_RGB);
     }
@@ -210,9 +211,9 @@ void win_set_rgb_bg(window_t *win, int8_t r, int8_t g, int8_t b)
 {
     if(win != NULL)
     {
-        win->attrs[BG_R] = r;
-        win->attrs[BG_G] = g;
-        win->attrs[BG_B] = b;
+        win->attrs.bytes[BG_R] = r;
+        win->attrs.bytes[BG_G] = g;
+        win->attrs.bytes[BG_B] = b;
 
         win_set_attr(win, BG_RGB);
     }
@@ -224,7 +225,7 @@ void win_set_fg(window_t *win, int8_t color)
 {
     if(win != NULL)
     {
-        win->attrs[FG] = color;
+        win->attrs.bytes[FG] = color;
         win_clr_attr(win, FG_RGB | FG_GRAY);
     }
 }
@@ -235,7 +236,7 @@ void win_set_bg(window_t *win, int8_t color)
 {
     if(win != NULL)
     {
-        win->attrs[BG] = color;
+        win->attrs.bytes[BG] = color;
         win_clr_attr(win, BG_RGB | BG_GRAY);
     }
 }
@@ -252,7 +253,7 @@ void win_erase_line(window_t *win, int16_t line)
     {
         p = win_line_addr(win, line);
 
-        *(int64_t *)&cell.attrs = *(int64_t *)win->attrs;
+        cell.attrs.chunk = win->attrs.chunk;
         cell.code = win->blank;
 
         for(i = 0; i < win->width; i++)
@@ -336,7 +337,7 @@ void win_scroll_lt(window_t *win)
 
     if(win != NULL)
     {
-        *(int64_t *)cell.attrs = *(int64_t *)win->attrs;
+        cell.attrs.chunk = win->attrs.chunk;
 
         cell.code = win->blank;
 
@@ -362,7 +363,7 @@ void win_scroll_rt(window_t *win)
 
     if(win != NULL)
     {
-        *(int64_t *)&cell.attrs = *(int64_t *)win->attrs;
+        cell.attrs.chunk = win->attrs.chunk;
         cell.code = win->blank;
 
         for(i = win->width - 1; i != 0; i--)
@@ -500,7 +501,7 @@ static void _win_emit(window_t *win, uint32_t c)
         win_cr(win);
     }
 
-    *(uint64_t *)&cell.attrs = *(uint64_t *)win->attrs;
+    cell.attrs.chunk = win->attrs.chunk;
     cell.code = c;
 
     p = win_line_addr(win, win->cy);

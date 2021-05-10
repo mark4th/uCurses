@@ -16,17 +16,17 @@ static INLINE void populate_attribs(void *pstruct, int32_t ptype)
 {
     if((ptype == STRUCT_WINDOW) || (ptype == STRUCT_BACKDROP))
     {
-        *(int64_t *)((window_t *)pstruct)->attrs =
+        ((window_t *)pstruct)->attrs.chunk =
             *(int64_t *)j_state->structure;
     }
     else if(ptype == STRUCT_PULLDOWN)
     {
-        *(int64_t *)((pulldown_t *)pstruct)->normal =
+        ((pulldown_t *)pstruct)->attrs.chunk =
             *(int64_t *)j_state->structure;
     }
     else // ptype == STRUCT_MENU_BAR:
     {
-        *(int64_t *)((menu_bar_t *)pstruct)->normal =
+        ((menu_bar_t *)pstruct)->attrs.chunk =
             *(int64_t *)j_state->structure;
     }
 
@@ -37,7 +37,7 @@ static INLINE void populate_attribs(void *pstruct, int32_t ptype)
 
 static INLINE void populate_b_attribs(window_t *pstruct)
 {
-    *(int64_t *)pstruct->bdr_attrs = *(int64_t *)j_state->structure;
+    pstruct->bdr_attrs.chunk = *(int64_t *)j_state->structure;
 
     free(j_state->structure);
 }
@@ -48,12 +48,12 @@ static INLINE void populate_s_attribs(void *pstruct, int32_t ptype)
 {
     if(ptype == STRUCT_PULLDOWN)
     {
-        *(int64_t *)((pulldown_t *)pstruct)->selected =
+        ((pulldown_t *)pstruct)->selected.chunk =
             *(int64_t *)j_state->structure;
     }
     else // ptype == STRUCT_MENU_BAR:
     {
-        *(int64_t *)((menu_bar_t *)pstruct)->selected =
+        ((menu_bar_t *)pstruct)->selected.chunk =
             *(int64_t *)j_state->structure;
     }
 
@@ -66,12 +66,12 @@ static INLINE void populate_d_attribs(void *pstruct, int32_t ptype)
 {
     if(ptype == STRUCT_PULLDOWN)
     {
-        *(int64_t *)((pulldown_t *)pstruct)->disabled =
+        ((pulldown_t *)pstruct)->disabled.chunk =
             *(int64_t *)j_state->structure;
     }
     else // ptype == STRUCT_MENU_BAR:
     {
-        *(int64_t *)((menu_bar_t *)pstruct)->disabled =
+        ((menu_bar_t *)pstruct)->disabled.chunk =
             *(int64_t *)j_state->structure;
     }
 

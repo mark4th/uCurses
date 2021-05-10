@@ -72,7 +72,7 @@ static void draw_char(window_t *win, int16_t cx, int16_t cy, int32_t code,
     cell_t *p1 = &scr->buffer1[index];
     cell_t *p2 = &scr->buffer2[index];
 
-    *(int64_t *)p1->attrs = *(int64_t *)win->bdr_attrs;
+    p1->attrs.chunk = win->bdr_attrs.chunk;
     p1->code = code;
 
     // when a double width character is drawn underneath a pulled down
@@ -126,8 +126,12 @@ void win_draw_borders(window_t *win)
     int16_t height;
     int16_t cy;
 
-    border_t *borders[] = { &bdr_single[0], &bdr_double[0],
-                            &bdr_curved[0] };
+    border_t *borders[] = //
+        {                 //
+          &bdr_single[0], //
+          &bdr_double[0], //
+          &bdr_curved[0]
+        };
 
     border_t *b;
 

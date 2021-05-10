@@ -34,6 +34,20 @@ extern int64_t params[MAX_PARAM];
 #define DEADCODE 0xdeadc0de
 #define FAR 0x7fff
 
+// allows me to sset the 8 byte uint8_t array with one uint64_t write
+#define attrs8 (uint64_t *)&attrs[0]
+
+// -----------------------------------------------------------------------
+
+typedef struct
+{
+    union
+    {
+        uint8_t bytes[8];
+        uint64_t chunk;
+    };
+} attribs_t;
+
 // -----------------------------------------------------------------------
 
 typedef void (*opt_t)(void);     // re_switch vectors
@@ -86,7 +100,7 @@ typedef struct
 
 // -----------------------------------------------------------------------
 
-#define win_clr_attr(win, attr) win->attrs[ATTR] &= ~attr
+#define win_clr_attr(win, attr) win->attrs.bytes[ATTR] &= ~attr
 
 #define win_set_ul(win) win_set_attr(win, UNDERLINE)
 #define win_set_rev(win) win_set_attr(win, REVERSE)
@@ -155,7 +169,7 @@ typedef struct
 
 typedef struct
 {
-    int8_t attrs[8]; // bold, blink, underline, gray scale, rgb
+    attribs_t attrs; // bold, blink, underline, gray scale, rgb
     int32_t code;    // utf-8 codepoint
 } cell_t;
 
@@ -181,11 +195,11 @@ typedef struct
     int16_t count;
     // not a linked list of sub items. max 10
     menu_item_t *items[MAX_MENU_ITEMS];
-    void *window;       // this is a window_t honest!
-    int8_t attr[8];     // attribs for pulldown menu border
-    int8_t normal[8];   // attribs for non selected menu items
-    int8_t selected[8]; // atrribs for selected menu item
-    int8_t disabled[8]; // attribs for disabled meny items
+    void *window;        // this is a window_t honest!
+    attribs_t bdr_attrs; // attribs for pulldown menu border
+    attribs_t attrs;     // attribs for non selected menu items
+    attribs_t selected;  // atrribs for selected menu item
+    attribs_t disabled;  // attribs for disabled meny items
 } pulldown_t;
 
 // -----------------------------------------------------------------------
@@ -198,9 +212,9 @@ typedef struct
     int16_t which;  // which pulldown item is active
     int16_t count;  // number of pulldowns defined
     pulldown_t *items[MAX_MENU_ITEMS];
-    int8_t normal[8];   // attribs for non selected menu bar items
-    int8_t selected[8]; // attribs for selected menu bar items
-    int8_t disabled[8]; // attribs for disabled menu bar items
+    attribs_t attrs;    // attribs for non selected menu bar items
+    attribs_t selected; // attribs for selected menu bar items
+    attribs_t disabled; // attribs for disabled menu bar items
 } menu_bar_t;
 
 // -----------------------------------------------------------------------
@@ -219,9 +233,9 @@ typedef struct
     int16_t cx; // cursor position within window
     int16_t cy;
     int16_t bdr_type;
-    int8_t attrs[8];     // bold blink underline, gray scale, rgb etc
-    int8_t old_attrs[8]; // previous state..
-    int8_t bdr_attrs[8]; // likewise for the windows border if it has
+    attribs_t attrs;     // bold blink underline, gray scale, rgb etc
+    attribs_t old_attrs; // previous state..
+    attribs_t bdr_attrs; // likewise for the windows border if it has
 } window_t;
 
 // -----------------------------------------------------------------------

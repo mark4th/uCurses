@@ -264,7 +264,7 @@ void run_demo(screen_t *scr, window_t *win1, window_t *win2)
     uint32_t frames = 0;
     uint32_t average = 0;
 
-    char foo[MAX_STATUS];
+    char status[MAX_STATUS];
 
     x1 = 2;
     y1 = 2;
@@ -302,9 +302,9 @@ void run_demo(screen_t *scr, window_t *win1, window_t *win2)
             total += flush_size;
             average = total / frames;
 
-            sprintf(foo, "Frame: %06d Max: %04x Avg: %04x", frames, max, average);
+            sprintf(status, "Frame: %06d Max: %04x Avg: %04x", frames, max, average);
             flush_size = 0;
-            bar_set_status(foo);
+//            bar_set_status(foo);
 
             do_run_demo(scr, win1, win2);
         }

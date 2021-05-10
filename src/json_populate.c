@@ -132,7 +132,8 @@ static INLINE void populate_bar(screen_t *scr)
 // ready.  add this C structure to its parent objects C structure...
 // or sometimes its grandparents
 
-void INLINE populate_parent(void)
+extern list_t j_stack;
+void populate_parent(void)
 {
     int32_t ptype;
 
@@ -142,6 +143,14 @@ void INLINE populate_parent(void)
     j_state_t *gp;
 
     parent = j_state->parent;
+
+    // thanks username234 for helping me find this!!!
+    // if the current structures parent is null then the current structure is
+    // the screen that has no parent so dont try to populate the non existant
+    // parent with the screen structure!
+    // the real question here is how the hell did this code work when compiled
+    // with clang? :)
+    if(parent == NULL) { return; }
     gp = parent->parent;
     pstruct = parent->structure;
     gstruct = gp->structure;

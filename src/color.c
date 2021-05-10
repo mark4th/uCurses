@@ -112,9 +112,9 @@ static INLINE void do_set_bg(void)
     // are we setting a rgb background?
     if(attrs.bytes[ATTR] & BG_RGB)
     {
-        params[0] = (uint8_t)attrs.bytes[BG_R];
-        params[1] = (uint8_t)attrs.bytes[BG_G];
-        params[2] = (uint8_t)attrs.bytes[BG_B];
+        params[0] = attrs.bytes[BG_R];
+        params[1] = attrs.bytes[BG_G];
+        params[2] = attrs.bytes[BG_B];
 
         f_str = &rgb_seq[0];
         parse_format();

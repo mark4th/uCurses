@@ -13,7 +13,7 @@
 
 // -----------------------------------------------------------------------
 
-#define INLINE __attribute__((always_inline))
+#define INLINE inline __attribute__((always_inline))
 // #define INLINE
 
 // -----------------------------------------------------------------------

@@ -163,23 +163,24 @@ static void value_xy(void)
 {
     j_state_t *parent = j_state->parent;
     window_t *win = parent->structure;
+    int16_t mult;
+
+    if(percent != 0)
+    {
+        mult =                                //
+            (j_state->struct_type == KEY_XCO) //
+                ? console_width
+                : console_height;
+        key_value *= mult;
+        key_value /= 100;
+    }
 
     if(j_state->struct_type == KEY_XCO)
     {
-        if(percent != 0)
-        {
-            key_value *= console_width;
-            key_value /= 100;
-        }
         win->xco = key_value;
     }
     else
     {
-        if(percent != 0)
-        {
-            key_value *= console_height;
-            key_value /= 100;
-        }
         win->yco = key_value;
     }
 }
@@ -190,23 +191,24 @@ static void value_wh(void)
 {
     j_state_t *parent = j_state->parent;
     window_t *win = parent->structure;
+    int16_t mult;
+
+    if(percent != 0)
+    {
+        mult =                                  //
+            (j_state->struct_type == KEY_WIDTH) //
+                ? console_width
+                : console_height;
+        key_value *= mult;
+        key_value /= 100;
+    }
 
     if(j_state->struct_type == KEY_WIDTH)
     {
-        if(percent != 0)
-        {
-            key_value *= console_width;
-            key_value /= 100;
-        }
         win->width = key_value;
     }
     else // KEY_HEIGHT
     {
-        if(percent != 0)
-        {
-            key_value *= console_height;
-            key_value /= 100;
-        }
         win->height = key_value;
     }
 }
@@ -274,7 +276,10 @@ static void val_pd_flag(pulldown_t *pd)
 
 // -----------------------------------------------------------------------
 
-static void val_win_flag(window_t *win) { win->flags |= key_value; }
+static void val_win_flag(window_t *win) //
+{
+    win->flags |= key_value;
+}
 
 // -----------------------------------------------------------------------
 
@@ -327,77 +332,83 @@ static void value_vector(void)
     j_state_t *parent = j_state->parent;
     menu_item_t *item = parent->structure;
 
-    if(fp_finder == NULL)
+    if(fp_finder != NULL)
     {
-        return;
-    }
+        if(quoted == 0)
+        {
+            json_error("Vector name must be quoted");
+        }
 
-    if(quoted == 0)
-    {
-        json_error("Vector name must be quoted");
+        item->fp = (fp_finder)(json_hash);
     }
-
-    item->fp = (fp_finder)(json_hash);
 }
 
 // -----------------------------------------------------------------------
 // how == tbd
 
-static void value_shortcut(void) { ; }
+static void value_shortcut(void)
+{
+    ;
+}
 
 // -----------------------------------------------------------------------
 
-static const switch_t value_types[] = {
-    // this comment is to resoluve a bug in clang-format
-    // that would push everything in here out to column 41
-    { KEY_FG, value_fgbg },
-    { KEY_BG, value_fgbg },
-    { KEY_GRAY_FG, value_gray_fgbg },
-    { KEY_GRAY_BG, value_gray_fgbg },
-    { KEY_RED, value_rgb },
-    { KEY_GREEN, value_rgb },
-    { KEY_BLUE, value_rgb },
-    { KEY_XCO, value_xy },
-    { KEY_YCO, value_xy },
-    { KEY_WIDTH, value_wh },
-    { KEY_HEIGHT, value_wh },
-    { KEY_NAME, value_name },
-    { KEY_FLAGS, value_flag },
-    { KEY_BORDER_TYPE, value_border_type },
-    { KEY_VECTOR, value_vector },
-    { KEY_SHORTCUT, value_shortcut },
-    { KEY_FLAG, value_flag }
-};
+static const switch_t value_types[] = ///
+    {
+        // this comment is to resoluve a bug in clang-format
+        // that would push everything in here out to column 41
+        { KEY_FG, value_fgbg },
+        { KEY_BG, value_fgbg },
+        { KEY_GRAY_FG, value_gray_fgbg },
+        { KEY_GRAY_BG, value_gray_fgbg },
+        { KEY_RED, value_rgb },
+        { KEY_GREEN, value_rgb },
+        { KEY_BLUE, value_rgb },
+        { KEY_XCO, value_xy },
+        { KEY_YCO, value_xy },
+        { KEY_WIDTH, value_wh },
+        { KEY_HEIGHT, value_wh },
+        { KEY_NAME, value_name },
+        { KEY_FLAGS, value_flag },
+        { KEY_BORDER_TYPE, value_border_type },
+        { KEY_VECTOR, value_vector },
+        { KEY_SHORTCUT, value_shortcut },
+        { KEY_FLAG, value_flag }
+    };
 
 #define NUM_KEYS (sizeof(value_types) / sizeof(value_types[0]))
 
 // -----------------------------------------------------------------------
 
-static int32_t constant_hash[] = {
-    0x0ed8a8cf, 0xfa264646, 0x4e4f416d, 0x8cb49b59, 0x901cbb7a, 0xd6b11d20,
-    0x6f7f7df8, 0x264116fc,
+static int32_t constant_hash[] = //
+    {
+        //
+        0x0ed8a8cf, 0xfa264646, 0x4e4f416d, 0x8cb49b59, 0x901cbb7a,
+        0xd6b11d20, 0x6f7f7df8, 0x264116fc,
 
-    // BLACK RED GREEN BROWN BLUE MAGENTA
-    // CYAN WHITE GRAY PINK LT_GREEN YELLOW
-    // LT_BLUE LT_MAGENTA CYAN LT_WHITE
+        // BLACK RED GREEN BROWN BLUE MAGENTA
+        // CYAN WHITE GRAY PINK LT_GREEN YELLOW
+        // LT_BLUE LT_MAGENTA CYAN LT_WHITE
 
-    0xdc51d022, 0x5a235332, 0xe3671392, 0x4ff50adb, 0xd1e100a9, 0x7dc1a602,
-    0x7cde54cc, 0xc2f8ecb8, 0xbabf7ce4, 0xf62236fd, 0x064123b9, 0x4d265959,
-    0x2805c15c, 0x186aeb45, 0x7cde54cc, 0x060a9a87
-};
+        0xdc51d022, 0x5a235332, 0xe3671392, 0x4ff50adb, 0xd1e100a9,
+        0x7dc1a602, 0x7cde54cc, 0xc2f8ecb8, 0xbabf7ce4, 0xf62236fd,
+        0x064123b9, 0x4d265959, 0x2805c15c, 0x186aeb45, 0x7cde54cc,
+        0x060a9a87 //
+    };
 
 #define NUM_CONSTANTS (sizeof(constant_hash) / sizeof(constant_hash[0]))
 
-static int32_t constant_val[] = {
-    // this comment is to resoluve a bug in clang-format
+static int32_t constant_val[] = //
+    {
+        // this comment is to resoluve a bug in clang-format
 
-    MENU_DISABLED, BDR_SINGLE, BDR_DOUBLE, BDR_CURVED, WIN_LOCKED,
-    WIN_FILLED, WIN_BOXED, FAR,
+        MENU_DISABLED, BDR_SINGLE, BDR_DOUBLE, BDR_CURVED, WIN_LOCKED,
+        WIN_FILLED, WIN_BOXED, FAR,
 
-    // color values
-    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b,
-    0x0c, 0x0d, 0x0e, 0x0f
-};
+        // color values
+        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a,
+        0x0b, 0x0c, 0x0d, 0x0e, 0x0f
+    };
 
 // -----------------------------------------------------------------------
 // allowing hex or deciamal. but hex must be stated with lower case chars

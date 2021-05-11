@@ -229,18 +229,42 @@ static void clr_attr(ti_attrib_t attr)
 // -----------------------------------------------------------------------
 // set individual attribs
 
-void set_ul(void) { set_attr(UNDERLINE); }
-void set_rev(void) { set_attr(REVERSE); }
-void set_bold(void) { set_attr(BOLD); }
-void set_blink(void) { set_attr(BLINK); }
+void set_ul(void)
+{
+    set_attr(UNDERLINE);
+}
+void set_rev(void)
+{
+    set_attr(REVERSE);
+}
+void set_bold(void)
+{
+    set_attr(BOLD);
+}
+void set_blink(void)
+{
+    set_attr(BLINK);
+}
 
 // -----------------------------------------------------------------------
 // clear individual attribs
 
-void clr_ul(void) { clr_attr(UNDERLINE); }
-void clr_rev(void) { clr_attr(REVERSE); }
-void clr_bold(void) { clr_attr(BOLD); }
-void clr_blink(void) { clr_attr(BLINK); }
+void clr_ul(void)
+{
+    clr_attr(UNDERLINE);
+}
+void clr_rev(void)
+{
+    clr_attr(REVERSE);
+}
+void clr_bold(void)
+{
+    clr_attr(BOLD);
+}
+void clr_blink(void)
+{
+    clr_attr(BLINK);
+}
 
 // -----------------------------------------------------------------------
 

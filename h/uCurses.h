@@ -498,7 +498,7 @@ uint16_t is_keyword(int32_t *table, size_t size, int32_t hash);
 void token(void);
 int16_t is_token(int32_t *table, size_t size, char *s);
 void json_de_tab(char *s, size_t len);
-void json_error(char *s);
+__attribute__((noreturn)) void json_error(char *s);
 void json_new_state_struct(size_t struct_size, int32_t struct_type);
 void json_state_value(void);
 void json_state_key(void);
@@ -555,6 +555,8 @@ void cuf(int16_t n1);
 void cuu(int16_t n1);
 void vpa(int16_t n1);
 void cr(void);
+
+__attribute__((noreturn)) void xabort(char *msg);
 
 // -----------------------------------------------------------------------
 //      +--- terminfo name

@@ -19,7 +19,10 @@ static int16_t num_k;
 
 // -----------------------------------------------------------------------
 
-static void noop(void) { ; }
+static void noop(void)
+{
+    ;
+}
 
 // -----------------------------------------------------------------------
 
@@ -87,7 +90,10 @@ static void set_esc0(uint8_t c)
 // -----------------------------------------------------------------------
 // ti_kent seems to return 3 bytes for me and none of them are 0x0a
 
-static void kent(void) { set_esc0(0x0a); }
+static void kent(void)
+{
+    set_esc0(0x0a);
+}
 
 // -----------------------------------------------------------------------
 // due to "design decisions" made elsewhere your backspace key may return
@@ -101,8 +107,15 @@ static void kent(void) { set_esc0(0x0a); }
 // of you who are ranting and raving against TED have picked the wrong
 // target </2c>
 
-static void kbs(void) { set_esc0(0x08); }
-static void kbs2(void) { set_esc0(0x7f); }
+static void kbs(void)
+{
+    set_esc0(0x08);
+}
+
+static void kbs2(void)
+{
+    set_esc0(0x7f);
+}
 
 // -----------------------------------------------------------------------
 
@@ -112,30 +125,115 @@ static void kbs2(void) { set_esc0(0x7f); }
 // actual sequence that was input with the data returned by each of these
 
 // static void kent(void)  { ti_kent();  }
-static void kcuu1(void) { ti_kcuu1(); }
-static void kcud1(void) { ti_kcud1(); }
-static void kcub1(void) { ti_kcub1(); }
-static void kcuf1(void) { ti_kcuf1(); }
+static void kcuu1(void)
+{
+    ti_kcuu1();
+}
 
-static void kdch1(void) { ti_kdch1(); }
-static void kich1(void) { ti_kich1(); }
-static void khome(void) { ti_khome(); }
-static void kend(void) { ti_kend(); }
-static void knp(void) { ti_knp(); }
-static void kpp(void) { ti_kpp(); }
+static void kcud1(void)
+{
+    ti_kcud1();
+}
 
-static void kf1(void) { ti_kf1(); }
-static void kf2(void) { ti_kf2(); }
-static void kf3(void) { ti_kf3(); }
-static void kf4(void) { ti_kf4(); }
-static void kf5(void) { ti_kf5(); }
-static void kf6(void) { ti_kf6(); }
-static void kf7(void) { ti_kf7(); }
-static void kf8(void) { ti_kf8(); }
-static void kf9(void) { ti_kf9(); }
-static void kf10(void) { ti_kf10(); }
-static void kf11(void) { ti_kf11(); }
-static void kf12(void) { ti_kf12(); }
+static void kcub1(void)
+{
+    ti_kcub1();
+}
+
+static void kcuf1(void)
+{
+    ti_kcuf1();
+}
+
+static void kdch1(void)
+{
+    ti_kdch1();
+}
+
+static void kich1(void)
+{
+    ti_kich1();
+}
+
+static void khome(void)
+{
+    ti_khome();
+}
+
+static void kend(void)
+{
+    ti_kend();
+}
+
+static void knp(void)
+{
+    ti_knp();
+}
+
+static void kpp(void)
+{
+    ti_kpp();
+}
+
+static void kf1(void)
+{
+    ti_kf1();
+}
+
+static void kf2(void)
+{
+    ti_kf2();
+}
+
+static void kf3(void)
+{
+    ti_kf3();
+}
+
+static void kf4(void)
+{
+    ti_kf4();
+}
+
+static void kf5(void)
+{
+    ti_kf5();
+}
+
+static void kf6(void)
+{
+    ti_kf6();
+}
+
+static void kf7(void)
+{
+    ti_kf7();
+}
+
+static void kf8(void)
+{
+    ti_kf8();
+}
+
+static void kf9(void)
+{
+    ti_kf9();
+}
+
+static void kf10(void)
+{
+    ti_kf10();
+}
+
+static void kf11(void)
+{
+    ti_kf11();
+}
+
+static void kf12(void)
+{
+    ti_kf12();
+}
 
 // -----------------------------------------------------------------------
 // array of pointers to functions to get each key escape sequence
@@ -195,8 +293,15 @@ static void set_kb0(int8_t c)
 // -----------------------------------------------------------------------
 // add delete char to keyboard input buffer
 
-static void k_bs(void) { set_kb0(0x08); }
-static void k_ent(void) { set_kb0(0x0a); }
+static void k_bs(void)
+{
+    set_kb0(0x08);
+}
+
+static void k_ent(void)
+{
+    set_kb0(0x0a);
+}
 
 // -----------------------------------------------------------------------
 // the system indirectly calls the function pointers pointed to by the

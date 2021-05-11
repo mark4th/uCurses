@@ -141,10 +141,9 @@ void j_pop(void)
 
 __attribute__((noreturn)) void json_error(char *s)
 {
-    fprintf(stderr, "%d:%d %s\n", line_no, line_index, s);
-    uCurses_deInit();
-    restore_term();
-    _exit(1);
+    char msg[128];
+    sprintf(msg, "%d:%d %s\n", line_no, line_index, s);
+    xabort(msg);
 }
 
 // -----------------------------------------------------------------------
@@ -190,7 +189,10 @@ void json_new_state_struct(size_t struct_size, int32_t struct_type)
     // if there is one allocate buffer for C structure for subseqeuent
     // keys to populate
 
-    structure = (struct_size != 0) ? j_alloc(struct_size) : NULL;
+    structure =            //
+        (struct_size != 0) //
+            ? j_alloc(struct_size)
+            : NULL;
 
     j->parent = j_state;
     j->structure = structure;
@@ -230,11 +232,11 @@ void json_state_r_brace(void)
     }
 
     // thanks username234 for helping me find this!!!
-    // if the current structures parent is null then the current structure is
-    // the screen that has no parent so dont try to populate the non existant
-    // parent with the screen structure!
-    // the real question here is how the hell did this code work when compiled
-    // with clang? :)
+    // if the current structures parent is null then the current structure
+    // is the screen that has no parent so dont try to populate the non
+    // existant parent with the screen structure! the real question here is
+    // how the hell did this code work when compiled with clang? :)
+
     if(j_state->struct_type != STRUCT_SCREEN)
     {
         // a right brace terminates a json object.  we need to add
@@ -242,10 +244,6 @@ void json_state_r_brace(void)
         // to its grandparent as its dirce parent is a dummy object)
 
         populate_parent();
-    }
-    else
-    {
-        printf("foo\n");
     }
 
     j_state->state = STATE_DONE;
@@ -258,7 +256,10 @@ void json_state_r_brace(void)
 
             if(j_state != NULL)
             {
-                j_state->state = (has_comma != 0) ? STATE_KEY : STATE_R_BRACE;
+                j_state->state =     //
+                    (has_comma != 0) //
+                        ? STATE_KEY
+                        : STATE_R_BRACE;
             }
         }
     }
@@ -284,6 +285,7 @@ static INLINE void json_state_machine(void)
 
     j_state->struct_type = -1;
     j_state->state = JSON_L_BRACE;
+    j_stack.count = 0;
 
     do
     {
@@ -296,12 +298,12 @@ static INLINE void json_state_machine(void)
 
         if(f == -1)
         {
-            json_error("Unknown or miss placed token");
+            json_error("Unknown or out of place token");
         }
+
     } while(j_state->state != STATE_DONE);
 
     j_pop();
-    printf("fud\n");
 
     free(j_state);
 }

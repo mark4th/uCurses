@@ -294,10 +294,25 @@ static void key_attr(uint16_t key)
 
 // -----------------------------------------------------------------------
 
-static void key_fg(void) { key_attr(KEY_FG); }
-static void key_bg(void) { key_attr(KEY_BG); }
-static void key_gray_fg(void) { key_attr(KEY_GRAY_FG); }
-static void key_gray_bg(void) { key_attr(KEY_GRAY_BG); }
+static void key_fg(void)
+{
+    key_attr(KEY_FG);
+}
+
+static void key_bg(void)
+{
+    key_attr(KEY_BG);
+}
+
+static void key_gray_fg(void)
+{
+    key_attr(KEY_GRAY_FG);
+}
+
+static void key_gray_bg(void)
+{
+    key_attr(KEY_GRAY_BG);
+}
 
 // -----------------------------------------------------------------------
 
@@ -315,9 +330,20 @@ static void key_rgb(uint16_t key)
 
 // -----------------------------------------------------------------------
 
-static void key_red(void) { key_rgb(KEY_RED); }
-static void key_green(void) { key_rgb(KEY_GREEN); }
-static void key_blue(void) { key_rgb(KEY_BLUE); }
+static void key_red(void)
+{
+    key_rgb(KEY_RED);
+}
+
+static void key_green(void)
+{
+    key_rgb(KEY_GREEN);
+}
+
+static void key_blue(void)
+{
+    key_rgb(KEY_BLUE);
+}
 
 // -----------------------------------------------------------------------
 
@@ -334,10 +360,25 @@ static void key_xywh(uint16_t key)
 
 // -----------------------------------------------------------------------
 
-static void key_xco(void) { key_xywh(KEY_XCO); }
-static void key_yco(void) { key_xywh(KEY_YCO); }
-static void key_width(void) { key_xywh(KEY_WIDTH); }
-static void key_height(void) { key_xywh(KEY_HEIGHT); }
+static void key_xco(void)
+{
+    key_xywh(KEY_XCO);
+}
+
+static void key_yco(void)
+{
+    key_xywh(KEY_YCO);
+}
+
+static void key_width(void)
+{
+    key_xywh(KEY_WIDTH);
+}
+
+static void key_height(void)
+{
+    key_xywh(KEY_HEIGHT);
+}
 
 // -----------------------------------------------------------------------
 
@@ -426,39 +467,44 @@ static void key_flag(void)
 
 // breakpoint : xxx   // any value
 
-static void breakpoint(void) { ; }
+static void breakpoint(void)
+{
+    ;
+}
 
 // -----------------------------------------------------------------------
 // these hash values look like magic numbers but they are derived
 // programatically by running this library as an executable.
 // see ui_json.c
 
-static const switch_t key_types[] = {
-    { 0x6b77251c, key_fg },     { 0xaa3b6788, key_gray_fg },
-    { 0x6f772ba0, key_bg },     { 0xa63b61c4, key_gray_bg },
-    { 0x3a72d292, key_red },    { 0xf73297b2, key_green },
-    { 0x4f068569, key_blue },   { 0x1c63995d, key_xco },
-    { 0x3461800c, key_yco },    { 0x182e64eb, key_width },
-    { 0x4c47d5c0, key_height }, { 0x2f8b3bf4, key_name },
-    { 0x68cdf632, key_flags },  { 0x362bb2fc, key_border_type },
-    { 0x0ee694b4, key_vector }, { 0x1c13e01f, key_shortcut },
-    { 0xaeb95d5b, key_flag },   { 0x1441d80c, breakpoint },
-};
+static const switch_t key_types[] = //
+    {
+        { 0x6b77251c, key_fg },     { 0xaa3b6788, key_gray_fg },
+        { 0x6f772ba0, key_bg },     { 0xa63b61c4, key_gray_bg },
+        { 0x3a72d292, key_red },    { 0xf73297b2, key_green },
+        { 0x4f068569, key_blue },   { 0x1c63995d, key_xco },
+        { 0x3461800c, key_yco },    { 0x182e64eb, key_width },
+        { 0x4c47d5c0, key_height }, { 0x2f8b3bf4, key_name },
+        { 0x68cdf632, key_flags },  { 0x362bb2fc, key_border_type },
+        { 0x0ee694b4, key_vector }, { 0x1c13e01f, key_shortcut },
+        { 0xaeb95d5b, key_flag },   { 0x1441d80c, breakpoint },
+    };
 
 #define NUM_KEYS (sizeof(key_types) / sizeof(key_types[0]))
 
 // -----------------------------------------------------------------------
 
-static const switch_t object_types[] = {
-    { 0x2ff97421, struct_screen },    { 0x1025ba8c, struct_windows },
-    { 0x8ae7f465, struct_window },    { 0x3bacc0d7, struct_backdrop },
-    { 0x95fe0788, struct_m_bar },     { 0x80f84daf, struct_pulldowns },
-    { 0x09159434, struct_pulldown },  { 0x196fe4d3, struct_m_items },
-    { 0x90f9ece0, struct_m_item },    { 0xbc6bca20, struct_attribs },
-    { 0x77d19b03, struct_b_attribs }, { 0x4d8ce0ce, struct_s_attribs },
-    { 0x19007641, struct_d_attribs }, { 0xea8606c2, struct_rgb_fg },
-    { 0xe686003e, struct_rgb_bg },    { 0x68cdf632, struct_flags }
-};
+static const switch_t object_types[] = //
+    {                                  //
+        { 0x2ff97421, struct_screen },    { 0x1025ba8c, struct_windows },
+        { 0x8ae7f465, struct_window },    { 0x3bacc0d7, struct_backdrop },
+        { 0x95fe0788, struct_m_bar },     { 0x80f84daf, struct_pulldowns },
+        { 0x09159434, struct_pulldown },  { 0x196fe4d3, struct_m_items },
+        { 0x90f9ece0, struct_m_item },    { 0xbc6bca20, struct_attribs },
+        { 0x77d19b03, struct_b_attribs }, { 0x4d8ce0ce, struct_s_attribs },
+        { 0x19007641, struct_d_attribs }, { 0xea8606c2, struct_rgb_fg },
+        { 0xe686003e, struct_rgb_bg },    { 0x68cdf632, struct_flags }
+    };
 
 #define NUM_OBJECTS (sizeof(object_types) / sizeof(object_types[0]))
 

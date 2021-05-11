@@ -11,7 +11,10 @@
 // -----------------------------------------------------------------------
 // for format string % commands that dont actually need to do anything
 
-static void noop(void) { ; }
+static void noop(void)
+{
+    ;
+}
 
 // -----------------------------------------------------------------------
 
@@ -144,7 +147,10 @@ static int64_t fs_pop(void)
 // -----------------------------------------------------------------------
 // format = %%
 
-static void _percent(void) { c_emit('%'); }
+static void _percent(void)
+{
+    c_emit('%');
+}
 
 // -----------------------------------------------------------------------
 // format = %&   bitwise and
@@ -630,18 +636,19 @@ static INLINE char next_c(void)
 // -----------------------------------------------------------------------
 // terminfo format string % codes
 
-static const switch_t p_codes[] = {
-    { '%', &_percent }, { 'p', &_p },      { 'd', &_d },
-    { 'c', &_c },       { 'i', &_i },      { 's', &_s },
-    { 'l', &_l },       { 'A', &_andl },   { '&', &_and },
-    { 'O', &_orl },     { '|', &_or },     { '!', &_bang },
-    { '~', &_tilde },   { '^', &_caret },  { '+', &_plus },
-    { '-', &_minus },   { '*', &_star },   { '/', &_slash },
-    { 'm', &_mod },     { '=', &_equals }, { '>', &_greater },
-    { '<', &_less },    { 0x27, &_tick },  { '{', &_brace },
-    { 'P', &_P },       { 'g', &_g },      { '?', &noop },
-    { 't', &_t },       { 'e', &_e },      { ';', &noop },
-};
+static const switch_t p_codes[] = //
+    {
+        { '%', &_percent }, { 'p', &_p },      { 'd', &_d },
+        { 'c', &_c },       { 'i', &_i },      { 's', &_s },
+        { 'l', &_l },       { 'A', &_andl },   { '&', &_and },
+        { 'O', &_orl },     { '|', &_or },     { '!', &_bang },
+        { '~', &_tilde },   { '^', &_caret },  { '+', &_plus },
+        { '-', &_minus },   { '*', &_star },   { '/', &_slash },
+        { 'm', &_mod },     { '=', &_equals }, { '>', &_greater },
+        { '<', &_less },    { 0x27, &_tick },  { '{', &_brace },
+        { 'P', &_P },       { 'g', &_g },      { '?', &noop },
+        { 't', &_t },       { 'e', &_e },      { ';', &noop },
+    };
 
 #define PCOUNT (sizeof(p_codes) / sizeof(p_codes[0]))
 

@@ -220,8 +220,7 @@ void scr_add_backdrop(screen_t *scr)
 
         if(win != NULL)
         {
-            win->bdr_attrs.bytes[ATTR] =
-                (int8_t)(FG_GRAY | BG_GRAY | BOLD);
+            win->bdr_attrs.bytes[ATTR] = (FG_GRAY | BG_GRAY | BOLD);
             win->bdr_attrs.bytes[FG] = 13;
             win->bdr_attrs.bytes[BG] = 0;
             win->bdr_type = BDR_SINGLE;
@@ -271,7 +270,6 @@ static void scr_emit(screen_t *scr, int16_t index)
     p2 = &scr->buffer2[index];
 
     // are we about to write a wide character here..
-
 
     // mental note to self.  If you are about to read p1[1] make sure
     // p1 is not pointing to the last element of the array

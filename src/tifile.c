@@ -50,12 +50,14 @@ char *ti_table;
 int8_t wide; // numbers item size size shift factor
 
 // -----------------------------------------------------------------------
+// terminfo can also be in ~/terminfo but who puts it there?
 
-char *paths[] = {
-    "/usr/share/terminfo/", // the RIGHT place for terminfo files
-    "/lib/terminfo/",       // the stupidest place to put it
-    "/etc/terminfo/",       // better than /lib debian idiocy
-};
+char *paths[] = //
+    {
+        "/usr/share/terminfo/", // the RIGHT place for terminfo files
+        "/lib/terminfo/",       // the stupidest place to put it
+        "/etc/terminfo/",       // better than /lib debian idiocy
+    };
 
 // -----------------------------------------------------------------------
 

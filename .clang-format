@@ -42,6 +42,6 @@ AlignConsecutiveAssignments: false
 AlignConsecutiveDeclarations: false
 AllowShortBlocksOnASingleLine: true
 AllowShortCaseLabelsOnASingleLine: false
-AllowShortFunctionsOnASingleLine: true
+AllowShortFunctionsOnASingleLine: false
 AllowShortLoopsOnASingleLine: false
 NamespaceIndentation: All

@@ -517,10 +517,11 @@ static void menu_activate(void)
 
 static INLINE void prev_item(pulldown_t *pd)
 {
-    pd->which =          //
-        (pd->which != 0) //
-            ? pd->which - 1
-            : pd->count - 1;
+    if(pd->which == 0) //
+    {
+        pd->which = pd->count;
+    }
+    pd->which--;
 }
 
 // -----------------------------------------------------------------------
@@ -547,10 +548,11 @@ static INLINE void next_pd(menu_bar_t *bar)
 
 static INLINE void prev_pd(menu_bar_t *bar)
 {
-    bar->which =          //
-        (bar->which != 0) //
-            ? bar->which - 1
-            : bar->count - 1;
+    if(bar->which == 0)
+    {
+        bar->which = bar->count;
+    }
+    bar->which--;
 }
 
 // -----------------------------------------------------------------------
@@ -624,10 +626,25 @@ static void menu_l_r(int dir)
 #define MENU_LEFT 1
 #define MENU_RIGHT -1
 
-static INLINE void menu_up(void) { menu_up_down(MENU_UP); }
-static INLINE void menu_down(void) { menu_up_down(MENU_DOWN); }
-static INLINE void menu_left(void) { menu_l_r(MENU_LEFT); }
-static INLINE void menu_right(void) { menu_l_r(MENU_RIGHT); }
+static INLINE void menu_up(void)
+{
+    menu_up_down(MENU_UP);
+}
+
+static INLINE void menu_down(void)
+{
+    menu_up_down(MENU_DOWN);
+}
+
+static INLINE void menu_left(void)
+{
+    menu_l_r(MENU_LEFT);
+}
+
+static INLINE void menu_right(void)
+{
+    menu_l_r(MENU_RIGHT);
+}
 
 // -----------------------------------------------------------------------
 

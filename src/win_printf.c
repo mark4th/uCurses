@@ -9,6 +9,12 @@
 
 // -----------------------------------------------------------------------
 
+static va_list arg;
+static char *p;
+static window_t *w;
+
+// -----------------------------------------------------------------------
+
 void win_puts(window_t *win, char *p)
 {
     uint8_t skip;
@@ -23,184 +29,248 @@ void win_puts(window_t *win, char *p)
 }
 
 // -----------------------------------------------------------------------
+
+static void zero_abort(void)
+{
+    if(*p == '\0')
+    {
+        xabort("Unexpected end of win_printf format string");
+    }
+}
+
+// -----------------------------------------------------------------------
+// %rf   set 24 bit rgb fg
+
+static void rf(void)
+{
+    int r, g, b;
+
+    zero_abort();
+
+    r = va_arg(arg, int) & 0xff;
+    g = va_arg(arg, int) & 0xff;
+    b = va_arg(arg, int) & 0xff;
+
+    if(*p == 'f')
+    {
+        win_set_rgb_fg(w, r, g, b);
+        p++;
+    }
+    else if(*p == 'b')
+    {
+        win_set_rgb_bg(w, r, g, b);
+        p++;
+    }
+    xabort("Expected x or b on win_printf %r");
+}
+
+// -----------------------------------------------------------------------
+
+static void f(void)
+{
+    int f;
+
+    zero_abort();
+
+    f = va_arg(arg, int);
+
+    if(*p == 'c')
+    {
+        win_set_fg(w, f & 0xff);
+        p++;
+    }
+    else if(*p == 's')
+    {
+        win_set_gray_fg(w, f % 21);
+        p++;
+    }
+    xabort("Expected c or s on win_printf %f");
+}
+
+// -----------------------------------------------------------------------
+
+static void b(void)
+{
+    int b;
+
+    zero_abort();
+
+    b = va_arg(arg, int);
+
+    if(*p == 'c')
+    {
+        win_set_bg(w, b & 0xff);
+    }
+    else if(*p == 's')
+    {
+        win_set_bg(w, b % 21);
+    }
+    else
+    {
+        xabort("Expected c or s on win_printf %b");
+    }
+    p++;
+}
+
+// -----------------------------------------------------------------------
+
+static void xy(void)
+{
+    int x = va_arg(arg, int);
+    int y = va_arg(arg, int);
+
+    win_cup(w, x, y);
+}
+
+// -----------------------------------------------------------------------
+
+static void x(void)
+{
+    int x = va_arg(arg, int);
+
+    win_set_cx(w, x);
+}
+
+// -----------------------------------------------------------------------
+
+static void y(void)
+{
+    int y = va_arg(arg, int);
+
+    win_set_cy(w, y);
+}
+
+// -----------------------------------------------------------------------
+
+static void up(void)
+{
+    int y = va_arg(arg, int);
+
+    while(y-- != 0)
+    {
+        win_scroll_up(w);
+    }
+}
+
+// -----------------------------------------------------------------------
+
+static void dn(void)
+{
+    int y = va_arg(arg, int);
+
+    while(y-- != 0)
+    {
+        win_scroll_dn(w);
+    }
+}
+
+// -----------------------------------------------------------------------
+
+static void lt(void)
+{
+    int x = va_arg(arg, int);
+
+    while(x-- != 0)
+    {
+        win_scroll_lt(w);
+    }
+}
+
+// -----------------------------------------------------------------------
+
+static void rt(void)
+{
+    int x = va_arg(arg, int);
+
+    while(x-- != 0)
+    {
+        win_scroll_rt(w);
+    }
+}
+
+// -----------------------------------------------------------------------
+
+static void c(void)
+{
+    if(*p == 'u')
+    {
+        win_crsr_up(w);
+    }
+    else if(*p == 'd')
+    {
+        win_crsr_dn(w);
+    }
+    else if(*p == 'l')
+    {
+        win_crsr_lt(w);
+    }
+    else if(*p == 'r')
+    {
+        win_crsr_rt(w);
+    }
+    else
+    {
+        xabort("Expected u, d, l or r on win_printf %c");
+    }
+    p++;
+}
+
+// -----------------------------------------------------------------------
+
+static void wclear(void)
+{
+    win_clear(w);
+}
+
+// -----------------------------------------------------------------------
+
+static switch_t commands[] = //
+    {                        //
+        { 'r', &rf }, { 'f', &f },  { 'b', &b },      { '@', &xy },
+        { 'x', &x },  { 'y', &y },  { 'u', &up },     { 'd', &dn },
+        { 'l', &lt }, { 'r', &rt }, { '0', &wclear }, { 'c', &c }
+    };
+
+#define COMMANDS sizeof(commands) / sizeof(commands[0])
+
+// -----------------------------------------------------------------------
+
+static INLINE void command(void)
+{
+    zero_abort();
+    re_switch(commands, COMMANDS, *p++);
+}
+
+// -----------------------------------------------------------------------
 // window string writing and window attribute control
-
-// this is not intended to be used as a printf the way you think of it.
-// this does no parsing of %d or %i or %c or %s or any other normal
-// printf format specifier.  if you need those parsed you must use
-// sprintf and build your string up there.  this printf allows you to
-// set gray scale colors, rgb colors, x/y coordinates within a window
-// or to directly move the cursor up/down/left/right relative to its
-// current position and to scroll that window up/down/left/right
-
-// NOTE: some of the format specifiers require more than one parameter
 
 void win_printf(window_t *win, char *format, ...)
 {
-    char *p;
-    va_list arg;
-
     int32_t codepoint;
     int8_t skip;
-
-    int8_t r, g, b, f, x, y;
 
     va_start(arg, format);
 
     p = format;
+    w = win;
 
     while(*p != '\0')
     {
-        while(*p != '%')
+        while((*p != '%') && (*p != '\0'))
         {
             skip = utf8_decode(&codepoint, p);
             win_emit(win, codepoint);
             p += skip;
-            if(*p == '\0')
-            {
-                break;
-            }
         }
 
         if(*p == '\0')
         {
-            break;
+            return;
         }
 
         p++;
 
-        switch(*p)
-        {
-            case 'r':
-                r = va_arg(arg, int) % 0x100;
-                g = va_arg(arg, int) % 0x100;
-                b = va_arg(arg, int) % 0x100;
-
-                switch(p[1])
-                {
-                    case 'f': // %fg = set foreground color
-                        win_set_rgb_fg(win, r, g, b);
-                        p++;
-                        break;
-                    case 'b': // %of = set grayscale foreground color
-                        win_set_rgb_bg(win, r, g, b);
-                        p++;
-                        break;
-                    default:
-                        // must specify %Rf or %Rb
-                        // what do do if f/b missing?
-                        // silently aborting printf here
-                        return;
-                }
-                break;
-
-            case 'f':
-                f = va_arg(arg, int);
-
-                switch(p[1])
-                {
-                    case 'c': // %fc set foreground color
-                        win_set_fg(win, f % 16);
-                        p++;
-                        break;
-                    case 's': // set foreground grayscale
-                        win_set_gray_fg(win, f % 21);
-                        p++;
-                        break;
-                    default:
-                        return;
-                }
-                break;
-
-            case 'b':
-                b = va_arg(arg, int);
-
-                switch(p[1])
-                {
-                    case 'c': // %bc set background color
-                        win_set_bg(win, b % 16);
-                        p++;
-                        break;
-                    case 's': // %bs set background gray scale
-                        win_set_bg(win, b % 21);
-                        p++;
-                        break;
-                    default:
-                        return;
-                }
-                break;
-
-            case '@': // set cursor X/Y
-                x = va_arg(arg, int);
-                y = va_arg(arg, int);
-
-                win_cup(win, x, y);
-                break;
-
-            case 'x':
-                x = va_arg(arg, int);
-                win_set_cx(win, x);
-                break;
-
-            case 'y':
-                y = va_arg(arg, int);
-                win_set_cy(win, y);
-                break;
-
-            case '^':
-                y = va_arg(arg, int);
-                while(0 != y)
-                {
-                    win_scroll_up(win);
-                }
-                break;
-            case 'v':
-                y = va_arg(arg, int);
-                while(0 != y)
-                {
-                    win_scroll_dn(win);
-                }
-                break;
-            case '<':
-                x = va_arg(arg, int);
-                while(0 != x)
-                {
-                    win_scroll_lt(win);
-                }
-                break;
-            case '>':
-                x = va_arg(arg, int);
-                while(0 != x)
-                {
-                    win_scroll_rt(win);
-                }
-                break;
-            case '0':
-                win_clear(win);
-                break;
-            case 'c':
-                switch(p[1])
-                {
-                    case '^':
-                        win_crsr_up(win);
-                        p++;
-                        break;
-                    case 'v':
-                        win_crsr_dn(win);
-                        p++;
-                        break;
-                    case '<':
-                        win_crsr_lt(win);
-                        p++;
-                        break;
-                    case '>':
-                        win_crsr_rt(win);
-                        p++;
-                        break;
-                }
-                break;
-        }
-        p++;
+        command();
     }
 
     va_end(arg);

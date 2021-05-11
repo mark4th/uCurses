@@ -4,15 +4,15 @@
 #include <stdlib.h>
 
 #include "h/list.h"
-
-#define INLINE __attribute__((always_inline))
+#include "h/uCurses.h"
+//#define INLINE inline __attribute__((always_inline))
 
 // -----------------------------------------------------------------------
 // insert node n2 into list after node n1
 
 // gcc cant INLINE this ???
 
-static void node_insert(node_t *n1, node_t *n2)
+static INLINE void node_insert(node_t *n1, node_t *n2)
 {
     node_t *t;
     list_t *l;

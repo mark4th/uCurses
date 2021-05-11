@@ -116,6 +116,7 @@ static INLINE void fix_menus(screen_t *scr)
         bar->xco += strlen(pd->name) + 2;
 
         // widest item in pulldown defines the width of the window
+
         for(j = 0; j < pd->count; j++)
         {
             width = strlen(pd->items[j]->name);

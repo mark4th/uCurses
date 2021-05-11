@@ -3,6 +3,7 @@
 
 #include <errno.h>
 #include <inttypes.h>
+#include <stdio.h>
 #include <termios.h>
 #include <time.h>
 #include <unistd.h>
@@ -46,7 +47,10 @@ void curoff(void)
 // -----------------------------------------------------------------------
 // turn cursor on
 
-void curon(void) { ti_cnorm(); }
+void curon(void)
+{
+    ti_cnorm();
+}
 
 // -----------------------------------------------------------------------
 // clear screen
@@ -231,8 +235,15 @@ void cr(void)
 // -----------------------------------------------------------------------
 // enable cursor keys
 
-void smkx(void) { ti_smkx(); }
-void rmkx(void) { ti_rmkx(); }
+void smkx(void)
+{
+    ti_smkx();
+}
+
+void rmkx(void)
+{
+    ti_rmkx();
+}
 
 // -----------------------------------------------------------------------
 
@@ -241,6 +252,16 @@ void restore_term(void)
     tcsetattr(STDIN_FILENO, TCSANOW, &term_save);
     curon();
     flush();
+}
+
+// -----------------------------------------------------------------------
+
+__attribute__((noreturn)) void xabort(char *msg)
+{
+    fprintf(stderr, "%s\n", msg);
+    uCurses_deInit();
+    restore_term();
+    _exit(1);
 }
 
 // =======================================================================

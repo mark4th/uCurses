@@ -61,10 +61,11 @@ static void rf(void)
         win_set_rgb_bg(w, r, g, b);
         p++;
     }
-    xabort("Expected x or b on win_printf %r");
+    xabort("Expected x or b on win_printf %%r");
 }
 
 // -----------------------------------------------------------------------
+// %fc ir %fs  set foreground color or gray scale
 
 static void f(void)
 {
@@ -84,10 +85,11 @@ static void f(void)
         win_set_gray_fg(w, f % 21);
         p++;
     }
-    xabort("Expected c or s on win_printf %f");
+    xabort("Expected c or s on win_printf %%f");
 }
 
 // -----------------------------------------------------------------------
+// %bc or %bs  set backgorund color or gray scale
 
 static void b(void)
 {
@@ -107,12 +109,13 @@ static void b(void)
     }
     else
     {
-        xabort("Expected c or s on win_printf %b");
+        xabort("Expected c or s on win_printf %%b");
     }
     p++;
 }
 
 // -----------------------------------------------------------------------
+// %@    set cursor x/y within window
 
 static void xy(void)
 {
@@ -123,6 +126,7 @@ static void xy(void)
 }
 
 // -----------------------------------------------------------------------
+// %x   set cursor x in window
 
 static void x(void)
 {
@@ -132,6 +136,7 @@ static void x(void)
 }
 
 // -----------------------------------------------------------------------
+// %y   set cursor y in window
 
 static void y(void)
 {
@@ -141,6 +146,8 @@ static void y(void)
 }
 
 // -----------------------------------------------------------------------
+// %u  scroll window up specified amount
+
 
 static void up(void)
 {
@@ -153,6 +160,7 @@ static void up(void)
 }
 
 // -----------------------------------------------------------------------
+// %d   scroll window down specified amount
 
 static void dn(void)
 {
@@ -165,6 +173,7 @@ static void dn(void)
 }
 
 // -----------------------------------------------------------------------
+// %l   scroll window left specified amount
 
 static void lt(void)
 {
@@ -177,6 +186,7 @@ static void lt(void)
 }
 
 // -----------------------------------------------------------------------
+// %r    scroll window right specified amount
 
 static void rt(void)
 {
@@ -189,6 +199,7 @@ static void rt(void)
 }
 
 // -----------------------------------------------------------------------
+// %cu  %cd %cl %cr    move cursor up, down, left or right in window
 
 static void c(void)
 {
@@ -210,12 +221,13 @@ static void c(void)
     }
     else
     {
-        xabort("Expected u, d, l or r on win_printf %c");
+        xabort("Expected u, d, l or r on win_printf %%c");
     }
     p++;
 }
 
 // -----------------------------------------------------------------------
+// %0    clear window
 
 static void wclear(void)
 {
@@ -263,14 +275,11 @@ void win_printf(window_t *win, char *format, ...)
             p += skip;
         }
 
-        if(*p == '\0')
+        if(*p != '\0')
         {
-            return;
+            p++;
+            command();
         }
-
-        p++;
-
-        command();
     }
 
     va_end(arg);

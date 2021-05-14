@@ -78,14 +78,16 @@ static void f(void)
     if(*p == 'c')
     {
         win_set_fg(w, f & 0xff);
-        p++;
     }
     else if(*p == 's')
     {
         win_set_gray_fg(w, f % 21);
-        p++;
     }
-    xabort("Expected c or s on win_printf %%f");
+    else
+    {
+        xabort("Expected c or s on win_printf %%f");
+    }
+    p++;
 }
 
 // -----------------------------------------------------------------------
@@ -147,7 +149,6 @@ static void y(void)
 
 // -----------------------------------------------------------------------
 // %u  scroll window up specified amount
-
 
 static void up(void)
 {

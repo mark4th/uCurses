@@ -1,0 +1,137 @@
+{
+    "screen" :
+    {
+        "backdrop" :
+        {
+            "attribs" :
+            {
+                "gray-fg"   : 1,
+                "gray-bg"   : 6
+            },
+
+            "border-attribs" :
+            {
+                "gray-fg"   : 12,
+                "gray-bg"   : 3
+            },
+            "border-type"   : "BDR_DOUBLE"
+        },
+
+        "windows" :
+        {
+            "window" :
+            {
+                "width"  : 35%,             // a percentage of the screen
+                "height" : 55%,             // width and height
+
+                "xco"    : 2,               // within bounds of backdrop border
+                "yco"    : 2,
+
+                "border-type" : "BDR_SINGLE",
+
+                "attribs" :
+                {
+                    "fg" : "LT_WHITE",
+                    "bg" : "BROWN"
+                },
+
+                "border-attribs" :
+                {
+                    "fg"      : "YELLOW",
+                    "gray-bg" : 6
+                },
+
+                "flags" :
+                {
+                   "flag" : "WIN_BOXED"
+                }
+            },
+
+            "window" :
+            {
+                "width"  : 35%,
+                "height" : 55%,
+
+                "xco" : "FAR",   // as far right/down as it can go and
+                "yco" : "FAR",   // still be completely within bounds
+
+                "border-type" : "BDR_SINGLE",
+
+                "attribs" :
+                {
+                    "fg" : "LT_WHITE",
+                    "bg" : "GRAY"
+                },
+
+                "border-attribs" :
+                {
+                    "fg"      : "LT_GREEN",
+                    "gray-bg" : 6
+                },
+
+                "flags" :
+                {
+                   "flag" : "WIN_BOXED"
+                }
+            }
+        },
+        "menu-bar" :
+        {
+            "attribs" :
+            {
+                "fg"      : "BROWN",
+                "gray-bg" : 5
+            },
+            "selected-attribs" :
+            {
+                "fg"      : "CYAN",
+                "gray-bg" : 8
+            },
+            "disabled-attribs" :
+            {
+                "gray-fg" : 8,
+                "gray-bg" : 4
+            },
+            "pulldowns" :
+            {
+                "pulldown" :
+                {
+                    "name"    : "Demos",
+                    "attribs" :
+                    {
+                        "fg"      : "BROWN",
+                        "gray-bg" : 5
+                    },
+                    "selected-attribs" :
+                    {
+                        "fg"      : "CYAN",
+                        "gray-bg" : 8
+                    },
+                    "disabled-attribs" :
+                    {
+                        "gray-fg" : 8,
+                        "gray-bg" : 4
+                    },
+                    "menu-items" :
+                    {
+                        "menu-item" :
+                        {
+                            "name"   : "Window Demo",
+                            "vector" : "window_demo"
+                        },
+                        "menu-item" :
+                        {
+                            "name"   : "Dots Demo",
+                            "vector" : "dots_demo"
+                        },
+                        "menu-item" :
+                        {
+                            "name"   : "Exit Program",
+                            "vector" : "exit_prog"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

@@ -21,9 +21,9 @@ static INLINE void bounds_check(window_t *win)
 
     int16_t z = (win->flags & WIN_BOXED) ? 1 : 0;
 
-    if(((xco + win->width + z) < console_width) &&
-       ((yco + win->height + z) < console_height) && ((xco - z) > 0) &&
-       ((yco - z) > 0))
+    if(((xco + win->width + z) <= console_width) &&
+       ((yco + win->height + z) <= console_height) && //
+       ((xco - z) >= 0) && ((yco - z) >= 0))
     {
         return;
     }

@@ -456,7 +456,7 @@ void scr_draw_screen(screen_t *scr)
         // background color which is not a screen attribute
         // normally
 
-        scr_draw_win((window_t *)scr->backdrop);
+        scr_draw_win(scr->backdrop);
 
         scr_draw_windows(scr);
         scr_update_menus(scr);

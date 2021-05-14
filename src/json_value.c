@@ -201,6 +201,8 @@ static void value_wh(void)
                 : console_height;
         key_value *= mult;
         key_value /= 100;
+        // mark for correction if window is given a border
+        key_value |= 0x8000;
     }
 
     if(j_state->struct_type == KEY_WIDTH)
@@ -279,6 +281,19 @@ static void val_pd_flag(pulldown_t *pd)
 static void val_win_flag(window_t *win) //
 {
     win->flags |= key_value;
+    if(key_value == WIN_BOXED)
+    {
+        if((win->width & 0x8000) != 0)
+        {
+            win->width &= ~0x8000;
+            win->width -= 2;
+        }
+        if((win->height & 0x8000) != 0)
+        {
+            win->height &= ~0x8000;
+            win->height -= 2;
+        }
+    }
 }
 
 // -----------------------------------------------------------------------

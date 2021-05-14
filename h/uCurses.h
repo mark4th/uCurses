@@ -458,7 +458,6 @@ void pd_disable(screen_t *scr, char *name);
 
 void init_key_handlers(void);
 key_handler_t *set_key_action(key_index_t index, key_handler_t *action);
-void stuff_key(int8_t c);
 void bar_set_status(char *string);
 void bar_clr_status(void);
 void bar_draw_status(menu_bar_t *bar);
@@ -467,7 +466,10 @@ void alloc_status(void);
 // -----------------------------------------------------------------------
 
 int re_switch(const switch_t *s, size_t size, int32_t option);
+
 uint8_t key(void);
+uint8_t test_keys(void);
+void stuff_key(int8_t c);
 
 // -----------------------------------------------------------------------
 

@@ -1,13 +1,18 @@
 
 CFLAGS = -Os -m64 -g3 -g -march=native --std=c17
-foo:
-	clang $(CFLAGS) -o u main.c -L /usr/local/lib64 -luCurses
-#	strip -R .comment u
-clean:
-	rm -f u
+CC = clang
 
-u:
-	make --silent foo
+SOURCES = main.c menus.c demo1.c
+
+%.o: %.d $(SOURCES)
+	$(CC) -c -o $@ $< $(CFLAGS)
+
+demo: main.o menus.o demo1.o
+	$(CC) -L /usr/local/lib64 -luCurses -o demo main.o menus.o demo1.o
+#	strip -R .comment demo
+
+clean:
+	rm -f *.o demo
 
 run: u
-	LD_LIBRARY_PATH=/usr/local/lib ./u
+	LD_LIBRARY_PATH=/usr/local/lib64 ./demo

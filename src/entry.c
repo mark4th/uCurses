@@ -1,9 +1,5 @@
-// ui_json.c
+// entry.c
 // -----------------------------------------------------------------------
-
-// technicaly not really part of the UI build but included for now so I
-// can generate the hash values for all the various json keys.
-// this should be a totally separate make target really
 
 // -----------------------------------------------------------------------
 
@@ -204,15 +200,18 @@ static int8_t read_c1(void)
     static int16_t blob;
 
     int8_t c1;
+
     if(q == 0)
     {
         blob = smushed[i++];
         q = 3;
     }
+
     c1 = (blob >> 10);
     blob <<= 5;
     blob &= 0x7fff;
     q--;
+
     return c1;
 }
 
@@ -282,6 +281,9 @@ static const char message[] = //
         "passed\n"
         "to the library.\n\n"
     };
+
+// ------------------------------------------------------------------------
+
 static void help(void)
 {
     printf("%s", message);

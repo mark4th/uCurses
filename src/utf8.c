@@ -59,10 +59,12 @@ utf8_encode_t *utf8_encode(int32_t cp)
 }
 
 // --------------------------------------------------------------------------
+// utf8 chars can be 1, 2, 3, 4, 5, ??? columns wide on the console
 
 int16_t is_wide(int32_t code)
 {
-    return ((wcwidth(code) == 1) ? 0 : 1);
+    int32_t width = wcwidth(code);
+    return ((width > 1) ? 1 : 0);
 }
 
 // --------------------------------------------------------------------------

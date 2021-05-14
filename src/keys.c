@@ -14,6 +14,7 @@ extern int8_t *esc_buff;
 extern int16_t num_esc;
 static int8_t keybuff[32];
 static int16_t num_k;
+static int16_t stuffed;
 
 #define KEY_COUNT (sizeof(k_table) / sizeof(k_table[0]))
 
@@ -38,14 +39,18 @@ static struct pollfd pfd = //
 
 uint8_t test_keys(void)
 {
-    uint8_t x = poll(&pfd, 1, 0);
+    uint8_t x;
 
-    if(x == 0xff)
+    if((x = stuffed) == 0)
     {
-        x = 0;
-        // TODO: log warning
-    }
+        x = poll(&pfd, 1, 0);
 
+        if(x == 0xff)
+        {
+            x = 0;
+            // TODO: log warning
+        }
+    }
     return x;
 }
 
@@ -310,7 +315,7 @@ static void k_ent(void)
 
 static key_handler_t *default_key_actions[] = //
     {                                         //
-      //  ENTER   UP     DOWN   LEFT   RIGHT   BS     BS2
+        //  ENTER   UP     DOWN   LEFT   RIGHT   BS     BS2
         k_ent, noop, noop, noop, noop, k_bs, k_bs,
         //  DEL     INSERT HOME   END    PDN     PUP    F1
         noop, noop, noop, noop, noop, noop, noop,
@@ -341,7 +346,7 @@ uint8_t key(void)
 {
     int16_t c;
 
-    do
+    while((num_k != 1) && (stuffed != 1))
     {
         read_keys(); // read key or sequence into keyboard buff
 
@@ -358,10 +363,12 @@ uint8_t key(void)
             {
                 break;
             }
-            return 0xff;
+            num_k = 0;
+            return 0;
         }
-    } while(num_k != 1);
-
+    }
+    stuffed = 0;
+    num_k   = 0;
     return keybuff[0];
 }
 
@@ -369,8 +376,9 @@ uint8_t key(void)
 
 void stuff_key(int8_t c)
 {
-    keybuff[0] = c;
+    stuffed = 1;
     num_k = 1;
+    keybuff[0] = c;
 }
 
 // -----------------------------------------------------------------------

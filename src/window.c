@@ -1,10 +1,13 @@
 // window.c
 // -----------------------------------------------------------------------
 
+#define _XOPEN_SOURCE    // needed to make wcwidth work
+
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <wchar.h>
 
 #include "h/uCurses.h"
 
@@ -174,7 +177,7 @@ void win_set_gray_fg(window_t *win, int8_t c)
 {
     if(win != NULL)
     {
-        win->attrs.bytes[FG] = c;
+        win->attrs.bytes[FG] = (c % 23);
         win_set_attr(win, FG_GRAY);
     }
 }
@@ -185,7 +188,7 @@ void win_set_gray_bg(window_t *win, int8_t c)
 {
     if(win != NULL)
     {
-        win->attrs.bytes[BG] = c;
+        win->attrs.bytes[BG] = (c % 23);
         win_set_attr(win, BG_GRAY);
     }
 }
@@ -225,7 +228,8 @@ void win_set_fg(window_t *win, int8_t color)
     if(win != NULL)
     {
         win->attrs.bytes[FG] = color;
-        win_clr_attr(win, FG_RGB | FG_GRAY);
+        win_clr_attr(win, FG_RGB);
+        win_clr_attr(win, FG_GRAY);
     }
 }
 
@@ -493,9 +497,11 @@ static void _win_emit(window_t *win, uint32_t c)
 {
     cell_t cell;
     cell_t *p;
-    utf8_encode_t *encoded;
+    int32_t width;
 
-    if(win->cx == win->width)
+    width = wcwidth(c);
+
+    if((win->cx == win->width) || ((win->cx + width) > win->width))
     {
         win_cr(win);
     }
@@ -507,24 +513,26 @@ static void _win_emit(window_t *win, uint32_t c)
     p[win->cx] = cell;
 
     win_crsr_rt(win);
+    width--;
 
-    // need to mark the next cell as used by this character too
-    // if this character is double width.  when this is all
-    // written to the console later the cell_t's after any wide
-    // character are skipped
+    // different utf8 characters are displayed using various
+    // numbers of columns on the display - most are only one or
+    // two columns wide but there are arabic characters for example
+    // that take 4 or 5 columns.  every column after the first
+    // needs to be marked as used by this character too
 
-    encoded = utf8_encode(c);
+    cell.code = DEADCODE;
 
-    if(encoded->width != 1)
+    while(width != 0)
     {
         // if the left edge of this double wide character is
         // later overwritten with a single wide character
         // we will need to draw a space over the DEADCODE
         // with the same attributes
 
-        cell.code = DEADCODE;
         p[win->cx] = cell;
         win_crsr_rt(win);
+        width--;
     }
 }
 

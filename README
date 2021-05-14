@@ -1,45 +1,42 @@
-uCurses
+uCurses library documentation at its lowest!
 
-This library gives you the ability to create applications with
-a very powerful user interface.  It allows for moving, overlapping
-windows and for all characters to be drawn using either a normal
-color, a gray scale from 0 to 23 or a full 24 bit RGB color.
+This  library  gives  you  the  ability  to  create applications with a very
+powerful user interfaces.  It allows for moving, overlapping windows and for
+all  characters to be drawn using either a normal color (over 200 paletitzed
+colors usually), a gray scale from 0 to 23 or a full 24 bit RGB color.
 
-The foreground and background color types are independent so you
-can have a gray scale background and a RGB foreground for example.
+The  foreground and background color types are independent so you can have a
+gray scale background and a RGB foreground for example.  I.E.  Palette, gray
+or RGB, pick two!
 
-This code can be built with either LLVM or Gcc but IMHO you should
-be using LLVM as it is far superior to gcc, specially at optimizing
-the code.
+This code can be built with either LLVM or Gcc.  I prefer LLVM myself :)
 
-Optimizing this codde for speed is not important, even at -O0 this
-code will run perfectly fine so I chose to build it to be as small
-as i can possibly make it - that would be with -Oz under LLVM.
-Gcc however does not understand this level of optimization so it
-is being built with -Os unless you override it.
+NOTE!!!  Optimizing  this  codde for speed is not important and in fact wont
+do much to help speed things up anyway because the enter library is heavilly
+bound  to  the terminal I/O wihch is notoriously slow.  Even at -O0 the code
+will  run perfectly fine even on older hardware so I have chosen to build it
+to  be  as  small as I can possibly make it.  That is either with -Os or -Oz
+which ever is suppored by the compiler.
 
 To build this, from the root of the source tree do
 
-make
-sudo make install
+        make
+        sudo make install
 
-The make install will copy the library files into /usr/local/lib
-after which you should be able to build with your applications
-with -l uCurses
+The  make  install  will  copy the library files into /usr/local/lib64 after
+which  you  should  be able to build with your applications with -l uCurses.
+Dont forget to run ldconfig first!
 
-To build the example cd into the example directory within the
-root of the project sources and run a make.  This will produce
-a file called u (for u curses).
+To  build  the  example  code  cd into the example directory and run a make.
+This will produce a file called demo which demonstrates various capabilities
+of the library.  This is not exhaustive but creating it was exhausting :)
 
-./u is NOT a good example of what you SHOULD be doing, just a
-questionable example of what you CAN do :)
+Documentation  for  how  to  use this library should be available soon.  The
+example code should help but again, this is not exhaustive.  I have tried to
+keep  the  library  as  simple  and  as  SMALL  as  possible  and  still  be
+powerful  enough  for every day use.  There is a lot left to do however as I
+am  not  yet playing well in certain terminal types. this will be fixed soon,
+hopefully!
 
-Documentation for how to use this library will be posted here soon.
-the example in main.c should help but this is going to be handled
-in a much cleaner way in the future (maybe with UI descriptions
-in JSON ???)
-
-When running the example code the ESC button exits and the F10 key
-toggles the menus and the cursor keys move you around said menus
-the ENTER key executes the selected pulldown menu item but do not
-expect any of the current menu items to do much :)
+Regards
+   MM

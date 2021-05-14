@@ -287,6 +287,8 @@ static INLINE void json_state_machine(void)
     j_state->state = JSON_L_BRACE;
     j_stack.count = 0;
 
+    json_index = 0;
+
     do
     {
         token();

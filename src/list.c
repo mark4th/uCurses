@@ -5,12 +5,9 @@
 
 #include "h/list.h"
 #include "h/uCurses.h"
-//#define INLINE inline __attribute__((always_inline))
 
 // -----------------------------------------------------------------------
 // insert node n2 into list after node n1
-
-// gcc cant INLINE this ???
 
 static INLINE void node_insert(node_t *n1, node_t *n2)
 {

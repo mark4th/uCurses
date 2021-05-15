@@ -315,7 +315,7 @@ static void k_ent(void)
 
 static key_handler_t *default_key_actions[] = //
     {                                         //
-        //  ENTER   UP     DOWN   LEFT   RIGHT   BS     BS2
+      //  ENTER   UP     DOWN   LEFT   RIGHT   BS     BS2
         k_ent, noop, noop, noop, noop, k_bs, k_bs,
         //  DEL     INSERT HOME   END    PDN     PUP    F1
         noop, noop, noop, noop, noop, noop, noop,
@@ -368,7 +368,7 @@ uint8_t key(void)
         }
     }
     stuffed = 0;
-    num_k   = 0;
+    num_k = 0;
     return keybuff[0];
 }
 

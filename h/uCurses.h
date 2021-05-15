@@ -100,27 +100,6 @@ typedef struct
 
 // -----------------------------------------------------------------------
 
-#define win_clr_attr(win, attr) win->attrs.bytes[ATTR] &= ~attr
-
-#define win_set_ul(win) win_set_attr(win, UNDERLINE)
-#define win_set_rev(win) win_set_attr(win, REVERSE)
-#define win_set_bold(win) win_set_attr(win, BOLD)
-#define win_set_blink(win) win_set_attr(win, BLINK)
-#define win_clr_ul(win) win_clr_attr(win, UNDERLINE)
-#define win_clr_rev(win) win_clr_attr(win, REVERSE)
-#define win_clr_bold(win) win_clr_attr(win, BOLD)
-#define win_clr_blink(win) win_clr_attr(win, BLINK)
-
-#define win_set_boxed(win) win->flags |= WIN_BOXED
-#define win_set_locked(win) win->flags |= WIN_LOCKED
-#define win_set_filled(win) win->flags |= WIN_FILLED
-
-#define win_clr_boxed(win) win->flags &= ~WIN_BOXED
-#define win_clr_locked(win) win->flags &= ~WIN_LOCKED
-#define win_clr_filled(win) win->flags &= ~WIN_FILLED
-
-// -----------------------------------------------------------------------
-
 typedef enum
 {
     BDR_TOP_LEFT,
@@ -169,7 +148,7 @@ typedef struct
 
 typedef struct
 {
-    attribs_t attrs; // bold, blink, underline, gray scale, rgb
+    attribs_t attrs; // bold, underline, gray scale, rgb
     int32_t code;    // utf-8 codepoint
 } cell_t;
 
@@ -233,7 +212,7 @@ typedef struct
     int16_t cx; // cursor position within window
     int16_t cy;
     int16_t bdr_type;
-    attribs_t attrs;     // bold blink underline, gray scale, rgb etc
+    attribs_t attrs;     // bold underline, gray scale, rgb etc
     attribs_t old_attrs; // previous state..
     attribs_t bdr_attrs; // likewise for the windows border if it has
 } window_t;
@@ -284,7 +263,6 @@ typedef enum
     TI_UNDERLINE,
     TI_REVERSE,
     TI_BOLD,
-    TI_BLINK,
     TI_FG_RGB,
     TI_BG_RGB,
     TI_FG_GRAY,
@@ -293,7 +271,6 @@ typedef enum
     UNDERLINE = (1 << TI_UNDERLINE),
     REVERSE = (1 << TI_REVERSE),
     BOLD = (1 << TI_BOLD),
-    BLINK = (1 << TI_BLINK),
 
     FG_RGB = (1 << TI_FG_RGB),
     BG_RGB = (1 << TI_BG_RGB),
@@ -316,6 +293,28 @@ enum
     FG_B,
     BG_B,
 };
+
+// -----------------------------------------------------------------------
+
+void win_clr_attr(window_t *win, ti_attrib_t attr);
+void win_set_attr(window_t *win, ti_attrib_t attr);
+
+#define win_set_ul(win) win_set_attr(win, UNDERLINE)
+#define win_clr_ul(win) win_clr_attr(win, UNDERLINE)
+
+#define win_set_rev(win) win_set_attr(win, REVERSE)
+#define win_clr_rev(win) win_clr_attr(win, REVERSE)
+
+#define win_set_bold(win) win_set_attr(win, BOLD)
+#define win_clr_bold(win) win_clr_attr(win, BOLD)
+
+#define win_set_boxed(win) win->flags |= WIN_BOXED
+#define win_set_locked(win) win->flags |= WIN_LOCKED
+#define win_set_filled(win) win->flags |= WIN_FILLED
+
+#define win_clr_boxed(win) win->flags &= ~WIN_BOXED
+#define win_clr_locked(win) win->flags &= ~WIN_LOCKED
+#define win_clr_filled(win) win->flags &= ~WIN_FILLED
 
 // -----------------------------------------------------------------------
 
@@ -500,7 +499,7 @@ uint16_t is_keyword(int32_t *table, size_t size, int32_t hash);
 void token(void);
 int16_t is_token(int32_t *table, size_t size, char *s);
 void json_de_tab(char *s, size_t len);
-__attribute__((noreturn)) void json_error(char *s);
+__attribute__((noreturn)) void json_error(const char *s);
 void json_new_state_struct(size_t struct_size, int32_t struct_type);
 void json_state_value(void);
 void json_state_key(void);
@@ -514,14 +513,16 @@ void populate_parent(void);
 // -----------------------------------------------------------------------
 
 void set_ul(void);
-void set_rev(void);
-void set_bold(void);
-void set_blink(void);
-
 void clr_ul(void);
+
+void set_rev(void);
 void clr_rev(void);
+
+void set_bold(void);
 void clr_bold(void);
-void clr_blink(void);
+
+void set_fg(int8_t c);
+void set_bg(int8_t c);
 
 void set_gray_fg(int8_t c);
 void set_gray_bg(int8_t c);
@@ -529,10 +530,9 @@ void set_gray_bg(int8_t c);
 void set_rgb_fg(int8_t r, int8_t g, int8_t b);
 void set_rgb_bg(int8_t r, int8_t g, int8_t b);
 
-void set_fg(int8_t c);
-void set_bg(int8_t c);
-
 void set_norm(void);
+
+ti_attrib_t add_attr(uint8_t a, ti_attrib_t attr);
 
 // -----------------------------------------------------------------------
 // wrappers for terminfo cursor handling etc
@@ -561,9 +561,7 @@ void cr(void);
 __attribute__((noreturn)) void xabort(char *msg);
 
 // -----------------------------------------------------------------------
-//      +--- terminfo name
-//      |                    +--terminfo strings section offset to
-//      v                    v  to format string
+// terminfo name, terminfo strings section offset to format string
 
 #define ti_bell() format(2 >> 1) // NOOOOO!
 #define ti_cr() format(4 >> 1)
@@ -584,7 +582,6 @@ __attribute__((noreturn)) void xabort(char *msg);
 #define ti_cvvis() format(40 >> 1) // make cursor very visible?
 #define ti_dch1() format(42 >> 1)  // delete character
 #define ti_dl1() format(44 >> 1)   // delete line
-#define ti_blink() format(52 >> 1) // NOOOOO !
 #define ti_bold() format(54 >> 1)  // turn on bold mode
 #define ti_smir() format(62 >> 1)  // set mode insert
 #define ti_rev() format(68 >> 1)   // turn on reverse video

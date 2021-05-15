@@ -53,7 +53,7 @@ void curon(void)
 }
 
 // -----------------------------------------------------------------------
-// clear screen
+// clear terminal
 
 void clear(void)
 {

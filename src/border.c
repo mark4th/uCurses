@@ -81,7 +81,7 @@ static void draw_char(window_t *win, int16_t cx, int16_t cy, int32_t code,
     // when a double width character is drawn underneath a pulled down
     // menu window such that the menu window overwrites the left edge
     // of said double width character we must force an update of the
-    // meny character as this will also cause us to write a space into
+    // menu character as this will also cause us to write a space into
     // the DEADCODE slot of the covered double wide char.
     // if we did not foce the right edge of the pulldown menus to be
     // updated we would get glitches in the following DEAD slot

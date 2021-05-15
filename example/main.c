@@ -33,6 +33,10 @@ void main_screen(void)
 
     json_create_ui("base.json", menu_address_cb);
 
+    alloc_status();
+    bar_clr_status();
+    menu_init();
+
     scr = active_screen;
     xco = (scr->width / 2) - (58 / 2) - 1;
     n = scr->windows.head;
@@ -68,8 +72,9 @@ void main_screen(void)
         xco, 10, DARK);
 
     xco = (scr->width / 2) - (46 / 2) - 2;
-    win_printf(win, "%@%fcDemo Application.  Press F10 to pull down Menu",
+    win_printf(win, "%@%fcDemo Application.  Press %U+%B+F10%B-%U- to pull down Menu",
         xco, 12, CYAN);
+
     xco = (scr->width / 2) - (50 / 2) - 2;
     win_printf(win, "%@%fcEscape quits each demo: Escape here quits program!",
         xco, 14, LT_GREEN);
@@ -83,16 +88,9 @@ int main(void)
     window_t *win;
     node_t *n;
 
-    alloc_status();
-
     uCurses_init();
 
-    // initialize menu key handling
-    menu_init();
-
-
     main_screen();
-
 
     do
     {
@@ -121,10 +119,9 @@ int main(void)
     clear();
     cup(10, 0);
     restore_term();
-
     uCurses_deInit();
 
-    printf("bye!\n");
+    printf("Au revoir!\n");
     return 0;
 }
 

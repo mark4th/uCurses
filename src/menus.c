@@ -16,7 +16,7 @@ extern attribs_t attrs;
 char *status_line;
 
 // -----------------------------------------------------------------------
-// hard coded attributes for now
+// default attribs, not used by json parser, there are no defaults there
 
 #define NORMAL 0x0004030000000080
 #define SELECTED 0x0001060000000080
@@ -82,13 +82,10 @@ void bar_draw_status(menu_bar_t *bar)
     {
         window_t *win = bar->window;
         scr = win->screen;
+        // this x calculation needs work but this is close enough for now
         x = (scr->width - MAX_STATUS) - 6;
         win->attrs.chunk = bar->selected.chunk;
-        win_cup(win, x, 0);
-        win_emit(win, '[');
-        win_emit(win, ' ');
-        win_puts(win, status_line);
-        win_emit(win, ']');
+        win_printf(win, "%@[ %s]", x, 0, status_line);
     }
 }
 

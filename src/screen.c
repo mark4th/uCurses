@@ -1,10 +1,13 @@
 // screen.c   - uCurses text user interface screen handling
 // -----------------------------------------------------------------------
 
+#define _XOPEN_SOURCE // needed to make wcwidth work
+
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <wchar.h>
 
 #include "h/list.h"
 #include "h/uCurses.h"
@@ -258,7 +261,7 @@ static void new_attrs(int64_t a)
 // -----------------------------------------------------------------------
 // emits charcter from screen buffer1 to the console
 
-static void scr_emit(screen_t *scr, int16_t index)
+static INLINE void scr_emit(screen_t *scr, int16_t index)
 {
     cell_t *p1, *p2;
 
@@ -276,13 +279,13 @@ static void scr_emit(screen_t *scr, int16_t index)
 
     if(index != (scr->width * scr->height) - 1)
     {
-        wide = is_wide(p1->code);
+        wide = wcwidth(p1->code);
 
         // if the character we are about to write is double width but there
         // is a single width character overlapping it to the right then
         // force an update of the overlapping single width char
 
-        if(wide == 1)
+        if(wide != 1)
         {
             if(p1[1].code != (int32_t)DEADCODE)
             {
@@ -442,14 +445,14 @@ static INLINE void scr_update_menus(screen_t *scr)
 
 void scr_draw_screen(screen_t *scr)
 {
+    old_attrs.chunk = 0;
+
     if(scr != NULL)
     {
         active_screen = scr;
 
-        old_attrs.chunk = 0;
-
         // the backdrop if it exists is always the first window
-        // to be drawn into the screen. its sole purpose is to
+        // to be drawn into the screen. its main purpose is to
         // allow for moveable windows which would leave trails
         // behind if there was no backdrop.
         // it also gives you the ability to set the screen

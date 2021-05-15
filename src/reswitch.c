@@ -1,9 +1,10 @@
-// did i say how much i hate the c switch statememt?
+// replacemetn switch construct
 // -----------------------------------------------------------------------
 
 #include "h/uCurses.h"
 
 // -----------------------------------------------------------------------
+// did i say how much i hate the c switch statememt?
 
 // create an array of switch_t structures.  where each element of the
 // structure contains a option and a function vector.  for example

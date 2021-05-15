@@ -1,7 +1,7 @@
 // window.c
 // -----------------------------------------------------------------------
 
-#define _XOPEN_SOURCE    // needed to make wcwidth work
+#define _XOPEN_SOURCE // needed to make wcwidth work
 
 #include <inttypes.h>
 #include <stdio.h>
@@ -145,30 +145,16 @@ int16_t win_set_pos(window_t *win, int16_t x, int16_t y)
 
 // -----------------------------------------------------------------------
 
-static void win_set_attr(window_t *win, ti_attrib_t attr)
+void win_set_attr(window_t *win, ti_attrib_t attr)
 {
-    win->attrs.bytes[ATTR] |= attr;
+    win->attrs.bytes[ATTR] = add_attr(win->attrs.bytes[ATTR], attr);
+}
 
-    // gray scales and rgb are mutually exclusive
-    if((attr & FG_RGB) != 0)
-    {
-        win->attrs.bytes[ATTR] &= ~FG_GRAY;
-    }
+// -----------------------------------------------------------------------
 
-    if((attr & BG_RGB) != 0)
-    {
-        win->attrs.bytes[ATTR] &= ~BG_GRAY;
-    }
-
-    if((attr & FG_GRAY) != 0)
-    {
-        win->attrs.bytes[ATTR] &= ~FG_RGB;
-    }
-
-    if((attr & BG_GRAY) != 0)
-    {
-        win->attrs.bytes[ATTR] &= ~BG_RGB;
-    }
+void win_clr_attr(window_t *win, ti_attrib_t attr)
+{
+    win->attrs.bytes[ATTR] &= ~attr;
 }
 
 // -----------------------------------------------------------------------
@@ -286,12 +272,12 @@ void win_clear(window_t *win)
 
 // -----------------------------------------------------------------------
 
-static void win_copy_line(window_t *win, int16_t src, int16_t dst)
+static void win_copy_line(window_t *win, int16_t sl, int16_t dl)
 {
-    cell_t *s = win_line_addr(win, src);
-    cell_t *d = win_line_addr(win, dst);
+    cell_t *src = win_line_addr(win, sl);
+    cell_t *dst = win_line_addr(win, dl);
 
-    memcpy(d, s, win->width * sizeof(cell_t));
+    memcpy(dst, src, win->width * sizeof(cell_t));
 }
 
 // -----------------------------------------------------------------------
@@ -501,7 +487,7 @@ static void _win_emit(window_t *win, uint32_t c)
 
     width = wcwidth(c);
 
-    if((win->cx == win->width) || ((win->cx + width) > win->width))
+    if((win->cx + width) > win->width)
     {
         win_cr(win);
     }

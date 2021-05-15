@@ -14,6 +14,7 @@ static char *p;
 static window_t *w;
 
 // -----------------------------------------------------------------------
+// write string into specified window at its currnt cursor location
 
 void win_puts(window_t *win, char *p)
 {
@@ -54,14 +55,17 @@ static void rf(void)
     if(*p == 'f')
     {
         win_set_rgb_fg(w, r, g, b);
-        p++;
     }
     else if(*p == 'b')
     {
         win_set_rgb_bg(w, r, g, b);
-        p++;
     }
-    xabort("Expected x or b on win_printf %%r");
+    else
+    {
+        xabort("Expected x or b on win_printf %%r");
+    }
+
+    p++;
 }
 
 // -----------------------------------------------------------------------
@@ -113,6 +117,7 @@ static void b(void)
     {
         xabort("Expected c or s on win_printf %%b");
     }
+
     p++;
 }
 
@@ -236,12 +241,82 @@ static void wclear(void)
 }
 
 // -----------------------------------------------------------------------
+// just a wrapper for puts which is at the top of this file
+
+static void u_puts(void)
+{
+    char *s = va_arg(arg, char *);
+    win_puts(w, s);
+}
+
+// -----------------------------------------------------------------------
+
+static void bold(void)
+{
+    if(*p == '+')
+    {
+        win_set_bold(w);
+    }
+    else if(*p == '-')
+    {
+        win_clr_bold(w);
+    }
+    else
+    {
+        xabort("Expected + or - win_printf %%B");
+    }
+
+    p++;
+}
+
+// -----------------------------------------------------------------------
+
+static void uline(void)
+{
+    if(*p == '+')
+    {
+        win_set_attr(w, UNDERLINE);
+    }
+    else if(*p == '-')
+    {
+        win_clr_attr(w, UNDERLINE);
+    }
+    else
+    {
+        xabort("Expected + or - win_printf %%U");
+    }
+
+    p++;
+}
+
+// -----------------------------------------------------------------------
+
+static void rev(void)
+{
+    if(*p == '+')
+    {
+        win_set_attr(w, REVERSE);
+    }
+    else if(*p == '-')
+    {
+        win_clr_attr(w, REVERSE);
+    }
+    else
+    {
+        xabort("Expected + or - win_printf %%R");
+    }
+
+    p++;
+}
+
+// -----------------------------------------------------------------------
 
 static switch_t commands[] = //
     {                        //
-        { 'r', &rf }, { 'f', &f },  { 'b', &b },      { '@', &xy },
-        { 'x', &x },  { 'y', &y },  { 'u', &up },     { 'd', &dn },
-        { 'l', &lt }, { 'r', &rt }, { '0', &wclear }, { 'c', &c }
+        { 'r', &rf },   { 'f', &f },     { 'b', &b },      { '@', &xy },
+        { 'x', &x },    { 'y', &y },     { 'u', &up },     { 'd', &dn },
+        { 'l', &lt },   { 'r', &rt },    { '0', &wclear }, { 'c', &c },
+        { 'B', &bold }, { 'U', &uline }, { 'R', rev },     { 's', u_puts }
     };
 
 #define COMMANDS sizeof(commands) / sizeof(commands[0])
@@ -256,6 +331,10 @@ static INLINE void command(void)
 
 // -----------------------------------------------------------------------
 // window string writing and window attribute control
+
+// if you need to use normal printf format tags you must first sprintf
+// your string into a buffer and escape the format tags within it that
+// you want passed to this function...
 
 void win_printf(window_t *win, char *format, ...)
 {

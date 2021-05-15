@@ -15,6 +15,16 @@
 extern uint32_t flush_size;
 
 // -----------------------------------------------------------------------
+// global variables considered harmful unless you restrict yourself
+// to one thread kthxbai
+
+uint16_t first = 1;
+int16_t x1, y1;
+int16_t x2, y2;
+int16_t x1i, x2i;
+int16_t y1i, y2i;
+
+// -----------------------------------------------------------------------
 
 uint8_t sintab[] =
 {
@@ -165,9 +175,6 @@ static void print_chinese(window_t *win)
 #define X_END(win) (scr->width  - win->width  - 2)
 #define Y_END(win) (scr->height - win->height - 2)
 
-uint8_t test_keys(void);
-uint16_t first = 1;
-
 // -----------------------------------------------------------------------
 // switch which window is on top and which is behind
 
@@ -181,11 +188,6 @@ static void flip_flop(window_t *win1, window_t *win2)
 }
 
 // -----------------------------------------------------------------------
-
-int16_t x1, y1;
-int16_t x2, y2;
-int16_t x1i, x2i;
-int16_t y1i, y2i;
 
 static void do_run_demo(screen_t *scr, window_t *win1, window_t *win2)
 {
@@ -300,8 +302,9 @@ void run_demo1(screen_t *scr, window_t *win1, window_t *win2)
             total += flush_size;
             average = total / frames;
 
-            sprintf(status, "Frame: %06d Max: %04x Avg: %04x",
-                  frames, max, average);
+            snprintf(status, MAX_STATUS, "Frame: %06d Max: %#04x Avg: %#04x",
+                   frames, max, average);
+
             flush_size = 0;
             bar_set_status(status);
 
@@ -309,6 +312,7 @@ void run_demo1(screen_t *scr, window_t *win1, window_t *win2)
         }
         // if we did not do this the display would look like its
         // freaking out!
+
         clock_sleep(SLEEP);
     }
 }

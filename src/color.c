@@ -64,6 +64,7 @@ static INLINE void do_set_fg(void)
         parse_format();
         return;
     }
+
     if(attrs.bytes[ATTR] & FG_GRAY)
     {
         f_str = fg_seq;
@@ -145,23 +146,20 @@ void apply_attribs(void)
 
     changes = attrs.bytes[ATTR] ^ old_attrs.bytes[ATTR];
 
-    if((changes & BLINK) || (changes & BOLD) || (changes & REVERSE))
+    if((changes & BOLD) || (changes & REVERSE))
     {
         ti_sgr0();
 
-        if(attrs.bytes[ATTR] & BLINK)
-        {
-            ti_blink();
-        }
-        if(attrs.bytes[ATTR] & BOLD)
+        if((attrs.bytes[ATTR] & BOLD) != 0)
         {
             ti_bold();
         }
-        if(attrs.bytes[ATTR] & REVERSE)
+        if((attrs.bytes[ATTR] & REVERSE) != 0)
         {
             ti_rev();
         }
     }
+
     // if underline changed we need to set it.  if it was not changed
     // we might need to restore it because of the above sgr0
     if((changes & UNDERLINE) ||
@@ -174,7 +172,7 @@ void apply_attribs(void)
        (attrs.bytes[BG_R] != old_attrs.bytes[BG_R]) ||
        (attrs.bytes[BG_G] != old_attrs.bytes[BG_G]) ||
        (attrs.bytes[BG_B] != old_attrs.bytes[BG_B]) ||
-       (changes & BG_GRAY) || (changes & BG_RGB))
+       (changes != 0))
     {
         do_set_bg();
     }
@@ -183,7 +181,7 @@ void apply_attribs(void)
        (attrs.bytes[FG_R] != old_attrs.bytes[FG_R]) ||
        (attrs.bytes[FG_G] != old_attrs.bytes[FG_G]) ||
        (attrs.bytes[FG_B] != old_attrs.bytes[FG_B]) ||
-       (changes & FG_GRAY) || (changes & FG_RGB))
+       (changes != 0))
     {
         do_set_fg();
     }
@@ -193,28 +191,34 @@ void apply_attribs(void)
 
 // -----------------------------------------------------------------------
 
-static void set_attr(ti_attrib_t attr)
+ti_attrib_t add_attr(uint8_t a, ti_attrib_t attr)
 {
-    attrs.bytes[ATTR] |= attr;
+    a |= attr;
 
-    // gray scale and rgb color settngs are mutually exclusive
     if(FG_RGB & attr)
     {
-        attrs.bytes[ATTR] &= ~FG_GRAY;
+        a &= ~FG_GRAY;
     }
     if(BG_RGB & attr)
     {
-        attrs.bytes[ATTR] &= ~BG_GRAY;
+        a &= ~BG_GRAY;
     }
     if(FG_GRAY & attr)
     {
-        attrs.bytes[ATTR] &= ~FG_RGB;
+        a &= ~FG_RGB;
     }
     if(BG_GRAY & attr)
     {
-        attrs.bytes[ATTR] &= ~BG_RGB;
+        a &= ~BG_RGB;
     }
+    return a;
+}
 
+// -----------------------------------------------------------------------
+
+static void set_attr(ti_attrib_t attr)
+{
+    attrs.bytes[ATTR] = add_attr(attrs.bytes[ATTR], attr);
     apply_attribs();
 }
 
@@ -233,17 +237,15 @@ void set_ul(void)
 {
     set_attr(UNDERLINE);
 }
+
 void set_rev(void)
 {
     set_attr(REVERSE);
 }
+
 void set_bold(void)
 {
     set_attr(BOLD);
-}
-void set_blink(void)
-{
-    set_attr(BLINK);
 }
 
 // -----------------------------------------------------------------------
@@ -253,17 +255,15 @@ void clr_ul(void)
 {
     clr_attr(UNDERLINE);
 }
+
 void clr_rev(void)
 {
     clr_attr(REVERSE);
 }
+
 void clr_bold(void)
 {
     clr_attr(BOLD);
-}
-void clr_blink(void)
-{
-    clr_attr(BLINK);
 }
 
 // -----------------------------------------------------------------------

@@ -27,8 +27,8 @@ static void window_demo(void)
     n = n->next;
     win2 = n->payload;
 
+    alloc_status();
     run_demo1(scr, win1, win2);
-
     scr_close(active_screen);
     main_screen();
 }

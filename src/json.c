@@ -139,7 +139,7 @@ void j_pop(void)
 
 // -----------------------------------------------------------------------
 
-__attribute__((noreturn)) void json_error(char *s)
+__attribute__((noreturn)) void json_error(const char *s)
 {
     char msg[128];
     sprintf(msg, "%d:%d %s\n", line_no, line_index, s);

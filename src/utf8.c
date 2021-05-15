@@ -171,7 +171,7 @@ int16_t utf8_width(char *s)
     {
         encode = utf8_encode(*s);
         s += encode->len;
-        width += (encode->width != 1) ? 2 : 1;
+        width += encode->width;
     }
 
     return width;

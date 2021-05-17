@@ -51,6 +51,7 @@ uint8_t test_keys(void)
             // TODO: log warning
         }
     }
+    stuffed = 0;
     return x;
 }
 

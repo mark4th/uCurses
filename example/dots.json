@@ -71,16 +71,6 @@
                     },
                     "menu-items" :
                     {
-//                        "menu-item" :
-//                        {
-//                            "name"   : "Window Demo",
-//                            "vector" : "window_demo"
-//                        },
-//                        "menu-item" :
-//                        {
-//                            "name"   : "Dots Demo",
-//                            "vector" : "dots_demo"
-//                        },
                         "menu-item" :
                         {
                             "name"   : "Back",

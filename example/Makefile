@@ -3,9 +3,9 @@ OBJDIR=obj
 CFLAGS = -Os -m64 -g3 -g -march=native --std=c17
 CC = clang
 
-SOURCES = main.c menus.c demo1.c dots.c sintab.c shapes.c
+SOURCES = main.c menus.c demo1.c dots.c sintab.c shapes.c mandel.c
 
-objects = $(addprefix $(OBJDIR)/, main.o menus.o demo1.o dots.o sintab.o shapes.o)
+objects = $(addprefix $(OBJDIR)/, main.o menus.o demo1.o dots.o sintab.o shapes.o mandel.o)
 
 $(shell   mkdir -p obj)
 

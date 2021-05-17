@@ -82,6 +82,11 @@
                         },
                         "menu-item" :
                         {
+                            "name"   : "Mandelbrot",
+                            "vector" : "mandel_demo"
+                        },
+                        "menu-item" :
+                        {
                             "name"   : "Exit Program",
                             "vector" : "exit_prog"
                         }

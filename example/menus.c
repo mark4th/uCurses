@@ -60,7 +60,7 @@ static switch_t menu_vectors[] =
 {
     { 0xfcb028fd, window_demo             },
     { 0x9999e2a1, dots_demo               },
-    // more demos here
+    { 0xa3e38b20, mandel_demo             },
     { 0x8d9c616c, exit_prog               }
 };
 

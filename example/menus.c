@@ -37,7 +37,13 @@ static void window_demo(void)
 
 static void dots_demo(void)
 {
-    ;
+    scr_close(active_screen);
+    json_create_ui("dots.json", menu_address_cb);
+
+    alloc_status();
+    do_dots();
+    scr_close(active_screen);
+    main_screen();
 }
 
 // -----------------------------------------------------------------------

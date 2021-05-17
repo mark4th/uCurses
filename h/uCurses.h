@@ -421,6 +421,7 @@ void win_crsr_lt(window_t *win);
 void win_crsr_rt(window_t *win);
 void win_cr(window_t *win);
 void win_emit(window_t *win, int32_t c);
+cell_t *win_peek(window_t *win);
 void win_clear(window_t *win);
 void win_draw_borders(window_t *win);
 void win_el(window_t *win);

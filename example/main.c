@@ -1,10 +1,6 @@
 // test main
 // -----------------------------------------------------------------------
 
-// -----------------------------------------------------------------------
-// not an example of how to do thins properly, just test/debug code
-// -----------------------------------------------------------------------
-
 #include <inttypes.h>
 #include <stdio.h>
 #include <sys/ioctl.h>
@@ -76,7 +72,7 @@ void main_screen(void)
         xco, 12, CYAN);
 
     xco = (scr->width / 2) - (50 / 2) - 2;
-    win_printf(win, "%@%fcEscape quits each demo: Escape here quits program!",
+    win_printf(win, "%@%fcEscape quits each demo:  Escape here quits program!",
         xco, 14, LT_GREEN);
 }
 

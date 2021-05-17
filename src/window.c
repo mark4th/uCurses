@@ -163,7 +163,7 @@ void win_set_gray_fg(window_t *win, int8_t c)
 {
     if(win != NULL)
     {
-        win->attrs.bytes[FG] = (c % 23);
+        win->attrs.bytes[FG] = (c % 24);
         win_set_attr(win, FG_GRAY);
     }
 }
@@ -257,10 +257,10 @@ void win_erase_line(window_t *win, int16_t line)
 
 void win_clear(window_t *win)
 {
+    int16_t i;
+
     if(win != NULL)
     {
-        int16_t i;
-
         for(i = 0; i != win->height; i++)
         {
             win_erase_line(win, i);
@@ -535,6 +535,16 @@ void win_emit(window_t *win, int32_t c)
                 : _win_emit(win, c);
         }
     }
+}
+
+// -----------------------------------------------------------------------
+
+cell_t *win_peek(window_t *win)
+{
+    cell_t *p;
+
+    p = win_line_addr(win, win->cy);
+    return &p[win->cx];
 }
 
 // -----------------------------------------------------------------------

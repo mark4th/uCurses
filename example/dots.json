@@ -1,79 +1,36 @@
 {
     "screen" :
     {
-        "backdrop" :
-        {
-            "attribs" :
-            {
-                "gray-fg"   : 1,
-                "gray-bg"   : 6
-            },
-
-            "border-attribs" :
-            {
-                "gray-fg"   : 12,
-                "gray-bg"   : 3
-            },
-            "border-type"   : "BDR_DOUBLE"
-        },
-
         "windows" :
         {
             "window" :
             {
-                "width"  : 35%,             // a percentage of the screen
-                "height" : 55%,             // width and height
+                "width"  : 100%,             // a percentage of the screen
+                "height" : 100%,             // width and height
 
-                "xco"    : 2,               // within bounds of backdrop border
-                "yco"    : 2,
+                "xco"    : 1,               // within bounds of backdrop border
+                "yco"    : 1,
 
                 "border-type" : "BDR_SINGLE",
 
                 "attribs" :
                 {
-                    "fg" : "LT_WHITE",
-                    "bg" : "BROWN"
+                    "gray-fg"   : 23,
+                    "bg"   : 0
                 },
 
                 "border-attribs" :
                 {
-                    "fg"      : "YELLOW",
-                    "gray-bg" : 6
+                    "gray-fg" : 9,
+                    "gray-bg" : 4
                 },
 
                 "flags" :
                 {
-                   "flag" : "WIN_BOXED"
+                   "flag" : "WIN_BOXED",
+                   "flag" : "WIN_LOCKED"
                 }
             },
-
-            "window" :
-            {
-                "width"  : 35%,
-                "height" : 55%,
-
-                "xco" : "FAR",   // as far right/down as it can go and
-                "yco" : "FAR",   // still be completely within bounds
-
-                "border-type" : "BDR_SINGLE",
-
-                "attribs" :
-                {
-                    "fg" : "LT_WHITE",
-                    "bg" : "GRAY"
-                },
-
-                "border-attribs" :
-                {
-                    "fg"      : "LT_GREEN",
-                    "gray-bg" : 6
-                },
-
-                "flags" :
-                {
-                   "flag" : "WIN_BOXED"
-                }
-            }
         },
         "menu-bar" :
         {

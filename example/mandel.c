@@ -44,7 +44,7 @@ static void make_palette(void)
 
 // -----------------------------------------------------------------------
 
-static unsigned sqrt(int val)
+static unsigned mandel_sqrt(int val)
 {
     int a, b;
 
@@ -88,7 +88,8 @@ static void mandel(window_t *win)
             re = (c - w / 2.0) * 5.2 / w;
             im = (r - h / 2.0) * 8.3 / w;
 
-            x = y = 0;
+            x = 0;
+            y = 0;
             i = 0;
 
             while(((x * x + y * y) <= 4) && (i < max))
@@ -104,7 +105,9 @@ static void mandel(window_t *win)
             R = palette[i].r;
             G = palette[i].g;
             B = palette[i].b;
+
             win_set_rgb_fg(win, R, G, B);
+
             win_emit(win, (i < max) ? 0x2981 : ' ');
         }
     }

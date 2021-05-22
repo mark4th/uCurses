@@ -87,6 +87,16 @@
                         },
                         "menu-item" :
                         {
+                            "name"   : "Lion",
+                            "vector" : "lion"
+                        },
+                        "menu-item" :
+                        {
+                            "name"   : "Raycast",
+                            "vector" : "raycast"
+                        },
+                        "menu-item" :
+                        {
                             "name"   : "Exit Program",
                             "vector" : "exit_prog"
                         }

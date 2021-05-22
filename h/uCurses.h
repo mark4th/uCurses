@@ -18,7 +18,7 @@
 
 // -----------------------------------------------------------------------
 
-#define NAN 0x7fff // not a number (honest!)
+#define UCURSES_NAN 0x7fff // not a number (honest!)
 
 #define MAX_PARAM 9
 extern int64_t params[MAX_PARAM];
@@ -560,6 +560,14 @@ void vpa(int16_t n1);
 void cr(void);
 
 __attribute__((noreturn)) void xabort(char *msg);
+
+// -----------------------------------------------------------------------
+
+void braile_8(window_t *win, uint16_t *braile_data, uint8_t *map,
+              uint16_t width);
+void braile_1(window_t *win, uint16_t *braile_data, uint8_t *map,
+              uint16_t width, uint16_t height);
+void draw_braile(window_t *win, uint16_t *braile_data);
 
 // -----------------------------------------------------------------------
 // terminfo name, terminfo strings section offset to format string

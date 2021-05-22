@@ -46,27 +46,27 @@ extern int16_t *ti_strings;
 
 void log_dump(void)
 {
-//     int16_t i;
-//     char *p = esc_buff;
-//
-//     for(i = 0; i < num_esc; i++)
-//     {
-//         if(*p == 0x1b)
-//         {
-//             fprintf(log_fp, "\n");
-//         }
-//         (*p <= 0x1f) ? fprintf(log_fp, "。%02x", (uint8_t)*p)
-//                      : fprintf(log_fp, "%c", *p);
-//         p++;
-//     }
-//     fprintf(log_fp, "\n\n");
+    //     int16_t i;
+    //     char *p = esc_buff;
+    //
+    //     for(i = 0; i < num_esc; i++)
+    //     {
+    //         if(*p == 0x1b)
+    //         {
+    //             fprintf(log_fp, "\n");
+    //         }
+    //         (*p <= 0x1f) ? fprintf(log_fp, "。%02x", (uint8_t)*p)
+    //                      : fprintf(log_fp, "%c", *p);
+    //         p++;
+    //     }
+    //     fprintf(log_fp, "\n\n");
 }
 
 // -----------------------------------------------------------------------
 
 void open_log_file(void)
 {
-//    log_fp = fopen("log", "w");
+    //    log_fp = fopen("log", "w");
 }
 
 // -----------------------------------------------------------------------

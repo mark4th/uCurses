@@ -32,3 +32,5 @@ void run_demo1(screen_t *scr, window_t *win1, window_t *win2);
 void do_dots(void);
 void main_screen(void);
 void mandel_demo(void);
+void lion(void);
+void raycast(void);

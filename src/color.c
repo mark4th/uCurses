@@ -171,8 +171,7 @@ void apply_attribs(void)
     if((attrs.bytes[BG] != old_attrs.bytes[BG]) ||
        (attrs.bytes[BG_R] != old_attrs.bytes[BG_R]) ||
        (attrs.bytes[BG_G] != old_attrs.bytes[BG_G]) ||
-       (attrs.bytes[BG_B] != old_attrs.bytes[BG_B]) ||
-       (changes != 0))
+       (attrs.bytes[BG_B] != old_attrs.bytes[BG_B]) || (changes != 0))
     {
         do_set_bg();
     }
@@ -180,8 +179,7 @@ void apply_attribs(void)
     if((attrs.bytes[FG] != old_attrs.bytes[FG]) ||
        (attrs.bytes[FG_R] != old_attrs.bytes[FG_R]) ||
        (attrs.bytes[FG_G] != old_attrs.bytes[FG_G]) ||
-       (attrs.bytes[FG_B] != old_attrs.bytes[FG_B]) ||
-       (changes != 0))
+       (attrs.bytes[FG_B] != old_attrs.bytes[FG_B]) || (changes != 0))
     {
         do_set_fg();
     }

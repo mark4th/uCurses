@@ -504,7 +504,7 @@ void json_state_value(void)
     int16_t has_comma = 0;
     size_t len;
 
-    key_value = NAN; // assume NAN
+    key_value = UCURSES_NAN; // assume NAN
 
     len = strlen(json_token);
 
@@ -518,7 +518,7 @@ void json_state_value(void)
 
     is_constant();
 
-    if(key_value == NAN)
+    if(key_value == UCURSES_NAN)
     {
         parse_number();
     }

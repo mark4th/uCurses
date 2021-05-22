@@ -487,6 +487,11 @@ static void _win_emit(window_t *win, uint32_t c)
 
     width = wcwidth(c);
 
+    if(width <= 0)
+    {
+        return;
+    }
+
     if((win->cx + width) > win->width)
     {
         win_cr(win);

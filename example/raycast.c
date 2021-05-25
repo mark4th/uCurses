@@ -96,14 +96,16 @@ uint8_t worldMap[24][24]=
 
 static void build_frame(void)
 {
-    int lineHeight;
-    int drawStart;
-    int drawEnd;
-    int stepX;
-    int stepY;
-    int mapX;
-    int mapY;
-    int x;
+    int16_t lineHeight;
+    int16_t drawStart;
+    int16_t drawEnd;
+    int16_t stepX;
+    int16_t stepY;
+    int16_t mapX;
+    int16_t mapY;
+    int16_t x;
+
+    int8_t side = 0;
 
     double sideDistX;
     double sideDistY;
@@ -118,11 +120,11 @@ static void build_frame(void)
     memset(fb, 0, fb_width * fb_height);
     memset(color_map, 0, fb_width);
 
-    for(x = 0; x < fb_width; x++)
+    for(x = 1; x < fb_width; x++)
     {
         //  calculate ray position and direction
 
-        cameraX = (2 * (x / (double)fb_width)) - 1;   // x-coordinate in camera space
+        cameraX = (2 * x) / ((double)fb_width) - 1;   // x-coordinate in camera space
 
         rayDirX = dirX + (planeX * cameraX);
         rayDirY = dirY + (planeY * cameraX);
@@ -159,11 +161,9 @@ static void build_frame(void)
         }
 
         // perform DDA
-        int8_t side = 0;
 
         do
         {
-             // jump to next map square, OR in x-direction, OR in y-direction
              if(sideDistX < sideDistY)
              {
                  sideDistX += deltaX;
@@ -178,7 +178,6 @@ static void build_frame(void)
              }
         } while(worldMap[mapX][mapY] == 0);
 
-        dark_map[x] = 0;
         if(side == 0)
         {
             wallDist = (mapX - posX + (1 - stepX) / 2) / rayDirX;
@@ -186,27 +185,31 @@ static void build_frame(void)
         }
         else
         {
-             dark_map[x] = 2;
              wallDist = (mapY - posY + (1 - stepY) / 2) / rayDirY;
+             dark_map[x] = 2;
         }
 
         // Calculate height of line to draw on screen
         lineHeight = (fb_height / wallDist);
+        lineHeight &= ~1;  // ensure symetrical jaggies
 
         // calculate lowest and highest pixel to fill in current stripe
         drawStart = (fb_height / 2) - (lineHeight / 2);
-        if(drawStart < 0)
+        while(drawStart < 1)
         {
-             drawStart = 0;
+            drawStart++;
+            lineHeight--;
         }
 
-        drawEnd = (lineHeight / 2) + (fb_height / 2);
-        if(drawEnd >= fb_height)
+        // drawEnd = (lineHeight / 2) + (fb_height / 2);
+        drawEnd = drawStart + lineHeight;
+        while(drawEnd > fb_height - 2)
         {
-            drawEnd = fb_height - 1;
+            drawEnd--;
+            lineHeight--;
         }
 
-        color_map[x] = (23 - (int)wallDist / 2) - 5;
+        color_map[x] = (23 - (int)(wallDist) % 23) / 2;
 
         while(lineHeight-- != 0)
         {
@@ -222,17 +225,19 @@ void process_key(uint8_t keypress)
 {
     double oldPlaneX ;
     double oldDirX;
+    double x, y;
 
     // move forward if no wall in front of you
+
     if(keypress == 'w')
     {
-        if(worldMap[(int)(posX + dirX * moveSpeed)][(int)posY] == 0)
+        x = posX + dirX * moveSpeed;
+        y = posY + dirY * moveSpeed;
+
+        if(worldMap[(int)x][(int)y] == 0)
         {
-            posX += dirX * moveSpeed;
-        }
-        if(worldMap[(int)posX][(int)(posY + dirY * moveSpeed)] == 0)
-        {
-            posY += dirY * moveSpeed;
+            posX = x;
+            posY = y;
         }
     }
 
@@ -240,13 +245,13 @@ void process_key(uint8_t keypress)
 
     if(keypress == 's')
     {
-        if(worldMap[(int)(posX - dirX * moveSpeed)][(int)posY] == 0)
+       x = posX - dirX * moveSpeed;
+       y = posY - dirY * moveSpeed;
+
+        if(worldMap[(int)x][(int)y] == 0)
         {
-            posX -= dirX * moveSpeed;
-        }
-        if(worldMap[(int)posX][(int)(posY - dirY * moveSpeed)] == 0)
-        {
-            posY -= dirY * moveSpeed;
+            posX = x;
+            posY = y;
         }
     }
 
@@ -279,7 +284,7 @@ void process_key(uint8_t keypress)
 
 static void draw_frame(void)
 {
-    uint8_t c;
+    uint16_t c;
     uint8_t pixle;
     uint8_t x, y;
 
@@ -292,13 +297,20 @@ static void draw_frame(void)
     for(x = 0; x < win->width; x++)
     {
         color = color_map[x * 2];
-        if(dark_map[x * 2] == 2) { color /= 2; }
+
+        if(dark_map[x * 2] != 2) { color *= 2; }
+
         win_set_gray_fg(win, color);
 
         for(y = 0; y < win->height; y++)
         {
-            win_cup(win, x, y);
-            win_emit(win, braile_data[(y * win->width) + x]);
+            c = braile_data[(y * win->width) + x];
+
+            if(c != 0x2800)
+            {
+                win_cup(win, x, y);
+                win_emit(win, c);
+            }
         }
     }
 }
@@ -321,7 +333,6 @@ void raycast(void)
 
     gettimeofday(&tv, NULL);
     old_time = tv.tv_sec;
-
 
     json_create_ui("dots.json", NULL);
 
@@ -365,13 +376,13 @@ void raycast(void)
             old_time = time;
             fps = framecount - old_count;
             old_count = framecount;
-            frame_time = 1 / fps;
+            frame_time = (1 / fps);
         }
 
         if(frame_time == 0) { frame_time = 1; }
 
         moveSpeed = frame_time * 0.2;
-        rotSpeed  = frame_time * 0.05;
+        rotSpeed  = frame_time * 0.08;
 
         if(test_keys() != 0)
         {
@@ -383,6 +394,7 @@ void raycast(void)
             }
             process_key(keypress);
         }
+        // asdfasdf
     }
 }
 

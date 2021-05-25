@@ -568,6 +568,7 @@ void braile_8(window_t *win, uint16_t *braile_data, uint8_t *map,
 void braile_1(window_t *win, uint16_t *braile_data, uint8_t *map,
               uint16_t width, uint16_t height);
 void draw_braile(window_t *win, uint16_t *braile_data);
+int16_t braile_xlat(uint8_t chr);
 
 // -----------------------------------------------------------------------
 // terminfo name, terminfo strings section offset to format string

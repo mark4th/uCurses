@@ -76,12 +76,15 @@ void braile_8(window_t *win, uint16_t *braile_data, uint8_t *map,
                 d0 >>= 1;
                 d0 |= d1 & 0x80;
                 d1 <<= 1;
+
                 d0 >>= 1;
                 d0 |= d2 & 0x80;
                 d2 <<= 1;
+
                 d0 >>= 1;
                 d0 |= d3 & 0x80;
                 d3 <<= 1;
+
                 d0 >>= 1;
                 d0 |= d4 & 0x80;
                 d4 <<= 1;
@@ -91,12 +94,15 @@ void braile_8(window_t *win, uint16_t *braile_data, uint8_t *map,
                 d0 >>= 1;
                 d0 |= d1 & 0x80;
                 d1 <<= 1;
+
                 d0 >>= 1;
                 d0 |= d2 & 0x80;
                 d2 <<= 1;
+
                 d0 >>= 1;
                 d0 |= d3 & 0x80;
                 d3 <<= 1;
+
                 d0 >>= 1;
                 d0 |= d4 & 0x80;
                 d4 <<= 1;

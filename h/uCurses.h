@@ -7,6 +7,7 @@
 // -----------------------------------------------------------------------
 
 #include <aio.h>
+#include <assert.h>
 #include <inttypes.h>
 
 #include "list.h"
@@ -357,76 +358,121 @@ void attr_set_bytes(attribs_t *attribs, attr_index_t which,
 
 extern attribs_t attrs;
 
-#define win_set_attr(attribs, attr)                                       \
-    attr_set_attr(&win->attr_group.attrs, attr)
-
+#define win_set_attr(win, attr) attr_set_attr(&win->attr_group.attrs, attr)
 #define win_clr_attr(win, attr) attr_clr_attr(&win->attr_group.attrs, attr)
 
-#define win_set_bdr_attr(win, attr)                                       \
-    attr_set_attr(&win->attr_group.bdr_attrs, attr)
+// -----------------------------------------------------------------------
 
-#define win_clr_bdr_attrs(win, attr)                                      \
-    attr_clr_attr(&win->attr_group.bdr_attrs, attr)
+#define win_set_bold(win)                                                 \
+    assert(win);                                                          \
+    attr_set_attr(&win->attr_group.attrs, BOLD)
+#define win_clr_bold(win)                                                 \
+    assert(win);                                                          \
+    attr_clr_attr(&win->attr_group.attrs, BOLD)
+#define win_set_rev(win)                                                  \
+    assert(win);                                                          \
+    attr_set_attr(&win->attr_group.attrs, REVERSE)
+#define win_clr_rev(win)                                                  \
+    assert(win);                                                          \
+    attr_clr_attr(&win->attr_group.attrs, REVERSE)
+#define win_set_ul(win)                                                   \
+    assert(win);                                                          \
+    attr_set_attr(&win->attr_group.attrs, UNDERLINE)
+#define win_clr_ul(win)                                                   \
+    assert(win);                                                          \
+    attr_clr_attr(&win->attr_group.attrs, UNDERLINE)
+
+// -----------------------------------------------------------------------
+
+#define win_set_bdr_bold(win)                                             \
+    assert(win);                                                          \
+    attr_set_attr(&win->attr_group.bdr_attrs, BOLD)
+
+#define win_clr_bdr_bold(win)                                             \
+    assert(win);                                                          \
+    attr_clr_attr(&win->attr_group.bdr_attrs, BOLD)
+
+#define win_set_bdr_rev(win)                                              \
+    assert(win);                                                          \
+    attr_set_attr(&win->attr_group.bdr_attrs, REVERSE)
+
+#define win_clr_bdr_rev(win)                                              \
+    assert(win);                                                          \
+    attr_clr_attr(&win->attr_group.bdr_attrs, REVERSE)
+
+#define win_set_bdr_ul(win)                                               \
+    assert(win);                                                          \
+    attr_set_attr(&win->attr_group.bdr_attrs, UNDERLINE)
+
+#define win_clr_bdr_ul(win)                                               \
+    assert(win);                                                          \
+    attr_clr_attr(&win->attr_group.bdr_attrs, UNDERLINE)
+
+// -----------------------------------------------------------------------
 
 #define win_set_fg(win, color)                                            \
-    attr_set_bytes(&win->attr_group.attrs, FG, color)
+    assert(win);                                                          \
+    attr_set_bytes(&win->attr_group.attrs, FG, color);                    \
+    attr_clr_attr(&win->attr_group.attrs, FG_RGB | FG_GRAY)
 
 #define win_set_bg(win, color)                                            \
-    attr_set_bytes(&win->attr_group.attrs, BG, color)
+    assert(win);                                                          \
+    attr_set_bytes(&win->attr_group.attrs, BG, color);                    \
+    attr_clr_attr(&win->attr_group.attrs, BG_RGB | FG_GRAY)
 
 #define win_set_gray_fg(win, color)                                       \
+    assert(win);                                                          \
     attr_set_bytes(&win->attr_group.attrs, FG, color);                    \
-    attr_set_attr(&win->attr_group.attrs, FG_GRAY)
+    attr_set_attr(&win->attr_group.attrs, FG_GRAY);
 
 #define win_set_gray_bg(win, color)                                       \
+    assert(win);                                                          \
     attr_set_bytes(&win->attr_group.attrs, BG, color);                    \
     attr_set_attr(&win->attr_group.attrs, BG_GRAY)
 
 #define win_set_rgb_fg(win, r, g, b)                                      \
+    assert(win);                                                          \
     attr_set_bytes(&win->attr_group.attrs, FG_R, r);                      \
     attr_set_bytes(&win->attr_group.attrs, FG_G, g);                      \
     attr_set_bytes(&win->attr_group.attrs, FG_B, b);                      \
     attr_set_attr(&win->attr_group.attrs, FG_RGB)
 
 #define win_set_rgb_bg(win, r, g, b)                                      \
+    assert(win);                                                          \
     attr_set_bytes(&win->attr_group.attrs, BG_R, r);                      \
     attr_set_bytes(&win->attr_group.attrs, BG_G, g);                      \
     attr_set_bytes(&win->attr_group.attrs, BG_B, b);                      \
     attr_set_attr(&win->attr_group.attrs, BG_RGB)
 
-#define win_set_bold(win) attr_set_attr(&win->attr_group.attrs, BOLD)
-
-#define win_clr_bold(win) attr_clr_attr(&win->attr_group.attrs, BOLD)
-
-#define win_set_rev(win) attr_set_attr(&win->attr_group.attrs, REVERSE)
-
-#define win_clr_rev(win) attr_clr_attr(&win->attr_group.attrs, REVERSE)
-
-#define win_set_ul(win) attr_set_attr(&win->attr_group.attrs, UNDERLINE)
-
-#define win_clr_ul(win) attr_clr_attr(&win->attr_group.attrs, UNDERLINE)
+// -----------------------------------------------------------------------
 
 #define win_set_bdr_fg(win, color)                                        \
+    assert(win);                                                          \
     attr_set_bytes(&win->attr_group.bdr_attrs, FG, color)
 
 #define win_set_bdr_bg(win, color)                                        \
+    assert(win);                                                          \
     attr_set_bytes(&win->attr_group.bdr_attrs, BG, color)
 
 #define win_set_bdr_gray_fg(win, color)                                   \
+    assert(win);                                                          \
     attr_set_bytes(&win->attr_group.bdr_attrs, FG, color);                \
     attr_set_attr(&win->attr_group.bdr_attrs, FG_GRAY)
 
 #define win_set_bdr_gray_bg(win, color)                                   \
+    assert(win);                                                          \
     attr_set_bytes(&win->attr_group.bdr_attrs, BG, color);                \
     attr_set_attr(&win->attr_group.bdr_attrs, BG_GRAY)
 
 #define win_set_bdr_rgb_fg(win, r, g, b)                                  \
+    assert(win);                                                          \
     attr_set_bytes(&win->attr_group.bdr_attrs, FG_R, r);                  \
     attr_set_bytes(&win->attr_group.bdr_attrs, FG_G, g);                  \
     attr_set_bytes(&win->attr_group.bdr_attrs, FG_B, b);                  \
     attr_set_attr(&win->attr_group.bdr_attrs, FG_RGB)
 
 #define win_set_bdr_rgb_bg(win, r, g, b)                                  \
+    assert(win);                                                          \
     attr_set_bytes(&win->attr_group.bdr_attrs, BG_R, r);                  \
     attr_set_bytes(&win->attr_group.bdr_attrs, BG_G, g);                  \
     attr_set_bytes(&win->attr_group.bdr_attrs, BG_B, b);                  \

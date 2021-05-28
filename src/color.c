@@ -213,15 +213,21 @@ ti_attrib_t add_attr(uint8_t a, ti_attrib_t attr)
     return a;
 }
 
+// -----------------------------------------------------------------------
+
 void attr_set_attr(attribs_t *attribs, int8_t attr)
 {
     attribs->bytes[ATTR] = add_attr(attribs->bytes[ATTR], attr);
 }
 
+// -----------------------------------------------------------------------
+
 void attr_clr_attr(attribs_t *attribs, ti_attrib_t attr)
 {
     attribs->bytes[ATTR] &= ~attr;
 }
+
+// -----------------------------------------------------------------------
 
 void attr_set_bytes(attribs_t *attribs, attr_index_t which,
                     ti_color_t color)

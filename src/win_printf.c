@@ -81,7 +81,7 @@ static void f(void)
 
     if(*p == 'c')
     {
-        win_set_fg(w, f & 0xff);
+        win_set_fg(w, f);
     }
     else if(*p == 's')
     {

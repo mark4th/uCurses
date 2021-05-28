@@ -74,8 +74,8 @@ window_t *win_open(int16_t width, int16_t height)
 
         if(win_alloc(win) == 0)
         {
-            win->attrs.bytes[FG] = default_fg;
-            win->attrs.bytes[BG] = default_bg;
+            win->attr_group.attrs.bytes[FG] = default_fg;
+            win->attr_group.attrs.bytes[BG] = default_bg;
             win->blank = 0x20;
             win_clear(win);
         }
@@ -145,93 +145,6 @@ int16_t win_set_pos(window_t *win, int16_t x, int16_t y)
 
 // -----------------------------------------------------------------------
 
-void win_set_attr(window_t *win, ti_attrib_t attr)
-{
-    win->attrs.bytes[ATTR] = add_attr(win->attrs.bytes[ATTR], attr);
-}
-
-// -----------------------------------------------------------------------
-
-void win_clr_attr(window_t *win, ti_attrib_t attr)
-{
-    win->attrs.bytes[ATTR] &= ~attr;
-}
-
-// -----------------------------------------------------------------------
-
-void win_set_gray_fg(window_t *win, int8_t c)
-{
-    if(win != NULL)
-    {
-        win->attrs.bytes[FG] = (c % 24);
-        win_set_attr(win, FG_GRAY);
-    }
-}
-
-// -----------------------------------------------------------------------
-
-void win_set_gray_bg(window_t *win, int8_t c)
-{
-    if(win != NULL)
-    {
-        win->attrs.bytes[BG] = (c % 23);
-        win_set_attr(win, BG_GRAY);
-    }
-}
-
-// -----------------------------------------------------------------------
-
-void win_set_rgb_fg(window_t *win, int8_t r, int8_t g, int8_t b)
-{
-    if(win != NULL)
-    {
-        win->attrs.bytes[FG_R] = r;
-        win->attrs.bytes[FG_G] = g;
-        win->attrs.bytes[FG_B] = b;
-
-        win_set_attr(win, FG_RGB);
-    }
-}
-
-// -----------------------------------------------------------------------
-
-void win_set_rgb_bg(window_t *win, int8_t r, int8_t g, int8_t b)
-{
-    if(win != NULL)
-    {
-        win->attrs.bytes[BG_R] = r;
-        win->attrs.bytes[BG_G] = g;
-        win->attrs.bytes[BG_B] = b;
-
-        win_set_attr(win, BG_RGB);
-    }
-}
-
-// -----------------------------------------------------------------------
-
-void win_set_fg(window_t *win, int8_t color)
-{
-    if(win != NULL)
-    {
-        win->attrs.bytes[FG] = color;
-        win_clr_attr(win, FG_RGB);
-        win_clr_attr(win, FG_GRAY);
-    }
-}
-
-// -----------------------------------------------------------------------
-
-void win_set_bg(window_t *win, int8_t color)
-{
-    if(win != NULL)
-    {
-        win->attrs.bytes[BG] = color;
-        win_clr_attr(win, BG_RGB | BG_GRAY);
-    }
-}
-
-// -----------------------------------------------------------------------
-
 void win_erase_line(window_t *win, int16_t line)
 {
     int16_t i;
@@ -242,7 +155,7 @@ void win_erase_line(window_t *win, int16_t line)
     {
         p = win_line_addr(win, line);
 
-        cell.attrs.chunk = win->attrs.chunk;
+        cell.attrs.chunk = win->attr_group.attrs.chunk;
         cell.code = win->blank;
 
         for(i = 0; i < win->width; i++)
@@ -326,7 +239,7 @@ void win_scroll_lt(window_t *win)
 
     if(win != NULL)
     {
-        cell.attrs.chunk = win->attrs.chunk;
+        cell.attrs.chunk = win->attr_group.attrs.chunk;
 
         cell.code = win->blank;
 
@@ -352,7 +265,7 @@ void win_scroll_rt(window_t *win)
 
     if(win != NULL)
     {
-        cell.attrs.chunk = win->attrs.chunk;
+        cell.attrs.chunk = win->attr_group.attrs.chunk;
         cell.code = win->blank;
 
         for(i = win->width - 1; i != 0; i--)
@@ -497,7 +410,7 @@ static void _win_emit(window_t *win, uint32_t c)
         win_cr(win);
     }
 
-    cell.attrs.chunk = win->attrs.chunk;
+    cell.attrs.chunk = win->attr_group.attrs.chunk;
     cell.code = c;
 
     p = win_line_addr(win, win->cy);
@@ -544,12 +457,18 @@ void win_emit(window_t *win, int32_t c)
 
 // -----------------------------------------------------------------------
 
-cell_t *win_peek(window_t *win)
+cell_t *win_peek_xy(window_t *win, uint16_t x, uint16_t y)
 {
     cell_t *p;
+    p = win_line_addr(win, y);
+    return &p[x];
+}
 
-    p = win_line_addr(win, win->cy);
-    return &p[win->cx];
+// -----------------------------------------------------------------------
+
+cell_t *win_peek(window_t *win)
+{
+    return win_peek_xy(win, win->cx, win->cy);
 }
 
 // -----------------------------------------------------------------------

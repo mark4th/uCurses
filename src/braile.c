@@ -43,7 +43,7 @@ int16_t braile_xlat(uint8_t chr)
     code = skew[i];    // err yea index
     code += (chr & 7); // index into the block of 8 to get char
 
-    return(code + 0x2800); // utf8 0x2800 to 0x28ff
+    return (code + 0x2800); // utf8 0x2800 to 0x28ff
 }
 
 // -----------------------------------------------------------------------

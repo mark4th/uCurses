@@ -154,6 +154,23 @@ typedef struct
 
 // -----------------------------------------------------------------------
 
+typedef struct uCurses
+{
+    attribs_t attrs;
+    union
+    {
+        attribs_t selected;
+        attribs_t old_attrs;
+    };
+    union
+    {
+        attribs_t disabled;
+        attribs_t bdr_attrs;
+    };
+} attrib_group_t;
+
+// -----------------------------------------------------------------------
+
 typedef struct
 {
     char *name;
@@ -174,11 +191,8 @@ typedef struct
     int16_t count;
     // not a linked list of sub items. max 10
     menu_item_t *items[MAX_MENU_ITEMS];
-    void *window;        // this is a window_t honest!
-    attribs_t bdr_attrs; // attribs for pulldown menu border
-    attribs_t attrs;     // attribs for non selected menu items
-    attribs_t selected;  // atrribs for selected menu item
-    attribs_t disabled;  // attribs for disabled meny items
+    void *window; // this is a window_t honest!
+    attrib_group_t attr_group;
 } pulldown_t;
 
 // -----------------------------------------------------------------------
@@ -190,10 +204,10 @@ typedef struct
     int16_t active; // 0 = not active
     int16_t which;  // which pulldown item is active
     int16_t count;  // number of pulldowns defined
+
     pulldown_t *items[MAX_MENU_ITEMS];
-    attribs_t attrs;    // attribs for non selected menu bar items
-    attribs_t selected; // attribs for selected menu bar items
-    attribs_t disabled; // attribs for disabled menu bar items
+
+    attrib_group_t attr_group;
 } menu_bar_t;
 
 // -----------------------------------------------------------------------
@@ -212,9 +226,8 @@ typedef struct
     int16_t cx; // cursor position within window
     int16_t cy;
     int16_t bdr_type;
-    attribs_t attrs;     // bold underline, gray scale, rgb etc
-    attribs_t old_attrs; // previous state..
-    attribs_t bdr_attrs; // likewise for the windows border if it has
+
+    attrib_group_t attr_group;
 } window_t;
 
 // -----------------------------------------------------------------------
@@ -281,7 +294,7 @@ typedef enum
 // -----------------------------------------------------------------------
 // indicies into attributes array
 
-enum
+typedef enum
 {
     ATTR,
     FG = 1,
@@ -292,29 +305,132 @@ enum
     BG_G,
     FG_B,
     BG_B,
-};
+} attr_index_t;
 
 // -----------------------------------------------------------------------
 
-void win_clr_attr(window_t *win, ti_attrib_t attr);
-void win_set_attr(window_t *win, ti_attrib_t attr);
+void attr_set_attr(attribs_t *attribs, int8_t attr);
+void attr_clr_attr(attribs_t *attribs, ti_attrib_t attr);
+void attr_set_bytes(attribs_t *attribs, attr_index_t which,
+                    ti_color_t color);
 
-#define win_set_ul(win) win_set_attr(win, UNDERLINE)
-#define win_clr_ul(win) win_clr_attr(win, UNDERLINE)
+#define console_set_attr(attr) attr_set_attr(&attrs, attr)
+#define console_clr_attr(attr) attr_clr_attr(&attrs, attr)
+#define console_set_bytes(which, color) attr_set_byes(&attrs, which, color)
 
-#define win_set_rev(win) win_set_attr(win, REVERSE)
-#define win_clr_rev(win) win_clr_attr(win, REVERSE)
+#define console_set_ul console_set_attr(UNDERLINE)
+#define console_clr_ul console_clr_attr(UNDERLINE)
+#define console_set_rev console_set_attr(REVERSE)
+#define console_clr_rev console_clr_attr(REVERSE)
+#define console_set_bold console_set_attr(BOLD)
+#define console_clr_bold console_clr_attr(BOLD)
 
-#define win_set_bold(win) win_set_attr(win, BOLD)
-#define win_clr_bold(win) win_clr_attr(win, BOLD)
+#define console_set_fg(color)                                             \
+    attr_set_bytes(&attrs, FG, color);                                    \
+    attr_clr_attr(&attrs, FG_RGB | FG_GRAY)
 
-#define win_set_boxed(win) win->flags |= WIN_BOXED
-#define win_set_locked(win) win->flags |= WIN_LOCKED
-#define win_set_filled(win) win->flags |= WIN_FILLED
+#define console_set_bg(color)                                             \
+    attr_set_bytes(&attrs, BG, color);                                    \
+    attr_clr_attr(&attrs, BG_RGB | BG_GRAY)
 
-#define win_clr_boxed(win) win->flags &= ~WIN_BOXED
-#define win_clr_locked(win) win->flags &= ~WIN_LOCKED
-#define win_clr_filled(win) win->flags &= ~WIN_FILLED
+#define console_set_gray_fg(color)                                        \
+    attr_set_bytes(&attrs, FG, color);                                    \
+    attr_set_attr(FG_GRAY)
+
+#define console_set_gray_bg(color)                                        \
+    attr_set_bytes(&attrs, BG, color);                                    \
+    attr_set_attr(BG_GRAY)
+
+#define console_set_rgb_fg(r, g, b)                                       \
+    attr_set_bytes(&attrs, FG_R, r);                                      \
+    attr_set_bytes(&attrs, FG_G, g);                                      \
+    attr_set_bytes(&attrs, FG_B, b);                                      \
+    attr_set_attr(FG_RGB)
+
+#define console_set_rgb_bg(r, g, b)                                       \
+    attr_set_bytes(&attrs, BG_R, r);                                      \
+    attr_set_bytes(&attrs, BG_G, g);                                      \
+    attr_set_bytes(&attrs, BG_B, b);                                      \
+    attr_set_attr(BG_RGB)
+
+// -----------------------------------------------------------------------
+
+extern attribs_t attrs;
+
+#define win_set_attr(attribs, attr)                                       \
+    attr_set_attr(&win->attr_group.attrs, attr)
+
+#define win_clr_attr(win, attr) attr_clr_attr(&win->attr_group.attrs, attr)
+
+#define win_set_bdr_attr(win, attr)                                       \
+    attr_set_attr(&win->attr_group.bdr_attrs, attr)
+
+#define win_clr_bdr_attrs(win, attr)                                      \
+    attr_clr_attr(&win->attr_group.bdr_attrs, attr)
+
+#define win_set_fg(win, color)                                            \
+    attr_set_bytes(&win->attr_group.attrs, FG, color)
+
+#define win_set_bg(win, color)                                            \
+    attr_set_bytes(&win->attr_group.attrs, BG, color)
+
+#define win_set_gray_fg(win, color)                                       \
+    attr_set_bytes(&win->attr_group.attrs, FG, color);                    \
+    attr_set_attr(&win->attr_group.attrs, FG_GRAY)
+
+#define win_set_gray_bg(win, color)                                       \
+    attr_set_bytes(&win->attr_group.attrs, BG, color);                    \
+    attr_set_attr(&win->attr_group.attrs, BG_GRAY)
+
+#define win_set_rgb_fg(win, r, g, b)                                      \
+    attr_set_bytes(&win->attr_group.attrs, FG_R, r);                      \
+    attr_set_bytes(&win->attr_group.attrs, FG_G, g);                      \
+    attr_set_bytes(&win->attr_group.attrs, FG_B, b);                      \
+    attr_set_attr(&win->attr_group.attrs, FG_RGB)
+
+#define win_set_rgb_bg(win, r, g, b)                                      \
+    attr_set_bytes(&win->attr_group.attrs, BG_R, r);                      \
+    attr_set_bytes(&win->attr_group.attrs, BG_G, g);                      \
+    attr_set_bytes(&win->attr_group.attrs, BG_B, b);                      \
+    attr_set_attr(&win->attr_group.attrs, BG_RGB)
+
+#define win_set_bold(win) attr_set_attr(&win->attr_group.attrs, BOLD)
+
+#define win_clr_bold(win) attr_clr_attr(&win->attr_group.attrs, BOLD)
+
+#define win_set_rev(win) attr_set_attr(&win->attr_group.attrs, REVERSE)
+
+#define win_clr_rev(win) attr_clr_attr(&win->attr_group.attrs, REVERSE)
+
+#define win_set_ul(win) attr_set_attr(&win->attr_group.attrs, UNDERLINE)
+
+#define win_clr_ul(win) attr_clr_attr(&win->attr_group.attrs, UNDERLINE)
+
+#define win_set_bdr_fg(win, color)                                        \
+    attr_set_bytes(&win->attr_group.bdr_attrs, FG, color)
+
+#define win_set_bdr_bg(win, color)                                        \
+    attr_set_bytes(&win->attr_group.bdr_attrs, BG, color)
+
+#define win_set_bdr_gray_fg(win, color)                                   \
+    attr_set_bytes(&win->attr_group.bdr_attrs, FG, color);                \
+    attr_set_attr(&win->attr_group.bdr_attrs, FG_GRAY)
+
+#define win_set_bdr_gray_bg(win, color)                                   \
+    attr_set_bytes(&win->attr_group.bdr_attrs, BG, color);                \
+    attr_set_attr(&win->attr_group.bdr_attrs, BG_GRAY)
+
+#define win_set_bdr_rgb_fg(win, r, g, b)                                  \
+    attr_set_bytes(&win->attr_group.bdr_attrs, FG_R, r);                  \
+    attr_set_bytes(&win->attr_group.bdr_attrs, FG_G, g);                  \
+    attr_set_bytes(&win->attr_group.bdr_attrs, FG_B, b);                  \
+    attr_set_attr(&win->attr_group.bdr_attrs, FG_RGB)
+
+#define win_set_bdr_rgb_bg(win, r, g, b)                                  \
+    attr_set_bytes(&win->attr_group.bdr_attrs, BG_R, r);                  \
+    attr_set_bytes(&win->attr_group.bdr_attrs, BG_G, g);                  \
+    attr_set_bytes(&win->attr_group.bdr_attrs, BG_B, b);                  \
+    attr_set_attr(&win->attr_group.bdr_attrs, BG_RGB)
 
 // -----------------------------------------------------------------------
 
@@ -402,12 +518,6 @@ void win_pop(window_t *win);
 void win_close(window_t *win);
 window_t *win_open(int16_t width, int16_t height);
 int16_t win_set_pos(window_t *win, int16_t x, int16_t y);
-void win_set_gray_fg(window_t *win, int8_t c);
-void win_set_gray_bg(window_t *win, int8_t c);
-void win_set_rgb_fg(window_t *win, int8_t r, int8_t g, int8_t b);
-void win_set_rgb_bg(window_t *win, int8_t r, int8_t g, int8_t b);
-void win_set_fg(window_t *win, int8_t color);
-void win_set_bg(window_t *win, int8_t color);
 void win_scroll_up(window_t *win);
 void win_scroll_dn(window_t *win);
 void win_scroll_lt(window_t *win);
@@ -421,6 +531,7 @@ void win_crsr_lt(window_t *win);
 void win_crsr_rt(window_t *win);
 void win_cr(window_t *win);
 void win_emit(window_t *win, int32_t c);
+cell_t *win_peek_xy(window_t *win, uint16_t x, uint16_t y);
 cell_t *win_peek(window_t *win);
 void win_clear(window_t *win);
 void win_draw_borders(window_t *win);

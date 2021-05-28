@@ -75,7 +75,7 @@ static void draw_char(window_t *win, int16_t cx, int16_t cy, int32_t code,
     cell_t *p1 = &scr->buffer1[index];
     cell_t *p2 = &scr->buffer2[index];
 
-    p1->attrs.chunk = win->bdr_attrs.chunk;
+    p1->attrs.chunk = win->attr_group.bdr_attrs.chunk;
     p1->code = code;
 
     // when a double width character is drawn underneath a pulled down

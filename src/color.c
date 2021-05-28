@@ -22,7 +22,7 @@ int8_t default_fg = WHITE;
 // -----------------------------------------------------------------------
 // fg can be a normal color, a gray scale or an RGB value
 
-static INLINE void do_set_fg(void)
+static INLINE void apply_fg(void)
 {
     // terminfo format string for setting RGB colors.  these are not
     // supported by any current terminfo files that I know of and may
@@ -87,7 +87,7 @@ static INLINE void do_set_fg(void)
 // -----------------------------------------------------------------------
 // bg can be a normal color, a gray scale or an RGB value
 
-static INLINE void do_set_bg(void)
+static INLINE void apply_bg(void)
 {
     // terminfo format string for setting RGB colors.  these are not
     // supported by any current terminfo files that I know of and may
@@ -173,7 +173,7 @@ void apply_attribs(void)
        (attrs.bytes[BG_G] != old_attrs.bytes[BG_G]) ||
        (attrs.bytes[BG_B] != old_attrs.bytes[BG_B]) || (changes != 0))
     {
-        do_set_bg();
+        apply_bg();
     }
 
     if((attrs.bytes[FG] != old_attrs.bytes[FG]) ||
@@ -181,13 +181,14 @@ void apply_attribs(void)
        (attrs.bytes[FG_G] != old_attrs.bytes[FG_G]) ||
        (attrs.bytes[FG_B] != old_attrs.bytes[FG_B]) || (changes != 0))
     {
-        do_set_fg();
+        apply_fg();
     }
 
     old_attrs.chunk = attrs.chunk;
 }
 
 // -----------------------------------------------------------------------
+// disable attribes that are mutually exclusive with the one being set
 
 ti_attrib_t add_attr(uint8_t a, ti_attrib_t attr)
 {
@@ -212,118 +213,26 @@ ti_attrib_t add_attr(uint8_t a, ti_attrib_t attr)
     return a;
 }
 
-// -----------------------------------------------------------------------
-
-static void set_attr(ti_attrib_t attr)
+void attr_set_attr(attribs_t *attribs, int8_t attr)
 {
-    attrs.bytes[ATTR] = add_attr(attrs.bytes[ATTR], attr);
-    apply_attribs();
+    attribs->bytes[ATTR] = add_attr(attribs->bytes[ATTR], attr);
 }
 
-// -----------------------------------------------------------------------
-
-static void clr_attr(ti_attrib_t attr)
+void attr_clr_attr(attribs_t *attribs, ti_attrib_t attr)
 {
-    attrs.bytes[ATTR] &= ~attr;
-    apply_attribs();
+    attribs->bytes[ATTR] &= ~attr;
 }
 
-// -----------------------------------------------------------------------
-// set individual attribs
-
-void set_ul(void)
+void attr_set_bytes(attribs_t *attribs, attr_index_t which,
+                    ti_color_t color)
 {
-    set_attr(UNDERLINE);
-}
-
-void set_rev(void)
-{
-    set_attr(REVERSE);
-}
-
-void set_bold(void)
-{
-    set_attr(BOLD);
-}
-
-// -----------------------------------------------------------------------
-// clear individual attribs
-
-void clr_ul(void)
-{
-    clr_attr(UNDERLINE);
-}
-
-void clr_rev(void)
-{
-    clr_attr(REVERSE);
-}
-
-void clr_bold(void)
-{
-    clr_attr(BOLD);
-}
-
-// -----------------------------------------------------------------------
-
-void set_gray_fg(int8_t c)
-{
-    attrs.bytes[FG] = c;
-    set_attr(FG_GRAY);
-}
-
-// -----------------------------------------------------------------------
-
-void set_gray_bg(int8_t c)
-{
-    attrs.bytes[BG] = c;
-    set_attr(BG_GRAY);
-}
-
-// -----------------------------------------------------------------------
-
-void set_rgb_fg(int8_t r, int8_t g, int8_t b)
-{
-    attrs.bytes[FG_R] = r;
-    attrs.bytes[FG_G] = g;
-    attrs.bytes[FG_B] = b;
-
-    set_attr(FG_RGB);
-}
-
-// -----------------------------------------------------------------------
-
-void set_rgb_bg(int8_t r, int8_t g, int8_t b)
-{
-    attrs.bytes[BG_R] = r;
-    attrs.bytes[BG_G] = g;
-    attrs.bytes[BG_B] = b;
-
-    set_attr(BG_RGB);
-}
-
-// -----------------------------------------------------------------------
-// calling this resets the fg to the usual 16 pre-set color palette
-
-void set_fg(int8_t c)
-{
-    attrs.bytes[FG] = c;
-    clr_attr(FG_RGB | FG_GRAY);
-}
-
-// -----------------------------------------------------------------------
-// calling this resets the bg to the usual 16 pre-set color palette
-
-void set_bg(int8_t c)
-{
-    attrs.bytes[BG] = c;
-    clr_attr(BG_RGB | BG_GRAY);
+    attribs->bytes[which] = color;
 }
 
 // -----------------------------------------------------------------------
 // clear all attributes, reset colors to defaults
 
-void set_norm(void)
+void console_reset_attrs(void)
 {
     attrs.bytes[FG] = default_fg;
     attrs.bytes[BG] = default_bg;

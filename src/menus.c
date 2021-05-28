@@ -84,7 +84,7 @@ void bar_draw_status(menu_bar_t *bar)
         scr = win->screen;
         // this x calculation needs work but this is close enough for now
         x = (scr->width - MAX_STATUS) - 6;
-        win->attrs.chunk = bar->selected.chunk;
+        win->attr_group.attrs.chunk = bar->attr_group.selected.chunk;
         win_printf(win, "%@[ %s]", x, 0, status_line);
     }
 }
@@ -101,9 +101,9 @@ static INLINE void init_bar(screen_t *scr, window_t *win, menu_bar_t *bar)
     win->screen = scr;
     scr->menu_bar = bar;
 
-    bar->attrs.chunk = NORMAL;
-    bar->selected.chunk = SELECTED;
-    bar->disabled.chunk = DISABLED;
+    bar->attr_group.attrs.chunk = NORMAL;
+    bar->attr_group.selected.chunk = SELECTED;
+    bar->attr_group.disabled.chunk = DISABLED;
 
     bar->xco = 2; // x coordinate of first pulldown menu window
 }
@@ -154,9 +154,9 @@ int32_t new_pulldown(screen_t *scr, char *name)
 
             bar->xco += utf8_strlen(name) + 2;
 
-            pd->attrs.chunk = NORMAL;
-            pd->selected.chunk = SELECTED;
-            pd->disabled.chunk = DISABLED;
+            pd->attr_group.attrs.chunk = NORMAL;
+            pd->attr_group.selected.chunk = SELECTED;
+            pd->attr_group.disabled.chunk = DISABLED;
 
             result = 0;
         }
@@ -240,13 +240,13 @@ static INLINE void pd_set_attr(int16_t i, pulldown_t *pd, uint64_t *p,
 {
     if(i == pd->which)
     {
-        *p = pd->selected.chunk;
+        *p = pd->attr_group.selected.chunk;
         return;
     }
     *p =                                     //
         ((item->flags & MENU_DISABLED) != 0) //
-            ? pd->disabled.chunk
-            : pd->attrs.chunk;
+            ? pd->attr_group.disabled.chunk
+            : pd->attr_group.attrs.chunk;
 }
 
 // -----------------------------------------------------------------------
@@ -267,7 +267,7 @@ void bar_populdate_pd(pulldown_t *pd)
         {
             item = pd->items[i];
 
-            pd_set_attr(i, pd, &win->attrs.chunk, item);
+            pd_set_attr(i, pd, &win->attr_group.attrs.chunk, item);
 
             win_cup(win, 0, i);
             win_puts(win, item->name);
@@ -287,13 +287,13 @@ static INLINE void bar_set_attrs(int16_t i, menu_bar_t *bar, uint64_t *p,
 {
     if((i == bar->which) && (bar->active != 0))
     {
-        *p = bar->selected.chunk;
+        *p = bar->attr_group.selected.chunk;
         return;
     }
     *p =                                   //
         ((pd->flags & MENU_DISABLED) != 0) //
-            ? bar->disabled.chunk
-            : bar->attrs.chunk;
+            ? bar->attr_group.disabled.chunk
+            : bar->attr_group.attrs.chunk;
 }
 
 // -----------------------------------------------------------------------
@@ -311,7 +311,7 @@ void bar_draw_text(screen_t *scr)
     {
         win = bar->window;
 
-        win->attrs.chunk = bar->attrs.chunk;
+        win->attr_group.attrs.chunk = bar->attr_group.attrs.chunk;
 
         win_clear(win);
         win_emit(win, win->blank);
@@ -320,7 +320,7 @@ void bar_draw_text(screen_t *scr)
         {
             pd = bar->items[i];
 
-            bar_set_attrs(i, bar, &win->attrs.chunk, pd);
+            bar_set_attrs(i, bar, &win->attr_group.attrs.chunk, pd);
 
             win_emit(win, win->blank);
             win_puts(win, pd->name);
@@ -463,9 +463,10 @@ static INLINE int32_t bar_create_pd_win(screen_t *scr, pulldown_t *pd)
         win->flags = WIN_BOXED | WIN_LOCKED;
         win->blank = 0x20;
 
-        win->bdr_attrs.bytes[ATTR] = (int8_t)(FG_GRAY | BG_GRAY | BOLD);
-        win->bdr_attrs.bytes[FG] = 11; // pd->attr[FG];
-        win->bdr_attrs.bytes[BG] = 4;  // pd->attr[BG];
+        win->attr_group.bdr_attrs.bytes[ATTR] =
+            (int8_t)(FG_GRAY | BG_GRAY | BOLD);
+        win->attr_group.bdr_attrs.bytes[FG] = 11; // pd->attr[FG];
+        win->attr_group.bdr_attrs.bytes[BG] = 4;  // pd->attr[BG];
         win->bdr_type = BDR_CURVED;
 
         win->screen = scr;

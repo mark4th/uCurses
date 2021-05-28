@@ -275,11 +275,11 @@ static void uline(void)
 {
     if(*p == '+')
     {
-        win_set_attr(w, UNDERLINE);
+        win_set_ul(w);
     }
     else if(*p == '-')
     {
-        win_clr_attr(w, UNDERLINE);
+        win_clr_ul(w);
     }
     else
     {
@@ -295,11 +295,11 @@ static void rev(void)
 {
     if(*p == '+')
     {
-        win_set_attr(w, REVERSE);
+        win_set_rev(w);
     }
     else if(*p == '-')
     {
-        win_clr_attr(w, REVERSE);
+        win_clr_rev(w);
     }
     else
     {

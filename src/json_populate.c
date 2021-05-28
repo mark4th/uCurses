@@ -16,17 +16,17 @@ static INLINE void populate_attribs(void *pstruct, int32_t ptype)
 {
     if((ptype == STRUCT_WINDOW) || (ptype == STRUCT_BACKDROP))
     {
-        ((window_t *)pstruct)->attrs.chunk =
+        ((window_t *)pstruct)->attr_group.attrs.chunk =
             *(int64_t *)j_state->structure;
     }
     else if(ptype == STRUCT_PULLDOWN)
     {
-        ((pulldown_t *)pstruct)->attrs.chunk =
+        ((pulldown_t *)pstruct)->attr_group.attrs.chunk =
             *(int64_t *)j_state->structure;
     }
     else // ptype == STRUCT_MENU_BAR:
     {
-        ((menu_bar_t *)pstruct)->attrs.chunk =
+        ((menu_bar_t *)pstruct)->attr_group.attrs.chunk =
             *(int64_t *)j_state->structure;
     }
 
@@ -37,7 +37,7 @@ static INLINE void populate_attribs(void *pstruct, int32_t ptype)
 
 static INLINE void populate_b_attribs(window_t *pstruct)
 {
-    pstruct->bdr_attrs.chunk = *(int64_t *)j_state->structure;
+    pstruct->attr_group.bdr_attrs.chunk = *(int64_t *)j_state->structure;
 
     free(j_state->structure);
 }
@@ -48,12 +48,12 @@ static INLINE void populate_s_attribs(void *pstruct, int32_t ptype)
 {
     if(ptype == STRUCT_PULLDOWN)
     {
-        ((pulldown_t *)pstruct)->selected.chunk =
+        ((pulldown_t *)pstruct)->attr_group.selected.chunk =
             *(int64_t *)j_state->structure;
     }
     else // ptype == STRUCT_MENU_BAR:
     {
-        ((menu_bar_t *)pstruct)->selected.chunk =
+        ((menu_bar_t *)pstruct)->attr_group.selected.chunk =
             *(int64_t *)j_state->structure;
     }
 
@@ -66,12 +66,12 @@ static INLINE void populate_d_attribs(void *pstruct, int32_t ptype)
 {
     if(ptype == STRUCT_PULLDOWN)
     {
-        ((pulldown_t *)pstruct)->disabled.chunk =
+        ((pulldown_t *)pstruct)->attr_group.disabled.chunk =
             *(int64_t *)j_state->structure;
     }
     else // ptype == STRUCT_MENU_BAR:
     {
-        ((menu_bar_t *)pstruct)->disabled.chunk =
+        ((menu_bar_t *)pstruct)->attr_group.disabled.chunk =
             *(int64_t *)j_state->structure;
     }
 

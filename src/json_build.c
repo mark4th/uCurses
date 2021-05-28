@@ -143,7 +143,10 @@ void json_build_ui(void)
     }
 
     fix_windows(scr);
-    fix_menus(scr);
+    if(scr->menu_bar != NULL)
+    {
+        fix_menus(scr);
+    }
 }
 
 // =======================================================================

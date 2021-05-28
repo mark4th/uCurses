@@ -109,8 +109,8 @@ int main(void)
 
     scr_close(active_screen);
 
-    set_fg(WHITE);
-    set_bg(BLACK);
+    console_set_fg(WHITE);
+    console_set_bg(BLACK);
 
     clear();
     cup(10, 0);

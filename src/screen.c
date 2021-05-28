@@ -223,12 +223,15 @@ void scr_add_backdrop(screen_t *scr)
 
         if(win != NULL)
         {
-            win->bdr_attrs.bytes[ATTR] = (FG_GRAY | BG_GRAY | BOLD);
-            win->bdr_attrs.bytes[FG] = 13;
-            win->bdr_attrs.bytes[BG] = 0;
+            win->attr_group.bdr_attrs.bytes[ATTR] =
+                (FG_GRAY | BG_GRAY | BOLD);
+            win->attr_group.bdr_attrs.bytes[FG] = 13;
+            win->attr_group.bdr_attrs.bytes[BG] = 0;
+
             win->bdr_type = BDR_SINGLE;
 
             win_set_gray_fg(win, 12);
+
             init_backdrop(scr, win);
             scr->backdrop = win;
             win_clear(win);

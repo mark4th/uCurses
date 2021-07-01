@@ -8,3 +8,7 @@ help:
 	set -x
 	cd $(BUILD)
 	./$(shared_object) --help
+
+test: .build
+	$_
+	CHORDTEST_TEST_TAG=test-uCurses ./build/test-uCurses.src.app

@@ -3,3 +3,5 @@
 *demo
 build
 obj
+default.profraw
+test-uCurses-test.results

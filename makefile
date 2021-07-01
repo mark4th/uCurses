@@ -9,6 +9,6 @@ help:
 	cd $(BUILD)
 	./$(shared_object) --help
 
-test:
+test: .build
 	$_
 	CHORDTEST_TEST_TAG=test-uCurses ./build/test-uCurses.src.app

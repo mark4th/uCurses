@@ -9,22 +9,48 @@
 // -----------------------------------------------------------------------
 // insert node n2 into list after node n1
 
-static INLINE void node_insert(node_t *n1, node_t *n2)
+void node_insert(node_t *n1, node_t *n2)
 {
     node_t *t;
     list_t *l;
 
-    l = (list_t *)n1->parent;
+    l = n1->parent;             // make n2's parent the same as n1's
     n2->parent = l;
 
-    t = (node_t *)(n1->next);
+    t = (node_t *)n1->next;     // going to insert after node n1
 
     n2->next = t;
 
-    (t == NULL) ? (l->tail = n2) : (t->prev = n2);
+    (t == NULL)                 // if n2 was tail then
+        ? (l->tail = n2)        // n1 is now the tail
+        : (t->prev = n2);       // else link back from t to n2
 
-    n1->next = n2;
-    n2->prev = n1;
+    n1->next = n2;              // link n1 ->> n2
+    n2->prev = n1;              // link n1 <<- n2
+
+    l->count++;
+}
+
+// -----------------------------------------------------------------------
+// add new node to head of list
+
+static INLINE void node_add(list_t *l, node_t *n1)
+{
+    n1->parent = l;
+    node_t *t;
+
+    if(l->head == NULL)
+    {
+        l->head = l->tail = n1;
+    }
+    else
+    {
+        t = l->head;
+        t->prev = n1;
+        n1->next = t;
+        l->head = n1;
+    }
+    l->count++;
 }
 
 // -----------------------------------------------------------------------
@@ -88,10 +114,11 @@ void list_remove_node(list_t *l1, void *payload)
 }
 
 // -----------------------------------------------------------------------
+// append a new node onto end of list
 
-uint16_t list_append_node(list_t *l, void *payload)
+int16_t list_append_node(list_t *l, void *payload)
 {
-    node_t *n1;
+    node_t *n1, *t;
 
     n1 = calloc(1, sizeof(node_t));
     if(n1 == NULL)
@@ -103,18 +130,39 @@ uint16_t list_append_node(list_t *l, void *payload)
 
     if(l->head == NULL)
     {
-        l->head = l->tail = n1;
-        n1->next = n1->prev = NULL;
+        l->head    = l->tail = n1;
+        n1->next   = n1->prev = NULL;
         n1->parent = l;
     }
     else
     {
-        node_insert((node_t *)(l->tail), n1);
-        l->tail = n1;
+        n1->parent = l;
+        t          = l->tail;
+        t->next    = n1;
+        n1->prev   = t;
+        l->tail    = n1;
     }
-
     l->count++;
 
+    return 0;
+}
+
+// -----------------------------------------------------------------------
+// add a new node to start of list
+
+int16_t list_add_node(list_t *l, void *payload)
+{
+    node_t *n1;
+
+    n1 = calloc(1, sizeof(node_t));
+    if(n1 == NULL)
+    {
+        return -1;
+    }
+
+    n1->payload = payload;
+
+    node_add(l, n1);
     return 0;
 }
 

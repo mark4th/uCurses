@@ -12,8 +12,8 @@
 
 extern int8_t *esc_buff;
 extern int16_t num_esc;
-static int8_t keybuff[32];
-static int16_t num_k;
+int8_t keybuff[32];
+int16_t num_k;
 static int16_t stuffed;
 
 #define KEY_COUNT (sizeof(k_table) / sizeof(k_table[0]))
@@ -349,6 +349,7 @@ uint8_t key(void)
 
     while((num_k != 1) && (stuffed != 1))
     {
+        memset(keybuff, 0, 32);
         read_keys(); // read key or sequence into keyboard buff
 
         c = match_key(); // compare input with all handled escapes

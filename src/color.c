@@ -20,22 +20,29 @@ int8_t default_bg = BLACK;
 int8_t default_fg = WHITE;
 
 // -----------------------------------------------------------------------
-// fg can be a normal color, a gray scale or an RGB value
+// hard coded format string to set a rgb fg
 
-static INLINE void apply_fg(void)
+static void rgb_fg(void)
 {
-    // terminfo format string for setting RGB colors.  these are not
-    // supported by any current terminfo files that I know of and may
-    // not be supported by all terminal types
+    const char *const rgb_seq =
+       "\x1b[38;2;%p1%3d;%p2%3d;%p3%3dm";
 
-    const char *const rgb_seq = "\x1b[38;2;%p1%3d;%p2%3d;%p3%3dm";
+    params[0] = attrs.bytes[FG_R];
+    params[1] = attrs.bytes[FG_G];
+    params[2] = attrs.bytes[FG_B];
 
-    // format string to set gray scales which again might not be
-    // supported by all terminal types.  this has been hard coded
-    // here because for some terminals this is how they encode
-    // the setaf and for others it is how they encide the setf
-    // (e.g. xterm)
+    // there is no format string for this within the terminfo
+    // string section
 
+    f_str = rgb_seq;
+    parse_format();
+}
+
+// -----------------------------------------------------------------------
+// hard coded format string to set a gray fg
+
+static void gray_fg(void)
+{
     const char *const fg_seq =
         "\x1b["
         "%?%p1%{8}%<"    // if p1 < 8
@@ -44,36 +51,68 @@ static INLINE void apply_fg(void)
         "%t9%p1%{8}%-%d" //    output '9' followed by p1 - 8
         "%e38;5;%p1%d"   // else output '38;5;' followed by p1
         "%;m";           // last char output is always the m
+    f_str = fg_seq;
 
-    // the params array is how we pass parameters to the terminfo
-    // parsing functions for each format string.  this converts the
-    // given format string into an escape sequence for the terminal
+    // gray scales are specified as values from 0 to 23 but
+    // the escape seaueces use values from 232 to 255
 
+    params[0] += 232;
+    parse_format();
+}
+
+// -----------------------------------------------------------------------
+
+static void rgb_bg(void)
+{
+    const char *const rgb_seq =
+      "\x1b[48;2;%p1%3d;%p2%3d;%p3%3dm";
+
+    params[0] = attrs.bytes[BG_R];
+    params[1] = attrs.bytes[BG_G];
+    params[2] = attrs.bytes[BG_B];
+
+    f_str = &rgb_seq[0];
+    parse_format();
+}
+
+// -----------------------------------------------------------------------
+
+static void gray_bg(void)
+{
+    const char *const bg_seq =
+        "\x1b["
+        "%?%p1%{8}%<"
+        "%t4%p1%d"
+        "%e%p1%{16}%<"
+        "%t10%p1%{8}%-%d"
+        "%e48;5;%p1%d"
+        "%;m";
+
+    f_str = &bg_seq[0];
+
+    // gray scales are specified as values from 0 to 23 but
+    // the escape seaueces use values from 232 to 255
+
+    params[0] += 232;
+    parse_format();
+}
+
+// -----------------------------------------------------------------------
+// fg can be a normal color, a gray scale or an RGB value
+
+static INLINE void apply_fg(void)
+{
     params[0] = attrs.bytes[FG];
 
     if(attrs.bytes[ATTR] & FG_RGB)
     {
-        params[0] = attrs.bytes[FG_R];
-        params[1] = attrs.bytes[FG_G];
-        params[2] = attrs.bytes[FG_B];
-
-        // there is no format string for this within the terminfo
-        // string section
-
-        f_str = rgb_seq;
-        parse_format();
+        rgb_fg();
         return;
     }
 
     if(attrs.bytes[ATTR] & FG_GRAY)
     {
-        f_str = fg_seq;
-
-        // gray scales are specified as values from 0 to 23 but
-        // the escape seaueces use values from 232 to 255
-
-        params[0] += 232;
-        parse_format();
+        gray_fg();
         return;
     }
 
@@ -89,36 +128,15 @@ static INLINE void apply_fg(void)
 
 static INLINE void apply_bg(void)
 {
-    // terminfo format string for setting RGB colors.  these are not
-    // supported by any current terminfo files that I know of and may
-    // not be supported by all terminal types
-
-    const char *const rgb_seq = "\x1b[48;2;%p1%3d;%p2%3d;%p3%3dm";
-
-    const char *const bg_seq =
-        "\x1b["
-        "%?%p1%{8}%<"
-        "%t4%p1%d"
-        "%e%p1%{16}%<"
-        "%t10%p1%{8}%-%d"
-        "%e48;5;%p1%d"
-        "%;m";
-
     // the params array is how we pass parameters to the terminfo
-    // parsing functions for each format string.  this converts the
-    // given format string into an escape sequence for the terminal
+    // parsing functions for each format string.
 
     params[0] = attrs.bytes[BG];
 
     // are we setting a rgb background?
     if(attrs.bytes[ATTR] & BG_RGB)
     {
-        params[0] = attrs.bytes[BG_R];
-        params[1] = attrs.bytes[BG_G];
-        params[2] = attrs.bytes[BG_B];
-
-        f_str = &rgb_seq[0];
-        parse_format();
+        rgb_bg();
         return;
     }
 
@@ -126,11 +144,7 @@ static INLINE void apply_bg(void)
 
     if(attrs.bytes[ATTR] & BG_GRAY)
     {
-        f_str = &bg_seq[0];
-        // gray scales are specified as values from 0 to 23 but
-        // the escape seaueces use values from 232 to 255
-        params[0] += 232;
-        parse_format();
+        gray_bg();
         return;
     }
 

@@ -107,11 +107,11 @@ static void b(void)
 
     if(*p == 'c')
     {
-        win_set_bg(w, b & 0xff);
+        win_set_bg(w, b);
     }
     else if(*p == 's')
     {
-        win_set_bg(w, b % 21);
+        win_set_gray_bg(w, b % 23);
     }
     else
     {

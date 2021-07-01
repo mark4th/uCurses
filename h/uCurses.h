@@ -28,15 +28,11 @@ extern int64_t params[MAX_PARAM];
 // utf-8 codepoint for 'blank' char used in screen backdrop windows
 
 #define SOLID 0x2592
-#define SHADOW 0x2591
 
 #define MENU_DISABLED 1
 #define MAX_MENU_ITEMS 10
 #define DEADCODE 0xdeadc0de
 #define FAR 0x7fff
-
-// allows me to sset the 8 byte uint8_t array with one uint64_t write
-#define attrs8 (uint64_t *)&attrs[0]
 
 // -----------------------------------------------------------------------
 
@@ -358,26 +354,31 @@ void attr_set_bytes(attribs_t *attribs, attr_index_t which,
 
 extern attribs_t attrs;
 
-#define win_set_attr(win, attr) attr_set_attr(&win->attr_group.attrs, attr)
-#define win_clr_attr(win, attr) attr_clr_attr(&win->attr_group.attrs, attr)
-
 // -----------------------------------------------------------------------
+
+#define win_set_flag(win, flag) win->flags |= flag
+#define win_clr_flag(win, flag) win->flags &= ~flag
 
 #define win_set_bold(win)                                                 \
     assert(win);                                                          \
     attr_set_attr(&win->attr_group.attrs, BOLD)
+
 #define win_clr_bold(win)                                                 \
     assert(win);                                                          \
     attr_clr_attr(&win->attr_group.attrs, BOLD)
+
 #define win_set_rev(win)                                                  \
     assert(win);                                                          \
     attr_set_attr(&win->attr_group.attrs, REVERSE)
+
 #define win_clr_rev(win)                                                  \
     assert(win);                                                          \
     attr_clr_attr(&win->attr_group.attrs, REVERSE)
+
 #define win_set_ul(win)                                                   \
     assert(win);                                                          \
     attr_set_attr(&win->attr_group.attrs, UNDERLINE)
+
 #define win_clr_ul(win)                                                   \
     assert(win);                                                          \
     attr_clr_attr(&win->attr_group.attrs, UNDERLINE)
@@ -418,7 +419,7 @@ extern attribs_t attrs;
 #define win_set_bg(win, color)                                            \
     assert(win);                                                          \
     attr_set_bytes(&win->attr_group.attrs, BG, color);                    \
-    attr_clr_attr(&win->attr_group.attrs, BG_RGB | FG_GRAY)
+    attr_clr_attr(&win->attr_group.attrs, BG_RGB | BG_GRAY)
 
 #define win_set_gray_fg(win, color)                                       \
     assert(win);                                                          \
@@ -688,7 +689,7 @@ void set_gray_bg(int8_t c);
 void set_rgb_fg(int8_t r, int8_t g, int8_t b);
 void set_rgb_bg(int8_t r, int8_t g, int8_t b);
 
-void set_norm(void);
+void console_reset_attrs(void);
 
 ti_attrib_t add_attr(uint8_t a, ti_attrib_t attr);
 
@@ -720,12 +721,12 @@ __attribute__((noreturn)) void xabort(char *msg);
 
 // -----------------------------------------------------------------------
 
-void braile_8(window_t *win, uint16_t *braile_data, uint8_t *map,
-              uint16_t width);
-void braile_1(window_t *win, uint16_t *braile_data, uint8_t *map,
-              uint16_t width, uint16_t height);
-void draw_braile(window_t *win, uint16_t *braile_data);
-int16_t braile_xlat(uint8_t chr);
+void braille_8(window_t *win, uint16_t *braille_data, uint8_t *map,
+               uint16_t width);
+void braille_1(window_t *win, uint16_t *braille_data, uint8_t *map,
+               uint16_t width, uint16_t height);
+void draw_braille(window_t *win, uint16_t *braille_data);
+int16_t braille_xlat(uint8_t chr);
 
 // -----------------------------------------------------------------------
 // terminfo name, terminfo strings section offset to format string

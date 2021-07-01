@@ -27,8 +27,8 @@ void main_screen(void)
 
     int16_t xco;
 
+    uCurses_init();
     json_create_ui("base.json", menu_address_cb);
-
     alloc_status();
     bar_clr_status();
     menu_init();
@@ -82,9 +82,6 @@ int main(void)
 {
     screen_t *scr;
     window_t *win;
-    node_t *n;
-
-    uCurses_init();
 
     main_screen();
 
@@ -96,8 +93,8 @@ int main(void)
         // actually calls the selected demo).
 
         scr = active_screen;
-        n = scr->windows.head;
-        win = n->payload;
+////        n = scr->windows.head;
+////        win = n->payload;
 
         scr_draw_screen(scr);
 
@@ -109,8 +106,7 @@ int main(void)
 
     scr_close(active_screen);
 
-    console_set_fg(WHITE);
-    console_set_bg(BLACK);
+    console_reset_attrs();
 
     clear();
     cup(10, 0);

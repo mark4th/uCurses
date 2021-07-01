@@ -164,11 +164,11 @@ static void draw_lion(void)
 
     braile_data = calloc(win->width * win->height, 2);
 
-    braile_8(win, braile_data, lion_data, LION_WIDTH);
+    braille_8(win, braile_data, lion_data, LION_WIDTH);
 
     // you can do further drawing into the braile data here maybe
 
-    draw_braile(win, braile_data);
+    draw_braille(win, braile_data);
 
     free(braile_data);
 }

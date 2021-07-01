@@ -1,4 +1,4 @@
-// braile.c   the braile engine - graphics modes within a text mode !!!
+// braille.c   the braille engine - graphics modes within a text mode !!!
 // -----------------------------------------------------------------------
 
 #include <inttypes.h>
@@ -6,7 +6,7 @@
 #include "../h/uCurses.h"
 
 // -----------------------------------------------------------------------
-// every glyph here can be thoug of as an 8 bit binary value where the
+// every glyph here can be thougt of as an 8 bit binary value where the
 // low order nibble is on the right and the high order nibble on the left.
 // unfortunately the guy who layed this out was high on cocain on that day
 // and jumbued up the order of the table..
@@ -34,7 +34,7 @@ static uint8_t skew[] = //
 // -----------------------------------------------------------------------
 // translates value 0x00 through 0xff into the assinine order above
 
-int16_t braile_xlat(uint8_t chr)
+int16_t braille_xlat(uint8_t chr)
 {
     int16_t code;
     uint16_t i;
@@ -47,10 +47,10 @@ int16_t braile_xlat(uint8_t chr)
 }
 
 // -----------------------------------------------------------------------
-// braile encode map that contains 8 bits per byte of data
+// braille encode map that contains 8 bits per byte of data
 
-void braile_8(window_t *win, uint16_t *braile_data, uint8_t *map,
-              uint16_t width)
+void braille_8(window_t *win, uint16_t *braille_data, uint8_t *map,
+               uint16_t width)
 {
     uint8_t x, y, z;
     uint8_t d0, d1, d2, d3, d4;
@@ -111,7 +111,8 @@ void braile_8(window_t *win, uint16_t *braile_data, uint8_t *map,
 
                 if((wx < win->width) && (wy < win->height))
                 {
-                    braile_data[(wy * win->width) + wx] = braile_xlat(d0);
+                    braille_data[(wy * win->width) + wx] =
+                        braille_xlat(d0);
                 }
                 wx++;
             }
@@ -124,10 +125,10 @@ void braile_8(window_t *win, uint16_t *braile_data, uint8_t *map,
 }
 
 // -----------------------------------------------------------------------
-// braile encode map that contains 1 bits per byte of data
+// braille encode map that contains 1 bits per byte of data
 
-void braile_1(window_t *win, uint16_t *braile_data, uint8_t *map,
-              uint16_t width, uint16_t height)
+void braille_1(window_t *win, uint16_t *braille_data, uint8_t *map,
+               uint16_t width, uint16_t height)
 {
     uint8_t x, y;
     uint8_t *p0, *p1, *p2, *p3;
@@ -164,7 +165,7 @@ void braile_1(window_t *win, uint16_t *braile_data, uint8_t *map,
 
             if((x < win->width) && (y < win->height))
             {
-                braile_data[(y * win->width) + x] = braile_xlat(d0);
+                braille_data[(y * win->width) + x] = braille_xlat(d0);
             }
         }
         p0 += (width * 3);
@@ -173,7 +174,7 @@ void braile_1(window_t *win, uint16_t *braile_data, uint8_t *map,
 
 // -----------------------------------------------------------------------
 
-void draw_braile(window_t *win, uint16_t *braile_data)
+void draw_braille(window_t *win, uint16_t *braille_data)
 {
     uint16_t x;
     uint16_t y;
@@ -184,7 +185,7 @@ void draw_braile(window_t *win, uint16_t *braile_data)
 
         for(x = 0; x < win->width; x++)
         {
-            win_emit(win, braile_data[(y * win->width) + x]);
+            win_emit(win, braille_data[(y * win->width) + x]);
         }
     }
 }

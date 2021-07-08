@@ -1,5 +1,5 @@
 #include <libchordtest/test.h>
-#include "src/braile.c"
+#include "src/braille.c"
 
 TEST("what name", "what summary")
 {

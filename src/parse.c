@@ -75,7 +75,7 @@ void flush(void)
 {
     ssize_t n;
 
-    log_dump();
+    // log_dump();
 
     // for profiling
     flush_size = num_esc;
@@ -118,9 +118,7 @@ static void fs_push(int64_t n)
         fstack[fsp++] = n;
         return;
     }
-
-    // methinks this might could be an internal error
-    // abort" uCurses format string stack overflow"
+    // abort stack overflow
 }
 
 // -----------------------------------------------------------------------
@@ -128,13 +126,12 @@ static void fs_push(int64_t n)
 
 static int64_t fs_pop(void)
 {
-    int16_t rv;
-
-    rv = (fsp != 0) //
-             ? fstack[--fsp]
-             : 0; // also an internal error?
-
-    return rv;
+    if(fsp != 0)
+    {
+        return fstack[--fsp];
+    }
+    // abort stack underflow
+    return 0;
 }
 
 // -----------------------------------------------------------------------

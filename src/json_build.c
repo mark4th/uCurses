@@ -44,12 +44,12 @@ static INLINE void fix_win(screen_t *scr, window_t *win)
         fudge++;
     }
 
-    if(win->xco == FAR)
+    if(win->xco == WIN_FAR)
     {
         win->xco = scr->width - (win->width + fudge);
     }
 
-    if(win->yco == FAR)
+    if(win->yco == WIN_FAR)
     {
         win->yco = scr->height - (win->height + fudge);
     }

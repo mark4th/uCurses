@@ -14,8 +14,15 @@
 
 // -----------------------------------------------------------------------
 
+#if defined(__TESTING__)
+
+#define INLINE
+
+#else
+
 #define INLINE inline __attribute__((always_inline))
-// #define INLINE
+
+#endif
 
 // -----------------------------------------------------------------------
 

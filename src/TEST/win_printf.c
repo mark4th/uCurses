@@ -1,5 +1,5 @@
 #include <libchordtest/test.h>
-
+#include "src/win_printf.c"
 
 TEST("what name", "what summary")
 {

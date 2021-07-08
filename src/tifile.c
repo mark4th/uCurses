@@ -19,6 +19,8 @@
 extern FILE *log_fp;
 
 extern int8_t *esc_buff;
+extern uint16_t num_esc;
+
 struct termios term_save;
 struct termios term;
 
@@ -182,6 +184,8 @@ void uCurses_init(void)
         exit(1);
     }
     init_info();
+
+    num_esc = 0;
 
     setlocale(LC_ALL, "C.UTF-8");
     curoff();

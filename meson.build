@@ -87,7 +87,7 @@ if compiler.get_id() == 'clang'
         '-fno-inline', '-Wall', '-Werror', '-pipe', '-fno-align-functions', '-Wno-error=pedantic', '-Wno-pedantic',
     ]
 
-    test_linker_args = ['-L/opt/chordlang.io/lib', '-lchordtest']
+    test_linker_args = ['-L/opt/chordlang.io/lib', '-lchordtest', '-lunwind', '-ldl']
 
     test_build_args_c = test_build_args + [
         '-Oz', '-std=gnu17', '-fblocks', '-I/opt/chordlang.io/include'  ]

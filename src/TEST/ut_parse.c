@@ -21,11 +21,11 @@ static void src_parse_teardown(void)
 // ------------------------------------------------------------------------
 
 #include <libchord/newframe.h>
-#define frame check_c_emit
+#define frame test_c_emit
 
 // ------------------------------------------------------------------------
 
-void our(check_c_emit)(char sent)
+void our(test_c_emit)(char sent)
 {
     uint16_t prev_num_esc;
     char got;
@@ -40,16 +40,17 @@ void our(check_c_emit)(char sent)
     ut_assert_op_int16x(got, ==, sent);
 }
 
-TEST("c_emit", "check for add to esc_buff")
+TEST("c_emit", "Test add of character to terminfo esc_buff")
 {
     src_parse_init();
-    our(check_c_emit)('*');
+    our(test_c_emit)('x');
+    our(test_c_emit)('y');
     src_parse_teardown();
 }
 
 // -----------------------------------------------------------------------
 
-void our(check_fs_push)(int64_t sent)
+void our(test_fs_push)(int64_t sent)
 {
     int8_t prev_fsp;
     int64_t got;
@@ -64,18 +65,18 @@ void our(check_fs_push)(int64_t sent)
     ut_assert_op_int64x(got, ==, sent);
 }
 
-TEST("fs_push", "check format string stack push")
+TEST("fs_push", "Test push to terminfo format string stack")
 {
     src_parse_init();
-    our(check_fs_push)(0x12);
-    our(check_fs_push)(0x34);
+    our(test_fs_push)(0x12);
+    our(test_fs_push)(0x34);
 
     src_parse_teardown();
 }
 
 // -----------------------------------------------------------------------
 
-void our(check_fs_pop)(int64_t sent)
+void our(test_fs_pop)(int64_t sent)
 {
     int8_t prev_fsp;
     int64_t got;
@@ -89,17 +90,17 @@ void our(check_fs_pop)(int64_t sent)
     ut_assert_op_int64x(got, ==, sent);
 }
 
-TEST("fs_push", "check format string stack pop")
+TEST("fs_push", "Test pop from terminfo format string stack")
 {
     src_parse_init();
-    our(check_fs_push)(0x12);
-    our(check_fs_push)(0x34);
+    our(test_fs_push)(0x12);
+    our(test_fs_push)(0x34);
     src_parse_teardown();
 }
 
 // -----------------------------------------------------------------------
 
-void our(check_percent)(void)
+void our(test_percent)(void)
 {
     int16_t prev_num_esc;
     char sent;
@@ -115,16 +116,16 @@ void our(check_percent)(void)
     ut_assert_op_int8(got, ==, sent);
 }
 
-TEST("check_percent", "verify addition of '%' char to escape buffer")
+TEST("_percent", "Test add of '%' to terminfo esc_buff")
 {
     src_parse_init();
-    our(check_percent)();
+    our(test_percent)();
     src_parse_teardown();
 }
 
 // -----------------------------------------------------------------------
 
-void our(check_and(int64_t n1, int64_t n2))
+void our(test_and(int64_t n1, int64_t n2))
 {
     int64_t rv;
 
@@ -138,17 +139,17 @@ void our(check_and(int64_t n1, int64_t n2))
     ut_assert_op_int64x(rv, ==, (n1 & n2));
 }
 
-TEST("_and", "check format string 'and' operator")
+TEST("_and", "Test terminfo format string 'and' operator")
 {
     src_parse_init();
-    our(check_and(0x55, 0xff));
-    our(check_and(3, 2));
+    our(test_and(0x55, 0xff));
+    our(test_and(3, 2));
     src_parse_teardown();
 }
 
 // -----------------------------------------------------------------------
 
-void our(check_and_logical(int64_t n1, int64_t n2))
+void our(test_and_logical(int64_t n1, int64_t n2))
 {
     int64_t rv;
 
@@ -162,17 +163,17 @@ void our(check_and_logical(int64_t n1, int64_t n2))
     ut_assert_op_int64x(rv, ==, (n1 && n2));
 }
 
-TEST("_andl", "check format string logical 'and' operator")
+TEST("_andl", "Test teerminfo format string logical 'and' operator")
 {
     src_parse_init();
-    our(check_and_logical(0x55, 0xff));
-    our(check_and_logical(1, 0));
+    our(test_and_logical(0x55, 0xff));
+    our(test_and_logical(1, 0));
     src_parse_teardown();
 }
 
 // -----------------------------------------------------------------------
 
-void our(check_or(int64_t n1, int64_t n2))
+void our(test_or(int64_t n1, int64_t n2))
 {
     int64_t rv;
 
@@ -186,17 +187,17 @@ void our(check_or(int64_t n1, int64_t n2))
     ut_assert_op_int64x(rv, ==, (n1 | n2));
 }
 
-TEST("_or", "check format string 'or' operator")
+TEST("_or", "Test terminfo format string 'or' operator")
 {
     src_parse_init();
-    our(check_or(0x55, 0xff));
-    our(check_or(1, 0));
+    our(test_or(0x55, 0xff));
+    our(test_or(1, 0));
     src_parse_teardown();
 }
 
 // -----------------------------------------------------------------------
 
-void our(check_or_logical(int64_t n1, int64_t n2))
+void our(test_or_logical(int64_t n1, int64_t n2))
 {
     int64_t rv;
 
@@ -210,17 +211,17 @@ void our(check_or_logical(int64_t n1, int64_t n2))
     ut_assert_op_int64x(rv, ==, (n1 || n2));
 }
 
-TEST("_orl", "check format string logical 'or' operator")
+TEST("_orl", "Test terminfo format string logical 'or' operator")
 {
     src_parse_init();
-    our(check_or_logical(0x55, 0xff));
-    our(check_or_logical(1, 0));
+    our(test_or_logical(0x55, 0xff));
+    our(test_or_logical(1, 0));
     src_parse_teardown();
 }
 
 // -----------------------------------------------------------------------
 
-void our(check_not(int64_t n1))
+void our(test_not(int64_t n1))
 {
     int64_t rv;
 
@@ -233,17 +234,17 @@ void our(check_not(int64_t n1))
     ut_assert_op_int64x(rv, ==, ~n1);
 }
 
-TEST("_tilde", "check format string 'not' operator")
+TEST("_tilde", "Test terminfo format string 'not' operator")
 {
     src_parse_init();
-    our(check_not(0x55));
-    our(check_not(0));
+    our(test_not(0x55));
+    our(test_not(0));
     src_parse_teardown();
 }
 
 // -----------------------------------------------------------------------
 
-void our(check_not_logical(int64_t n1))
+void our(test_not_logical(int64_t n1))
 {
     int64_t rv;
 
@@ -256,17 +257,17 @@ void our(check_not_logical(int64_t n1))
     ut_assert_op_int64x(rv, ==, !n1);
 }
 
-TEST("_bang", "check format string logical 'not' operator")
+TEST("_bang", "Test terminfo format string logical 'not' operator")
 {
     src_parse_init();
-    our(check_not_logical(0x55));
-    our(check_not_logical(0));
+    our(test_not_logical(0x55));
+    our(test_not_logical(0));
     src_parse_teardown();
 }
 
 // -----------------------------------------------------------------------
 
-void our(check_xor(int64_t n1, int64_t n2))
+void our(test_xor(int64_t n1, int64_t n2))
 {
     int64_t rv;
 
@@ -280,17 +281,17 @@ void our(check_xor(int64_t n1, int64_t n2))
     ut_assert_op_int64x(rv, ==, (n1 ^ n2));
 }
 
-TEST("_caret", "check format string 'xor' operator")
+TEST("_caret", "Test terminfo format string 'xor' operator")
 {
     src_parse_init();
-    our(check_xor(0x55, 0xff));
-    our(check_xor(1, 0));
+    our(test_xor(0x55, 0xff));
+    our(test_xor(1, 0));
     src_parse_teardown();
 }
 
 // -----------------------------------------------------------------------
 
-void our(check_plus(int64_t n1, int64_t n2))
+void our(test_plus(int64_t n1, int64_t n2))
 {
     int64_t rv;
 
@@ -304,17 +305,17 @@ void our(check_plus(int64_t n1, int64_t n2))
     ut_assert_op_int64x(rv, ==, (n1 + n2));
 }
 
-TEST("_plus", "check format string '+' operator")
+TEST("_plus", "Test terminfo format string '+' operator")
 {
     src_parse_init();
-    our(check_plus(0x55, 0xff));
-    our(check_plus(1, 0));
+    our(test_plus(0x55, 0xff));
+    our(test_plus(1, 0));
     src_parse_teardown();
 }
 
 // -----------------------------------------------------------------------
 
-void our(check_minus(int64_t n1, int64_t n2))
+void our(test_minus(int64_t n1, int64_t n2))
 {
     int64_t rv;
 
@@ -328,17 +329,17 @@ void our(check_minus(int64_t n1, int64_t n2))
     ut_assert_op_int64x(rv, ==, (n1 - n2));
 }
 
-TEST("_minus", "check format string '-' operator")
+TEST("_minus", "Test terminfo format string '-' operator")
 {
     src_parse_init();
-    our(check_minus(0x55, 0xff));
-    our(check_minus(1, 0));
+    our(test_minus(0x55, 0xff));
+    our(test_minus(1, 0));
     src_parse_teardown();
 }
 
 // -----------------------------------------------------------------------
 
-void our(check_star(int64_t n1, int64_t n2))
+void our(test_star(int64_t n1, int64_t n2))
 {
     int64_t rv;
 
@@ -352,17 +353,17 @@ void our(check_star(int64_t n1, int64_t n2))
     ut_assert_op_int64x(rv, ==, (n1 * n2));
 }
 
-TEST("_star", "check format string '*' operator")
+TEST("_star", "Test terminfo format string '*' operator")
 {
     src_parse_init();
-    our(check_star(0x55, 0xff));
-    our(check_star(1, 0));
+    our(test_star(0x55, 0xff));
+    our(test_star(1, 0));
     src_parse_teardown();
 }
 
 // -----------------------------------------------------------------------
 
-void our(check_slash(int64_t n1, int64_t n2))
+void our(test_slash(int64_t n1, int64_t n2))
 {
     int64_t rv;
 
@@ -376,17 +377,17 @@ void our(check_slash(int64_t n1, int64_t n2))
     ut_assert_op_int64x(rv, ==, (n1 / n2));
 }
 
-TEST("_slash", "check format string '/' operator")
+TEST("_slash", "Test terminfo format string '/' operator")
 {
     src_parse_init();
-    our(check_slash(0x55, 0x23));
-    our(check_slash(10, 2));
+    our(test_slash(0x55, 0x23));
+    our(test_slash(10, 2));
     src_parse_teardown();
 }
 
 // -----------------------------------------------------------------------
 
-void our(check_mod(int64_t n1, int64_t n2))
+void our(test_mod(int64_t n1, int64_t n2))
 {
     int64_t rv;
 
@@ -400,17 +401,17 @@ void our(check_mod(int64_t n1, int64_t n2))
     ut_assert_op_int64x(rv, ==, (n1 % n2));
 }
 
-TEST("_mod", "check format string 'mod' operator")
+TEST("_mod", "Test terminfo format string 'mod' operator")
 {
     src_parse_init();
-    our(check_mod(0x55, 0x23));
-    our(check_mod(10, 2));
+    our(test_mod(0x55, 0x23));
+    our(test_mod(10, 2));
     src_parse_teardown();
 }
 
 // -----------------------------------------------------------------------
 
-void our(check_equals(int64_t n1, int64_t n2))
+void our(test_equals(int64_t n1, int64_t n2))
 {
     int64_t rv;
 
@@ -424,17 +425,17 @@ void our(check_equals(int64_t n1, int64_t n2))
     ut_assert_op_int64x(rv, ==, (n1 == n2));
 }
 
-TEST("_mod", "check format string '=' operator")
+TEST("_mod", "Test terminfo format string '=' operator")
 {
     src_parse_init();
-    our(check_mod(0x55, 0x55));
-    our(check_mod(10, 2));
+    our(test_mod(0x55, 0x55));
+    our(test_mod(10, 2));
     src_parse_teardown();
 }
 
 // -----------------------------------------------------------------------
 
-void our(check_greater(int64_t n1, int64_t n2))
+void our(test_greater(int64_t n1, int64_t n2))
 {
     int64_t rv;
 
@@ -448,17 +449,17 @@ void our(check_greater(int64_t n1, int64_t n2))
     ut_assert_op_int64x(rv, ==, (n1 > n2));
 }
 
-TEST("_greater", "check format string '>' operator")
+TEST("_greater", "Test terminfo format string '>' operator")
 {
     src_parse_init();
-    our(check_greater(0x22, 0x55));
-    our(check_greater(10, 2));
+    our(test_greater(0x22, 0x55));
+    our(test_greater(10, 2));
     src_parse_teardown();
 }
 
 // -----------------------------------------------------------------------
 
-void our(check_less(int64_t n1, int64_t n2))
+void our(test_less(int64_t n1, int64_t n2))
 {
     int64_t rv;
 
@@ -472,17 +473,17 @@ void our(check_less(int64_t n1, int64_t n2))
     ut_assert_op_int64x(rv, ==, (n1 < n2));
 }
 
-TEST("_less", "check format string '<' operator")
+TEST("_less", "Test terminfo format string '<' operator")
 {
     src_parse_init();
-    our(check_less(0x22, 0x55));
-    our(check_less(10, 2));
+    our(test_less(0x22, 0x55));
+    our(test_less(10, 2));
     src_parse_teardown();
 }
 
 // -----------------------------------------------------------------------
 
-void our(check_tick(char c))
+void our(test_tick(char c))
 {
     int16_t prev_num_esc;
     char got;
@@ -497,17 +498,17 @@ void our(check_tick(char c))
     ut_assert_op_int64x(got, ==, c);
 }
 
-TEST("_tick", "check format string literal insertion")
+TEST("_tick", "Test terminfo format string literal insertion")
 {
     src_parse_init();
-    our(check_tick('x'));
-    our(check_tick('z'));
+    our(test_tick('x'));
+    our(test_tick('z'));
     src_parse_teardown();
 }
 
 // -----------------------------------------------------------------------
 
-void our(check_parse_i(int64_t n1, int64_t n2))
+void our(test_parse_i(int64_t n1, int64_t n2))
 {
     params[0] = n1;
     params[1] = n2;
@@ -518,17 +519,17 @@ void our(check_parse_i(int64_t n1, int64_t n2))
     ut_assert_op_int64x(params[1], ==, n2 + 1);
 }
 
-TEST("_i", "check format strimg 'i' operator")
+TEST("_i", "Test terminfo format strimg 'i' operator")
 {
     src_parse_init();
-    our(check_parse_i(12, 34));
-    our(check_parse_i(56, 78));
+    our(test_parse_i(12, 34));
+    our(test_parse_i(56, 78));
     src_parse_teardown();
 }
 
 // -----------------------------------------------------------------------
 
-void our(check_parse_s(char *s))
+void our(test_parse_s(char *s))
 {
     int16_t prev_num_esc;
 
@@ -542,17 +543,17 @@ void our(check_parse_s(char *s))
     ut_assert_op_int64x(num_esc, ==, prev_num_esc + strlen(s));
 }
 
-TEST("_s", "check format string 's' operator")
+TEST("_s", "Test terminfo format string 's' operator")
 {
     src_parse_init();
-    our(check_parse_s("The cat in the hat"));
-    our(check_parse_s("To stupidity and beyond"));
+    our(test_parse_s("The cat in the hat"));
+    our(test_parse_s("To stupidity and beyond"));
     src_parse_teardown();
 }
 
 // -----------------------------------------------------------------------
 
-void our(check_parse_l(char *s))
+void our(test_parse_l(char *s))
 {
     int rv;
 
@@ -565,24 +566,23 @@ void our(check_parse_l(char *s))
     ut_assert_op_int64x(rv, ==, strlen(s));
 }
 
-TEST("_l", "check format string 'l' operator")
+TEST("_l", "Test terminfo format string 'l' operator")
 {
     src_parse_init();
-    our(check_parse_l("The cat in the hat"));
-    our(check_parse_l("To stupidity and beyond"));
+    our(test_parse_l("The cat in the hat"));
+    our(test_parse_l("To stupidity and beyond"));
     src_parse_teardown();
 }
 
 // -----------------------------------------------------------------------
 
-TEST("get_var_addr", "check calc of format string variable address")
+void our(get_var_addr(void))
 {
     int64_t *p;
 
     char *var1 = "a";
     char *var2 = "Z";
 
-    src_parse_init();
 
     f_str = var1;
     p = get_var_addr();
@@ -591,18 +591,21 @@ TEST("get_var_addr", "check calc of format string variable address")
     f_str = var2;
     p = get_var_addr();
     ut_assert_op_void_pt(p, ==, &AtoZ[25]);
+}
 
+TEST("get_var_addr", "Test terminfo format string var addr calc")
+{
+    src_parse_init();
+    our(get_var_addr());
     src_parse_teardown();
 }
 
 // -----------------------------------------------------------------------
 
-TEST("_P", "check setting of format string variables")
+void our(test_P(void))
 {
     char *var1 = "a";
     char *var2 = "Z";
-
-    src_parse_init();
 
     atoz[0] = 0;
     fs_push(0x1234);
@@ -616,20 +619,23 @@ TEST("_P", "check setting of format string variables")
     f_str = var2;
     _P();
     ut_assert_op_int64x(AtoZ[25], ==, 0x5678);
+}
 
+TEST("_P", "Test terminfo format string 'P' operator")
+{
+    src_parse_init();
+    our(test_P());
     src_parse_teardown();
 }
 
 // -----------------------------------------------------------------------
 
-TEST("_P", "check getting of format string variables")
+void our(test_g(void))
 {
     int64_t rv;
 
     char *var1 = "a";
     char *var2 = "Z";
-
-    src_parse_init();
 
     atoz[0]  = 0x1234;
     AtoZ[25] = 0x5678;
@@ -645,20 +651,23 @@ TEST("_P", "check getting of format string variables")
     rv = fs_pop();
 
     ut_assert_op_int64x(rv, ==, 0x5678);
+}
 
+TEST("_g", "Test terminfo format string 'g' operator")
+{
+    src_parse_init();
+    our(test_g());
     src_parse_teardown();
 }
 
 // -----------------------------------------------------------------------
 
-TEST("_brace", "check parsing of format string numbers")
+void our(test_brace(void))
 {
     int64_t rv;
 
     char *var1 = "1234}";
     char *var2 = "5678}";
-
-    src_parse_init();
 
     f_str = var1;
     _brace();
@@ -671,18 +680,21 @@ TEST("_brace", "check parsing of format string numbers")
     rv = fs_pop();
 
     ut_assert_op_int64x(rv, ==, 5678);
+}
 
+TEST("_brace", "Test terminfo parse of format string numbers")
+{
+    src_parse_init();
+    our(test_brace());
     src_parse_teardown();
 }
 
 // -----------------------------------------------------------------------
 
-TEST("to_cmd", "verify pparse to next format string '%' char")
+void our(test_to_cmd(void))
 {
     char *var1 = "abcd%efg";
     char *var2 = "hij%klm";
-
-    src_parse_init();
 
     f_str = var1;
     to_cmd();
@@ -696,19 +708,23 @@ TEST("to_cmd", "verify pparse to next format string '%' char")
     ut_assert_op_int8(*f_str, ==, '%');
     ut_assert_op_int64x((int64_t)f_str, ==, (int64_t)&var2[3]);
 
+}
+
+TEST("to_cmd", "Test terminfo parse to next format string '%' char")
+{
+    src_parse_init();
+    our(test_to_cmd());
     src_parse_teardown();
 }
 
 // -----------------------------------------------------------------------
 
-TEST("_t", "verify parsting of terminfo 't' operator")
+void our(test_t(void))
 {
     char *var1 = "Zaa%;Xxx";
     char *var2 = "Zaa%eXxx";
     char *var3 = "Zaa%?aa%;Aa%;X";
     char rv;
-
-    src_parse_init();
 
     f_str = var1;
     fs_push(1);
@@ -733,19 +749,22 @@ TEST("_t", "verify parsting of terminfo 't' operator")
     _t();
     rv = *f_str;
     ut_assert_op_int8(rv, ==, 'X');
+}
 
+TEST("_t", "Test terminfo format string 't' operator")
+{
+    src_parse_init();
+    our(test_t());
     src_parse_teardown();
 }
 
 // -----------------------------------------------------------------------
 
-TEST("_e", "Verify terminfo format string 'e' operator")
+void our(test_e(void))
 {
     char *var1 = "xxx%;X";
     char *var2 = "xxx%?aaaaa%eZzzzz%;zzzz%;X";
     char rv;
-
-    src_parse_init();
 
     f_str = var1;
     _e();
@@ -756,7 +775,12 @@ TEST("_e", "Verify terminfo format string 'e' operator")
     _e();
     rv = *f_str;
     ut_assert_op_int8(rv, ==, 'X');
+}
 
+TEST("_e", "Test terminfo format string 'e' operator")
+{
+    src_parse_init();
+    our(test_e());
     src_parse_teardown();
 }
 
@@ -771,7 +795,7 @@ TEST("_d", "STUBB")
 
 // -----------------------------------------------------------------------
 
-void our(check_emit_tos)(char sent)
+void our(test_emit_tos)(char sent)
 {
     char got;
     uint16_t prev_num_esc;
@@ -787,21 +811,20 @@ void our(check_emit_tos)(char sent)
 TEST("_c", "Test terminfo format string 'c' operator")
 {
     src_parse_init();
-    our(check_emit_tos)('x');
-    our(check_emit_tos)('z');
+    our(test_emit_tos)('x');
+    our(test_emit_tos)('z');
     src_parse_teardown();
 }
 
 // -----------------------------------------------------------------------
 
-TEST("_p", "Test terminfo format string 'p' operator")
+void our(test_p(void))
 {
     int64_t rv;
 
     char *var1 = "1";
     char *var2 = "7";
 
-    src_parse_init();
     params[0] = 0x1234;
     params[6] = 0x5678;
 
@@ -814,19 +837,23 @@ TEST("_p", "Test terminfo format string 'p' operator")
     _p();
     rv = fs_pop();
     ut_assert_op_int64x(rv, ==, 0x5678);
+}
 
+TEST("_p", "Test terminfo format string 'p' operator")
+{
+    src_parse_init();
+    our(test_p());
     src_parse_teardown();
 }
 
 // -----------------------------------------------------------------------
 
-TEST("next_c", "Test Get of next character from format string")
+void our(test_next_c(void))
 {
     char rv;
     char *var1 = "abcde";
     char *var2 = "2b000";
 
-    src_parse_init();
     digits = 0;
 
     f_str = var1;
@@ -838,7 +865,30 @@ TEST("next_c", "Test Get of next character from format string")
     rv = next_c();
     ut_assert_op_int8(rv, ==, 'b');
     ut_assert_op_int8(digits, ==, 2);
+}
 
+TEST("next_c", "Test read of next char from format string")
+{
+    src_parse_init();
+    our(test_next_c());
+    src_parse_teardown();
+}
+
+// -----------------------------------------------------------------------
+
+TEST("parse_format", "STUBB")
+{
+    src_parse_init();
+    // deferred till mocking is available
+    src_parse_teardown();
+}
+
+// -----------------------------------------------------------------------
+
+TEST("format", "STUBB")
+{
+    src_parse_init();
+    // deferred till mocking is available
     src_parse_teardown();
 }
 

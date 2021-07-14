@@ -2,7 +2,7 @@
 // -----------------------------------------------------------------------
 
 #include <libchordtest/test.h>
-#include "h/assert.h"
+#include "h/ut_assert.h"
 #include "src/parse.c"
 
 // ------------------------------------------------------------------------
@@ -125,7 +125,7 @@ TEST("_percent", "Test add of '%' to terminfo esc_buff")
 
 // -----------------------------------------------------------------------
 
-void our(test_and(int64_t n1, int64_t n2))
+void our(test_and)(int64_t n1, int64_t n2)
 {
     int64_t rv;
 
@@ -142,14 +142,14 @@ void our(test_and(int64_t n1, int64_t n2))
 TEST("_and", "Test terminfo format string 'and' operator")
 {
     src_parse_init();
-    our(test_and(0x55, 0xff));
-    our(test_and(3, 2));
+    our(test_and)(0x55, 0xff);
+    our(test_and)(3, 2);
     src_parse_teardown();
 }
 
 // -----------------------------------------------------------------------
 
-void our(test_and_logical(int64_t n1, int64_t n2))
+void our(test_and_logical)(int64_t n1, int64_t n2)
 {
     int64_t rv;
 
@@ -166,14 +166,14 @@ void our(test_and_logical(int64_t n1, int64_t n2))
 TEST("_andl", "Test teerminfo format string logical 'and' operator")
 {
     src_parse_init();
-    our(test_and_logical(0x55, 0xff));
-    our(test_and_logical(1, 0));
+    our(test_and_logical)(0x55, 0xff);
+    our(test_and_logical)(1, 0);
     src_parse_teardown();
 }
 
 // -----------------------------------------------------------------------
 
-void our(test_or(int64_t n1, int64_t n2))
+void our(test_or)(int64_t n1, int64_t n2)
 {
     int64_t rv;
 
@@ -190,14 +190,14 @@ void our(test_or(int64_t n1, int64_t n2))
 TEST("_or", "Test terminfo format string 'or' operator")
 {
     src_parse_init();
-    our(test_or(0x55, 0xff));
-    our(test_or(1, 0));
+    our(test_or)(0x55, 0xff);
+    our(test_or)(1, 0);
     src_parse_teardown();
 }
 
 // -----------------------------------------------------------------------
 
-void our(test_or_logical(int64_t n1, int64_t n2))
+void our(test_or_logical)(int64_t n1, int64_t n2)
 {
     int64_t rv;
 
@@ -214,14 +214,14 @@ void our(test_or_logical(int64_t n1, int64_t n2))
 TEST("_orl", "Test terminfo format string logical 'or' operator")
 {
     src_parse_init();
-    our(test_or_logical(0x55, 0xff));
-    our(test_or_logical(1, 0));
+    our(test_or_logical)(0x55, 0xff);
+    our(test_or_logical)(1, 0);
     src_parse_teardown();
 }
 
 // -----------------------------------------------------------------------
 
-void our(test_not(int64_t n1))
+void our(test_not)(int64_t n1)
 {
     int64_t rv;
 
@@ -237,14 +237,14 @@ void our(test_not(int64_t n1))
 TEST("_tilde", "Test terminfo format string 'not' operator")
 {
     src_parse_init();
-    our(test_not(0x55));
-    our(test_not(0));
+    our(test_not)(0x55);
+    our(test_not)(0);
     src_parse_teardown();
 }
 
 // -----------------------------------------------------------------------
 
-void our(test_not_logical(int64_t n1))
+void our(test_not_logical)(int64_t n1)
 {
     int64_t rv;
 
@@ -260,14 +260,14 @@ void our(test_not_logical(int64_t n1))
 TEST("_bang", "Test terminfo format string logical 'not' operator")
 {
     src_parse_init();
-    our(test_not_logical(0x55));
-    our(test_not_logical(0));
+    our(test_not_logical)(0x55);
+    our(test_not_logical)(0);
     src_parse_teardown();
 }
 
 // -----------------------------------------------------------------------
 
-void our(test_xor(int64_t n1, int64_t n2))
+void our(test_xor)(int64_t n1, int64_t n2)
 {
     int64_t rv;
 
@@ -284,14 +284,14 @@ void our(test_xor(int64_t n1, int64_t n2))
 TEST("_caret", "Test terminfo format string 'xor' operator")
 {
     src_parse_init();
-    our(test_xor(0x55, 0xff));
-    our(test_xor(1, 0));
+    our(test_xor)(0x55, 0xff);
+    our(test_xor)(1, 0);
     src_parse_teardown();
 }
 
 // -----------------------------------------------------------------------
 
-void our(test_plus(int64_t n1, int64_t n2))
+void our(test_plus)(int64_t n1, int64_t n2)
 {
     int64_t rv;
 
@@ -308,14 +308,14 @@ void our(test_plus(int64_t n1, int64_t n2))
 TEST("_plus", "Test terminfo format string '+' operator")
 {
     src_parse_init();
-    our(test_plus(0x55, 0xff));
-    our(test_plus(1, 0));
+    our(test_plus)(0x55, 0xff);
+    our(test_plus)(1, 0);
     src_parse_teardown();
 }
 
 // -----------------------------------------------------------------------
 
-void our(test_minus(int64_t n1, int64_t n2))
+void our(test_minus)(int64_t n1, int64_t n2)
 {
     int64_t rv;
 
@@ -332,14 +332,14 @@ void our(test_minus(int64_t n1, int64_t n2))
 TEST("_minus", "Test terminfo format string '-' operator")
 {
     src_parse_init();
-    our(test_minus(0x55, 0xff));
-    our(test_minus(1, 0));
+    our(test_minus)(0x55, 0xff);
+    our(test_minus)(1, 0);
     src_parse_teardown();
 }
 
 // -----------------------------------------------------------------------
 
-void our(test_star(int64_t n1, int64_t n2))
+void our(test_star)(int64_t n1, int64_t n2)
 {
     int64_t rv;
 
@@ -356,14 +356,14 @@ void our(test_star(int64_t n1, int64_t n2))
 TEST("_star", "Test terminfo format string '*' operator")
 {
     src_parse_init();
-    our(test_star(0x55, 0xff));
-    our(test_star(1, 0));
+    our(test_star)(0x55, 0xff);
+    our(test_star)(1, 0);
     src_parse_teardown();
 }
 
 // -----------------------------------------------------------------------
 
-void our(test_slash(int64_t n1, int64_t n2))
+void our(test_slash)(int64_t n1, int64_t n2)
 {
     int64_t rv;
 
@@ -380,14 +380,14 @@ void our(test_slash(int64_t n1, int64_t n2))
 TEST("_slash", "Test terminfo format string '/' operator")
 {
     src_parse_init();
-    our(test_slash(0x55, 0x23));
-    our(test_slash(10, 2));
+    our(test_slash)(0x55, 0x23);
+    our(test_slash)(10, 2);
     src_parse_teardown();
 }
 
 // -----------------------------------------------------------------------
 
-void our(test_mod(int64_t n1, int64_t n2))
+void our(test_mod)(int64_t n1, int64_t n2)
 {
     int64_t rv;
 
@@ -404,14 +404,14 @@ void our(test_mod(int64_t n1, int64_t n2))
 TEST("_mod", "Test terminfo format string 'mod' operator")
 {
     src_parse_init();
-    our(test_mod(0x55, 0x23));
-    our(test_mod(10, 2));
+    our(test_mod)(0x55, 0x23);
+    our(test_mod)(10, 2);
     src_parse_teardown();
 }
 
 // -----------------------------------------------------------------------
 
-void our(test_equals(int64_t n1, int64_t n2))
+void our(test_equals)(int64_t n1, int64_t n2)
 {
     int64_t rv;
 
@@ -428,14 +428,14 @@ void our(test_equals(int64_t n1, int64_t n2))
 TEST("_mod", "Test terminfo format string '=' operator")
 {
     src_parse_init();
-    our(test_mod(0x55, 0x55));
-    our(test_mod(10, 2));
+    our(test_mod)(0x55, 0x55);
+    our(test_mod)(10, 2);
     src_parse_teardown();
 }
 
 // -----------------------------------------------------------------------
 
-void our(test_greater(int64_t n1, int64_t n2))
+void our(test_greater)(int64_t n1, int64_t n2)
 {
     int64_t rv;
 
@@ -452,14 +452,14 @@ void our(test_greater(int64_t n1, int64_t n2))
 TEST("_greater", "Test terminfo format string '>' operator")
 {
     src_parse_init();
-    our(test_greater(0x22, 0x55));
-    our(test_greater(10, 2));
+    our(test_greater)(0x22, 0x55);
+    our(test_greater)(10, 2);
     src_parse_teardown();
 }
 
 // -----------------------------------------------------------------------
 
-void our(test_less(int64_t n1, int64_t n2))
+void our(test_less)(int64_t n1, int64_t n2)
 {
     int64_t rv;
 
@@ -476,14 +476,14 @@ void our(test_less(int64_t n1, int64_t n2))
 TEST("_less", "Test terminfo format string '<' operator")
 {
     src_parse_init();
-    our(test_less(0x22, 0x55));
-    our(test_less(10, 2));
+    our(test_less)(0x22, 0x55);
+    our(test_less)(10, 2);
     src_parse_teardown();
 }
 
 // -----------------------------------------------------------------------
 
-void our(test_tick(char c))
+void our(test_tick)(char c)
 {
     int16_t prev_num_esc;
     char got;
@@ -501,14 +501,14 @@ void our(test_tick(char c))
 TEST("_tick", "Test terminfo format string literal insertion")
 {
     src_parse_init();
-    our(test_tick('x'));
-    our(test_tick('z'));
+    our(test_tick)('x');
+    our(test_tick)('z');
     src_parse_teardown();
 }
 
 // -----------------------------------------------------------------------
 
-void our(test_parse_i(int64_t n1, int64_t n2))
+void our(test_parse_i)(int64_t n1, int64_t n2)
 {
     params[0] = n1;
     params[1] = n2;
@@ -522,14 +522,14 @@ void our(test_parse_i(int64_t n1, int64_t n2))
 TEST("_i", "Test terminfo format strimg 'i' operator")
 {
     src_parse_init();
-    our(test_parse_i(12, 34));
-    our(test_parse_i(56, 78));
+    our(test_parse_i)(12, 34);
+    our(test_parse_i)(56, 78);
     src_parse_teardown();
 }
 
 // -----------------------------------------------------------------------
 
-void our(test_parse_s(char *s))
+void our(test_parse_s)(char *s)
 {
     int16_t prev_num_esc;
 
@@ -546,14 +546,14 @@ void our(test_parse_s(char *s))
 TEST("_s", "Test terminfo format string 's' operator")
 {
     src_parse_init();
-    our(test_parse_s("The cat in the hat"));
-    our(test_parse_s("To stupidity and beyond"));
+    our(test_parse_s)("The cat in the hat");
+    our(test_parse_s)("To stupidity and beyond");
     src_parse_teardown();
 }
 
 // -----------------------------------------------------------------------
 
-void our(test_parse_l(char *s))
+void our(test_parse_l)(char *s)
 {
     int rv;
 
@@ -569,14 +569,14 @@ void our(test_parse_l(char *s))
 TEST("_l", "Test terminfo format string 'l' operator")
 {
     src_parse_init();
-    our(test_parse_l("The cat in the hat"));
-    our(test_parse_l("To stupidity and beyond"));
+    our(test_parse_l)("The cat in the hat");
+    our(test_parse_l)("To stupidity and beyond");
     src_parse_teardown();
 }
 
 // -----------------------------------------------------------------------
 
-void our(get_var_addr(void))
+void our(get_var_addr)(void)
 {
     int64_t *p;
 
@@ -596,13 +596,13 @@ void our(get_var_addr(void))
 TEST("get_var_addr", "Test terminfo format string var addr calc")
 {
     src_parse_init();
-    our(get_var_addr());
+    our(get_var_addr)();
     src_parse_teardown();
 }
 
 // -----------------------------------------------------------------------
 
-void our(test_P(void))
+void our(test_P)(void)
 {
     char *var1 = "a";
     char *var2 = "Z";
@@ -624,13 +624,13 @@ void our(test_P(void))
 TEST("_P", "Test terminfo format string 'P' operator")
 {
     src_parse_init();
-    our(test_P());
+    our(test_P)();
     src_parse_teardown();
 }
 
 // -----------------------------------------------------------------------
 
-void our(test_g(void))
+void our(test_g)(void)
 {
     int64_t rv;
 
@@ -656,13 +656,13 @@ void our(test_g(void))
 TEST("_g", "Test terminfo format string 'g' operator")
 {
     src_parse_init();
-    our(test_g());
+    our(test_g)();
     src_parse_teardown();
 }
 
 // -----------------------------------------------------------------------
 
-void our(test_brace(void))
+void our(test_brace)(void)
 {
     int64_t rv;
 
@@ -685,13 +685,13 @@ void our(test_brace(void))
 TEST("_brace", "Test terminfo parse of format string numbers")
 {
     src_parse_init();
-    our(test_brace());
+    our(test_brace)();
     src_parse_teardown();
 }
 
 // -----------------------------------------------------------------------
 
-void our(test_to_cmd(void))
+void our(test_to_cmd)(void)
 {
     char *var1 = "abcd%efg";
     char *var2 = "hij%klm";
@@ -707,19 +707,18 @@ void our(test_to_cmd(void))
     f_str--;
     ut_assert_op_int8(*f_str, ==, '%');
     ut_assert_op_int64x((int64_t)f_str, ==, (int64_t)&var2[3]);
-
 }
 
 TEST("to_cmd", "Test terminfo parse to next format string '%' char")
 {
     src_parse_init();
-    our(test_to_cmd());
+    our(test_to_cmd)();
     src_parse_teardown();
 }
 
 // -----------------------------------------------------------------------
 
-void our(test_t(void))
+void our(test_t)(void)
 {
     char *var1 = "Zaa%;Xxx";
     char *var2 = "Zaa%eXxx";
@@ -754,13 +753,13 @@ void our(test_t(void))
 TEST("_t", "Test terminfo format string 't' operator")
 {
     src_parse_init();
-    our(test_t());
+    our(test_t)();
     src_parse_teardown();
 }
 
 // -----------------------------------------------------------------------
 
-void our(test_e(void))
+void our(test_e)(void)
 {
     char *var1 = "xxx%;X";
     char *var2 = "xxx%?aaaaa%eZzzzz%;zzzz%;X";
@@ -780,7 +779,7 @@ void our(test_e(void))
 TEST("_e", "Test terminfo format string 'e' operator")
 {
     src_parse_init();
-    our(test_e());
+    our(test_e)();
     src_parse_teardown();
 }
 
@@ -818,7 +817,7 @@ TEST("_c", "Test terminfo format string 'c' operator")
 
 // -----------------------------------------------------------------------
 
-void our(test_p(void))
+void our(test_p)(void)
 {
     int64_t rv;
 
@@ -842,13 +841,13 @@ void our(test_p(void))
 TEST("_p", "Test terminfo format string 'p' operator")
 {
     src_parse_init();
-    our(test_p());
+    our(test_p)();
     src_parse_teardown();
 }
 
 // -----------------------------------------------------------------------
 
-void our(test_next_c(void))
+void our(test_next_c)(void)
 {
     char rv;
     char *var1 = "abcde";
@@ -870,7 +869,7 @@ void our(test_next_c(void))
 TEST("next_c", "Test read of next char from format string")
 {
     src_parse_init();
-    our(test_next_c());
+    our(test_next_c)();
     src_parse_teardown();
 }
 

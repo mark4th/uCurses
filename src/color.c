@@ -24,8 +24,7 @@ int8_t default_fg = WHITE;
 
 static void rgb_fg(void)
 {
-    const char *const rgb_seq =
-       "\x1b[38;2;%p1%3d;%p2%3d;%p3%3dm";
+    const char *const rgb_seq = "\x1b[38;2;%p1%3d;%p2%3d;%p3%3dm";
 
     params[0] = attrs.bytes[FG_R];
     params[1] = attrs.bytes[FG_G];
@@ -64,8 +63,7 @@ static void gray_fg(void)
 
 static void rgb_bg(void)
 {
-    const char *const rgb_seq =
-      "\x1b[48;2;%p1%3d;%p2%3d;%p3%3dm";
+    const char *const rgb_seq = "\x1b[48;2;%p1%3d;%p2%3d;%p3%3dm";
 
     params[0] = attrs.bytes[BG_R];
     params[1] = attrs.bytes[BG_G];

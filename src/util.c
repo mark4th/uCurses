@@ -41,7 +41,7 @@ void clock_sleep(int32_t when)
 
 void curoff(void)
 {
-    ti_civis(); // what you cant read this ?
+    ti_civis();
 }
 
 // -----------------------------------------------------------------------

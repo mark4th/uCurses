@@ -14,19 +14,19 @@ void node_insert(node_t *n1, node_t *n2)
     node_t *t;
     list_t *l;
 
-    l = n1->parent;             // make n2's parent the same as n1's
+    l = n1->parent; // make n2's parent the same as n1's
     n2->parent = l;
 
-    t = (node_t *)n1->next;     // going to insert after node n1
+    t = (node_t *)n1->next; // going to insert after node n1
 
     n2->next = t;
 
-    (t == NULL)                 // if n2 was tail then
-        ? (l->tail = n2)        // n1 is now the tail
-        : (t->prev = n2);       // else link back from t to n2
+    (t == NULL)           // if n2 was tail then
+        ? (l->tail = n2)  // n1 is now the tail
+        : (t->prev = n2); // else link back from t to n2
 
-    n1->next = n2;              // link n1 ->> n2
-    n2->prev = n1;              // link n1 <<- n2
+    n1->next = n2; // link n1 ->> n2
+    n2->prev = n1; // link n1 <<- n2
 
     l->count++;
 }
@@ -130,17 +130,17 @@ int16_t list_append_node(list_t *l, void *payload)
 
     if(l->head == NULL)
     {
-        l->head    = l->tail = n1;
-        n1->next   = n1->prev = NULL;
+        l->head = l->tail = n1;
+        n1->next = n1->prev = NULL;
         n1->parent = l;
     }
     else
     {
         n1->parent = l;
-        t          = l->tail;
-        t->next    = n1;
-        n1->prev   = t;
-        l->tail    = n1;
+        t = l->tail;
+        t->next = n1;
+        n1->prev = t;
+        l->tail = n1;
     }
     l->count++;
 

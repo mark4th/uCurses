@@ -11,6 +11,7 @@ project_description = 'TUI app builder for consoles and terminals.'
 build_args = [
     '-fno-inline',
     '-Werror',
+    '-Wno-extra-semi',
     '-std=gnu17',
     '-pipe',
     '-fno-align-functions',

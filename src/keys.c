@@ -37,22 +37,23 @@ static struct pollfd pfd = //
 // -----------------------------------------------------------------------
 // returns 0 = no keys available, 1 = keys available
 
-uint8_t test_keys(void)
+int8_t test_keys(void)
 {
-    uint8_t x;
+    int x;
 
     if((x = stuffed) == 0)
     {
         x = poll(&pfd, 1, 0);
 
-        if(x == 0xff)
+        if(x == -1)
         {
             x = 0;
             // TODO: log warning
         }
     }
     stuffed = 0;
-    return x;
+
+    return (int8_t)x;
 }
 
 // -----------------------------------------------------------------------
@@ -86,6 +87,7 @@ static void read_keys(void)
 }
 
 // -----------------------------------------------------------------------
+// set index zero of the escape buffer to specified char
 
 static void set_esc0(uint8_t c)
 {
@@ -375,6 +377,7 @@ uint8_t key(void)
 }
 
 // -----------------------------------------------------------------------
+// manyally stuff a key into the buffer as if a key had been pressed.
 
 void stuff_key(int8_t c)
 {

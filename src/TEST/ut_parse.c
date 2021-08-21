@@ -496,6 +496,7 @@ void our(test_tick)(char c)
     got = esc_buff[prev_num_esc];
 
     ut_assert_op_int64x(got, ==, c);
+    f_str = NULL;
 }
 
 TEST("_tick", "Test terminfo format string literal insertion")

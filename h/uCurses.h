@@ -633,7 +633,7 @@ void alloc_status(void);
 int re_switch(const switch_t *s, size_t size, int32_t option);
 
 uint8_t key(void);
-uint8_t test_keys(void);
+int8_t test_keys(void);
 void stuff_key(int8_t c);
 
 // -----------------------------------------------------------------------

@@ -5,7 +5,11 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-#include "h/uCurses.h"
+#include "uCurses.h"
+#include "re_switch.h"
+#include "window.h"
+#include "utf8.h"
+#include "utils.h"
 
 // -----------------------------------------------------------------------
 
@@ -16,15 +20,15 @@ static window_t *w;
 // -----------------------------------------------------------------------
 // write string into specified window at its currnt cursor location
 
-void win_puts(window_t *win, char *p)
+API void uC_win_puts(window_t *win, char *p)
 {
     uint8_t skip;
     int32_t codepoint;
 
-    while(*p != '\0')
+    while (*p != '\0')
     {
         skip = utf8_decode(&codepoint, p);
-        win_emit(win, codepoint);
+        uC_win_emit(win, codepoint);
         p += skip;
     }
 }
@@ -33,7 +37,7 @@ void win_puts(window_t *win, char *p)
 
 static void zero_abort(void)
 {
-    if(*p == '\0')
+    if (*p == '\0')
     {
         xabort("Unexpected end of win_printf format string");
     }
@@ -52,14 +56,8 @@ static void rf(void)
     g = va_arg(arg, int) & 0xff;
     b = va_arg(arg, int) & 0xff;
 
-    if(*p == 'f')
-    {
-        win_set_rgb_fg(w, r, g, b);
-    }
-    else if(*p == 'b')
-    {
-        win_set_rgb_bg(w, r, g, b);
-    }
+    if (*p == 'f')      { uC_win_set_rgb_fg(w, r, g, b); }
+    else if (*p == 'b') { uC_win_set_rgb_bg(w, r, g, b); }
     else
     {
         xabort("Expected x or b on win_printf %%r");
@@ -69,7 +67,7 @@ static void rf(void)
 }
 
 // -----------------------------------------------------------------------
-// %fc ir %fs  set foreground color or gray scale
+// %fc or %fs  set foreground color or gray scale
 
 static void f(void)
 {
@@ -79,14 +77,8 @@ static void f(void)
 
     f = va_arg(arg, int);
 
-    if(*p == 'c')
-    {
-        win_set_fg(w, f);
-    }
-    else if(*p == 's')
-    {
-        win_set_gray_fg(w, f % 21);
-    }
+    if (*p == 'c')      { uC_win_set_fg(w, f);           }
+    else if (*p == 's') { uC_win_set_gray_fg(w, f % 21); }
     else
     {
         xabort("Expected c or s on win_printf %%f");
@@ -105,14 +97,8 @@ static void b(void)
 
     b = va_arg(arg, int);
 
-    if(*p == 'c')
-    {
-        win_set_bg(w, b);
-    }
-    else if(*p == 's')
-    {
-        win_set_gray_bg(w, b % 23);
-    }
+    if (*p == 'c')       { uC_win_set_bg(w, b);           }
+    else if (*p == 's')  { uC_win_set_gray_bg(w, b % 23); }
     else
     {
         xabort("Expected c or s on win_printf %%b");
@@ -129,7 +115,7 @@ static void xy(void)
     int x = va_arg(arg, int);
     int y = va_arg(arg, int);
 
-    win_cup(w, x, y);
+    uC_win_cup(w, x, y);
 }
 
 // -----------------------------------------------------------------------
@@ -139,7 +125,7 @@ static void x(void)
 {
     int x = va_arg(arg, int);
 
-    win_set_cx(w, x);
+    uC_win_set_cx(w, x);
 }
 
 // -----------------------------------------------------------------------
@@ -149,7 +135,7 @@ static void y(void)
 {
     int y = va_arg(arg, int);
 
-    win_set_cy(w, y);
+    uC_win_set_cy(w, y);
 }
 
 // -----------------------------------------------------------------------
@@ -159,9 +145,9 @@ static void up(void)
 {
     int y = va_arg(arg, int);
 
-    while(y-- != 0)
+    while (y-- != 0)
     {
-        win_scroll_up(w);
+        uC_win_scroll_up(w);
     }
 }
 
@@ -172,9 +158,9 @@ static void dn(void)
 {
     int y = va_arg(arg, int);
 
-    while(y-- != 0)
+    while (y-- != 0)
     {
-        win_scroll_dn(w);
+        uC_win_scroll_dn(w);
     }
 }
 
@@ -185,9 +171,9 @@ static void lt(void)
 {
     int x = va_arg(arg, int);
 
-    while(x-- != 0)
+    while (x-- != 0)
     {
-        win_scroll_lt(w);
+        uC_win_scroll_lt(w);
     }
 }
 
@@ -198,9 +184,9 @@ static void rt(void)
 {
     int x = va_arg(arg, int);
 
-    while(x-- != 0)
+    while (x-- != 0)
     {
-        win_scroll_rt(w);
+        uC_win_scroll_rt(w);
     }
 }
 
@@ -209,22 +195,10 @@ static void rt(void)
 
 static void c(void)
 {
-    if(*p == 'u')
-    {
-        win_crsr_up(w);
-    }
-    else if(*p == 'd')
-    {
-        win_crsr_dn(w);
-    }
-    else if(*p == 'l')
-    {
-        win_crsr_lt(w);
-    }
-    else if(*p == 'r')
-    {
-        win_crsr_rt(w);
-    }
+    if (*p == 'u')      { uC_win_crsr_up(w); }
+    else if (*p == 'd') { uC_win_crsr_dn(w); }
+    else if (*p == 'l') { uC_win_crsr_lt(w); }
+    else if (*p == 'r') { uC_win_crsr_rt(w); }
     else
     {
         xabort("Expected u, d, l or r on win_printf %%c");
@@ -237,7 +211,7 @@ static void c(void)
 
 static void wclear(void)
 {
-    win_clear(w);
+    uC_win_clear(w);
 }
 
 // -----------------------------------------------------------------------
@@ -246,21 +220,15 @@ static void wclear(void)
 static void u_puts(void)
 {
     char *s = va_arg(arg, char *);
-    win_puts(w, s);
+    uC_win_puts(w, s);
 }
 
 // -----------------------------------------------------------------------
 
 static void bold(void)
 {
-    if(*p == '+')
-    {
-        win_set_bold(w);
-    }
-    else if(*p == '-')
-    {
-        win_clr_bold(w);
-    }
+    if (*p == '+')      { uC_win_set_bold(w); }
+    else if (*p == '-') { uC_win_clr_bold(w); }
     else
     {
         xabort("Expected + or - win_printf %%B");
@@ -273,14 +241,8 @@ static void bold(void)
 
 static void uline(void)
 {
-    if(*p == '+')
-    {
-        win_set_ul(w);
-    }
-    else if(*p == '-')
-    {
-        win_clr_ul(w);
-    }
+    if (*p == '+')      { uC_win_set_ul(w); }
+    else if (*p == '-') { uC_win_clr_ul(w); }
     else
     {
         xabort("Expected + or - win_printf %%U");
@@ -293,14 +255,8 @@ static void uline(void)
 
 static void rev(void)
 {
-    if(*p == '+')
-    {
-        win_set_rev(w);
-    }
-    else if(*p == '-')
-    {
-        win_clr_rev(w);
-    }
+    if (*p == '+')      { uC_win_set_rev(w); }
+    else if (*p == '-') { uC_win_clr_rev(w); }
     else
     {
         xabort("Expected + or - win_printf %%R");
@@ -311,19 +267,19 @@ static void rev(void)
 
 // -----------------------------------------------------------------------
 
-static switch_t commands[] = //
-    {                        //
-        { 'r', &rf },   { 'f', &f },     { 'b', &b },      { '@', &xy },
-        { 'x', &x },    { 'y', &y },     { 'u', &up },     { 'd', &dn },
-        { 'l', &lt },   { 'r', &rt },    { '0', &wclear }, { 'c', &c },
-        { 'B', &bold }, { 'U', &uline }, { 'R', rev },     { 's', u_puts }
-    };
+static switch_t commands[] =
+{
+    { 'r', &rf   }, { 'f', &f     }, { 'b', &b      }, { '@', &xy },
+    { 'x', &x    }, { 'y', &y     }, { 'u', &up     }, { 'd', &dn },
+    { 'l', &lt   }, { 'r', &rt    }, { '0', &wclear }, { 'c', &c },
+    { 'B', &bold }, { 'U', &uline }, { 'R', rev     }, { 's', u_puts }
+};
 
 #define COMMANDS sizeof(commands) / sizeof(commands[0])
 
 // -----------------------------------------------------------------------
 
-static INLINE void command(void)
+static void command(void)
 {
     zero_abort();
     re_switch(commands, COMMANDS, *p++);
@@ -336,7 +292,7 @@ static INLINE void command(void)
 // your string into a buffer and escape the format tags within it that
 // you want passed to this function...
 
-void win_printf(window_t *win, char *format, ...)
+API void uC_win_printf(window_t *win, char *format, ...)
 {
     int32_t codepoint;
     int8_t skip;
@@ -346,16 +302,16 @@ void win_printf(window_t *win, char *format, ...)
     p = format;
     w = win;
 
-    while(*p != '\0')
+    while (*p != '\0')
     {
-        while((*p != '%') && (*p != '\0'))
+        while ((*p != '%') && (*p != '\0'))
         {
             skip = utf8_decode(&codepoint, p);
-            win_emit(win, codepoint);
+            uC_win_emit(win, codepoint);
             p += skip;
         }
 
-        if(*p != '\0')
+        if (*p != '\0')
         {
             p++;
             command();

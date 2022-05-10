@@ -11,10 +11,12 @@ project_description = 'TUI app builder for consoles and terminals.'
 build_args = [
     '-fno-inline',
     '-Werror',
-    '-Wno-extra-semi',
+#    '-Wno-extra-semi',
     '-std=gnu17',
     '-pipe',
     '-fno-align-functions',
+    '-fvisibility=hidden',
+    '-I../h'
 ]
 
 usable_pythons = [ 'python3.12', 'python3.11', 'python3.10', 'python3.9', 'python3.8', 'python3.7', 'python3' ]
@@ -39,20 +41,37 @@ build_args += [
 message('@0@: @1@'.format(compiler.get_id(), build_args))
 
 
-linker_args = ['-Wl,--entry=entry']
+linker_args = ['-Wl,--entry=entry ']
 
-find_test_src = '''from glob import glob;print('\n'.join(glob('src/TEST/*.c')))'''
-src_test_sources = run_command(python, '-c', find_test_src, check: true).stdout().strip().split('\n')
+#find_test_src = '''from glob import glob;print('\n'.join(glob('src/TEST/*.c')))'''
+#src_test_sources = run_command(python, '-c', find_test_src, check: true).stdout().strip().split('\n')
 
 find_src = '''from glob import glob;print('\n'.join(glob('src/*.c')))'''
+find_jsr = '''from glob import glob;print('\n'.join(glob('src/json/*.c')))'''
+find_mnu = '''from glob import glob;print('\n'.join(glob('src/menus/*.c')))'''
+find_key = '''from glob import glob;print('\n'.join(glob('src/keys/*.c')))'''
+find_ti  = '''from glob import glob;print('\n'.join(glob('src/terminfo/*.c')))'''
 
 sources = run_command(python, '-c', find_src, check: true)
+sourcej = run_command(python, '-c', find_jsr, check: true)
+sourcem = run_command(python, '-c', find_mnu, check: true)
+sourcek = run_command(python, '-c', find_key, check: true)
+sourcet = run_command(python, '-c', find_ti, check: true)
+
 
 project_source_files = sources.stdout().strip().split('\n')
+json_source_files = sourcej.stdout().strip().split('\n')
+menu_source_files = sourcem.stdout().strip().split('\n')
+key_source_files  = sourcek.stdout().strip().split('\n')
+ti_source_files   = sourcet.stdout().strip().split('\n')
 
 shared_object = shared_library(
     meson.project_name(),
     project_source_files,
+    json_source_files,
+    menu_source_files,
+    key_source_files,
+    ti_source_files,
     install : true,
     link_args : linker_args,
     c_args : build_args,
@@ -81,26 +100,26 @@ project_target = custom_target(
 )
 
 
-if compiler.get_id() == 'clang'
-    test_build_args = build_args
+#if compiler.get_id() == 'clang'
+#    test_build_args = build_args
+#
+#    test_arg_clang = [
+#        '-fno-inline', '-Wall', '-Werror', '-pipe', '-fno-align-functions', '-Wno-error=pedantic', '-Wno-pedantic',
+#    ]
+#
+#    test_linker_args = ['-L/opt/chordlang.io/lib', '-lchordtest', '-lunwind', '-ldl']
+#
+#    test_build_args_c = test_build_args + [
+#        '-Oz', '-std=gnu17', '-fblocks', '-I/opt/chordlang.io/include'  ]
+#    linker_args_test = test_linker_args + [ '-gdwarf', '-fprofile-instr-generate', '-fcoverage-mapping',  ]
+#    build_args_test_c = test_build_args_c + [ '-D__TESTING__=1', '-gdwarf', '-fprofile-instr-generate', '-fcoverage-mapping', ]
+#endif
 
-    test_arg_clang = [
-        '-fno-inline', '-Wall', '-Werror', '-pipe', '-fno-align-functions', '-Wno-error=pedantic', '-Wno-pedantic',
-    ]
 
-    test_linker_args = ['-L/opt/chordlang.io/lib', '-lchordtest', '-lunwind', '-ldl']
-
-    test_build_args_c = test_build_args + [
-        '-Oz', '-std=gnu17', '-fblocks', '-I/opt/chordlang.io/include'  ]
-    linker_args_test = test_linker_args + [ '-gdwarf', '-fprofile-instr-generate', '-fcoverage-mapping',  ]
-    build_args_test_c = test_build_args_c + [ '-D__TESTING__=1', '-gdwarf', '-fprofile-instr-generate', '-fcoverage-mapping', ]
-endif
-
-
-test_src = executable(
-    'test-' + meson.project_name() + '.src.app',
-    src_test_sources,
-    install: false,
-    link_args: linker_args_test,
-    c_args: build_args_test_c,
-)
+#test_src = executable(
+#    'test-' + meson.project_name() + '.src.app',
+#    src_test_sources,
+#    install: false,
+#    link_args: linker_args_test,
+#    c_args: build_args_test_c,
+#)

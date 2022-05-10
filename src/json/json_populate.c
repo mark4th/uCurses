@@ -4,126 +4,130 @@
 #include <inttypes.h>
 #include <stdlib.h>
 
-#include "h/uCurses.h"
+#include "uCurses.h"
+#include "json.h"
+#include "window.h"
+#include "screen.h"
 
-extern j_state_t *j_state;
+extern json_state_t *json_state;
 
 // -----------------------------------------------------------------------
 // this series of IF statements produces significantly smaller code than
 // a switch statement does.   C sucks
 
-static INLINE void populate_attribs(void *pstruct, int32_t ptype)
+static void populate_attribs(void *pstruct, int32_t ptype)
 {
     if((ptype == STRUCT_WINDOW) || (ptype == STRUCT_BACKDROP))
     {
-        ((window_t *)pstruct)->attr_group.attrs.chunk =
-            *(int64_t *)j_state->structure;
+        ((window_t *)pstruct)->attr_grp.attrs.chunk =
+            *(int64_t *)json_state->structure;
     }
     else if(ptype == STRUCT_PULLDOWN)
     {
-        ((pulldown_t *)pstruct)->attr_group.attrs.chunk =
-            *(int64_t *)j_state->structure;
+        ((pulldown_t *)pstruct)->attr_grp.attrs.chunk =
+            *(int64_t *)json_state->structure;
     }
     else // ptype == STRUCT_MENU_BAR:
     {
-        ((menu_bar_t *)pstruct)->attr_group.attrs.chunk =
-            *(int64_t *)j_state->structure;
+        ((menu_bar_t *)pstruct)->attr_grp.attrs.chunk =
+            *(int64_t *)json_state->structure;
     }
 
-    free(j_state->structure);
+    free(json_state->structure);
 }
 
 // -----------------------------------------------------------------------
 
-static INLINE void populate_b_attribs(window_t *pstruct)
+static void populate_b_attribs(window_t *pstruct)
 {
-    pstruct->attr_group.bdr_attrs.chunk = *(int64_t *)j_state->structure;
+    pstruct->attr_grp.bdr_attrs.chunk =
+        *(int64_t *)json_state->structure;
 
-    free(j_state->structure);
+    free(json_state->structure);
 }
 
 // -----------------------------------------------------------------------
 
-static INLINE void populate_s_attribs(void *pstruct, int32_t ptype)
+static void populate_s_attribs(void *pstruct, int32_t ptype)
 {
-    if(ptype == STRUCT_PULLDOWN)
+    if (ptype == STRUCT_PULLDOWN)
     {
-        ((pulldown_t *)pstruct)->attr_group.selected.chunk =
-            *(int64_t *)j_state->structure;
+        ((pulldown_t *)pstruct)->attr_grp.selected.chunk =
+            *(int64_t *)json_state->structure;
     }
     else // ptype == STRUCT_MENU_BAR:
     {
-        ((menu_bar_t *)pstruct)->attr_group.selected.chunk =
-            *(int64_t *)j_state->structure;
+        ((menu_bar_t *)pstruct)->attr_grp.selected.chunk =
+            *(int64_t *)json_state->structure;
     }
 
-    free(j_state->structure);
+    free(json_state->structure);
 }
 
 // -----------------------------------------------------------------------
 
-static INLINE void populate_d_attribs(void *pstruct, int32_t ptype)
+static void populate_d_attribs(void *pstruct, int32_t ptype)
 {
-    if(ptype == STRUCT_PULLDOWN)
+    if (ptype == STRUCT_PULLDOWN)
     {
-        ((pulldown_t *)pstruct)->attr_group.disabled.chunk =
-            *(int64_t *)j_state->structure;
+        ((pulldown_t *)pstruct)->attr_grp.disabled.chunk =
+            *(int64_t *)json_state->structure;
     }
     else // ptype == STRUCT_MENU_BAR:
     {
-        ((menu_bar_t *)pstruct)->attr_group.disabled.chunk =
-            *(int64_t *)j_state->structure;
+        ((menu_bar_t *)pstruct)->attr_grp.disabled.chunk =
+            *(int64_t *)json_state->structure;
     }
 
-    free(j_state->structure);
+    free(json_state->structure);
 }
 
 // -----------------------------------------------------------------------
 
-static INLINE void populate_pulldown(menu_bar_t *pstruct)
+static void populate_pulldown(menu_bar_t *pstruct)
 {
     uint16_t i;
 
     i = pstruct->count++;
-    pstruct->items[i] = j_state->structure;
+    pstruct->items[i] = json_state->structure;
 }
 
 // -----------------------------------------------------------------------
 
-static INLINE void populate_menu_item(pulldown_t *gstruct)
+static void populate_menu_item(pulldown_t *gstruct)
 {
     uint16_t i;
 
     i = gstruct->count++;
-    gstruct->items[i] = j_state->structure;
+    gstruct->items[i] = json_state->structure;
 }
 
 // -----------------------------------------------------------------------
 
-static INLINE void populate_window(j_state_t *parent)
+static void populate_window(json_state_t *parent)
 {
     window_t *win;
     screen_t *scr;
 
-    j_state_t *gp = parent->parent;
+    json_state_t *gp = parent->parent;
     scr = gp->structure;
-    win = j_state->structure;
+    win = json_state->structure;
 
-    scr_win_attach(scr, win);
+    uC_scr_win_attach(scr, win);
 }
 
 // -----------------------------------------------------------------------
 
-static INLINE void populate_backdrop(screen_t *pstruct)
+static void populate_backdrop(screen_t *pstruct)
 {
-    pstruct->backdrop = j_state->structure;
+    pstruct->backdrop = json_state->structure;
 }
 
 // -----------------------------------------------------------------------
 
-static INLINE void populate_bar(screen_t *scr)
+static void populate_bar(screen_t *scr)
 {
-    menu_bar_t *bar = j_state->structure;
+    menu_bar_t *bar = json_state->structure;
     scr->menu_bar = bar;
 }
 
@@ -132,19 +136,19 @@ static INLINE void populate_bar(screen_t *scr)
 // ready.  add this C structure to its parent objects C structure...
 // or sometimes its grandparents
 
-extern list_t j_stack;
 void populate_parent(void)
 {
     int32_t ptype;
 
     void *pstruct;
     void *gstruct;
-    j_state_t *parent;
-    j_state_t *gp;
 
-    parent = j_state->parent;
+    json_state_t *parent;
+    json_state_t *gp;
 
-    gp = parent->parent;
+    parent = json_state->parent;
+    gp     = parent->parent;
+
     pstruct = parent->structure;
     gstruct = gp->structure;
 
@@ -170,34 +174,20 @@ void populate_parent(void)
     // blob of code compared to my re_switch() model and size is
     // what I am optimizing for here.
 
-    switch(j_state->struct_type)
+    // also... C switch statements just look FUGTLY
+
+    switch(json_state->struct_type)
     {
-        case STRUCT_ATTRIBS:
-            populate_attribs(pstruct, ptype);
-            break;
-        case STRUCT_B_ATTRIBS:
-            populate_b_attribs(pstruct);
-            break;
-        case STRUCT_S_ATTRIBS:
-            populate_s_attribs(pstruct, ptype);
-            break;
-        case STRUCT_D_ATTRIBS:
-            populate_d_attribs(pstruct, ptype);
-            break;
-        case STRUCT_PULLDOWN:
-            populate_pulldown(gstruct);
-            break;
-        case STRUCT_MENU_ITEM:
-            populate_menu_item(gstruct);
-            break;
-        case STRUCT_WINDOW:
-            populate_window(parent);
-            break;
-        case STRUCT_BACKDROP:
-            populate_backdrop(pstruct);
-            break;
-        case STRUCT_MENU_BAR:
-            populate_bar(pstruct);
+        case STRUCT_ATTRIBS:   populate_attribs(pstruct, ptype);   break;
+        case STRUCT_B_ATTRIBS: populate_b_attribs(pstruct);        break;
+        case STRUCT_S_ATTRIBS: populate_s_attribs(pstruct, ptype); break;
+        case STRUCT_D_ATTRIBS: populate_d_attribs(pstruct, ptype); break;
+        case STRUCT_PULLDOWN:  populate_pulldown(gstruct);         break;
+        case STRUCT_MENU_ITEM: populate_menu_item(gstruct);        break;
+        case STRUCT_WINDOW:    populate_window(parent);            break;
+        case STRUCT_BACKDROP:  populate_backdrop(pstruct);         break;
+        case STRUCT_MENU_BAR:  populate_bar(pstruct);              break;
+        default:
             break;
     }
 }

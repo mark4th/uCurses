@@ -9,15 +9,18 @@
 #include <string.h>
 #include <wchar.h>
 
-#include "h/list.h"
-#include "h/uCurses.h"
+#include "uCurses.h"
+#include "screen.h"
+#include "menus.h"
+#include "borders.h"
+#include "terminfo.h"
+#include "utf8.h"
 
 // -----------------------------------------------------------------------
 
-screen_t *active_screen;
+API screen_t *active_screen;
 
-extern attribs_t attrs;
-extern attribs_t old_attrs;
+extern attr_grp_t *uC_attr_grp;
 
 // -----------------------------------------------------------------------
 
@@ -29,7 +32,7 @@ int16_t scr_alloc(screen_t *scr)
     p1 = calloc((scr->width * scr->height), sizeof(*p1));
     p2 = calloc((scr->width * scr->height), sizeof(*p2));
 
-    if((p1 == NULL) || (p2 == NULL))
+    if ((p1 == NULL) || (p2 == NULL))
     {
         free(p1);
         free(p2);
@@ -44,16 +47,16 @@ int16_t scr_alloc(screen_t *scr)
 
 // -----------------------------------------------------------------------
 
-screen_t *scr_open(int16_t width, int16_t height)
+API screen_t *uC_scr_open(int16_t width, int16_t height)
 {
     screen_t *scr = calloc(1, sizeof(*scr));
 
-    if(scr != NULL)
+    if (scr != NULL)
     {
         scr->width = width;
         scr->height = height;
 
-        if(scr_alloc(scr) != 0)
+        if (scr_alloc(scr) != 0)
         {
             free(scr);
             scr = NULL;
@@ -63,41 +66,13 @@ screen_t *scr_open(int16_t width, int16_t height)
 }
 
 // -----------------------------------------------------------------------
-// attach a window to a screen
-
-void scr_win_attach(screen_t *scr, window_t *win)
-{
-    win->screen = scr;
-
-    if(list_append_node(&scr->windows, win) != 0)
-    {
-        // log error here?
-        // insert more ram to conginue!
-    }
-}
-
-// -----------------------------------------------------------------------
-// detach window from its parent screen
-
-void scr_win_detach(window_t *win)
-{
-    screen_t *scr = win->screen;
-
-    if(scr != NULL)
-    {
-        list_remove_node(&scr->windows, win);
-        win->screen = NULL;
-    }
-}
-
-// -----------------------------------------------------------------------
 // deallocate all structures attached to screen
 
-void scr_close(screen_t *scr)
+API void uC_scr_close(screen_t *scr)
 {
     window_t *win;
 
-    if(scr != NULL)
+    if (scr != NULL)
     {
         free(scr->buffer1);
         free(scr->buffer2);
@@ -105,15 +80,15 @@ void scr_close(screen_t *scr)
         scr->buffer1 = NULL;
         scr->buffer2 = NULL;
 
-        win_close(scr->backdrop);
+        uC_win_close(scr->backdrop);
 
         do
         {
             win = list_pop(&scr->windows);
-            win_close(win);
-        } while(win != NULL);
+            uC_win_close(win);
+        } while (win != NULL);
 
-        bar_close(scr);
+        uC_bar_close(scr);
 
         free(scr);
     }
@@ -137,12 +112,12 @@ static void scr_draw_win(window_t *win)
     cell_t *src, *dst;
     screen_t *scr;
 
-    if(win != NULL)
+    if (win != NULL)
     {
         scr = win->screen;
 
         // draw windows border if it has one
-        if(win->flags & WIN_BOXED)
+        if (win->flags & WIN_BOXED)
         {
             win_draw_borders(win);
         }
@@ -153,7 +128,7 @@ static void scr_draw_win(window_t *win)
 
         width = win->width * sizeof(cell_t);
 
-        for(i = 0; i < win->height; i++)
+        for (i = 0; i < win->height; i++)
         {
             memcpy(dst, src, width);
             src += win->width;
@@ -169,7 +144,7 @@ static void scr_draw_windows(screen_t *scr)
     window_t *win;
     node_t *n = scr->windows.head;
 
-    while(n != NULL)
+    while (n != NULL)
     {
         win = n->payload;
         scr_draw_win(win);
@@ -182,13 +157,13 @@ static void scr_draw_windows(screen_t *scr)
 
 // unless it is already there :)
 
-static INLINE void scr_cup(screen_t *scr, int16_t x, int16_t y)
+static void scr_cup(screen_t *scr, int16_t x, int16_t y)
 {
     // would a single hpa / vpa be faster than a cup ?
 
-    if((x != scr->cx) || (y != scr->cy))
+    if ((x != scr->cx) || (y != scr->cy))
     {
-        cup(y, x);
+        uC_cup(y, x);
         scr->cx = x;
         scr->cy = y;
     }
@@ -198,14 +173,14 @@ static INLINE void scr_cup(screen_t *scr, int16_t x, int16_t y)
 
 void init_backdrop(screen_t *scr, window_t *win)
 {
-    if((win != NULL) && (scr != NULL))
+    if ((win != NULL) && (scr != NULL))
     {
-        win->xco = 1;
-        win->yco = 1;
-        win->width = scr->width - 2;
+        win->xco    = 1;
+        win->yco    = 1;
+        win->width  = scr->width - 2;
         win->height = scr->height - 2;
-        win->flags = WIN_BOXED | WIN_LOCKED;
-        win->blank = SOLID;
+        win->flags  = WIN_BOXED | WIN_LOCKED;
+        win->blank  = SOLID;
         win->screen = scr;
     }
 }
@@ -213,42 +188,42 @@ void init_backdrop(screen_t *scr, window_t *win)
 // -----------------------------------------------------------------------
 // add a backdrop window to the screen
 
-void scr_add_backdrop(screen_t *scr)
+API void uC_scr_add_backdrop(screen_t *scr)
 {
     window_t *win;
 
-    if(scr != NULL)
+    if (scr != NULL)
     {
-        win = win_open(scr->width - 2, scr->height - 2);
+        win = uC_win_open(scr->width - 2, scr->height - 2);
 
-        if(win != NULL)
+        if (win != NULL)
         {
-            win->attr_group.bdr_attrs.bytes[ATTR] =
+            win->attr_grp.bdr_attrs.bytes[ATTR] =
                 (FG_GRAY | BG_GRAY | BOLD);
-            win->attr_group.bdr_attrs.bytes[FG] = 13;
-            win->attr_group.bdr_attrs.bytes[BG] = 0;
+            win->attr_grp.bdr_attrs.bytes[FG] = 13;
+            win->attr_grp.bdr_attrs.bytes[BG] = 0;
 
             win->bdr_type = BDR_SINGLE;
 
-            win_set_gray_fg(win, 12);
+            uC_win_set_gray_fg(win, 12);
 
             init_backdrop(scr, win);
             scr->backdrop = win;
-            win_clear(win);
+            uC_win_clear(win);
         }
     }
 }
 
 // -----------------------------------------------------------------------
 
-static INLINE uint16_t scr_is_modified(screen_t *scr, uint16_t index)
+static uint16_t scr_is_modified(screen_t *scr, uint16_t index)
 {
     cell_t *p1 = &scr->buffer1[index];
     cell_t *p2 = &scr->buffer2[index];
 
     // if attrs of this cell in buffer1 are different from the attrs
     // in buffer2 or if the characters in those cells are different
-    // then this cell needs updating
+    // then this cell needs u`pdating
 
     return (p1->attrs.chunk != p2->attrs.chunk) || (p1->code != p2->code);
 }
@@ -257,14 +232,14 @@ static INLINE uint16_t scr_is_modified(screen_t *scr, uint16_t index)
 
 static void new_attrs(int64_t a)
 {
-    attrs.chunk = a;
+    uC_attr_grp->attrs.chunk = a;
     apply_attribs();
 }
 
 // -----------------------------------------------------------------------
 // emits charcter from screen buffer1 to the console
 
-static INLINE void scr_emit(screen_t *scr, int16_t index)
+static void scr_emit(screen_t *scr, int16_t index)
 {
     cell_t *p1, *p2;
 
@@ -280,7 +255,7 @@ static INLINE void scr_emit(screen_t *scr, int16_t index)
     // mental note to self.  If you are about to read p1[1] make sure
     // p1 is not pointing to the last element of the array
 
-    if(index != (scr->width * scr->height) - 1)
+    if (index != (scr->width * scr->height) - 1)
     {
         wide = wcwidth(p1->code);
 
@@ -288,9 +263,9 @@ static INLINE void scr_emit(screen_t *scr, int16_t index)
         // is a single width character overlapping it to the right then
         // force an update of the overlapping single width char
 
-        if(wide != 1)
+        if (wide != 1)
         {
-            if(p1[1].code != (int32_t)DEADCODE)
+            if (p1[1].code != (int32_t)DEADC0DE)
             {
                 force = 1;
             }
@@ -298,9 +273,9 @@ static INLINE void scr_emit(screen_t *scr, int16_t index)
 
         // if we are about to overwrite the left edge of a double wide
         // character with a single width char then we need to output a
-        // blank over the associated DEADCODE slot (see below)
+        // blank over the associated DEADC0DE slot (see below)
 
-        else if(p1[1].code == (int32_t)DEADCODE)
+        else if (p1[1].code == (int32_t)DEADC0DE)
         {
             force = 2;
         }
@@ -313,21 +288,21 @@ static INLINE void scr_emit(screen_t *scr, int16_t index)
     x = index % scr->width;
     scr_cup(scr, x, y);
 
-    utf8_emit(p1->code);
+    uC_utf8_emit(p1->code);
 
     // are we overlaying either the left or right edge of a double
     // width char with a single width char?
 
-    if(force == 1) // right?
+    if (force == 1)         // right?
     {
         scr_cup(scr, x + 1, y);
         new_attrs(p1[1].attrs.chunk);
-        utf8_emit(p1[1].code);
+        uC_utf8_emit(p1[1].code);
     }
-    else if(force == 2) // left?
+    else if (force == 2)    // left?
     {
         new_attrs(p1[1].attrs.chunk);
-        utf8_emit('.');
+        uC_utf8_emit('.');
     }
 
     // restore working attributes after the above detour
@@ -335,44 +310,42 @@ static INLINE void scr_emit(screen_t *scr, int16_t index)
 
     scr->cx++;
 
-    if(scr->cx == scr->width)
+    if (scr->cx == scr->width)
     {
         scr->cx = 0;
         scr->cy++;
     }
 
-    *p2 = *p1; // mark cell as updated
+    *p2 = *p1;              // mark cell as updated
 }
 
 // -----------------------------------------------------------------------
 // inner loop of screen update
 
-static INLINE int16_t inner_update(screen_t *scr, int16_t index,
-                                   int16_t end)
+static int16_t inner_update(screen_t *scr, int16_t index, int16_t end)
 {
     cell_t *p1;
     int indx = 0;
 
     p1 = &scr->buffer1[index];
-
     new_attrs(p1->attrs.chunk);
 
     do
     {
-        if(attrs.chunk == p1->attrs.chunk)
+        if (uC_attr_grp->attrs.chunk == p1->attrs.chunk)
         {
-            if(scr_is_modified(scr, index) != 0)
+            if (scr_is_modified(scr, index) != 0)
             {
                 scr_emit(scr, index);
             }
         }
-        else if(indx == 0)
+        else if (indx == 0)
         {
             indx = index;
         }
         index++;
         p1++;
-    } while(index != end);
+    } while (index != end);
 
     // return index of first char that had different attributes to the
     // ones we were updating
@@ -394,7 +367,7 @@ static void outer_update(screen_t *scr)
     {
         // if char at index is modified then output everey char in the
         // screen that shares its attributes.
-        if(scr_is_modified(scr, index) != 0)
+        if (scr_is_modified(scr, index) != 0)
         {
             index = inner_update(scr, index, end);
 
@@ -405,34 +378,34 @@ static void outer_update(screen_t *scr)
             // screen and found no characters that that it did not
             // already update so we can exit early.
 
-            if(index == 0)
+            if (index == 0)
             {
                 break;
             }
-            continue; // skip the ++
+            continue;       // skip the ++
         }
         index++;
-    } while(index != end);
+    } while (index != end);
 }
 
 // -----------------------------------------------------------------------
 
-static INLINE void scr_update_menus(screen_t *scr)
+static void scr_update_menus(screen_t *scr)
 {
     menu_bar_t *bar;
     pulldown_t *pd;
 
-    if(scr->menu_bar != NULL)
+    if (scr->menu_bar != NULL)
     {
         bar = scr->menu_bar;
 
         // draw all text into memu bar window then write that to
         // the screen buffer
-        bar_draw_text(scr);
-        bar_draw_status(bar);
+        uC_bar_draw_text(scr);
+        uC_bar_draw_status(bar);
         scr_draw_win(bar->window);
 
-        if(bar->active != 0)
+        if (bar->active != 0)
         {
             pd = bar->items[bar->which];
 
@@ -446,11 +419,11 @@ static INLINE void scr_update_menus(screen_t *scr)
 
 // -----------------------------------------------------------------------
 
-void scr_draw_screen(screen_t *scr)
+API void uC_scr_draw_screen(screen_t *scr)
 {
-    old_attrs.chunk = 0;
+    uC_attr_grp->old_attrs.chunk = 0;
 
-    if(scr != NULL)
+    if (scr != NULL)
     {
         active_screen = scr;
 
@@ -461,7 +434,6 @@ void scr_draw_screen(screen_t *scr)
         // it also gives you the ability to set the screen
         // background color which is not a screen attribute
         // normally
-
         scr_draw_win(scr->backdrop);
 
         scr_draw_windows(scr);
@@ -469,7 +441,35 @@ void scr_draw_screen(screen_t *scr)
 
         outer_update(scr);
 
-        flush();
+        uC_terminfo_flush();
+    }
+}
+
+// -----------------------------------------------------------------------
+// attach a window to a screen
+
+API void uC_scr_win_attach(screen_t *scr, window_t *win)
+{
+    win->screen = scr;
+
+    if (list_append_node(&scr->windows, win) != 0)
+    {
+        // log error here?
+        // insert more ram to conginue!
+    }
+}
+
+// -----------------------------------------------------------------------
+// detach window from its parent screen
+
+API void uC_scr_win_detach(window_t *win)
+{
+    screen_t *scr = win->screen;
+
+    if (scr != NULL)
+    {
+        list_remove_node(&scr->windows, win);
+        win->screen = NULL;
     }
 }
 

@@ -11,7 +11,15 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "h/uCurses.h"
+#include <stdio.h>
+
+#include "uCurses.h"
+#include "re_switch.h"
+#include "utils.h"
+#include "screen.h"
+#include "json.h"
+
+extern screen_t *active_screen;
 
 // -----------------------------------------------------------------------
 // memory map flags
@@ -19,6 +27,7 @@
 #define MAP_FLAGS PROT_READ | PROT_WRITE
 
 // -----------------------------------------------------------------------
+// Custom Json parser state machine
 
 // There are 5 states in this state machine as follows
 //
@@ -28,22 +37,30 @@
 //      STATE_R_BRACE
 //      STATE_DONE
 //
+// As the json text is parsed the text does not define the state, rather,
+// the state defines what the next character must be.  All parsing is done
+// on a space delimited token by token basis.
+//
 // The initial state is STATE_L_BRACE which expects the next token parsed
 // to be the left brace '{' char.  If it is then the state is set to
-// STATE_KEY.
+// STATE_KEY.   If not... oopts!
 //
 // The handler for STATE_KEY expect to see one of several known tokens
-// which will either be a 'key' token or an 'object' token.  When parsing
-// tokens no C string compare routines are used, all tokens are recognized
-// by their 32 bit fnv-1a hash value.
+// which will either be a 'key' token or an 'object' token.  Only recobnized
+// tokens are valid, unrecognized tokens will cause the state machine to
+// puke.
 //
-// If the parsed token is recognized as a key
+// All tokens are recognized by their 32 bit fnv-1a hash value, no string
+// compare functions are called.
+//
+// If the parsed token is recognized as a key...
 //
 //      That specifc key is handled (see below) and the next state is set
 //      to STATE_VALUE where we extract the value to be stored in the
-//      specified key.
+//      specified key.  note: while the ':' character between a key and
+//      its associated value are required there is no state ':'
 //
-// If the parsed token is one of the recognized objects
+// If the parsed token is one of the recognized objects...
 //
 //      The state is set once again to STATE_L_BRACE.
 //
@@ -51,13 +68,13 @@
 // associated C structure is being created.
 //
 // For every object and every key the machine will transition into a new
-// state.  If the previous state was an object that object state is
+// state.  If the previous state was an object then that object state is
 // pushed onto a state stack.  Key states simply replace the previous key
-// state, they are never pushed onto the state stack.
+// state with the new one, they are never pushed onto the state stack.
 //
-// Any time a new object or key token is parsed in we check to see if
-// there is a comma on it.  If there is no comma the next state will
-// instead be STATE_R_BRACE.  This state pops the previous state off the
+// Any time a new object or key token is parsed we check to see if there
+// is a comma on it.  If there is no comma the next state will
+// instead be STATE_R_BRACE which state pops the previous state off the
 // stack.
 //
 // As key values are parsed we immediately set the specified item in
@@ -68,73 +85,57 @@
 // When all states have been popped off the stack we transition into
 // STATE_DONE and the state machine terminates.
 //
-// This code also knows what keys may go inside what objects and what
-// objects may go inside what objects.  Any time you try to do something
-// such as define a screen inside a window this code will abort with an
-// error message indicating the offending json line.
+// The following is WHY I wrote a custom json parser (which literally
+// doubled the size of my "micro" sized library)
+//
+// This code also knows which keys may go inside which objects and which
+// objects may go inside which objects.  You cannot for example define
+// a screen structure within a window structure.
 //
 // As stated above, some object states do not have an associated C
-// structure.  Any keys specified within these psudo object will be
-// assigned instead to the psudo objects parent C structure. I.E. the
+// structure.  Any keys specified within these pseudo object will be
+// assigned instead to the pseudo objects parent C structure. I.E. the
 // keys grandparent.
+//
+// I have not given a way to define arrays in this parser and I have also
+// allowed for values to be expressed as a percentage.  For example you
+// can set a window within to a percentage of its parent screens width.
 
 // -----------------------------------------------------------------------
+// should i make the state struct a child of the vars struct?
 
-char *json_data;    // pointer to json data to be parsed
-size_t json_len;    // total size of json data
-int32_t json_index; // parse index into data (current line)
-
-char line_buff[MAX_LINE_LEN];
-
-int16_t line_no;
-int16_t line_index; // line parse location
-int16_t line_left;  // number of chars left to parse in line
-
-// space delimited token extracted from data - +1 for the null
-
-char json_token[TOKEN_LEN + 1];
-int32_t json_hash;
-
-list_t j_stack;
-
-fp_finder_t fp_finder;
-
-int16_t console_width;
-int16_t console_height;
-
-// -----------------------------------------------------------------------
-// the current state
-
-j_state_t *j_state;
+json_vars_t *json_vars;
+json_state_t *json_state;
 
 // -----------------------------------------------------------------------
 // fnv-1a hash values for various json syntax chars
 
-const int32_t json_syntax[] = //
-    {
-        0x050c5d25, // :
-        0x050c5d64, // {
-        0x050c5d62, // }
-    };
+const int32_t json_syntax[] =
+{
+    0x050c5d25,             // :
+    0x050c5d64,             // {
+    0x050c5d62,             // }
+};
 
 // -----------------------------------------------------------------------
 // push current state onto end of state stack
 
-static void j_push(j_state_t *j)
+static void json_push(json_state_t *j)
 {
-    list_append_node(&j_stack, j_state);
-    j_state = j;
+    list_append_node(&json_vars->json_stack, json_state);
+    json_state = j;
 }
 
 // -----------------------------------------------------------------------
-// deallocate current state structure but not the C structure associated
-// with it.  then pop previous state off stack
+// deallocate current state structure and pop previous state off stack.
+// the compiled C structure associated with the destroyed state structure
+// remains intact
 
-void j_pop(void)
+void json_pop(void)
 {
-    free(j_state);
+    free(json_state);
 
-    j_state = list_pop(&j_stack);
+    json_state = list_pop(&json_vars->json_stack);
 }
 
 // -----------------------------------------------------------------------
@@ -142,20 +143,24 @@ void j_pop(void)
 __attribute__((noreturn)) void json_error(const char *s)
 {
     char msg[128];
-    sprintf(msg, "%d:%d %s\n", line_no, line_index, s);
+
+    sprintf(msg, "%d: %d:%d %s\n",
+        json_state->line_no,
+        json_vars->line_no,
+        json_vars->line_index, s);
     xabort(msg);
 }
 
 // -----------------------------------------------------------------------
+// allocate a new structure.  this can be a state structure or a target c
+// structure.
 
-void *j_alloc(uint32_t size)
+void *json_alloc(uint32_t size)
 {
     void *v = calloc(1, size);
 
-    if(v != NULL)
-    {
-        return v;
-    }
+    if (v != NULL)  { return v; }
+
     json_error("Out of Memory!");
 }
 
@@ -164,9 +169,11 @@ void *j_alloc(uint32_t size)
 
 static void json_state_l_brace(void)
 {
-    if(json_hash == json_syntax[JSON_L_BRACE])
+    // assert that the hash value of the most recently parsed json token
+    // is equal to the expected left brace hash value
+    if (json_vars->json_hash == json_syntax[JSON_L_BRACE])
     {
-        j_state->state = STATE_KEY;
+        json_state->state = STATE_KEY;
         return;
     }
     json_error("Opening brace missing");
@@ -180,41 +187,43 @@ static void json_state_l_brace(void)
 
 void json_new_state_struct(size_t struct_size, int32_t struct_type)
 {
-    j_state_t *j;
     void *structure;
 
     // allocate a structure for the new state
-    j = j_alloc(sizeof(*j));
+    json_state_t *j = json_alloc(sizeof(*j));
 
     // if there is one allocate buffer for C structure for subseqeuent
     // keys to populate
 
-    structure =            //
-        (struct_size != 0) //
-            ? j_alloc(struct_size)
-            : NULL;
+    structure = (struct_size != 0)
+        ? json_alloc(struct_size)
+        : NULL;
 
-    j->parent = j_state;
-    j->structure = structure;
+    j->parent      = json_state;
+    j->structure   = structure;
     j->struct_type = struct_type;
+    j->line_no     = json_vars->line_no;
 
     // push previous state and make new state the current state
-    j_push(j);
+    json_push(j);
 }
 
 // -----------------------------------------------------------------------
+// strips command and recalculates token hash
 
-static INLINE uint16_t check_comma(void)
+static bool check_comma(void)
 {
-    int16_t rv = 0;
-    int16_t end = strlen(json_token) - 1;
+    bool rv = false;
 
-    if(json_token[end] == ',')
+    int16_t end = strlen(json_vars->json_token) - 1;
+
+    if (json_vars->json_token[end] == ',')
     {
-        json_token[end] = '\0';
-        json_hash = fnv_hash(json_token);
-        rv = 1;
+        json_vars->json_token[end] = '\0';
+        json_vars->json_hash = fnv_hash(json_vars->json_token);
+        rv = true;
     }
+
     return rv;
 }
 
@@ -222,92 +231,68 @@ static INLINE uint16_t check_comma(void)
 
 void json_state_r_brace(void)
 {
-    int16_t has_comma;
+    bool has_comma = check_comma();
 
-    has_comma = check_comma();
-
-    if(json_hash != json_syntax[JSON_R_BRACE])
+    if (json_vars->json_hash != json_syntax[JSON_R_BRACE])
     {
         json_error("Closing brace missing");
     }
 
-    // thanks username234 for helping me find this!!!
-    // if the current structures parent is null then the current structure
-    // is the screen that has no parent so dont try to populate the non
-    // existant parent with the screen structure! the real question here is
-    // how the hell did this code work when compiled with clang? :)
+    json_state->state = STATE_DONE;
 
-    if(j_state->struct_type != STRUCT_SCREEN)
+    if (json_state->struct_type != STRUCT_SCREEN)
     {
-        // a right brace terminates a json object.  we need to add
-        // the current object to its parents structure (or in some cases
-        // to its grandparent as its dirce parent is a dummy object)
-
         populate_parent();
-    }
+        json_pop();
 
-    j_state->state = STATE_DONE;
-
-    if(j_stack.count != 0)
-    {
-        if(j_state->struct_type != STRUCT_SCREEN)
+        if (json_state != NULL)
         {
-            j_pop();
-
-            if(j_state != NULL)
-            {
-                j_state->state =     //
-                    (has_comma != 0) //
-                        ? STATE_KEY
-                        : STATE_R_BRACE;
-            }
+            json_state->state = (has_comma)
+                ? STATE_KEY
+                : STATE_R_BRACE;
         }
     }
 }
 
 // -----------------------------------------------------------------------
 
-static const switch_t states[] = //
-    {
-        { STATE_L_BRACE, json_state_l_brace },
-        { STATE_KEY, json_state_key },
-        { STATE_VALUE, json_state_value },
-        { STATE_R_BRACE, json_state_r_brace },
-    };
+static const switch_t states[] =
+{
+    { STATE_L_BRACE, json_state_l_brace },
+    { STATE_KEY,     json_state_key     },
+    { STATE_VALUE,   json_state_value   },
+    { STATE_R_BRACE, json_state_r_brace },
+};
 
 // -----------------------------------------------------------------------
 
-static INLINE void json_state_machine(void)
+static void json_state_machine(void)
 {
     int f;
 
-    j_state = j_alloc(sizeof(*j_state));
+    json_state = json_alloc(sizeof(*json_state));
 
-    j_state->struct_type = -1;
-    j_state->state = JSON_L_BRACE;
-    j_stack.count = 0;
-
-    json_index = 0;
+    json_state->struct_type = -1;
+    json_state->state       = JSON_L_BRACE;
 
     do
     {
         token();
-        json_hash = fnv_hash(json_token);
+        json_vars->json_hash = fnv_hash(json_vars->json_token);
 
         // the token does not define what the state is
         // the state defines what the token must be
-        f = re_switch(states, NUM_STATES, j_state->state);
 
-        if(f == -1)
+        f = re_switch(states, NUM_STATES, json_state->state);
+        if (f == -1)
         {
             json_error("Unknown or out of place token");
         }
+    } while (json_state->state != STATE_DONE);
 
-    } while(j_state->state != STATE_DONE);
+    json_pop();
 
-    j_pop();
-
-    free(j_state);
+    free(json_state);
 }
 
 // -----------------------------------------------------------------------
@@ -321,47 +306,49 @@ static INLINE void json_state_machine(void)
 // function based off of a string.  The HOW of this needs better
 // documentation than im prepared to put in source file comments :)
 
-void json_create_ui(char *path, fp_finder_t fp)
+API void uC_json_create_ui(char *path, fp_finder_t fp)
 {
     int result;
     struct winsize w;
+    struct stat st;
+
+    json_vars = calloc(1, sizeof(*json_vars));
 
     ioctl(0, TIOCGWINSZ, &w);
-    console_width = w.ws_col;
-    console_height = w.ws_row;
+    json_vars->console_width  = w.ws_col;
+    json_vars->console_height = w.ws_row;
 
-    struct stat st;
-    fp_finder = fp;
+    json_vars->fp_finder = fp;
 
     int fd = open(path, O_RDONLY);
-
-    if(fd < 0)
+    if (fd < 0)
     {
         json_error("Cannot open JSON file");
     }
 
     result = fstat(fd, &st);
-    if(result != 0)
+    if (result != 0)
     {
         json_error("Cannot stat JSON file");
     }
-    json_len = st.st_size;
-
-    json_data = mmap(NULL, json_len, MAP_FLAGS, MAP_PRIVATE, fd, 0);
+    json_vars->json_len = st.st_size;
+    json_vars->json_data = mmap(NULL, json_vars->json_len,
+        MAP_FLAGS, MAP_PRIVATE, fd, 0);
     close(fd);
 
-    if(json_data == MAP_FAILED)
+    if (json_vars->json_data == MAP_FAILED)
     {
         json_error("Unable to map JSON file");
     }
 
-    json_de_tab(json_data, json_len);
-    line_no = 1;
+    json_de_tab(json_vars->json_data, json_vars->json_len);
+    json_vars->line_no = 1;
+
     json_state_machine();
 
-    munmap(json_data, json_len);
+    munmap(json_vars->json_data, json_vars->json_len);
 
-    if(active_screen != NULL)
+    if (active_screen != NULL)
     {
         json_build_ui();
     }

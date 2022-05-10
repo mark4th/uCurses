@@ -4,22 +4,19 @@
 #include <inttypes.h>
 #include <string.h>
 
-#include "h/list.h"
 #include "h/uCurses.h"
+#include "h/list.h"
+#include "h/json.h"
+#include "h/utils.h"
+#include "h/window.h"
+#include "h/re_switch.h"
 
 // -----------------------------------------------------------------------
 
-extern list_t j_stack;
-extern j_state_t *j_state;
-extern int32_t json_hash;
-extern const int32_t json_syntax[];
 extern screen_t *active_screen;
-
-// -----------------------------------------------------------------------
-
-extern char json_token[TOKEN_LEN];
-extern int16_t console_width;
-extern int16_t console_height;
+extern json_state_t *json_state;
+extern json_vars_t *json_vars;
+extern const int32_t json_syntax[3];
 
 // -----------------------------------------------------------------------
 // must be the first object specified
@@ -28,14 +25,14 @@ static void struct_screen(void)
 {
     screen_t *scr;
 
-    if(j_stack.count == 0)
+    if (json_vars->json_stack.count == 0)
     {
         json_new_state_struct(sizeof(screen_t), STRUCT_SCREEN);
-        scr = j_state->structure;
+        scr = json_state->structure;
 
         // you have no say in this
-        scr->width = console_width;
-        scr->height = console_height;
+        scr->width  = json_vars->console_width;
+        scr->height = json_vars->console_height;
 
         active_screen = scr;
         return;
@@ -48,7 +45,7 @@ static void struct_screen(void)
 
 static void struct_windows(void)
 {
-    if(j_state->struct_type == STRUCT_SCREEN)
+    if (json_state->struct_type == STRUCT_SCREEN)
     {
         json_new_state_struct(0, STRUCT_WINDOWS);
         return;
@@ -62,7 +59,7 @@ static void struct_windows(void)
 
 static void struct_window(void)
 {
-    if(j_state->struct_type == STRUCT_WINDOWS)
+    if (json_state->struct_type == STRUCT_WINDOWS)
     {
         json_new_state_struct(sizeof(window_t), STRUCT_WINDOW);
         return;
@@ -76,7 +73,7 @@ static void struct_window(void)
 
 static void struct_backdrop(void)
 {
-    if(j_state->struct_type == STRUCT_SCREEN)
+    if (json_state->struct_type == STRUCT_SCREEN)
     {
         json_new_state_struct(sizeof(window_t), STRUCT_BACKDROP);
         return;
@@ -89,7 +86,7 @@ static void struct_backdrop(void)
 
 static void struct_m_bar(void)
 {
-    if(j_state->struct_type == STRUCT_SCREEN)
+    if (json_state->struct_type == STRUCT_SCREEN)
     {
         json_new_state_struct(sizeof(menu_bar_t), STRUCT_MENU_BAR);
         return;
@@ -102,7 +99,7 @@ static void struct_m_bar(void)
 
 static void struct_pulldowns(void)
 {
-    if(j_state->struct_type == STRUCT_MENU_BAR)
+    if (json_state->struct_type == STRUCT_MENU_BAR)
     {
         // there is no actual structure for this, as this item is
         // populated through json this state_t's parent structure
@@ -119,7 +116,7 @@ static void struct_pulldowns(void)
 
 static void struct_pulldown(void)
 {
-    if(j_state->struct_type == STRUCT_PULLDOWNS)
+    if (json_state->struct_type == STRUCT_PULLDOWNS)
     {
         json_new_state_struct(sizeof(pulldown_t), STRUCT_PULLDOWN);
         return;
@@ -132,7 +129,7 @@ static void struct_pulldown(void)
 
 static void struct_m_items(void)
 {
-    if(j_state->struct_type == STRUCT_PULLDOWN)
+    if (json_state->struct_type == STRUCT_PULLDOWN)
     {
         // there is no actual structure for this, as this item is
         // populated through json this state_t's parent structure
@@ -149,7 +146,7 @@ static void struct_m_items(void)
 
 static void struct_m_item(void)
 {
-    if(j_state->struct_type == STRUCT_MENU_ITEMS)
+    if (json_state->struct_type == STRUCT_MENU_ITEMS)
     {
         json_new_state_struct(sizeof(menu_item_t), STRUCT_MENU_ITEM);
         return;
@@ -159,13 +156,14 @@ static void struct_m_item(void)
 }
 
 // -----------------------------------------------------------------------
+// general attributes
 
 static void struct_attribs(void)
 {
-    if((j_state->struct_type == STRUCT_BACKDROP) ||
-       (j_state->struct_type == STRUCT_WINDOW) ||
-       (j_state->struct_type == STRUCT_PULLDOWN) ||
-       (j_state->struct_type == STRUCT_MENU_BAR))
+    if ((json_state->struct_type == STRUCT_BACKDROP) ||
+        (json_state->struct_type == STRUCT_WINDOW)   ||
+        (json_state->struct_type == STRUCT_PULLDOWN) ||
+        (json_state->struct_type == STRUCT_MENU_BAR))
     {
         json_new_state_struct(sizeof(attribs_t), STRUCT_ATTRIBS);
         return;
@@ -175,11 +173,12 @@ static void struct_attribs(void)
 }
 
 // -----------------------------------------------------------------------
+// border attributes
 
 static void struct_b_attribs(void)
 {
-    if((j_state->struct_type == STRUCT_BACKDROP) ||
-       (j_state->struct_type == STRUCT_WINDOW))
+    if ((json_state->struct_type == STRUCT_BACKDROP) ||
+        (json_state->struct_type == STRUCT_WINDOW))
     {
         json_new_state_struct(sizeof(attribs_t), STRUCT_B_ATTRIBS);
         return;
@@ -189,11 +188,12 @@ static void struct_b_attribs(void)
 }
 
 // -----------------------------------------------------------------------
+// selected attributes
 
 static void struct_s_attribs(void)
 {
-    if((j_state->struct_type == STRUCT_PULLDOWN) ||
-       (j_state->struct_type == STRUCT_MENU_BAR))
+    if ((json_state->struct_type == STRUCT_PULLDOWN) ||
+        (json_state->struct_type == STRUCT_MENU_BAR))
     {
         json_new_state_struct(sizeof(attribs_t), STRUCT_S_ATTRIBS);
         return;
@@ -203,11 +203,12 @@ static void struct_s_attribs(void)
 }
 
 // -----------------------------------------------------------------------
+// disabled attributes
 
 static void struct_d_attribs(void)
 {
-    if((j_state->struct_type == STRUCT_PULLDOWN) ||
-       (j_state->struct_type == STRUCT_MENU_BAR))
+    if ((json_state->struct_type == STRUCT_PULLDOWN) ||
+        (json_state->struct_type == STRUCT_MENU_BAR))
     {
         json_new_state_struct(sizeof(attribs_t), STRUCT_D_ATTRIBS);
         return;
@@ -220,10 +221,10 @@ static void struct_d_attribs(void)
 
 static void struct_rgb_fg(void)
 {
-    if((j_state->struct_type == STRUCT_ATTRIBS) ||
-       (j_state->struct_type == STRUCT_B_ATTRIBS) ||
-       (j_state->struct_type == STRUCT_S_ATTRIBS) ||
-       (j_state->struct_type == STRUCT_D_ATTRIBS))
+    if ((json_state->struct_type == STRUCT_ATTRIBS)   ||
+        (json_state->struct_type == STRUCT_B_ATTRIBS) ||
+        (json_state->struct_type == STRUCT_S_ATTRIBS) ||
+        (json_state->struct_type == STRUCT_D_ATTRIBS))
     {
         // there is no actual structure for this, as this item is
         // populated through json this state_t's parent structure
@@ -240,10 +241,10 @@ static void struct_rgb_fg(void)
 
 static void struct_rgb_bg(void)
 {
-    if((j_state->struct_type == STRUCT_ATTRIBS) ||
-       (j_state->struct_type == STRUCT_B_ATTRIBS) ||
-       (j_state->struct_type == STRUCT_S_ATTRIBS) ||
-       (j_state->struct_type == STRUCT_D_ATTRIBS))
+    if ((json_state->struct_type == STRUCT_ATTRIBS)  ||
+       (json_state->struct_type == STRUCT_B_ATTRIBS) ||
+       (json_state->struct_type == STRUCT_S_ATTRIBS) ||
+       (json_state->struct_type == STRUCT_D_ATTRIBS))
     {
         // there is no actual structure for this, as this item is
         // populated through json this state_t's parent structure
@@ -260,10 +261,10 @@ static void struct_rgb_bg(void)
 
 static void struct_flags(void)
 {
-    if((j_state->struct_type == STRUCT_BACKDROP) ||
-       (j_state->struct_type == STRUCT_WINDOW) ||
-       (j_state->struct_type == STRUCT_PULLDOWN) ||
-       (j_state->struct_type == STRUCT_MENU_BAR))
+    if ((json_state->struct_type == STRUCT_BACKDROP) ||
+        (json_state->struct_type == STRUCT_WINDOW)    ||
+        (json_state->struct_type == STRUCT_PULLDOWN)  ||
+        (json_state->struct_type == STRUCT_MENU_BAR))
     {
         // there is no actual structure for this, as this item is
         // populated through json this state_t's parent structure
@@ -280,10 +281,10 @@ static void struct_flags(void)
 
 static void key_attr(uint16_t key)
 {
-    if((j_state->struct_type == STRUCT_ATTRIBS) ||
-       (j_state->struct_type == STRUCT_B_ATTRIBS) ||
-       (j_state->struct_type == STRUCT_S_ATTRIBS) ||
-       (j_state->struct_type == STRUCT_D_ATTRIBS))
+    if ((json_state->struct_type == STRUCT_ATTRIBS)   ||
+        (json_state->struct_type == STRUCT_B_ATTRIBS) ||
+        (json_state->struct_type == STRUCT_S_ATTRIBS) ||
+        (json_state->struct_type == STRUCT_D_ATTRIBS))
     {
         json_new_state_struct(0, key);
         return;
@@ -294,32 +295,17 @@ static void key_attr(uint16_t key)
 
 // -----------------------------------------------------------------------
 
-static void key_fg(void)
-{
-    key_attr(KEY_FG);
-}
-
-static void key_bg(void)
-{
-    key_attr(KEY_BG);
-}
-
-static void key_gray_fg(void)
-{
-    key_attr(KEY_GRAY_FG);
-}
-
-static void key_gray_bg(void)
-{
-    key_attr(KEY_GRAY_BG);
-}
+static void key_fg(void)      { key_attr(KEY_FG);      }
+static void key_bg(void)      { key_attr(KEY_BG);      }
+static void key_gray_fg(void) { key_attr(KEY_GRAY_FG); }
+static void key_gray_bg(void) { key_attr(KEY_GRAY_BG); }
 
 // -----------------------------------------------------------------------
 
 static void key_rgb(uint16_t key)
 {
-    if((j_state->struct_type == STRUCT_RGB_FG) ||
-       (j_state->struct_type == STRUCT_RGB_BG))
+    if ((json_state->struct_type == STRUCT_RGB_FG) ||
+        (json_state->struct_type == STRUCT_RGB_BG))
     {
         json_new_state_struct(0, key);
         return;
@@ -330,26 +316,15 @@ static void key_rgb(uint16_t key)
 
 // -----------------------------------------------------------------------
 
-static void key_red(void)
-{
-    key_rgb(KEY_RED);
-}
-
-static void key_green(void)
-{
-    key_rgb(KEY_GREEN);
-}
-
-static void key_blue(void)
-{
-    key_rgb(KEY_BLUE);
-}
+static void key_red(void)   { key_rgb(KEY_RED);   }
+static void key_green(void) { key_rgb(KEY_GREEN); }
+static void key_blue(void)  { key_rgb(KEY_BLUE);  }
 
 // -----------------------------------------------------------------------
 
 static void key_xywh(uint16_t key)
 {
-    if(j_state->struct_type == STRUCT_WINDOW)
+    if (json_state->struct_type == STRUCT_WINDOW)
     {
         json_new_state_struct(0, key);
         return;
@@ -360,32 +335,18 @@ static void key_xywh(uint16_t key)
 
 // -----------------------------------------------------------------------
 
-static void key_xco(void)
-{
-    key_xywh(KEY_XCO);
-}
-
-static void key_yco(void)
-{
-    key_xywh(KEY_YCO);
-}
-
-static void key_width(void)
-{
-    key_xywh(KEY_WIDTH);
-}
-
-static void key_height(void)
-{
-    key_xywh(KEY_HEIGHT);
-}
+static void key_xco(void)    { key_xywh(KEY_XCO);    }
+static void key_yco(void)    { key_xywh(KEY_YCO);    }
+static void key_width(void)  { key_xywh(KEY_WIDTH);  }
+static void key_height(void) { key_xywh(KEY_HEIGHT); }
 
 // -----------------------------------------------------------------------
 
 static void key_name(void)
 {
-    if((j_state->struct_type == STRUCT_PULLDOWN) ||
-       (j_state->struct_type == STRUCT_MENU_ITEM))
+    if ((json_state->struct_type == STRUCT_PULLDOWN)  ||
+        (json_state->struct_type == STRUCT_MENU_ITEM) ||
+        (json_state->struct_type == STRUCT_WINDOW))
     {
         json_new_state_struct(0, KEY_NAME);
         return;
@@ -398,9 +359,9 @@ static void key_name(void)
 
 static void key_flags(void)
 {
-    if((j_state->struct_type == STRUCT_PULLDOWN) ||
-       (j_state->struct_type == STRUCT_MENU_ITEM) ||
-       (j_state->struct_type == STRUCT_WINDOW))
+    if ((json_state->struct_type == STRUCT_PULLDOWN)  ||
+        (json_state->struct_type == STRUCT_MENU_ITEM) ||
+        (json_state->struct_type == STRUCT_WINDOW))
     {
         json_new_state_struct(0, KEY_FLAGS);
         return;
@@ -413,8 +374,8 @@ static void key_flags(void)
 
 static void key_border_type(void)
 {
-    if((j_state->struct_type == STRUCT_BACKDROP) ||
-       (j_state->struct_type == STRUCT_WINDOW))
+    if ((json_state->struct_type == STRUCT_BACKDROP) ||
+        (json_state->struct_type == STRUCT_WINDOW))
     {
         json_new_state_struct(0, KEY_BORDER_TYPE);
         return;
@@ -427,7 +388,7 @@ static void key_border_type(void)
 
 static void key_vector(void)
 {
-    if(j_state->struct_type == STRUCT_MENU_ITEM)
+    if (json_state->struct_type == STRUCT_MENU_ITEM)
     {
         json_new_state_struct(0, KEY_VECTOR);
         return;
@@ -440,7 +401,7 @@ static void key_vector(void)
 
 static void key_shortcut(void)
 {
-    if(j_state->struct_type == STRUCT_MENU_ITEM)
+    if (json_state->struct_type == STRUCT_MENU_ITEM)
     {
         json_new_state_struct(0, KEY_SHORTCUT);
         return;
@@ -453,7 +414,7 @@ static void key_shortcut(void)
 
 static void key_flag(void)
 {
-    if(j_state->struct_type == STRUCT_FLAGS)
+    if (json_state->struct_type == STRUCT_FLAGS)
     {
         json_new_state_struct(0, KEY_FLAG);
         return;
@@ -477,42 +438,43 @@ static void breakpoint(void)
 // programatically by running this library as an executable.
 // see ui_json.c
 
-static const switch_t key_types[] = //
-    {
-        { 0x6b77251c, key_fg },     { 0xaa3b6788, key_gray_fg },
-        { 0x6f772ba0, key_bg },     { 0xa63b61c4, key_gray_bg },
-        { 0x3a72d292, key_red },    { 0xf73297b2, key_green },
-        { 0x4f068569, key_blue },   { 0x1c63995d, key_xco },
-        { 0x3461800c, key_yco },    { 0x182e64eb, key_width },
-        { 0x4c47d5c0, key_height }, { 0x2f8b3bf4, key_name },
-        { 0x68cdf632, key_flags },  { 0x362bb2fc, key_border_type },
-        { 0x0ee694b4, key_vector }, { 0x1c13e01f, key_shortcut },
-        { 0xaeb95d5b, key_flag },   { 0x1441d80c, breakpoint },
-    };
+static const switch_t key_types[] =
+{
+    { 0x6b77251c, key_fg     }, { 0xaa3b6788, key_gray_fg     },
+    { 0x6f772ba0, key_bg     }, { 0xa63b61c4, key_gray_bg     },
+    { 0x3a72d292, key_red    }, { 0xf73297b2, key_green       },
+    { 0x4f068569, key_blue   }, { 0x1c63995d, key_xco         },
+    { 0x3461800c, key_yco    }, { 0x182e64eb, key_width       },
+    { 0x4c47d5c0, key_height }, { 0x2f8b3bf4, key_name        },
+    { 0x68cdf632, key_flags  }, { 0x362bb2fc, key_border_type },
+    { 0x0ee694b4, key_vector }, { 0x1c13e01f, key_shortcut    },
+    { 0xaeb95d5b, key_flag   }, { 0x1441d80c, breakpoint      },
+};
 
 #define NUM_KEYS (sizeof(key_types) / sizeof(key_types[0]))
 
 // -----------------------------------------------------------------------
 
-static const switch_t object_types[] = //
-    {                                  //
-        { 0x2ff97421, struct_screen },    { 0x1025ba8c, struct_windows },
-        { 0x8ae7f465, struct_window },    { 0x3bacc0d7, struct_backdrop },
-        { 0x95fe0788, struct_m_bar },     { 0x80f84daf, struct_pulldowns },
-        { 0x09159434, struct_pulldown },  { 0x196fe4d3, struct_m_items },
-        { 0x90f9ece0, struct_m_item },    { 0xbc6bca20, struct_attribs },
-        { 0x77d19b03, struct_b_attribs }, { 0x4d8ce0ce, struct_s_attribs },
-        { 0x19007641, struct_d_attribs }, { 0xea8606c2, struct_rgb_fg },
-        { 0xe686003e, struct_rgb_bg },    { 0x68cdf632, struct_flags }
-    };
+static const switch_t object_types[] =
+{
+    { 0x2ff97421, struct_screen    }, { 0x1025ba8c, struct_windows   },
+    { 0x8ae7f465, struct_window    }, { 0x3bacc0d7, struct_backdrop  },
+    { 0x95fe0788, struct_m_bar     }, { 0x80f84daf, struct_pulldowns },
+    { 0x09159434, struct_pulldown  }, { 0x196fe4d3, struct_m_items   },
+    { 0x90f9ece0, struct_m_item    }, { 0xbc6bca20, struct_attribs   },
+    { 0x77d19b03, struct_b_attribs }, { 0x4d8ce0ce, struct_s_attribs },
+    { 0x19007641, struct_d_attribs }, { 0xea8606c2, struct_rgb_fg    },
+    { 0xe686003e, struct_rgb_bg    }, { 0x68cdf632, struct_flags     }
+};
 
 #define NUM_OBJECTS (sizeof(object_types) / sizeof(object_types[0]))
 
 // -----------------------------------------------------------------------
 
-static INLINE void must_quote(int16_t len)
+static void must_quote(int16_t len)
 {
-    if((json_token[0] != '"') || (json_token[len - 1] != '"'))
+    if ((json_vars->json_token[0]       != '"') ||
+        (json_vars->json_token[len - 1] != '"'))
     {
         json_error("Key names must be quoted");
     }
@@ -521,14 +483,14 @@ static INLINE void must_quote(int16_t len)
 // -----------------------------------------------------------------------
 // if token was not an object it must be a key... is it?
 
-static INLINE void is_key(void)
+static void is_key(void)
 {
     int f;
 
-    f = re_switch(key_types, NUM_KEYS, json_hash);
-    j_state->state = STATE_VALUE;
+    f = re_switch(key_types, NUM_KEYS, json_vars->json_hash);
+    json_state->state = STATE_VALUE;
 
-    if(f == -1)
+    if (f == -1)
     {
         json_error("Unknown key name");
     }
@@ -540,9 +502,9 @@ static INLINE void is_key(void)
 static void check_colon(void)
 {
     token();
-    json_hash = fnv_hash(json_token);
+    json_vars->json_hash = fnv_hash(json_vars->json_token);
 
-    if(json_hash != json_syntax[JSON_COLON])
+    if (json_vars->json_hash != json_syntax[JSON_COLON])
     {
         json_error("Missing colon");
     }
@@ -558,7 +520,7 @@ void json_state_key(void)
 
     // allows for syntatically incorrect placement of commas on the last
     // item within an object
-    if(json_token[0] == '}')
+    if (json_vars->json_token[0] == '}')
     {
         // user put in a trailing comma, hence the unexpected right brace
         // so just handle this as a right brace...
@@ -566,21 +528,18 @@ void json_state_key(void)
         return;
     }
 
-    len = strlen(json_token);
+    len = strlen(json_vars->json_token);
     must_quote(len);
     strip_quotes(len);
 
     // objects are a type of key which are a container for keys
-    f = re_switch(object_types, NUM_OBJECTS, json_hash);
-    j_state->state = STATE_L_BRACE;
+    f = re_switch(object_types, NUM_OBJECTS, json_vars->json_hash);
+    json_state->state = STATE_L_BRACE;
 
     // if reswitch returned -1 here then we did not just parse
     // in an object name but a possible key name
 
-    if(f == -1)
-    {
-        is_key();
-    }
+    if (f == -1) { is_key(); }
 
     check_colon();
 }

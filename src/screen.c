@@ -10,11 +10,11 @@
 #include <wchar.h>
 
 #include "uCurses.h"
-#include "screen.h"
-#include "menus.h"
-#include "borders.h"
-#include "terminfo.h"
-#include "utf8.h"
+#include "uC_screen.h"
+#include "uC_menus.h"
+#include "uC_borders.h"
+#include "uC_terminfo.h"
+#include "uC_utf8.h"
 
 // -----------------------------------------------------------------------
 
@@ -200,7 +200,7 @@ API void uC_scr_add_backdrop(screen_t *scr)
         {
             win->attr_grp.bdr_attrs.bytes[ATTR] =
                 (FG_GRAY | BG_GRAY | BOLD);
-            win->attr_grp.bdr_attrs.bytes[FG] = 13;
+            win->attr_grp.bdr_attrs.bytes[FG] = 12;
             win->attr_grp.bdr_attrs.bytes[BG] = 0;
 
             win->bdr_type = BDR_SINGLE;
@@ -223,7 +223,7 @@ static uint16_t scr_is_modified(screen_t *scr, uint16_t index)
 
     // if attrs of this cell in buffer1 are different from the attrs
     // in buffer2 or if the characters in those cells are different
-    // then this cell needs u`pdating
+    // then this cell needs updating
 
     return (p1->attrs.chunk != p2->attrs.chunk) || (p1->code != p2->code);
 }
@@ -302,7 +302,7 @@ static void scr_emit(screen_t *scr, int16_t index)
     else if (force == 2)    // left?
     {
         new_attrs(p1[1].attrs.chunk);
-        uC_utf8_emit('.');
+        uC_utf8_emit(0x20);
     }
 
     // restore working attributes after the above detour

@@ -29,10 +29,20 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "../h/uCurses.h"
+#include "uCurses.h"
+#include "uC_screen.h"
+#include "uC_window.h"
+#include "uC_menus.h"
+#include "uC_keys.h"
+#include "uC_json.h"
+#include "uC_braille.h"
+
+#include "demo.h"
 
 //int dots_sin(int16_t angle);
 //int dots_cos(int16_t angle);
+
+extern screen_t *active_screen;
 
 // -----------------------------------------------------------------------
 
@@ -446,18 +456,18 @@ static void draw_walls(void)
 
         if(dark_map[x * 2] != 2) { color *= 2; }
 
-        win_set_gray_fg(win, color);
+        uC_win_set_gray_fg(win, color);
 
         for(y = 0; y < win->height; y++)
         {
             c = braile_data[(y * win->width) + x];
 
-            cell = win_peek_xy(win, x, y);
+            cell = uC_win_peek_xy(win, x, y);
 
             if(c != 0x2800)
             {
-                win_cup(win, x, y);
-                win_emit(win, c);
+                uC_win_cup(win, x, y);
+                uC_win_emit(win, c);
             }
         }
     }
@@ -482,11 +492,11 @@ void raycast(void)
     gettimeofday(&tv, NULL);
     old_time = tv.tv_sec;
 
-    json_create_ui("dots.json", NULL);
+    uC_json_create_ui("dots.json", NULL);
 
-    alloc_status();
-    bar_clr_status();
-    menu_init();
+    uC_alloc_status();
+    uC_bar_clr_status();
+    uC_menu_init();
 
     scr = active_screen;
     n   = scr->windows.head;
@@ -512,16 +522,16 @@ void raycast(void)
         memset(fb_floor, 0, fb_width * (fb_height / 2));
         memset(color_map, 0, fb_width);
 
-        win_clear(win);
+        uC_win_clear(win);
         render_floor();
         render_walls();
 
         draw_walls();
 
         snprintf(status, MAX_STATUS, "FPS: %d", fps);
-        bar_set_status(status);
+        uC_bar_set_status(status);
 
-        scr_draw_screen(scr);
+        uC_scr_draw_screen(scr);
 
         framecount++;
 
@@ -543,9 +553,9 @@ void raycast(void)
         moveSpeed = frame_time * 0.2;
         rotSpeed  = frame_time * 0.08;
 
-        if(test_keys() != 0)
+        if (uC_test_keys() != 0)
         {
-            keypress = key();
+            keypress = uC_key();
 
             if(keypress == 0x1b)
             {
@@ -553,8 +563,9 @@ void raycast(void)
             }
             process_key(keypress);
         }
-        // asdfasdf
     }
+    uC_scr_close(active_screen);
+    main_screen();
 }
 
 // =======================================================================

@@ -6,10 +6,10 @@
 #include <stdio.h>
 
 #include "uCurses.h"
-#include "re_switch.h"
-#include "window.h"
-#include "utf8.h"
-#include "utils.h"
+#include "uC_switch.h"
+#include "uC_window.h"
+#include "uC_utf8.h"
+#include "uC_utils.h"
 
 // -----------------------------------------------------------------------
 
@@ -34,36 +34,25 @@ API void uC_win_puts(window_t *win, char *p)
 }
 
 // -----------------------------------------------------------------------
-
-static void zero_abort(void)
-{
-    if (*p == '\0')
-    {
-        xabort("Unexpected end of win_printf format string");
-    }
-}
-
-// -----------------------------------------------------------------------
 // %rf   set 24 bit rgb fg
 
 static void rf(void)
 {
     int r, g, b;
 
-    zero_abort();
-
-    r = va_arg(arg, int) & 0xff;
-    g = va_arg(arg, int) & 0xff;
-    b = va_arg(arg, int) & 0xff;
-
-    if (*p == 'f')      { uC_win_set_rgb_fg(w, r, g, b); }
-    else if (*p == 'b') { uC_win_set_rgb_bg(w, r, g, b); }
-    else
+    if (*p == 'f' || *p == 'b')
     {
-        xabort("Expected x or b on win_printf %%r");
-    }
+        r = va_arg(arg, int) & 0xff;
+        g = va_arg(arg, int) & 0xff;
+        b = va_arg(arg, int) & 0xff;
 
-    p++;
+        (*p == 'f')
+            ? uC_win_set_rgb_fg(w, r, g, b)
+            : uC_win_set_rgb_bg(w, r, g, b);
+        p++;
+        return;
+    }
+    xabort("Expected f or b on win_printf %r");
 }
 
 // -----------------------------------------------------------------------
@@ -73,17 +62,16 @@ static void f(void)
 {
     int f;
 
-    zero_abort();
-
-    f = va_arg(arg, int);
-
-    if (*p == 'c')      { uC_win_set_fg(w, f);           }
-    else if (*p == 's') { uC_win_set_gray_fg(w, f % 21); }
-    else
+    if (*p == 'c' || *p == 's')
     {
-        xabort("Expected c or s on win_printf %%f");
+        f = va_arg(arg, int);
+        (*p == 'c')
+            ? uC_win_set_fg(w, f)
+            : uC_win_set_gray_fg(w, f % 21);
+        p++;
+        return;
     }
-    p++;
+    xabort("Expected c or s on win_printf %f");
 }
 
 // -----------------------------------------------------------------------
@@ -93,18 +81,17 @@ static void b(void)
 {
     int b;
 
-    zero_abort();
-
     b = va_arg(arg, int);
 
-    if (*p == 'c')       { uC_win_set_bg(w, b);           }
-    else if (*p == 's')  { uC_win_set_gray_bg(w, b % 23); }
-    else
+    if (*p == 'c' || *p == 's')
     {
-        xabort("Expected c or s on win_printf %%b");
+        (*p == 'c')
+            ? uC_win_set_bg(w, b)
+            : uC_win_set_gray_bg(w, b % 23);
+        p++;
+        return;
     }
-
-    p++;
+    xabort("Expected c or s on win_printf %b");
 }
 
 // -----------------------------------------------------------------------
@@ -195,13 +182,14 @@ static void rt(void)
 
 static void c(void)
 {
-    if (*p == 'u')      { uC_win_crsr_up(w); }
-    else if (*p == 'd') { uC_win_crsr_dn(w); }
-    else if (*p == 'l') { uC_win_crsr_lt(w); }
-    else if (*p == 'r') { uC_win_crsr_rt(w); }
-    else
+    switch (*p)
     {
-        xabort("Expected u, d, l or r on win_printf %%c");
+        case 'u' :   uC_win_crsr_up(w); break;
+        case 'd' :   uC_win_crsr_dn(w); break;
+        case 'l' :   uC_win_crsr_lt(w); break;
+        case 'r' :   uC_win_crsr_rt(w); break;
+        default :
+            xabort("Expected u, d, l or r on win_printf %c");
     }
     p++;
 }
@@ -227,42 +215,45 @@ static void u_puts(void)
 
 static void bold(void)
 {
-    if (*p == '+')      { uC_win_set_bold(w); }
-    else if (*p == '-') { uC_win_clr_bold(w); }
-    else
+    if (*p == '+' || *p == '-')
     {
-        xabort("Expected + or - win_printf %%B");
+        (*p == '+')
+            ? uC_win_set_bold(w)
+            : uC_win_clr_bold(w);
+        p++;
+        return;
     }
-
-    p++;
+    xabort("Expected + or - win_printf %%B");
 }
 
 // -----------------------------------------------------------------------
 
 static void uline(void)
 {
-    if (*p == '+')      { uC_win_set_ul(w); }
-    else if (*p == '-') { uC_win_clr_ul(w); }
-    else
+    if (*p == '+' || *p == '-')
     {
-        xabort("Expected + or - win_printf %%U");
+        (*p == '+')
+            ? uC_win_set_ul(w)
+            : uC_win_clr_ul(w);
+        p++;
+        return;
     }
-
-    p++;
+    xabort("Expected + or - win_printf %U");
 }
 
 // -----------------------------------------------------------------------
 
 static void rev(void)
 {
-    if (*p == '+')      { uC_win_set_rev(w); }
-    else if (*p == '-') { uC_win_clr_rev(w); }
-    else
+    if (*p == '+' || *p == '-')
     {
-        xabort("Expected + or - win_printf %%R");
+       (*p == '+')
+            ? uC_win_set_rev(w)
+            : uC_win_clr_rev(w);
+        p++;
+        return;
     }
-
-    p++;
+    xabort("Expected + or - win_printf %R");
 }
 
 // -----------------------------------------------------------------------
@@ -281,7 +272,6 @@ static switch_t commands[] =
 
 static void command(void)
 {
-    zero_abort();
     re_switch(commands, COMMANDS, *p++);
 }
 

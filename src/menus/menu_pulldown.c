@@ -5,9 +5,9 @@
 #include <stddef.h>
 #include <stdlib.h>
 
-#include "menus.h"
-#include "utf8.h"
-#include "utils.h"
+#include "uC_menus.h"
+#include "uC_utf8.h"
+#include "uC_utils.h"
 
 // -----------------------------------------------------------------------
 // find address of pulldown structure with specified name

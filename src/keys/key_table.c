@@ -5,10 +5,10 @@
 #include <string.h>
 
 #include "uCurses.h"
-#include "keys.h"
-#include "utils.h"
-#include "parse.h"
-#include "keys.h"
+#include "uC_keys.h"
+#include "uC_utils.h"
+#include "uC_parse.h"
+#include "uC_keys.h"
 
 extern ti_parse_t *uC_ti_parse;
 extern int8_t keybuff[KEY_BUFF_SZ];

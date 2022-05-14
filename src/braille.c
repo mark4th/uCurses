@@ -4,7 +4,7 @@
 #include <inttypes.h>
 
 #include "uCurses.h"
-#include "window.h"
+#include "uC_window.h"
 
 // -----------------------------------------------------------------------
 // every glyph here can be thougt of as an 8 bit binary value where the

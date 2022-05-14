@@ -4,12 +4,12 @@
 #include <inttypes.h>
 #include <string.h>
 
-#include "h/uCurses.h"
-#include "h/list.h"
-#include "h/json.h"
-#include "h/utils.h"
-#include "h/window.h"
-#include "h/re_switch.h"
+#include "uCurses.h"
+#include "uC_list.h"
+#include "uC_json.h"
+#include "uC_utils.h"
+#include "uC_window.h"
+#include "uC_switch.h"
 
 // -----------------------------------------------------------------------
 

@@ -6,8 +6,8 @@
 #include <string.h>
 
 #include "uCurses.h"
-#include "menus.h"
-#include "win_printf.h"
+#include "uC_menus.h"
+#include "uC_win_printf.h"
 
 // -----------------------------------------------------------------------
 // user application allocatted

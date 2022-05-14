@@ -9,8 +9,8 @@
 #include <wchar.h>
 
 #include "uCurses.h"
-#include "utf8.h"
-#include "terminfo.h"
+#include "uC_utf8.h"
+#include "uC_terminfo.h"
 
 // --------------------------------------------------------------------------
 

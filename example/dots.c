@@ -5,8 +5,17 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <inttypes.h>
-#include "../h/uCurses.h"
+
+#include "uCurses.h"
+#include "uC_menus.h"
+#include "uC_json.h"
+#include "uC_keys.h"
+#include "uC_utils.h"
+#include "uC_json.h"
+
 #include "demo.h"
+
+extern screen_t *active_screen;
 
 // -----------------------------------------------------------------------
 
@@ -44,7 +53,7 @@ int x_angle = 0;            // angles of rotation in each axis
 int y_angle = 20;
 int z_angle = 45;
 
-short cos_x = 0;                // trig stuff
+short cos_x = 0;            // trig stuff
 short cos_y = 0;
 short cos_z = 0;
 short sin_x = 0;
@@ -93,25 +102,26 @@ modifier w4 =                   // zooms object in / out of window
 
 // -----------------------------------------------------------------------
 // draw a point at x/y in specified colour
-    int px, py, pz;         // 3d coordinates to rotate
+
+int px, py, pz;         // 3d coordinates to rotate
 
 void draw_point(int16_t x, int16_t y, int8_t c)
 {
     cell_t *p;
 
-    if(x != -1)
+    if (x != -1)
     {
-        win_cup(dots_win, x, y);
+        uC_win_cup(dots_win, x, y);
 
-        p = win_peek(dots_win);
+        p = uC_win_peek(dots_win);
 
         if(pel > p->code)
         {
-            win_set_rgb_fg(dots_win,
+            uC_win_set_rgb_fg(dots_win,
                 (z_off - px),
                 (z_off - py),
                 (z_off - pz));
-            win_emit(dots_win, pel);
+            uC_win_emit(dots_win, pel);
         }
     }
 }
@@ -172,20 +182,21 @@ void project(int px, int py, int pz, int *x, int *y)
 {
     int tx, ty;             // temp store...
 
+
     *x = *y = -1;           // assume point is clipped
 
-    if((z_off + pz) < 1)
+    if ((z_off + pz) < 1)
     {
         return;
     }
 
-    ty = ((y_off * py) / (z_off + pz)) + 10;
+    ty = ((y_off * py) / (z_off + pz)) + (dots_win->height / 2);
 
     if((ty > 0) && (ty < (25)))
     {
-        tx = ((x_off * px) / (z_off + pz)) + 40;
+        tx = ((x_off * px) / (z_off + pz)) + (dots_win->width / 2);
 
-        if((tx > 0) && (tx < 96))
+        if ((tx > 0) && (tx < 96))
         {
             *x = tx;
             *y = ty;
@@ -206,9 +217,9 @@ void do_frame(void)
 
     dots_sincos();          // calculate all sin/cos values
 
-    win_clear(dots_win);
+    uC_win_clear(dots_win);
 
-    for(i = 0; i < num_points; i++)
+    for (i = 0; i < num_points; i++)
     {
         px = object[i].x;   // collect point from object
         py = object[i].y;
@@ -225,7 +236,7 @@ void do_frame(void)
         int w = abs(zmin);
         int q = (zmax + w) / 15;
 
-        if(q == 0) { q = 1; }
+        if (q == 0) { q = 1; }
 
         c = ((pz + w) / q) % 24;
         c = 22 - c;
@@ -244,13 +255,13 @@ void modify(modifier *mod)
 {
     mod->counter--;
 
-    if(!mod->counter)
+    if (!mod->counter)
     {
         mod->counter = mod->reset;
 
         *mod->ptr += mod->delta;
 
-        if(*mod->ptr >= mod->upper || *mod->ptr <= mod->lower)
+        if (*mod->ptr >= mod->upper || *mod->ptr <= mod->lower)
         {
             mod->delta = -(mod->delta);
         }
@@ -298,20 +309,20 @@ void do_dots(void)
     gettimeofday(&tv, NULL);
     start = tv.tv_sec;
 
-    json_create_ui("dots.json", menu_address_cb);
+    uC_json_create_ui("dots.json", menu_address_cb);
 
-    alloc_status();
-    bar_clr_status();
-    menu_init();
+    uC_alloc_status();
+    uC_bar_clr_status();
+    uC_menu_init();
     int fps;
 
     scr = active_screen;
     n = scr->windows.head;
     dots_win = n->payload;
 
-    for(;;)               // only way out is to die
+    for (;;)               // only way out is to die
     {
-        if(obj_number == NUM_OBJECTS)
+        if (obj_number == NUM_OBJECTS)
         {
             obj_number = 0;
         }
@@ -326,52 +337,49 @@ void do_dots(void)
          zmin = 1000;
          zmax = -1000;
 
-        while(itters++ != 2000000)
+        while (itters++ != 2000000)
         {
-            if(pause == 0)
+            if (pause == 0)
             {
                 gettimeofday(&tv, NULL);
                 seconds = (tv.tv_sec - start);
-
-//        snprintf(status, MAX_STATUS,
-//            "min: %3d : max: %3d", zmin, zmax);
 
                 snprintf(status, MAX_STATUS,
                     "F: %8dk S: %5d FPS: %2dK",
                     frame / 1000, seconds, fps/1000);
 
-                bar_set_status(status);
+                uC_bar_set_status(status);
 
                 do_frame();        // draw object
 
-                if(seconds != 0)
+                if (seconds != 0)
                 {
                     fps = frame / seconds;
                 }
 
-                if((itters & 0x3ff) == 0)
+                if ((itters & 0x3ff) == 0)
                 {
                     change_angles();   // adjust angles of rotation
                     do_deltas();       // modify rotation speeds etc
                 }
 
-                scr_draw_screen(scr);
+                uC_scr_draw_screen(scr);
             }
-            if(test_keys() != 0)
+            if (uC_test_keys() != 0)
             {
-                c = key();
-                if(c == 0x20)
+                c = uC_key();
+                if (c == 0x20)
                 {
                     pause ^= 1;
                     continue;
                 }
-                if(c == 0x1b)
+                if (c == 0x1b)
                 {
                     break;
                 }
             }
         }
-        if(c == 0x1b)
+        if (c == 0x1b)
         {
             break;
         }

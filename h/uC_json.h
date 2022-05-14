@@ -4,8 +4,10 @@
 #ifndef JSON_H
 #define JSON_H
 
-#include "menus.h"
-#include "list.h"
+#include <stdbool.h>
+
+#include "uC_menus.h"
+#include "uC_list.h"
 
 // -----------------------------------------------------------------------
 
@@ -121,15 +123,19 @@ __attribute__((noreturn)) void json_error(const char *s);
 
 void json_pop(void);
 void *json_alloc(uint32_t size);
-void json_new_state_struct(size_t struct_size, int32_t struct_type);
+void json_new_state_struct(int struct_size, int32_t struct_type);
 void json_state_r_brace(void);
 void json_build_ui(void);
 void json_state_key(void);
 void populate_parent(void);
 void strip_quotes(int16_t len);
-void json_de_tab(char *s, size_t len);
+void json_de_tab(char *s, int len);
 void token(void);
 void json_state_value(void);
+
+// -----------------------------------------------------------------------
+
+API void uC_json_create_ui(char *path, fp_finder_t fp);
 
 // -----------------------------------------------------------------------
 

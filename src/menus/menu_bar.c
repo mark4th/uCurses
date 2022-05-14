@@ -5,11 +5,16 @@
 #include <stddef.h>
 #include <stdlib.h>
 
-#include "menus.h"
-#include "win_printf.h"
+#include "uC_menus.h"
+#include "uC_win_printf.h"
 
 // -----------------------------------------------------------------------
 // set attriutes to draw next pulldown item with
+
+// i    = menu index
+// pd   = pointer to pulldown
+// p    = pointer to attribute word
+// item = menu item i points to within pulldown
 
 static void pd_set_attr(int16_t i, pulldown_t *pd, uint64_t *p,
     menu_item_t *item)
@@ -44,7 +49,6 @@ void bar_populdate_pd(pulldown_t *pd)
             item = pd->items[i];
 
             pd_set_attr(i, pd, &win->attr_grp.attrs.chunk, item);
-
             uC_win_cup(win, 0, i);
             uC_win_puts(win, item->name);
 
@@ -57,6 +61,12 @@ void bar_populdate_pd(pulldown_t *pd)
 }
 
 // -----------------------------------------------------------------------
+// set attributes to draw meny bar item with
+
+// i   = currently selectd meny bar item
+// bar = pointer to menu bar structure
+// p   = attribute chunk to draw with
+// pd  = pointer to pulldown structure
 
 static void bar_set_attrs(int16_t i, menu_bar_t *bar, uint64_t *p,
     pulldown_t *pd)
@@ -86,7 +96,6 @@ API void uC_bar_draw_text(screen_t *scr)
     if ((bar != NULL) && (win != NULL))
     {
         win->attr_grp.attrs.chunk = bar->attr_grp.attrs.chunk;
-
         uC_win_clear(win);
         uC_win_emit(win, win->blank);
 
@@ -115,6 +124,7 @@ static void pd_close(pulldown_t *pd)
         }
 
         // window only exists if this pulldown is currently active
+
         uC_win_close(pd->window);
         pd->window = NULL;
         free(pd);
@@ -173,8 +183,6 @@ static void init_bar(screen_t *scr, window_t *win, menu_bar_t *bar)
     bar->attr_grp.attrs.chunk    = ATTRS_NORMAL;
     bar->attr_grp.selected.chunk = ATTRS_SELECTED;
     bar->attr_grp.disabled.chunk = ATTRS_DISABLED;
-
-    bar->xco = 2;           // x coordinate of first pulldown menu window
 }
 
 // -----------------------------------------------------------------------

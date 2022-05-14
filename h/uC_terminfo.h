@@ -8,7 +8,7 @@
 
 #include <stdint.h>
 
-#include "parse.h"
+#include "uC_parse.h"
 
 // -----------------------------------------------------------------------
 
@@ -120,17 +120,7 @@ typedef struct
 #define ti_kmous() uC_format(710 >> 1)  // mouse event has occurred
 
 // -----------------------------------------------------------------------
-// visibility hidden
 
-void alloc_parse(void);
-void free_parse(void);
-void c_emit(char c1);
-void uC_parse_format(void);
-
-// -----------------------------------------------------------------------
-
-API void uC_terminfo_flush(void);
-API void uC_format(int16_t i);
 API void uC_curoff(void);
 API void uC_curon(void);
 API void uC_clear(void);

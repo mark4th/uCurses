@@ -26,10 +26,15 @@ typedef struct
 
 void flush(void);
 void c_emit(char c1);
-void uC_parse_format(void);
 void uC_format(int16_t i);
 void alloc_parse(void);
 void free_parse(void);
+void uC_format(int16_t i);
+
+// -----------------------------------------------------------------------
+
+API void uC_terminfo_flush(void);
+API void uC_parse_format(const char *f);
 
 // -----------------------------------------------------------------------
 

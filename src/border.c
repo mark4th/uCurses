@@ -5,8 +5,8 @@
 #include <string.h>
 
 #include "uCurses.h"
-#include "window.h"
-#include "screen.h"
+#include "uC_window.h"
+#include "uC_screen.h"
 
 // -----------------------------------------------------------------------
 // force refresh of specific cell

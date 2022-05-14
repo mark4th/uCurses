@@ -5,9 +5,9 @@
 #include <stdlib.h>
 
 #include "uCurses.h"
-#include "json.h"
-#include "window.h"
-#include "screen.h"
+#include "uC_json.h"
+#include "uC_window.h"
+#include "uC_screen.h"
 
 extern json_state_t *json_state;
 

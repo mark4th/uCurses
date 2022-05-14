@@ -1,38 +1,44 @@
-// uCurses.h
+// list.h   -- uCurses linked lists
 // -----------------------------------------------------------------------
 
-#ifndef UCURSES_H
-#define UCURSES_H
+#ifndef LIST_H
+#define LIST_H
 
 // -----------------------------------------------------------------------
 
 #include <stdint.h>
 
-#include "uCurses.h"
-
-// -----------------------------------------------------------------------
-// macro to make public API functions etc visible
-
-#define API __attribute__ ((visibility ("default")))
-
 // -----------------------------------------------------------------------
 
-typedef void (*fp_t)(void *x);
+typedef struct
+{
+    void *head;
+    void *tail;
+    uint16_t count;
+} list_t;
 
 // -----------------------------------------------------------------------
 
-#define UCURSES_NAN (0x7fff)  // not a number (honest!)
-#define DEADC0DE (0xdeadc0de)
+typedef struct
+{
+    void *next;
+    void *prev;
+    void *payload;
+    list_t *parent;
+} node_t;
+
+// -----------------------------------------------------------------------
+// visibility hidden
+
+void node_insert(node_t *n1, node_t *n2);
+void list_remove_node(list_t *l1, void *payload);
+int16_t list_append_node(list_t *l, void *payload);
+int16_t list_add_node(list_t *l, void *payload);
+void *list_pop(list_t *list);
+void *list_scan(list_t *l);
 
 // -----------------------------------------------------------------------
 
-API void uCurses_init(void);
-API void uCurses_deInit(void);
-API void entry(void);
-API void make_contrast(uint8_t *r, uint8_t *g, uint8_t *b);
-
-// -----------------------------------------------------------------------
-
-#endif // UCURSES_H
+#endif // LIST_H
 
 // =======================================================================

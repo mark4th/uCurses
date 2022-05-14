@@ -5,7 +5,7 @@
 #define MENUS_H
 
 #include "uCurses.h"
-#include "screen.h"
+#include "uC_screen.h"
 
 // -----------------------------------------------------------------------
 // menu option vectors

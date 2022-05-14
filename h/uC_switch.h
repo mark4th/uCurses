@@ -1,44 +1,33 @@
-// list.h   -- uCurses linked lists
+// re_switch.h
 // -----------------------------------------------------------------------
 
-#ifndef LIST_H
-#define LIST_H
+#ifndef RE_SWITCH_H
+#define RE_SWITCH_H
 
 // -----------------------------------------------------------------------
 
-#include <inttypes.h>
+#include "uCurses.h"
 
 // -----------------------------------------------------------------------
+
+typedef void (*opt_t)(void);     // re_switch vectors
+
+// -----------------------------------------------------------------------
+// c switch statements are FUGLY
 
 typedef struct
 {
-    void *head;
-    void *tail;
-    uint16_t count;
-} list_t;
-
-// -----------------------------------------------------------------------
-
-typedef struct
-{
-    void *next;
-    void *prev;
-    void *payload;
-    list_t *parent;
-} node_t;
+    int32_t option;
+    opt_t vector;
+} switch_t;
 
 // -----------------------------------------------------------------------
 // visibility hidden
 
-void node_insert(node_t *n1, node_t *n2);
-void list_remove_node(list_t *l1, void *payload);
-int16_t list_append_node(list_t *l, void *payload);
-int16_t list_add_node(list_t *l, void *payload);
-void *list_pop(list_t *list);
-void *list_scan(list_t *l);
+int re_switch(const switch_t *s, int size, int32_t option);
 
 // -----------------------------------------------------------------------
 
-#endif // LIST_H
+#endif // RE_SWITCH_H
 
 // =======================================================================

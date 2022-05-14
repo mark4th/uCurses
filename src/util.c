@@ -9,9 +9,9 @@
 #include <unistd.h>
 
 #include "uCurses.h"
-#include "terminfo.h"
-#include "utf8.h"
-#include "utils.h"
+#include "uC_terminfo.h"
+#include "uC_utf8.h"
+#include "uC_utils.h"
 
 // -----------------------------------------------------------------------
 

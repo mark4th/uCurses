@@ -15,8 +15,8 @@
 
                 "attribs" :
                 {
-                    "gray-fg"   : 23,
-                    "bg"   : 0
+                    "gray-fg" : 23,
+                    "bg"      : 0
                 },
 
                 "border-attribs" :

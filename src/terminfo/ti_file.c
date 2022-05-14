@@ -10,10 +10,12 @@
 #include <sys/stat.h>
 #include <termios.h>
 #include <unistd.h>
+#include <stdbool.h>
+#include <assert.h>
 
 #include "uCurses.h"
-#include "terminfo.h"
-#include "parse.h"
+#include "uC_terminfo.h"
+#include "uC_parse.h"
 
 // -----------------------------------------------------------------------
 

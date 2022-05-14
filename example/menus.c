@@ -4,9 +4,16 @@
 #include <inttypes.h>
 #include <stdlib.h>
 
-#include "../h/uCurses.h"
+#include "uCurses.h"
+#include "uC_switch.h"
+#include "uC_menus.h"
+#include "uC_json.h"
+#include "uC_utils.h"
+#include "uC_keys.h"
 
 #include "demo.h"
+
+extern screen_t *active_screen;
 
 // -----------------------------------------------------------------------
 // just flipflops the border color of which ever window is on top
@@ -18,8 +25,8 @@ static void window_demo(void)
     window_t *win2;
     screen_t *scr;
 
-    scr_close(active_screen);
-    json_create_ui("demo1.json", menu_address_cb);
+    uC_scr_close(active_screen);
+    uC_json_create_ui("demo1.json", menu_address_cb);
     scr = active_screen;
 
     n = scr->windows.head;
@@ -27,9 +34,9 @@ static void window_demo(void)
     n = n->next;
     win2 = n->payload;
 
-    alloc_status();
+    uC_alloc_status();
     run_demo1(scr, win1, win2);
-    scr_close(active_screen);
+    uC_scr_close(active_screen);
     main_screen();
 }
 
@@ -37,12 +44,12 @@ static void window_demo(void)
 
 static void dots_demo(void)
 {
-    scr_close(active_screen);
-    json_create_ui("dots.json", menu_address_cb);
+    uC_scr_close(active_screen);
+    uC_json_create_ui("dots.json", menu_address_cb);
 
-    alloc_status();
+    uC_alloc_status();
     do_dots();
-    scr_close(active_screen);
+    uC_scr_close(active_screen);
     main_screen();
 }
 
@@ -51,7 +58,7 @@ static void dots_demo(void)
 
 static void exit_prog(void)
 {
-    stuff_key(0x1b);
+    uC_stuff_key(0x1b);
 }
 
 // -----------------------------------------------------------------------

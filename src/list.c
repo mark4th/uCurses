@@ -4,7 +4,7 @@
 #include <stdlib.h>
 
 #include "uCurses.h"
-#include "list.h"
+#include "uC_list.h"
 
 // -----------------------------------------------------------------------
 // insert node n2 into list after node n1

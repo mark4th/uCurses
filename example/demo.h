@@ -1,5 +1,7 @@
 
-#include "../h/uCurses.h"
+#include "uCurses.h"
+#include "uC_screen.h"
+#include "uC_switch.h"
 
 #define NUM_OBJECTS 5
 
@@ -11,10 +13,14 @@ typedef struct              // a point in 3d space
     char x, y, z;
 } xyz;
 
+// -----------------------------------------------------------------------
+
 typedef struct              // a point in 2d space
 {
     int x, y;
 } xy;
+
+// -----------------------------------------------------------------------
 
 typedef struct
 {
@@ -26,6 +32,7 @@ typedef struct
     int lower;              // lower limit for item
 } modifier;
 
+// -----------------------------------------------------------------------
 
 opt_t menu_address_cb(int32_t hash);
 void run_demo1(screen_t *scr, window_t *win1, window_t *win2);
@@ -34,3 +41,5 @@ void main_screen(void);
 void mandel_demo(void);
 void lion(void);
 void raycast(void);
+
+// =======================================================================

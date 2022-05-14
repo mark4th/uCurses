@@ -7,12 +7,13 @@
 #include <unistd.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <assert.h>
 
 #include "uCurses.h"
-#include "re_switch.h"
-#include "utils.h"
-#include "terminfo.h"
-#include "utf8.h"
+#include "uC_switch.h"
+#include "uC_utils.h"
+#include "uC_terminfo.h"
+#include "uC_utf8.h"
 
 // -----------------------------------------------------------------------
 
@@ -34,8 +35,8 @@ typedef struct
 // -----------------------------------------------------------------------
 // pointerd to variables
 
-ti_parse_t       *uC_ti_parse;
-static private_t *vars;
+ti_parse_t *uC_ti_parse;
+static private_t  *vars;
 
 // -----------------------------------------------------------------------
 // allocate buffers for terminfo parser
@@ -45,7 +46,7 @@ void alloc_parse(void)
     bool result;
 
     uC_ti_parse = calloc(1, sizeof(*uC_ti_parse));
-    result   = (uC_ti_parse != NULL);
+    result      = (uC_ti_parse != NULL);
 
     // allocate 64k for compiled escape sequences
     if (result)
@@ -80,12 +81,6 @@ void free_parse(void)
 API void uC_terminfo_flush(void)
 {
     ssize_t n;
-
-    // for profiling
-    // if (uC_ti_parse->max_esc < uC_ti_parse->num_esc)
-    // {
-    //     uC_ti_parse->max_esc = uC_ti_parse->num_esc;
-    // }
 
     n = write(1, uC_ti_parse->esc_buff, uC_ti_parse->num_esc);
     uC_ti_parse->num_esc = 0;
@@ -483,52 +478,55 @@ static void _brace(void) // parse number between { and } in decimal
 
 static void to_cmd(void)
 {
-    while('%' != *uC_ti_parse->f_str++)
+    while (*uC_ti_parse->f_str++ != '%')
         ;
 }
 
 // -----------------------------------------------------------------------
-// format = %t
 
-static void _t(void)        // too much if/and/but loop nesting
+void scan_to_endif(void)
 {
-    int64_t f1;
     char c1;
     int8_t nest;            // not sure if any terminfo has nested %?
 
     nest = 0;
 
-    f1 = fs_pop();          // if this is non 0 we dont do anything
+    for (;;)
+    {
+        // scan format string for next % char
+        to_cmd();
+        c1 = *uC_ti_parse->f_str++;
+
+        // if we are nesting if's count depth
+        if (c1 == '?') { nest++; }
+
+        // if we are at the else or endif....
+        if ((c1 == 'e') || (c1 == ';'))
+        {
+            if (nest == 0) // break out of loop if at else or endif
+            {              // and we have scanned past all nested %?
+                break;
+            }
+            // we are within a nested %? -
+            // must scan t0 %; before we break
+            else if (c1 == ';')
+            {
+                nest--;
+            }
+        }
+    }
+}
+
+// -----------------------------------------------------------------------
+// format = %t
+
+static void _t(void)
+{
+    int64_t f1 = fs_pop();  // if this is non 0 we dont do anything
 
     if (f1 == 0)            // if it is 0 we skip past then part
     {
-        for (;;)
-        {
-            // scan format string for next % char
-            to_cmd();
-            c1 = *uC_ti_parse->f_str++;
-
-            // if we are nesting if's count depth
-            if (c1 == '?')
-            {
-                nest++;
-            }
-
-            // if we are at the else or endif....
-            if ((c1 == 'e') || (c1 == ';'))
-            {
-                if (0 == nest) // break out of loop if at else or endif
-                {              // and we have scanned past all nested %?
-                    break;
-                }
-                // we are within a nested %? -
-                // must scan t0 %; before we break
-                else if (c1 == ';')
-                {
-                    nest--;
-                }
-            }
-        }
+        scan_to_endif();
     }
 }
 
@@ -552,10 +550,7 @@ static void _e(void)
         }
         else if (c1 == ';')
         {
-            if (nest == 0)
-            {
-                break;
-            }
+            if (nest == 0) { break; }
             nest--;
         }
     }
@@ -654,27 +649,28 @@ static const switch_t p_codes[] =
 #define PCOUNT (sizeof(p_codes) / sizeof(p_codes[0]))
 
 // -----------------------------------------------------------------------
-// silly inlined wrapper function to allow use of ternary below (ftw)
+// process a % command char from format string c1 = char following %
 
-static void wrapper(char c1)
+static void cmd(char c1)
 {
     re_switch(p_codes, PCOUNT, c1);
 }
 
 // -----------------------------------------------------------------------
-// parse format string pointed to by f_str
+// parse format string at specified address
 
-// this function is called directly when ever we implement a hard coded
-// format string such as for rgb colors. otherwise it would be static
-
-void uC_parse_format(void)
+API void uC_parse_format(const char *f)
 {
     char c1;
 
-    while ((c1 = *uC_ti_parse->f_str++))
+    uC_ti_parse->f_str = f;
+
+    while (*uC_ti_parse->f_str)
     {
-       (c1 == '%')
-            ? wrapper(next_c())
+        c1 = *uC_ti_parse->f_str++;
+
+        (c1 == '%')
+            ? cmd(next_c())
             : c_emit(c1);
     }
 }
@@ -682,15 +678,14 @@ void uC_parse_format(void)
 // -----------------------------------------------------------------------
 // parse a terminfo format string from the terminfo files strings section
 
-API void uC_format(int16_t i)
+void uC_format(int16_t i)
 {
     i = ti_file->ti_strings[i];
 
     // it is not an error for a format string to be blank
     if (i != -1)
     {
-        uC_ti_parse->f_str = &ti_file->ti_table[i];
-        uC_parse_format();
+        uC_parse_format(&ti_file->ti_table[i]);
     }
 }
 

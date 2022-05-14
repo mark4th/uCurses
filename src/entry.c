@@ -12,7 +12,7 @@
 #include <unistd.h>
 
 #include "uCurses.h"
-#include "utils.h"
+#include "uC_utils.h"
 
 // -----------------------------------------------------------------------
 

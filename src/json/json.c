@@ -14,10 +14,10 @@
 #include <stdio.h>
 
 #include "uCurses.h"
-#include "re_switch.h"
-#include "utils.h"
-#include "screen.h"
-#include "json.h"
+#include "uC_switch.h"
+#include "uC_utils.h"
+#include "uC_screen.h"
+#include "uC_json.h"
 
 extern screen_t *active_screen;
 
@@ -185,7 +185,7 @@ static void json_state_l_brace(void)
 // previous object states are pushed onto the json parse stack. key value
 // states are never pushed onto the state stack
 
-void json_new_state_struct(size_t struct_size, int32_t struct_type)
+void json_new_state_struct(int struct_size, int32_t struct_type)
 {
     void *structure;
 

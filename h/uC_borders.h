@@ -4,6 +4,8 @@
 #ifndef BORDERS_H
 #define BORDERS_H
 
+#include "uC_window.h"
+
 // -----------------------------------------------------------------------
 // visibility hidden
 

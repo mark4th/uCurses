@@ -5,7 +5,7 @@
 #define WINDOW_H
 
 #include "uCurses.h"
-#include "attribs.h"
+#include "uC_attribs.h"
 
 // -----------------------------------------------------------------------
 // structure of each cell of a window / screen
@@ -99,7 +99,7 @@ int16_t win_alloc(window_t *win);
 
 // -----------------------------------------------------------------------
 
-API void uC_win_close(void *win);
+API void uC_win_close(window_t *win);
 API window_t *uC_win_open(int16_t width, int16_t height);
 API void uC_win_pop(window_t *win);
 API int16_t uC_win_set_pos(window_t *win, int16_t x, int16_t y);

@@ -2,11 +2,18 @@
 
 #include <inttypes.h>
 
-#include "../h/uCurses.h"
+#include "uCurses.h"
+#include "uC_keys.h"
+#include "uC_menus.h"
+#include "uC_json.h"
+#include "uC_braille.h"
+
 #include "demo.h"
 
 screen_t *scr;
 window_t *win;
+
+extern screen_t *active_screen;
 
 // -----------------------------------------------------------------------
 // this image is 100 dots wide and 120 dots high.  the glyphs above are
@@ -179,30 +186,30 @@ void lion(void)
 {
     node_t *n;
 
-    scr_close(active_screen);
+    uC_scr_close(active_screen);
 
-    json_create_ui("dots.json", menu_address_cb);
+    uC_json_create_ui("dots.json", menu_address_cb);
 
-    menu_init();
+    uC_menu_init();
 
     scr = active_screen;
     n = scr->windows.head;
     win = n->payload;
 
-    while(test_keys() != 0)
+    while(uC_test_keys() != 0)
     {
-        key();
+        uC_key();
     }
 
     draw_lion();
-    scr_draw_screen(scr);
+    uC_scr_draw_screen(scr);
 
     do
     {
         ;
-    } while((test_keys() == 0) && (key() != 0x1b));
+    } while((uC_test_keys() == 0) && (uC_key() != 0x1b));
 
-    scr_close(active_screen);
+    uC_scr_close(active_screen);
     main_screen();
 }
 

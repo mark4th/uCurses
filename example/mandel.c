@@ -1,11 +1,16 @@
 
 #include <inttypes.h>
 
-#include "../h/uCurses.h"
+#include "uCurses.h"
+#include "uC_menus.h"
+#include "uC_keys.h"
+#include "uC_json.h"
 
 #include "demo.h"
 
 #define max 1000
+
+extern screen_t *active_screen;
 
 // -----------------------------------------------------------------------
 
@@ -28,7 +33,7 @@ static void make_palette(void)
     int i;
     double q;
 
-    for(int i = 0; i < max; i++)
+    for (int i = 0; i < max; i++)
     {
         q = 3.1415 * (i + 10);
 
@@ -56,14 +61,10 @@ static unsigned mandel_sqrt(int val)
     // starting point is relatively unimportant
     a = 1255;
 
-    b = val / a;
-    a = (a + b) / 2;
-    b = val / a;
-    a = (a + b) / 2;
-    b = val / a;
-    a = (a + b) / 2;
-    b = val / a;
-    a = (a + b) / 2;
+    b = val / a;    a = (a + b) / 2;
+    b = val / a;    a = (a + b) / 2;
+    b = val / a;    a = (a + b) / 2;
+    b = val / a;    a = (a + b) / 2;
 
     return a;
 }
@@ -81,9 +82,9 @@ static void mandel(window_t *win)
     double re, im;
     int cc;
 
-    for(r = 0; r < h; r++)
+    for (r = 0; r < h; r++)
     {
-        for(c = 0; c < w; c++)
+        for (c = 0; c < w; c++)
         {
             re = (c - w / 2.0) * 5.2 / w;
             im = (r - h / 2.0) * 8.3 / w;
@@ -92,7 +93,7 @@ static void mandel(window_t *win)
             y = 0;
             i = 0;
 
-            while(((x * x + y * y) <= 4) && (i < max))
+            while (((x * x + y * y) <= 4) && (i < max))
             {
                 xn = x * x - y * y + re;
                 y  = 2 * x * y + im;
@@ -100,15 +101,15 @@ static void mandel(window_t *win)
                 i++;
             }
 
-            win_cup(win, c, r);
+            uC_win_cup(win, c, r);
 
             R = palette[i].r;
             G = palette[i].g;
             B = palette[i].b;
 
-            win_set_rgb_fg(win, R, G, B);
+            uC_win_set_rgb_fg(win, R, G, B);
 
-            win_emit(win, (i < max) ? 0x2981 : ' ');
+            uC_win_emit(win, (i < max) ? 0x2981 : ' ');
         }
     }
 }
@@ -124,25 +125,26 @@ void mandel_demo(void)
 
     char status[MAX_STATUS];
 
-    scr_close(active_screen);
-    json_create_ui("dots.json", menu_address_cb);
+    uC_scr_close(active_screen);
+    uC_json_create_ui("dots.json", menu_address_cb);
     make_palette();
-    alloc_status();
-    bar_clr_status();
-    menu_init();
+    uC_alloc_status();
+    uC_bar_clr_status();
+    uC_menu_init();
 
     scr = active_screen;
-    n = scr->windows.head;
+    n   = scr->windows.head;
     win = n->payload;
 
-    while(test_keys() != 0);
+    mandel(win);
+    uC_scr_draw_screen(scr);
     do
     {
-        scr_draw_screen(scr);
-        mandel(win);
-    } while((test_keys() == 0) && (key() != 0x1b));
+        while(uC_test_keys() == 0)
+            ;
+    } while((uC_key() != 0x1b));
 
-    scr_close(active_screen);
+    uC_scr_close(active_screen);
     main_screen();
 }
 

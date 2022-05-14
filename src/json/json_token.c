@@ -7,9 +7,9 @@
 #include <stdio.h>
 
 #include "uCurses.h"
-#include "json.h"
-#include "utf8.h"
-#include "utils.h"
+#include "uC_json.h"
+#include "uC_utf8.h"
+#include "uC_utils.h"
 
 // -----------------------------------------------------------------------
 
@@ -114,7 +114,7 @@ static void skip_white(void)
 // -----------------------------------------------------------------------
 // convert all 0x09 and 0x0d chars into 0x20 (makes parsing easier)
 
-void json_de_tab(char *s, size_t len)
+void json_de_tab(char *s, int len)
 {
     while (len != 0)
     {

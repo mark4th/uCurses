@@ -6,7 +6,7 @@
 #include <unistd.h>
 
 #include "uCurses.h"
-#include "keys.h"
+#include "uC_keys.h"
 
 // -----------------------------------------------------------------------
 

@@ -4,9 +4,9 @@
 #include <inttypes.h>
 #include <stddef.h>
 
-#include "menus.h"
-#include "keys.h"
-#include "terminfo.h"
+#include "uC_menus.h"
+#include "uC_keys.h"
+#include "uC_terminfo.h"
 
 // -----------------------------------------------------------------------
 

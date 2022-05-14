@@ -4,15 +4,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "../h/uCurses.h"
+#include "uCurses.h"
+#include "uC_menus.h"
+#include "uC_utf8.h"
+#include "uC_utils.h"
+#include "uC_keys.h"
+#include "uC_win_printf.h"
 
 #include "demo.h"
 
 // -----------------------------------------------------------------------
 
 #define SLEEP 15000000
-
-extern uint32_t flush_size;
 
 // -----------------------------------------------------------------------
 // global variables considered harmful unless you restrict yourself
@@ -84,33 +87,19 @@ char lorem[69][14] =
 };
 
 // -----------------------------------------------------------------------
+// i have no idea what this says :)
 
 char *chinese[] =
 {
-    "我住长江头，君住长江尾。",
-    "日日思君不见君，共饮长江水。",
-    "此水几时休，此恨何时已。",
-    "只愿君心似我心，定不负相思意。",
-    " ",
-    "击鼓其镗，踊跃用兵。",
-    "土国城漕，我独南行。",
-    " ",
-    "从孙子仲，平陈与宋。",
-    "不我以归，忧心有忡。",
-    " ",
-    "爰居爰处，爰丧其马，",
-    "于以求之，于林之下。",
-    " ",
-    "死生契阔，与子成说。",
-    "执子之手，与子偕老。",
-    " ",
-    "于嗟阔兮，不我活兮。",
-    "于嗟洵兮，不我信兮。",
-    " ",
-    "我欲与君相知， 长命无绝衰。",
-    "山无陵，江水为竭，冬雷震震，",
-    "夏雨雪，天地合，乃敢与君绝！",
-    " ",
+    "我住长江头，君住长江尾。",    "日日思君不见君，共饮长江水。",
+    "此水几时休，此恨何时已。",    "只愿君心似我心，定不负相思意。",  " ",
+    "击鼓其镗，踊跃用兵。",       "土国城漕，我独南行。",          " ",
+    "从孙子仲，平陈与宋。",       "不我以归，忧心有忡。",          " ",
+    "爰居爰处，爰丧其马，",       "于以求之，于林之下。",          " ",
+    "死生契阔，与子成说。",       "执子之手，与子偕老。",          " ",
+    "于嗟阔兮，不我活兮。",       "于嗟洵兮，不我信兮。",          " ",
+    "我欲与君相知， 长命无绝衰。", "山无陵，江水为竭，冬雷震震，",
+    "夏雨雪，天地合，乃敢与君绝！",                              " ",
 };
 
 // -----------------------------------------------------------------------
@@ -118,31 +107,32 @@ char *chinese[] =
 void print_lorem(window_t *win)
 {
     int16_t len;
+
     static int16_t i = 0;
     static uint8_t r1 = 105, g1 = 100, b1 = 45;
     static uint8_t r2, g2, b2;
 
-    if(i == 70) { i = 0; }
+    if (i == 70) { i = 0; }
 
     // how many character cells will this string use.
     // this accounts for double width characters
 
-    len = utf8_width(lorem[i]);
+    len = uC_utf8_width(lorem[i]);
 
-    if((len + win->cx) > win->width)
+    if ((len + win->cx) > win->width)
     {
-        win_el(win);   // this also effects a win_cr()
+        r2 = sintab[r1];
+        g2 = sintab[g1];
+        b2 = sintab[b1];
 
-        r2 = r1 + 128;
-        g2 = g1 + 128;
-        b2 = b1 + 128;
+        uC_win_el(win);     // this also does a win_cr()
+        uC_win_set_rgb_bg(win, r2, g2, b2);
+        make_contrast(&r2, &g2, &b2);
+        uC_win_set_rgb_fg(win, r2, g2, b2);
 
-        win_set_rgb_fg(win, sintab[r1], sintab[g1], sintab[b1]);
-        win_set_rgb_bg(win, sintab[r2], sintab[g2], sintab[b2]);
-
-        r1 += 7; g1 += 5; b1 += 6;
+        r1+= 4; g1 += 3; b1 += 2;
     }
-    win_puts(win, lorem[i]);
+    uC_win_puts(win, lorem[i]);
     i++;
 }
 
@@ -154,26 +144,27 @@ static void print_chinese(window_t *win)
     static int8_t line = 0;
     static int8_t gray = 1;
 
-    win_set_gray_fg(win, gray);
-    win_set_gray_bg(win, abs(20 - (gray + 10)));
+    uC_win_set_gray_fg(win, gray);
+    uC_win_set_gray_bg(win, abs(23 - (gray + 11)));
 
     gray += inc;
 
-    if((gray == 23) || (gray == 0x1))
+    if ((gray == 23) || (gray == 0x1))
     {
         inc = -inc;
     }
 
-    win_puts(win, chinese[line++]);
-    win_el(win);
+    uC_win_puts(win, chinese[line++]);
+    uC_win_el(win);
 
-    if(line > 23) { line = 0; }
+    if (line > 23) { line = 0; }
 }
 
 // -----------------------------------------------------------------------
+// furthest right and down a window can go and not move off screen
 
-#define X_END(win) (scr->width  - win->width  - 2)
-#define Y_END(win) (scr->height - win->height - 2)
+#define X_MAX(win) (scr->width  - win->width  - 2)
+#define Y_MAX(win) (scr->height - win->height - 2)
 
 // -----------------------------------------------------------------------
 // switch which window is on top and which is behind
@@ -181,8 +172,8 @@ static void print_chinese(window_t *win)
 static void flip_flop(window_t *win1, window_t *win2)
 {
     (0 == first)
-        ? win_pop(win2)
-        : win_pop(win1);
+        ? uC_win_pop(win2)
+        : uC_win_pop(win1);
 
     first ^= 1;
 }
@@ -196,16 +187,14 @@ static void do_run_demo(screen_t *scr, window_t *win1, window_t *win2)
     print_chinese(win2);
 
     // move each window and refrseh the screen display
-    win_set_pos(win1, x1, y1);
-    win_set_pos(win2, x2, y2);
+    uC_win_set_pos(win1, x1, y1);
+    uC_win_set_pos(win2, x2, y2);
 
-    scr_draw_screen(scr);
+    uC_scr_draw_screen(scr);
 
     // add respective increments to x1, y1, x2, y2
-    x1 += x1i;
-    y1 += y1i;
-    x2 += x2i;
-    y2 += y2i;
+    x1 += x1i;   y1 += y1i;
+    x2 += x2i;   y2 += y2i;
 
     // this if / and / but looping makes each window
     // move around the edge of the screen in one direction
@@ -219,9 +208,9 @@ static void do_run_demo(screen_t *scr, window_t *win1, window_t *win2)
     // the window will now traverse down the right edge of
     // the screen...
 
-    if(y1i == 0)    // if we are moving hrizontally...
+    if (y1i == 0)    // if we are moving horizontally...
     {
-        if((x1 == X_END(win1)) || (x1 == 2))
+        if ((x1 == X_MAX(win1)) || (x1 == 2))
         {
             flip_flop(win1, win2);
 
@@ -238,9 +227,9 @@ static void do_run_demo(screen_t *scr, window_t *win1, window_t *win2)
     // the window will now move right to left along the
     // boottom of the window... and so on and so forth
 
-    if(x1i == 0)  // if we are moving vertically
+    if (x1i == 0)  // if we are moving vertically
     {
-        if((y1 == Y_END(win1)) || (y1 == 2))
+        if ((y1 == Y_MAX(win1)) || (y1 == 2))
         {
             x1i = -y1i;    y1i = 0;
             x2i = -y2i;    y2i = 0;
@@ -256,64 +245,48 @@ void run_demo1(screen_t *scr, window_t *win1, window_t *win2)
 {
     int8_t pause = 0;
     int8_t c;
-
-    uint32_t max = 0;
-    uint32_t total = 0;
     uint32_t frames = 0;
-    uint32_t average = 0;
 
     char status[MAX_STATUS];
 
-    x1 = 2;
-    y1 = 2;
-    x2 = X_END(win2);
-    y2 = Y_END(win2);
+    x1 = 2;   y1 = 2;
+    x2 = X_MAX(win2);
+    y2 = Y_MAX(win2);
 
-    x1i = 1;
-    x2i = -1;
-    y1i = 0;
-    y2i = 0;
+    x1i = 1;  x2i = -1;
+    y1i = 0;  y2i = 0;
 
-    scr_draw_screen(scr);
+    uC_scr_draw_screen(scr);
 
-    for(;;)
+    for (;;)
     {
-        // check for key presses. space pauses anything else quits
-        if(test_keys() != 0)
+        // check for key presses.
+        // space pauses anything else quits
+        if (uC_test_keys() != 0)
         {
-            c = key();
+            c = uC_key();
 
-            if((c == ' ') || (c == 0x0a))
+            if ((c == ' ') || (c == 0x0a))
             {
                 pause ^= 1;
                 continue;
             }
-            if(c == 0x1b)
-            {
-                break;
-            }
+            if(c == 0x1b) { break; }
         }
 
-        if(pause == 0)        // if not paused...
+        if (pause == 0)        // if not paused...
         {
             frames++;
 
-            if(max < flush_size) { max = flush_size; }
-            total += flush_size;
-            average = total / frames;
-
-            snprintf(status, MAX_STATUS, "Frame: %06d Max: %#04x Avg: %#04x",
-                   frames, max, average);
-
-            flush_size = 0;
-            bar_set_status(status);
+            snprintf(status, MAX_STATUS, "Frame: %d", frames);
+            uC_bar_set_status(status);
 
             do_run_demo(scr, win1, win2);
         }
-        // if we did not do this the display would look like its
-        // freaking out!
 
-        clock_sleep(SLEEP);
+        // if we did not do this the display would look like itsxz4
+        // freaking out!
+        uC_clock_sleep(SLEEP);
     }
 }
 

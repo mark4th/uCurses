@@ -4,10 +4,11 @@
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 
 #include "uCurses.h"
-#include "attribs.h"
-#include "terminfo.h"
+#include "uC_attribs.h"
+#include "uC_terminfo.h"
 
 // -----------------------------------------------------------------------
 
@@ -21,7 +22,7 @@ API attr_grp_t *uC_attr_grp;
 void alloc_attr_grp(void)
 {
     uC_attr_grp = calloc(1, sizeof(*uC_attr_grp));
-// todo: is asserting here bad?
+
     assert(uC_attr_grp != NULL);
 
     attribs_t *a = &uC_attr_grp->attrs;
@@ -40,22 +41,23 @@ void free_attr_grp(void)
 // -----------------------------------------------------------------------
 // hard coded format string to set a rgb fg
 
+// there is no format string for this within the terminfo
+// string section
+
 static void rgb_fg(void)
 {
     const char *const rgb_seq = "\x1b[38;2;%p1%3d;%p2%3d;%p3%3dm";
 
     attribs_t *a = &uC_attr_grp->attrs;
 
+    // copy the RGB elements of the current attribute set into the
+    // terminfo parameter array
+
     uC_ti_parse->params[0] = a->bytes[FG_R];
     uC_ti_parse->params[1] = a->bytes[FG_G];
     uC_ti_parse->params[2] = a->bytes[FG_B];
 
-    // there is no format string for this within the terminfo
-    // string section
-
-    uC_ti_parse->f_str = rgb_seq;
-
-    uC_parse_format();
+    uC_parse_format(rgb_seq);
 }
 
 // -----------------------------------------------------------------------
@@ -70,8 +72,7 @@ static void rgb_bg(void)
     uC_ti_parse->params[1] = a->bytes[BG_G];
     uC_ti_parse->params[2] = a->bytes[BG_B];
 
-    uC_ti_parse->f_str = rgb_seq;
-    uC_parse_format();
+    uC_parse_format(rgb_seq);
 }
 
 // -----------------------------------------------------------------------
@@ -87,13 +88,12 @@ static void gray_fg(void)
         "%t9%p1%{8}%-%d" //    output '9' followed by p1 - 8
         "%e38;5;%p1%d"   // else output '38;5;' followed by p1
         "%;m";           // last char output is always the m
-    uC_ti_parse->f_str = fg_seq;
 
     // gray scales are specified as values from 0 to 23 but
     // the escape seaueces use values from 232 to 255
 
     uC_ti_parse->params[0] += 232;
-    uC_parse_format();
+    uC_parse_format(fg_seq);
 }
 
 // -----------------------------------------------------------------------
@@ -109,13 +109,11 @@ static void gray_bg(void)
         "%e48;5;%p1%d"
         "%;m";
 
-    uC_ti_parse->f_str = bg_seq;
-
     // gray scales are specified as values from 0 to 23 but
     // the escape seaueces use values from 232 to 255
 
     uC_ti_parse->params[0] += 232;
-    uC_parse_format();
+    uC_parse_format(bg_seq);
 }
 
 // -----------------------------------------------------------------------
@@ -181,17 +179,23 @@ static void apply_bg(void)
 
 void apply_attribs(void)
 {
-    uint8_t changes;
+    // changes = detect alterations to attributes
+    // dff     = detect alterations to colors
+
+    uint8_t changes, diff;
 
     attr_grp_t *a = uC_attr_grp;
 
     changes = a->attrs.bytes[ATTR] ^ a->old_attrs.bytes[ATTR];
 
+    // in order to make changes to bold we need to clear ALL
+    // attributes because there is no way to clear just bold
+
     if ((changes & BOLD) || (changes & REVERSE))
     {
         ti_sgr0();
 
-        if ((a->attrs.bytes[ATTR] & BOLD) != 0)     { ti_bold(); }
+        if ((a->attrs.bytes[ATTR] & BOLD)    != 0)  { ti_bold(); }
         if ((a->attrs.bytes[ATTR] & REVERSE) != 0)  { ti_rev();  }
     }
 
@@ -206,23 +210,21 @@ void apply_attribs(void)
             : ti_rmul();
     }
 
-    if ((a->attrs.bytes[BG]   != a->old_attrs.bytes[BG])   ||
-        (a->attrs.bytes[BG_R] != a->old_attrs.bytes[BG_R]) ||
-        (a->attrs.bytes[BG_G] != a->old_attrs.bytes[BG_G]) ||
-        (a->attrs.bytes[BG_B] != a->old_attrs.bytes[BG_B]) ||
-        (changes != 0))
-    {
-        apply_bg();
-    }
+    diff =
+        (a->attrs.bytes[BG]   ^ a->old_attrs.bytes[BG])   |
+        (a->attrs.bytes[BG_R] ^ a->old_attrs.bytes[BG_R]) |
+        (a->attrs.bytes[BG_G] ^ a->old_attrs.bytes[BG_G]) |
+        (a->attrs.bytes[BG_B] ^ a->old_attrs.bytes[BG_B]);
 
-    if ((a->attrs.bytes[FG]   != a->old_attrs.bytes[FG])   ||
-        (a->attrs.bytes[FG_R] != a->old_attrs.bytes[FG_R]) ||
-        (a->attrs.bytes[FG_G] != a->old_attrs.bytes[FG_G]) ||
-        (a->attrs.bytes[FG_B] != a->old_attrs.bytes[FG_B]) ||
-        (changes != 0))
-    {
-        apply_fg();
-    }
+    if ((changes | diff) != 0) { apply_bg(); }
+
+    diff =
+        (a->attrs.bytes[FG]   ^ a->old_attrs.bytes[FG])   |
+        (a->attrs.bytes[FG_R] ^ a->old_attrs.bytes[FG_R]) |
+        (a->attrs.bytes[FG_G] ^ a->old_attrs.bytes[FG_G]) |
+        (a->attrs.bytes[FG_B] ^ a->old_attrs.bytes[FG_B]);
+
+    if ((changes | diff) != 0) { apply_fg(); }
 
     a->old_attrs.chunk = a->attrs.chunk;
 }

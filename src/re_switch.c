@@ -2,7 +2,7 @@
 // -----------------------------------------------------------------------
 
 #include "uCurses.h"
-#include "re_switch.h"
+#include "uC_switch.h"
 
 // -----------------------------------------------------------------------
 // did i say how much i *hate* the c switch statememt?
@@ -18,7 +18,7 @@
 // structure contains a option and a function vector.  for example
 // see parse.c
 
-int re_switch(const switch_t *s, size_t size, int32_t option)
+int re_switch(const switch_t *s, int size, int32_t option)
 {
     int result = -1;
 

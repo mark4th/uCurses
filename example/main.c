@@ -8,16 +8,26 @@
 #include <errno.h>
 #include <string.h>
 
-#include "../h/uCurses.h"
+#include "uCurses.h"
+#include "uC_json.h"
+#include "uC_win_printf.h"
+#include "uC_keys.h"
+#include "uC_terminfo.h"
+#include "uC_utils.h"
+#include "uC_json.h"
 
 #include "demo.h"
 
 #define SLEEP 15000000
 
+extern screen_t *active_screen;
+
 // -----------------------------------------------------------------------
 
 #define DARK  1
 #define LIGHT BROWN
+
+#include <stdio.h>
 
 void main_screen(void)
 {
@@ -28,51 +38,51 @@ void main_screen(void)
     int16_t xco;
 
     uCurses_init();
-    json_create_ui("base.json", menu_address_cb);
-    alloc_status();
-    bar_clr_status();
-    menu_init();
+    uC_json_create_ui("base.json", menu_address_cb);
+    uC_alloc_status();
+    uC_bar_clr_status();
+    uC_menu_init();
 
     scr = active_screen;
     xco = (scr->width / 2) - (58 / 2) - 1;
     n = scr->windows.head;
     win = n->payload;
 
-    win_printf(win, "%@%fc██%fs▖   %fc██%fs▖ %fc██████%fs▖%fc██%fs▖   %fc██"
+    uC_win_printf(win, "%@%fc██%fs▖   %fc██%fs▖ %fc██████%fs▖%fc██%fs▖   %fc██"
         "%fs▖%fc██████%fs▖ %fc███████%fs▖%fc███████%fs▖%fc███████%fs▖",
         xco, 5, LIGHT, DARK, LIGHT, DARK, LIGHT, DARK, LIGHT, DARK, LIGHT,
         DARK, LIGHT, DARK, LIGHT, DARK, LIGHT, DARK, LIGHT, DARK);
 
-    win_printf(win, "%@%fc██%fs▌   %fc██%fs▌%fc██%fs▛▀▀▀▀▘%fc██%fs▌   %fc██"
+    uC_win_printf(win, "%@%fc██%fs▌   %fc██%fs▌%fc██%fs▛▀▀▀▀▘%fc██%fs▌   %fc██"
         "%fs▌%fc██%fs▛▀▀%fc██%fs▖%fc██%fs▛▀▀▀▀▘%fc██%fs▛▀▀▀▀▘%fc██%fs▛▀▀▀▀▘",
         xco, 6, LIGHT, DARK, LIGHT, DARK, LIGHT, DARK, LIGHT, DARK, LIGHT,
         DARK, LIGHT, DARK, LIGHT, DARK, LIGHT, DARK, LIGHT, DARK, LIGHT, DARK);
 
-    win_printf(win, "%@%fc██%fs▌   %fc██%fs▌%fc██%fs▌     %fc██%fs▌   %fc██"
+    uC_win_printf(win, "%@%fc██%fs▌   %fc██%fs▌%fc██%fs▌     %fc██%fs▌   %fc██"
         "%fs▌%fc██████%fs▛▘%fc███████%fs▖%fc█████%fs▖  %fc███████%fs▖",
         xco, 7, LIGHT, DARK, LIGHT, DARK, LIGHT, DARK, LIGHT, DARK, LIGHT,
         DARK, LIGHT, DARK, LIGHT, DARK, LIGHT, DARK, LIGHT, DARK);
 
-    win_printf(win, "%@%fc██%fs▌   %fc██%fs▌%fc██%fs▌     %fc██%fs▌   %fc██"
+    uC_win_printf(win, "%@%fc██%fs▌   %fc██%fs▌%fc██%fs▌     %fc██%fs▌   %fc██"
         "%fs▌%fc██%fs▛▀▀%fc██%fs▌▝▀▀▀▀%fc██%fs▌%fc██%fs▛▀▀▘  ▝▀▀▀▀%fc██%fs▌",
         xco, 8, LIGHT, DARK, LIGHT, DARK, LIGHT, DARK, LIGHT, DARK, LIGHT,
         DARK, LIGHT, DARK, LIGHT, DARK, LIGHT, DARK, LIGHT, DARK, LIGHT, DARK);
 
-    win_printf(win, "%@%fs▝%fc██████%fs▛▘▝%fc██████%fs▖▝%fc██████%fs▛▘%fc██"
+    uC_win_printf(win, "%@%fs▝%fc██████%fs▛▘▝%fc██████%fs▖▝%fc██████%fs▛▘%fc██"
         "%fs▌  %fc██%fs▌%fc███████%fs▌%fc███████%fs▖%fc███████%fs▌",
         xco, 9, DARK, LIGHT, DARK, LIGHT, DARK, LIGHT, DARK, LIGHT, DARK,
         LIGHT, DARK, LIGHT, DARK, LIGHT, DARK, LIGHT, DARK);
 
-    win_printf(win, "%@ %fs▝▀▀▀▀▀▘  ▝▀▀▀▀▀▘ ▝▀▀▀▀▀▘ ▝▀▘  ▝▀▘▝▀▀▀▀▀▀▘▝▀▀▀▀▀▀▘"
+    uC_win_printf(win, "%@ %fs▝▀▀▀▀▀▘  ▝▀▀▀▀▀▘ ▝▀▀▀▀▀▘ ▝▀▘  ▝▀▘▝▀▀▀▀▀▀▘▝▀▀▀▀▀▀▘"
         "▝▀▀▀▀▀▀▘",
         xco, 10, DARK);
 
     xco = (scr->width / 2) - (46 / 2) - 2;
-    win_printf(win, "%@%fcDemo Application.  Press %U+%B+F10%B-%U- to pull down Menu",
+    uC_win_printf(win, "%@%fcDemo Application.  Press %U+%B+F10%B-%U- to pull down Menu",
         xco, 12, CYAN);
 
     xco = (scr->width / 2) - (50 / 2) - 2;
-    win_printf(win, "%@%fcEscape quits each demo:  Escape here quits program!",
+    uC_win_printf(win, "%@%fcEscape quits each demo:  Escape here quits program!",
         xco, 14, LT_GREEN);
 }
 
@@ -93,27 +103,24 @@ int main(void)
         // actually calls the selected demo).
 
         scr = active_screen;
-////        n = scr->windows.head;
-////        win = n->payload;
+        uC_scr_draw_screen(scr);
 
-        scr_draw_screen(scr);
-
-        while(test_keys() == 0)
+        while(uC_test_keys() == 0)
         {
-            clock_sleep(SLEEP);
+            uC_clock_sleep(SLEEP);
         }
-    } while(key() != 0x1b);
+    } while(uC_key() != 0x1b);
 
-    scr_close(active_screen);
+    uC_scr_close(active_screen);
 
-    console_reset_attrs();
+    uC_console_reset_attrs();
 
-    clear();
-    cup(10, 0);
-    restore_term();
+    uC_clear();
+    uC_cup(10, 0);
+    uC_restore_terminal();
     uCurses_deInit();
-
     printf("Au revoir!\n");
+
     return 0;
 }
 

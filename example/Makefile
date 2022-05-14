@@ -1,6 +1,6 @@
 
 OBJDIR=obj
-CFLAGS = -O3 -m64 -g3 -g -march=native --std=c17 -fno-inline -fPIE
+CFLAGS = -O3 -m64 -g3 -g -march=native --std=c17 -fno-inline -fPIE -I../h
 
 SOURCES = main.c menus.c demo1.c dots.c sintab.c shapes.c mandel.c lion.c raycast.c
 
@@ -21,3 +21,7 @@ clean:
 
 run: demo
 	LD_LIBRARY_PATH=/usr/local/lib64 ./demo
+
+shell:
+	$(CC) -L /usr/local/lib64 -I../h -lm -luCurses -o shell shell.c
+ 	

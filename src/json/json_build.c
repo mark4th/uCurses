@@ -6,10 +6,10 @@
 
 #include <stdio.h>
 
-#include "h/uCurses.h"
-#include "h/json.h"
-#include "h/screen.h"
-#include "h/window.h"
+#include "uCurses.h"
+#include "uC_json.h"
+#include "uC_screen.h"
+#include "uC_window.h"
 
 // -----------------------------------------------------------------------
 
@@ -113,6 +113,7 @@ static void fix_menus(screen_t *scr)
     win->flags    = WIN_LOCKED;
     scr->menu_bar = bar;
     bar->xco      = 2;
+    win->blank    = 0x20;
 
     for (i = 0; i < bar->count; i++)
     {

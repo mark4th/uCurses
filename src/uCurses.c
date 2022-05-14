@@ -4,10 +4,10 @@
 #include <locale.h>
 
 #include "uCurses.h"
-#include "terminfo.h"
-#include "ti_file.h"
-#include "attribs.h"
-#include "utils.h"
+#include "uC_terminfo.h"
+#include "uC_ti_file.h"
+#include "uC_attribs.h"
+#include "uC_utils.h"
 
 // -----------------------------------------------------------------------
 
@@ -29,7 +29,6 @@ API void uCurses_deInit(void)
     free_parse();
     free_info();
     free_attr_grp();
-
     uC_restore_terminal();
 }
 

@@ -1,9 +1,9 @@
 // -----------------------------------------------------------------------
 
 #include "uCurses.h"
-#include "keys.h"
-#include "terminfo.h"
-#include "utils.h"
+#include "uC_keys.h"
+#include "uC_terminfo.h"
+#include "uC_utils.h"
 
 extern ti_parse_t *uC_ti_parse;
 extern int8_t keybuff[KEY_BUFF_SZ];

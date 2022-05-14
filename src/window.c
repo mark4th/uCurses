@@ -10,9 +10,9 @@
 #include <wchar.h>
 
 #include "uCurses.h"
-#include "window.h"
-#include "screen.h"
-#include "attribs.h"
+#include "uC_window.h"
+#include "uC_screen.h"
+#include "uC_attribs.h"
 
 // -----------------------------------------------------------------------
 // calculate address of line within window buffer
@@ -47,13 +47,13 @@ int16_t win_alloc(window_t *win)
 
 // -----------------------------------------------------------------------
 
-API void uC_win_close(void *win)
+API void uC_win_close(window_t *win)
 {
     if (win != NULL)
     {
-        if (((window_t *)win)->buffer != NULL)
+        if (win->buffer != NULL)
         {
-            free(((window_t *)win)->buffer);
+            free(win->buffer);
         }
         free(win);
     }
@@ -76,6 +76,7 @@ API window_t *uC_win_open(int16_t width, int16_t height)
         if (win_alloc(win) == 0)
         {
             win->attr_grp.attrs.bytes[FG] = DEFAULT_FG;
+            win->attr_grp.attrs.bytes[BG] = DEFAULT_BG;
             uC_win_clear(win);
         }
         else
@@ -114,24 +115,24 @@ API int16_t uC_win_set_pos(window_t *win, int16_t x, int16_t y)
     {
         screen_t *scr = win->screen;
 
-        win_width = win->width;
+        win_width  = win->width;
         win_height = win->height;
         win_x = x;
         win_y = y;
-        scr_width = scr->width;
+        scr_width  = scr->width;
         scr_height = scr->height;
 
         // if window is boxed account for border
         if (win->flags & WIN_BOXED)
         {
-            win_width += 2;
+            win_width  += 2;
             win_height += 2;
             win_x--;
             win_y--;
         }
 
         if ((win_x + win_width < scr_width) &&
-           (win_y + win_height < scr_height))
+           (win_y  + win_height < scr_height))
         {
             win->xco = x;
             win->yco = y;
@@ -155,7 +156,7 @@ API void uC_win_erase_line(window_t *win, int16_t line)
         p = win_line_addr(win, line);
 
         cell.attrs.chunk = win->attr_grp.attrs.chunk;
-        cell.code = win->blank;
+        cell.code        = win->blank;
 
         for (i = 0; i < win->width; i++)
         {

@@ -84,7 +84,7 @@ API void uC_scr_close(screen_t *scr)
 
         do
         {
-            win = list_pop(&scr->windows);
+            win = list_pop_head(&scr->windows);
             uC_win_close(win);
         } while (win != NULL);
 
@@ -452,7 +452,7 @@ API void uC_scr_win_attach(screen_t *scr, window_t *win)
 {
     win->screen = scr;
 
-    if (list_append_node(&scr->windows, win) != 0)
+    if (list_push_tail(&scr->windows, win) != true)
     {
         // log error here?
         // insert more ram to conginue!

@@ -15,8 +15,8 @@
 
 // -----------------------------------------------------------------------
 
-static struct termios term_save;
 static struct termios term;
+static struct termios term_save;
 
 // -----------------------------------------------------------------------
 // do nothing and do it well
@@ -71,6 +71,9 @@ API void uC_clock_sleep(int32_t when)
 
 API void uC_restore_terminal(void)
 {
+    // these flags should not have been cleared here, why do i suddenly
+    // need to set them?
+    term_save.c_lflag |= (ECHO | ICANON);
     tcsetattr(STDIN_FILENO, TCSANOW, &term_save);
     uC_curon();
     uC_terminfo_flush();

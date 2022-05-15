@@ -38,6 +38,7 @@ void main_screen(void)
     int16_t xco;
 
     uCurses_init();
+
     uC_json_create_ui("base.json", menu_address_cb);
     uC_alloc_status();
     uC_bar_clr_status();
@@ -114,11 +115,11 @@ int main(void)
     uC_scr_close(active_screen);
 
     uC_console_reset_attrs();
-
     uC_clear();
     uC_cup(10, 0);
-    uC_restore_terminal();
+
     uCurses_deInit();
+
     printf("Au revoir!\n");
 
     return 0;

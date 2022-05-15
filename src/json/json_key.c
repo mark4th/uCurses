@@ -5,7 +5,6 @@
 #include <string.h>
 
 #include "uCurses.h"
-#include "uC_list.h"
 #include "uC_json.h"
 #include "uC_utils.h"
 #include "uC_window.h"

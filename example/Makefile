@@ -11,7 +11,7 @@ $(shell   mkdir -p obj)
 
 demo : $(objects)
 	$(CC) -L /usr/local/lib64 -lm -luCurses -o demo $(objects)
-#	strip -R .comment demo
+	strip -R .comment demo
 
 $(OBJDIR)/%.o : %.c demo.h $(SOURCES)
 	$(CC) -c $(CFLAGS) -o $@ $<
@@ -23,5 +23,4 @@ run: demo
 	LD_LIBRARY_PATH=/usr/local/lib64 ./demo
 
 shell:
-	$(CC) -L /usr/local/lib64 -I../h -lm -luCurses -o shell shell.c
- 	
+	$(CC) -O3 -L /usr/local/lib64 -I../h -lm -luCurses -o shell shell.c

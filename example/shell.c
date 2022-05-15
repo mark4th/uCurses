@@ -183,7 +183,7 @@ void dump_buff(uint32_t *p, uint32_t n)
 }
 
 // -----------------------------------------------------------------------
-// verify mplementation works as advertised
+// verify implementation works as advertised
 
 static void verify_sort(uint32_t *p, uint32_t n)
 {

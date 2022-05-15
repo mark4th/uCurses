@@ -236,8 +236,8 @@ ti_attrib_t add_attr(uint8_t a, ti_attrib_t attr)
 {
     a |= attr;
 
-    if (FG_RGB & attr)    { a &= ~FG_GRAY; }
-    if (BG_RGB & attr)    { a &= ~BG_GRAY; }
+    if (FG_RGB  & attr)   { a &= ~FG_GRAY; }
+    if (BG_RGB  & attr)   { a &= ~BG_GRAY; }
     if (FG_GRAY & attr)   { a &= ~FG_RGB;  }
     if (BG_GRAY & attr)   { a &= ~BG_RGB;  }
 

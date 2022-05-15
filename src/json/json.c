@@ -122,7 +122,7 @@ const int32_t json_syntax[] =
 
 static void json_push(json_state_t *j)
 {
-    list_append_node(&json_vars->json_stack, json_state);
+    list_push_head(&json_vars->json_stack, json_state);
     json_state = j;
 }
 
@@ -135,7 +135,7 @@ void json_pop(void)
 {
     free(json_state);
 
-    json_state = list_pop(&json_vars->json_stack);
+    json_state = list_pop_head(&json_vars->json_stack);
 }
 
 // -----------------------------------------------------------------------
@@ -352,6 +352,8 @@ API void uC_json_create_ui(char *path, fp_finder_t fp)
     {
         json_build_ui();
     }
+
+    free(json_vars);
 }
 
 // =======================================================================

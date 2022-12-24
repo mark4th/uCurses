@@ -145,7 +145,7 @@ static void print_chinese(window_t *win)
     static int8_t gray = 1;
 
     uC_win_set_gray_fg(win, gray);
-    uC_win_set_gray_bg(win, abs(23 - (gray + 11)));
+    uC_win_set_gray_bg(win, abs(23 - gray));
 
     gray += inc;
 

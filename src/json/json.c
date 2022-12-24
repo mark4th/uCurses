@@ -74,8 +74,7 @@ extern screen_t *active_screen;
 //
 // Any time a new object or key token is parsed we check to see if there
 // is a comma on it.  If there is no comma the next state will
-// instead be STATE_R_BRACE which state pops the previous state off the
-// stack.
+// instead be STATE_R_BRACE which pops the previous state off the stack.
 //
 // As key values are parsed we immediately set the specified item in
 // their parents C structure.  When an object is completed we store
@@ -209,7 +208,7 @@ void json_new_state_struct(int struct_size, int32_t struct_type)
 }
 
 // -----------------------------------------------------------------------
-// strips command and recalculates token hash
+// strips comma and recalculates token hash
 
 static bool check_comma(void)
 {

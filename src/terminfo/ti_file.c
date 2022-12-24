@@ -11,11 +11,11 @@
 #include <termios.h>
 #include <unistd.h>
 #include <stdbool.h>
-#include <assert.h>
 
 #include "uCurses.h"
 #include "uC_terminfo.h"
 #include "uC_parse.h"
+#include "uC_utils.h"
 
 // -----------------------------------------------------------------------
 
@@ -93,7 +93,7 @@ static void map_tifile(void)
     const char *env_term;
 
     ti_file = calloc(1, sizeof(*ti_file));
-    assert(ti_file);
+    uC_ASSERT(ti_file != NULL, "Out of Memory");
 
     env_term = getenv("TERM");
     if (env_term == NULL)
@@ -137,7 +137,7 @@ static void is_valid(void)
 
 // -----------------------------------------------------------------------
 
-void alloc_info()
+void alloc_info(void)
 {
     ti_hdr_t *p;
 

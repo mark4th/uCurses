@@ -4,6 +4,8 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include <stdbool.h>
+
 // -----------------------------------------------------------------------
 
 #define FNV_PRIME (0x01000193)
@@ -13,8 +15,13 @@
 // visibility hidden
 
 int32_t fnv_hash(char *s);
+void uC_assert(bool f, char *file, int line, char *msg);
 
 __attribute__((noreturn)) void xabort(char *msg);
+
+// -----------------------------------------------------------------------
+
+#define uC_ASSERT(f, msg) uC_assert(f, __FILE__, __LINE__, msg)
 
 // -----------------------------------------------------------------------
 

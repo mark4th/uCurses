@@ -16,7 +16,8 @@ static inline double dmin(double a, double b)  { return (a < b) ? a : b; }
 // -----------------------------------------------------------------------
 // Convert RGB color to HSL.
 
-static void rgb2hsl(double r, double g, double b, double *h, double *s, double *l)
+static void rgb2hsl(double r, double g, double b, double *h,
+    double *s, double *l)
 {
     r /= 255.0;
     g /= 255.0;

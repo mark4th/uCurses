@@ -7,7 +7,6 @@
 #include <unistd.h>
 #include <stdbool.h>
 #include <stdlib.h>
-#include <assert.h>
 
 #include "uCurses.h"
 #include "uC_switch.h"
@@ -25,8 +24,8 @@ extern ti_file_t *ti_file;
 
 typedef struct
 {
-    int8_t fsp;             // stack pointer for ...
     int8_t digits;          // number of digits for %d (2 or 3)
+    int8_t fsp;             // stack pointer for ...
     int64_t fstack[5];      // format string stack
     int64_t atoz[26];       // named format string variables
     int64_t AtoZ[26];
@@ -113,7 +112,7 @@ void c_emit(char c1)
 
 static void fs_push(int64_t n)
 {
-    assert(vars->fsp != 5);
+    uC_ASSERT(vars->fsp != 5, "Stack Overflow");
 
     vars->fstack[vars->fsp++] = n;
 }
@@ -123,7 +122,7 @@ static void fs_push(int64_t n)
 
 static int64_t fs_pop(void)
 {
-    assert(vars->fsp != 0);
+    uC_ASSERT(vars->fsp != 0, "Stack Underflow");
     vars->fsp--;
 
     return vars->fstack[vars->fsp];
@@ -357,7 +356,7 @@ static void _tick(void)
     char c1;
 
     c1 = *uC_ti_parse->f_str;
-    c_emit(c1);
+    fs_push(c1);
 
     uC_ti_parse->f_str += 2;
 }
@@ -680,7 +679,7 @@ API void uC_parse_format(const char *f)
 
 void uC_format(int16_t i)
 {
-    i = ti_file->ti_strings[i];
+     i = ti_file->ti_strings[i];
 
     // it is not an error for a format string to be blank
     if (i != -1)

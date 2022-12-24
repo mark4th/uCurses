@@ -14,7 +14,7 @@ extern ti_parse_t *uC_ti_parse;
 extern int8_t keybuff[KEY_BUFF_SZ];
 extern int16_t num_k;
 extern int8_t stuffed;
-extern void (*k_table[])();
+extern void (*k_table[])(void);
 
 // -----------------------------------------------------------------------
 

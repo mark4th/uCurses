@@ -27,15 +27,16 @@
 
 static uint8_t skew[] =
 {
-    0x00, 0x40, 0x08, 0x48, 0x10, 0x50, 0x18, 0x58, 0x20, 0x60, 0x28,
-    0x68, 0x30, 0x70, 0x38, 0x78, 0x80, 0xC0, 0x88, 0xC8, 0x90, 0xD0,
-    0x98, 0xD8, 0xA0, 0xE0, 0xA8, 0xE8, 0xB0, 0xF0, 0xB8, 0xF8
+    0x00, 0x40, 0x08, 0x48, 0x10, 0x50, 0x18, 0x58,
+    0x20, 0x60, 0x28, 0x68, 0x30, 0x70, 0x38, 0x78,
+    0x80, 0xC0, 0x88, 0xC8, 0x90, 0xD0, 0x98, 0xD8,
+    0xA0, 0xE0, 0xA8, 0xE8, 0xB0, 0xF0, 0xB8, 0xF8
 };
 
 // -----------------------------------------------------------------------
 // translates value 0x00 through 0xff into the assinine order above
 
-API int16_t braille_xlat(uint8_t chr)
+API int16_t uC_braille_xlat(uint8_t chr)
 {
     int16_t code;
     uint16_t i;
@@ -50,7 +51,7 @@ API int16_t braille_xlat(uint8_t chr)
 // -----------------------------------------------------------------------
 // braille encode map that contains 8 bits per byte of data
 
-API void braille_8(window_t *win, uint16_t *braille_data, uint8_t *map,
+API void uC_braille_8(window_t *win, uint16_t *braille_data, uint8_t *map,
     uint16_t width)
 {
     uint8_t x, y, z;
@@ -91,7 +92,7 @@ API void braille_8(window_t *win, uint16_t *braille_data, uint8_t *map,
                 if ((wx < win->width) && (wy < win->height))
                 {
                     braille_data[(wy * win->width) + wx] =
-                        braille_xlat(d0);
+                        uC_braille_xlat(d0);
                 }
                 wx++;
             }
@@ -106,7 +107,7 @@ API void braille_8(window_t *win, uint16_t *braille_data, uint8_t *map,
 // -----------------------------------------------------------------------
 // braille encode map that contains 1 bits per byte of data
 
-API void braille_1(window_t *win, uint16_t *braille_data, uint8_t *map,
+API void uC_braille_1(window_t *win, uint16_t *braille_data, uint8_t *map,
     uint16_t width, uint16_t height)
 {
     uint8_t x, y;
@@ -134,7 +135,7 @@ API void braille_1(window_t *win, uint16_t *braille_data, uint8_t *map,
 
             if ((x < win->width) && (y < win->height))
             {
-                braille_data[(y * win->width) + x] = braille_xlat(d0);
+                braille_data[(y * win->width) + x] = uC_braille_xlat(d0);
             }
         }
         p0 += (width * 3);
@@ -143,7 +144,7 @@ API void braille_1(window_t *win, uint16_t *braille_data, uint8_t *map,
 
 // -----------------------------------------------------------------------
 
-API void draw_braille(window_t *win, uint16_t *braille_data)
+API void uC_draw_braille(window_t *win, uint16_t *braille_data)
 {
     uint16_t x;
     uint16_t y;

@@ -79,7 +79,7 @@ typedef struct
     cell_t *buffer;
     void *screen;
     win_flags_t flags;
-    int32_t name;           // fnb-1a of window name
+    int32_t name;           // fnv-1a of window name
     int32_t blank;          // window fill character for backdrop windows
     int16_t width;          // window dimensions
     int16_t height;
@@ -118,7 +118,7 @@ API void uC_win_crsr_lt(window_t *win);
 API void uC_win_crsr_rt(window_t *win);
 API void uC_win_cr(window_t *win);
 API void uC_win_emit(window_t *win, int32_t c);
-API cell_t *uC_win_peek_xy(window_t *win, uint16_t x, uint16_t y);
+API cell_t *uC_win_peek_xy(window_t *win, int16_t x, int16_t y);
 API cell_t *uC_win_peek(window_t *win);
 API void uC_win_el(window_t *win);
 API void uC_win_set_flag(window_t *win, win_flags_t flag);

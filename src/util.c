@@ -7,6 +7,7 @@
 #include <termios.h>
 #include <time.h>
 #include <unistd.h>
+#include <stdlib.h>
 
 #include "uCurses.h"
 #include "uC_terminfo.h"
@@ -26,11 +27,11 @@ API void uC_noop(void) { ; }
 // -----------------------------------------------------------------------
 // FNV-1a on utf8 strings
 
-// actually i thin this is just fnv-1  not 1a : fix later
+// actually i think this is just fnv-1  not 1a : fix later
 
 int32_t fnv_hash(char *s)
 {
-    int32_t hash = FNV_BASIS;
+    uint32_t hash = FNV_BASIS;
 
     int16_t len;
 
@@ -95,7 +96,24 @@ __attribute__((noreturn)) void xabort(char *msg)
 {
     fprintf(stderr, "%s\n", msg);
     uCurses_deInit();
-    _exit(1);
+    exit(1);
+}
+
+// -----------------------------------------------------------------------
+
+void uC_assert(bool f, char *file, int line, char *msg)
+{
+    char *m = (msg != NULL) ? msg : "";
+
+    if (f == false)
+    {
+        if (file != NULL)
+        {
+            fprintf(stderr, "%s:%d %s\n", file, line, m);
+        }
+        uCurses_deInit();
+        exit(1);
+    }
 }
 
 // =======================================================================

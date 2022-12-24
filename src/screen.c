@@ -56,6 +56,8 @@ API screen_t *uC_scr_open(int16_t width, int16_t height)
         scr->width = width;
         scr->height = height;
 
+        // allocate screen buffer based on width / height
+
         if (scr_alloc(scr) != 0)
         {
             free(scr);
@@ -161,7 +163,8 @@ static void scr_cup(screen_t *scr, int16_t x, int16_t y)
 {
     // would a single hpa / vpa be faster than a cup ?
 
-    if ((x != scr->cx) || (y != scr->cy))
+    if ((x >= 0) && (y >= 0) &&
+        (x < scr->width) && (y < scr->height))
     {
         uC_cup(y, x);
         scr->cx = x;

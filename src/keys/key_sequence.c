@@ -75,7 +75,7 @@ static void kf12(void)  { ti_kf12();  }
 
 // order of items is important here
 
-void (*k_table[])() =
+void (*k_table[])(void) =
 {
     kent,  kcuu1, kcud1, kcub1, kcuf1, kbs,  kbs2,
     kdch1, kich1, khome, kend,  knp,   kpp,  kf1,

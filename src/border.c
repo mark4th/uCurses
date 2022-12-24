@@ -140,14 +140,14 @@ void win_draw_borders(window_t *win)
 
     border_t *const borders[] =
     {
-          &bdr_single[0],
-          &bdr_double[0],
-          &bdr_curved[0]
+        &bdr_single[0],
+        &bdr_double[0],
+        &bdr_curved[0]
     };
 
-    border_t *b;
+    border_t *bdr;
 
-    b = borders[win->bdr_type];
+    bdr = borders[win->bdr_type];
 
     height = win->height;
 
@@ -160,21 +160,27 @@ void win_draw_borders(window_t *win)
     // i may offer the choice of using either a single or double line
     // border
 
-    draw_top_bottom(win, b[BDR_TOP_LEFT], b[BDR_HORIZONTAL],
-        b[BDR_TOP_RIGHT], cy++);
+    draw_top_bottom(win,
+        bdr[BDR_TOP_LEFT],
+        bdr[BDR_HORIZONTAL],
+        bdr[BDR_TOP_RIGHT], cy++);
 
     // draw all rows between the top and bottom row
 
     while (0 != height)
     {
-        draw_mid_row(win, b[BDR_VERTICAL], b[BDR_VERTICAL], cy++);
+        draw_mid_row(win,
+            bdr[BDR_VERTICAL],
+            bdr[BDR_VERTICAL], cy++);
         height--;
     }
 
     // draw bottom row of the border
 
-    draw_top_bottom(win, b[BDR_BOTTOM_LEFT], b[BDR_HORIZONTAL],
-        b[BDR_BOTTOM_RIGHT], cy);
+    draw_top_bottom(win,
+        bdr[BDR_BOTTOM_LEFT],
+        bdr[BDR_HORIZONTAL],
+        bdr[BDR_BOTTOM_RIGHT], cy);
 }
 
 // =======================================================================

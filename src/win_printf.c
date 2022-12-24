@@ -34,7 +34,7 @@ API void uC_win_puts(window_t *win, char *p)
 }
 
 // -----------------------------------------------------------------------
-// %rf   set 24 bit rgb fg
+// %rf   set 24 bit rgb fg / bg
 
 static void rf(void)
 {

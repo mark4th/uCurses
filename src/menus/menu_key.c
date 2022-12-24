@@ -48,7 +48,7 @@ static void menu_activate(void)
 
 // -----------------------------------------------------------------------
 
-static void prev_item(pulldown_t *pd)
+static void to_prev_menu_item(pulldown_t *pd)
 {
     if (pd->which == 0)
     {
@@ -59,7 +59,7 @@ static void prev_item(pulldown_t *pd)
 
 // -----------------------------------------------------------------------
 
-static void next_item(pulldown_t *pd)
+static void to_next_menu_item(pulldown_t *pd)
 {
     pd->which = (pd->which != pd->count - 1)
         ? pd->which + 1
@@ -104,8 +104,8 @@ static void menu_up_down(int dir)
         while (n != 0)
         {
             (dir > 0)
-                ? prev_item(pd)
-                : next_item(pd);
+                ? to_prev_menu_item(pd)
+                : to_next_menu_item(pd);
 
             n--;
 

@@ -448,7 +448,7 @@ static void draw_walls(void)
     uint32_t offset;
     uint8_t color;
 
-    braille_1(win, braile_data, fb, fb_width, fb_height);
+    uC_braille_1(win, braile_data, fb, fb_width, fb_height);
 
     for(x = 0; x < win->width; x++)
     {

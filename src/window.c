@@ -46,11 +46,13 @@ int16_t win_alloc(window_t *win)
 }
 
 // -----------------------------------------------------------------------
+// close a window and free all associated allocated resources
 
 API void uC_win_close(window_t *win)
 {
     if (win != NULL)
     {
+        uC_scr_win_detach(win);
         if (win->buffer != NULL)
         {
             free(win->buffer);
@@ -60,6 +62,7 @@ API void uC_win_close(window_t *win)
 }
 
 // -----------------------------------------------------------------------
+// open a new window of given dimensions
 
 API window_t *uC_win_open(int16_t width, int16_t height)
 {
@@ -89,7 +92,7 @@ API window_t *uC_win_open(int16_t width, int16_t height)
 }
 
 // -----------------------------------------------------------------------
-// pop window to front
+// pop window to front in view
 
 API void uC_win_pop(window_t *win)
 {
@@ -98,6 +101,25 @@ API void uC_win_pop(window_t *win)
         screen_t *scr = win->screen;
         uC_scr_win_detach(win);
         uC_scr_win_attach(scr, win);
+    }
+}
+
+// -----------------------------------------------------------------------
+// push window to back
+
+API void uC_win_push(window_t *win)
+{
+    if (win != NULL)
+    {
+        screen_t *scr = win->screen;
+        uC_scr_win_detach(win);
+
+        if (list_push_head(&scr->windows, win) != true)
+        {
+            // oopts
+            // internal error?
+            // planetary alignment issue?
+        }
     }
 }
 
@@ -111,14 +133,18 @@ API int16_t uC_win_set_pos(window_t *win, int16_t x, int16_t y)
     int16_t win_x, win_y;
     int16_t rv = -1;
 
-    if (win != NULL)
+    if ((win != NULL) && (x >= 0) && (y >= 0))
     {
         screen_t *scr = win->screen;
 
+        if (scr == NULL)
+        {
+            return rv;
+        }
         win_width  = win->width;
         win_height = win->height;
-        win_x = x;
-        win_y = y;
+        win_x      = x;
+        win_y      = y;
         scr_width  = scr->width;
         scr_height = scr->height;
 
@@ -144,6 +170,7 @@ API int16_t uC_win_set_pos(window_t *win, int16_t x, int16_t y)
 }
 
 // -----------------------------------------------------------------------
+// erase one line of a window
 
 API void uC_win_erase_line(window_t *win, int16_t line)
 {
@@ -151,16 +178,19 @@ API void uC_win_erase_line(window_t *win, int16_t line)
     cell_t cell;
     cell_t *p;
 
-    if (win != NULL)
+    if ((win != NULL) && (line >= 0))
     {
-        p = win_line_addr(win, line);
-
-        cell.attrs.chunk = win->attr_grp.attrs.chunk;
-        cell.code        = win->blank;
-
-        for (i = 0; i < win->width; i++)
+        if (line < win->height)
         {
-            *p++ = cell;
+            p = win_line_addr(win, line);
+
+            cell.attrs.chunk = win->attr_grp.attrs.chunk;
+            cell.code        = win->blank;
+
+            for (i = 0; i < win->width; i++)
+            {
+                *p++ = cell;
+            }
         }
     }
 }
@@ -184,16 +214,21 @@ API void uC_win_clear(window_t *win)
 }
 
 // -----------------------------------------------------------------------
+// copy one line of window to another line in same window
 
 static void win_copy_line(window_t *win, int16_t sl, int16_t dl)
 {
-    cell_t *src = win_line_addr(win, sl);
-    cell_t *dst = win_line_addr(win, dl);
+    if (win != NULL)
+    {
+        cell_t *src = win_line_addr(win, sl);
+        cell_t *dst = win_line_addr(win, dl);
 
-    memcpy(dst, src, win->width * sizeof(cell_t));
+        memcpy(dst, src, win->width * sizeof(cell_t));
+    }
 }
 
 // -----------------------------------------------------------------------
+// scroll window up one line
 
 API void uC_win_scroll_up(window_t *win)
 {
@@ -211,6 +246,7 @@ API void uC_win_scroll_up(window_t *win)
 }
 
 // -----------------------------------------------------------------------
+// scroll widnow down one line
 
 API void uC_win_scroll_dn(window_t *win)
 {
@@ -228,6 +264,7 @@ API void uC_win_scroll_dn(window_t *win)
 }
 
 // -----------------------------------------------------------------------
+// pan window left one column
 
 API void uC_win_scroll_lt(window_t *win)
 {
@@ -240,10 +277,9 @@ API void uC_win_scroll_lt(window_t *win)
     if (win != NULL)
     {
         cell.attrs.chunk = win->attr_grp.attrs.chunk;
-
         cell.code = win->blank;
 
-        for (i = 0; i < win->width; i++)
+        for (i = 0; i < win->height; i++)
         {
             src = dst = win_line_addr(win, i);
             src++;
@@ -254,6 +290,7 @@ API void uC_win_scroll_lt(window_t *win)
 }
 
 // -----------------------------------------------------------------------
+// pan window right one column
 
 API void uC_win_scroll_rt(window_t *win)
 {
@@ -268,7 +305,7 @@ API void uC_win_scroll_rt(window_t *win)
         cell.attrs.chunk = win->attr_grp.attrs.chunk;
         cell.code = win->blank;
 
-        for (i = win->width - 1; i != 0; i--)
+        for (i = 0; i < win->height; i++)
         {
             src = dst = win_line_addr(win, i);
             dst++;
@@ -283,7 +320,7 @@ API void uC_win_scroll_rt(window_t *win)
 
 API void uC_win_cup(window_t *win, int16_t x, int16_t y)
 {
-    if (win != NULL)
+    if ((win != NULL) && (x >= 0) && (y >= 0))
     {
         if ((x < win->width) && (y < win->height))
         {
@@ -294,26 +331,29 @@ API void uC_win_cup(window_t *win, int16_t x, int16_t y)
 }
 
 // -----------------------------------------------------------------------
+// set cursor x position window window
 
 API void uC_win_set_cx(window_t *win, int16_t x)
 {
-    if ((win != NULL) && (x < win->width))
+    if ((win != NULL) && (x >= 0) && (x < win->width))
     {
         win->cx = x;
     }
 }
 
 // -----------------------------------------------------------------------
+// set cursor y position within window
 
 API void uC_win_set_cy(window_t *win, int16_t y)
 {
-    if ((win != NULL) && (y < win->height))
+    if ((win != NULL) && (y >= 0) && (y < win->height))
     {
         win->cy = y;
     }
 }
 
 // -----------------------------------------------------------------------
+// move cursor up one line in window
 
 API void uC_win_crsr_up(window_t *win)
 {
@@ -324,6 +364,7 @@ API void uC_win_crsr_up(window_t *win)
 }
 
 // -----------------------------------------------------------------------
+// move cursor down one line in window
 
 API void uC_win_crsr_dn(window_t *win)
 {
@@ -341,6 +382,7 @@ API void uC_win_crsr_dn(window_t *win)
 }
 
 // -----------------------------------------------------------------------
+// move cursor left one column in window
 
 API void uC_win_crsr_lt(window_t *win)
 {
@@ -359,6 +401,7 @@ API void uC_win_crsr_lt(window_t *win)
 }
 
 // -----------------------------------------------------------------------
+// move cursor right one column in window
 
 API void uC_win_crsr_rt(window_t *win)
 {
@@ -380,6 +423,7 @@ API void uC_win_crsr_rt(window_t *win)
 }
 
 // -----------------------------------------------------------------------
+// move cursor to start of next line (may cause a scroll)
 
 API void uC_win_cr(window_t *win)
 {
@@ -392,7 +436,7 @@ API void uC_win_cr(window_t *win)
 
 // -----------------------------------------------------------------------
 
-static void _win_emit(window_t *win, uint32_t c)
+static void _win_emit(window_t *win, int32_t c)
 {
     cell_t cell;
     cell_t *p;
@@ -418,6 +462,8 @@ static void _win_emit(window_t *win, uint32_t c)
 
     uC_win_crsr_rt(win);
     width--;
+
+// redo
 
     // different utf8 characters are displayed using various
     // numbers of columns on the display - most are only one or
@@ -457,11 +503,17 @@ API void uC_win_emit(window_t *win, int32_t c)
 
 // -----------------------------------------------------------------------
 
-API cell_t *uC_win_peek_xy(window_t *win, uint16_t x, uint16_t y)
+API cell_t *uC_win_peek_xy(window_t *win, int16_t x, int16_t y)
 {
     cell_t *p;
-    p = win_line_addr(win, y);
-    return &p[x];
+
+    if ((x < win->width) && (y < win->height) &&
+        (x >= 0) && (y >= 0))
+    {
+        p = win_line_addr(win, y);
+        return &p[x];
+    }
+    return NULL;
 }
 
 // -----------------------------------------------------------------------
@@ -476,7 +528,7 @@ API cell_t *uC_win_peek(window_t *win)
 
 API void uC_win_el(window_t *win)
 {
-    if(win != NULL)
+    if (win != NULL)
     {
         do
         {
@@ -746,6 +798,7 @@ API void uC_win_set_bdr_rgb_fg(window_t *win, color_t r, color_t g, color_t b)
         uC_attr_set_bytes(&win->attr_grp.bdr_attrs, FG_R, r);
         uC_attr_set_bytes(&win->attr_grp.bdr_attrs, FG_G, g);
         uC_attr_set_bytes(&win->attr_grp.bdr_attrs, FG_B, b);
+
         uC_attr_set_attr(&win->attr_grp.bdr_attrs, FG_RGB);
     }
 }
@@ -759,6 +812,7 @@ API void uC_win_set_bdr_rgb_bg(window_t *win, color_t r, color_t g, color_t b)
         uC_attr_set_bytes(&win->attr_grp.bdr_attrs, BG_R, r);
         uC_attr_set_bytes(&win->attr_grp.bdr_attrs, BG_G, g);
         uC_attr_set_bytes(&win->attr_grp.bdr_attrs, BG_B, b);
+
         uC_attr_set_attr(&win->attr_grp.bdr_attrs, BG_RGB);
     }
 }

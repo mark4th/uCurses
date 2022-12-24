@@ -4,11 +4,11 @@
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <assert.h>
 
 #include "uCurses.h"
 #include "uC_attribs.h"
 #include "uC_terminfo.h"
+#include "uC_utils.h"
 
 // -----------------------------------------------------------------------
 
@@ -17,13 +17,13 @@ extern ti_parse_t *uC_ti_parse;
 API attr_grp_t *uC_attr_grp;
 
 // -----------------------------------------------------------------------
-// allocate the attributes group pointer
+// allocate the attributes group pointer                               373
 
 void alloc_attr_grp(void)
 {
     uC_attr_grp = calloc(1, sizeof(*uC_attr_grp));
 
-    assert(uC_attr_grp != NULL);
+    uC_ASSERT(uC_attr_grp != NULL, "Out of Memory");
 
     attribs_t *a = &uC_attr_grp->attrs;
 
@@ -32,6 +32,7 @@ void alloc_attr_grp(void)
 }
 
 // -----------------------------------------------------------------------
+//                                                                     377
 
 void free_attr_grp(void)
 {
@@ -39,7 +40,7 @@ void free_attr_grp(void)
 }
 
 // -----------------------------------------------------------------------
-// hard coded format string to set a rgb fg
+// hard coded format string to set a rgb fg                            380
 
 // there is no format string for this within the terminfo
 // string section
@@ -61,6 +62,7 @@ static void rgb_fg(void)
 }
 
 // -----------------------------------------------------------------------
+//                                                                     382
 
 static void rgb_bg(void)
 {
@@ -76,7 +78,7 @@ static void rgb_bg(void)
 }
 
 // -----------------------------------------------------------------------
-// hard coded format string to set a gray fg
+// hard coded format string to set a gray fg                           384
 
 static void gray_fg(void)
 {
@@ -97,6 +99,7 @@ static void gray_fg(void)
 }
 
 // -----------------------------------------------------------------------
+//                                                                     386
 
 static void gray_bg(void)
 {
@@ -117,7 +120,7 @@ static void gray_bg(void)
 }
 
 // -----------------------------------------------------------------------
-// fg can be a normal color, a gray scale or an RGB value
+// fg can be a normal color, a gray scale or an RGB value              389
 
 static void apply_fg(void)
 {
@@ -145,7 +148,7 @@ static void apply_fg(void)
 }
 
 // -----------------------------------------------------------------------
-// bg can be a normal color, a gray scale or an RGB value
+// bg can be a normal color, a gray scale or an RGB value              392
 
 static void apply_bg(void)
 {
@@ -175,14 +178,40 @@ static void apply_bg(void)
 }
 
 // -----------------------------------------------------------------------
-// apply various attribute changes
+// conditionally apply background changes
+
+static inline void if_apply_bg(attr_grp_t *a, uint8_t changes)
+{
+    uint8_t diff =
+        (a->attrs.bytes[BG]   ^ a->old_attrs.bytes[BG])   |
+        (a->attrs.bytes[BG_R] ^ a->old_attrs.bytes[BG_R]) |
+        (a->attrs.bytes[BG_G] ^ a->old_attrs.bytes[BG_G]) |
+        (a->attrs.bytes[BG_B] ^ a->old_attrs.bytes[BG_B]);
+
+    if ((changes | diff) != 0) { apply_bg(); }
+}
+
+// -----------------------------------------------------------------------
+// conditionally apply foreground changes
+
+static inline void if_apply_fg(attr_grp_t *a, uint8_t changes)
+{
+    uint8_t diff =
+        (a->attrs.bytes[FG]   ^ a->old_attrs.bytes[FG])   |
+        (a->attrs.bytes[FG_R] ^ a->old_attrs.bytes[FG_R]) |
+        (a->attrs.bytes[FG_G] ^ a->old_attrs.bytes[FG_G]) |
+        (a->attrs.bytes[FG_B] ^ a->old_attrs.bytes[FG_B]);
+
+    if ((changes | diff) != 0) { apply_fg(); }
+}
+
+// -----------------------------------------------------------------------
+// apply various attribute changes                                     396
 
 void apply_attribs(void)
 {
-    // changes = detect alterations to attributes
-    // dff     = detect alterations to colors
 
-    uint8_t changes, diff;
+    uint8_t changes;        // detects alterations to attributes
 
     attr_grp_t *a = uC_attr_grp;
 
@@ -210,27 +239,16 @@ void apply_attribs(void)
             : ti_rmul();
     }
 
-    diff =
-        (a->attrs.bytes[BG]   ^ a->old_attrs.bytes[BG])   |
-        (a->attrs.bytes[BG_R] ^ a->old_attrs.bytes[BG_R]) |
-        (a->attrs.bytes[BG_G] ^ a->old_attrs.bytes[BG_G]) |
-        (a->attrs.bytes[BG_B] ^ a->old_attrs.bytes[BG_B]);
+    // now we can apply any alterations made to the fg / bg colors
 
-    if ((changes | diff) != 0) { apply_bg(); }
-
-    diff =
-        (a->attrs.bytes[FG]   ^ a->old_attrs.bytes[FG])   |
-        (a->attrs.bytes[FG_R] ^ a->old_attrs.bytes[FG_R]) |
-        (a->attrs.bytes[FG_G] ^ a->old_attrs.bytes[FG_G]) |
-        (a->attrs.bytes[FG_B] ^ a->old_attrs.bytes[FG_B]);
-
-    if ((changes | diff) != 0) { apply_fg(); }
+    if_apply_bg(a, changes);
+    if_apply_fg(a, changes);
 
     a->old_attrs.chunk = a->attrs.chunk;
 }
 
 // -----------------------------------------------------------------------
-// disable attribes that are mutually exclusive with the one being set
+// disable attribes that are mutually exclusive with the one being set 399
 
 ti_attrib_t add_attr(uint8_t a, ti_attrib_t attr)
 {
@@ -245,6 +263,7 @@ ti_attrib_t add_attr(uint8_t a, ti_attrib_t attr)
 }
 
 // -----------------------------------------------------------------------
+//                                                                     267
 
 API void uC_attr_set_attr(attribs_t *attribs, ti_attrib_t attr)
 {
@@ -252,6 +271,7 @@ API void uC_attr_set_attr(attribs_t *attribs, ti_attrib_t attr)
 }
 
 // -----------------------------------------------------------------------
+//                                                                     272
 
 API void uC_attr_clr_attr(attribs_t *attribs, ti_attrib_t attr)
 {
@@ -259,6 +279,7 @@ API void uC_attr_clr_attr(attribs_t *attribs, ti_attrib_t attr)
 }
 
 // -----------------------------------------------------------------------
+//                                                                     283
 
 API void uC_attr_set_bytes(attribs_t *attribs, attr_index_t which,
     color_t color)
@@ -267,7 +288,7 @@ API void uC_attr_set_bytes(attribs_t *attribs, attr_index_t which,
 }
 
 // -----------------------------------------------------------------------
-// clear all attributes, reset colors to defaults
+// clear all attributes, reset colors to defaults                      289
 
 API void uC_console_reset_attrs(void)
 {
@@ -279,6 +300,7 @@ API void uC_console_reset_attrs(void)
 }
 
 // -----------------------------------------------------------------------
+//                                                                     293
 
 API void uC_console_set_fg(color_t color)
 {
@@ -287,6 +309,7 @@ API void uC_console_set_fg(color_t color)
 }
 
 // -----------------------------------------------------------------------
+//                                                                     422
 
 API void uC_console_set_bg(color_t color)
 {
@@ -295,6 +318,7 @@ API void uC_console_set_bg(color_t color)
 }
 
 // -----------------------------------------------------------------------
+//                                                                     433
 
 API void uC_console_set_gray_fg(color_t color)
 {
@@ -303,6 +327,7 @@ API void uC_console_set_gray_fg(color_t color)
 }
 
 // -----------------------------------------------------------------------
+//                                                                     436
 
 API void console_set_gray_bg(color_t color)
 {
@@ -311,6 +336,7 @@ API void console_set_gray_bg(color_t color)
 }
 
 // -----------------------------------------------------------------------
+//                                                                     452
 
 API void uC_console_set_rgb_fg(color_t r, color_t g, color_t b)
 {
@@ -321,6 +347,7 @@ API void uC_console_set_rgb_fg(color_t r, color_t g, color_t b)
 }
 
 // -----------------------------------------------------------------------
+//                                                                     461
 
 API void uC_console_set_rgb_bg(color_t r, color_t g, color_t b)
 {
@@ -331,6 +358,7 @@ API void uC_console_set_rgb_bg(color_t r, color_t g, color_t b)
 }
 
 // -----------------------------------------------------------------------
+//                                                                     465
 
 API void uC_console_clr_attr(ti_attrib_t attr)
 {
@@ -338,6 +366,7 @@ API void uC_console_clr_attr(ti_attrib_t attr)
 }
 
 // -----------------------------------------------------------------------
+//                                                                     468
 
 API void uC_console_set_bytes(attr_index_t which, color_t color)
 {
@@ -345,6 +374,7 @@ API void uC_console_set_bytes(attr_index_t which, color_t color)
 }
 
 // -----------------------------------------------------------------------
+// 473 : 475 : 378 : 481 : 484 :
 
 #define uC_console_set_attr(attr) \
     uC_attr_set_attr(&uC_attr_grp->attrs, attr)

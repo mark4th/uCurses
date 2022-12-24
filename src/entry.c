@@ -78,8 +78,8 @@ static void print_cb(char *path)
         "    }\n"
 
         "    return NULL;\n"
-        "}\n\n",
-        path);
+        "}\n\n", path);
+
     separator();
 }
 

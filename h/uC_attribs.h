@@ -30,8 +30,14 @@ enum
 
 typedef enum
 {
-    TI_UNDERLINE, TI_REVERSE, TI_BOLD,    TI_FG_RGB,
-    TI_BG_RGB,    TI_FG_GRAY, TI_BG_GRAY,
+    TI_UNDERLINE,
+    TI_REVERSE,
+    TI_BOLD,
+
+    TI_FG_RGB,
+    TI_BG_RGB,
+    TI_FG_GRAY,
+    TI_BG_GRAY,
 
     UNDERLINE = (1 << TI_UNDERLINE),
     REVERSE   = (1 << TI_REVERSE),
@@ -48,9 +54,9 @@ typedef enum
 
 typedef enum
 {
-    ATTR,
-    FG = 1, FG_R = 1,
-    BG = 2, BG_R = 2,
+    ATTR,                   // uint_16_t
+    FG = 2, FG_R = 2,       // uint8_t's
+    BG = 3, BG_R = 3,
     FG_G,   BG_G,
     FG_B,   BG_B,
 } attr_index_t;
@@ -86,6 +92,7 @@ void alloc_attr_grp(void);
 void free_attr_grp(void);
 void int_color_set(void);
 void apply_attribs(void);
+
 ti_attrib_t add_attr(uint8_t a, ti_attrib_t attr);
 
 // -----------------------------------------------------------------------

@@ -10,10 +10,10 @@
 
 #include "demo.h"
 
-screen_t *scr;
-window_t *win;
+uC_screen_t *scr;
+uC_window_t *win;
 
-extern screen_t *active_screen;
+extern uC_screen_t *active_screen;
 
 // -----------------------------------------------------------------------
 // this image is 100 dots wide and 120 dots high.  the glyphs above are
@@ -184,7 +184,7 @@ static void draw_lion(void)
 
 void lion(void)
 {
-    node_t *n;
+    uC_list_node_t *n;
 
     uC_scr_close(active_screen);
 

@@ -157,7 +157,7 @@ static void value_rgb(void)
 static void value_xy(void)
 {
     json_state_t *parent = json_state->parent;
-    window_t *win        = parent->structure;
+    uC_window_t *win        = parent->structure;
 
     int16_t mult;
 
@@ -188,7 +188,7 @@ static void value_wh(void)
 {
     json_state_t *parent = json_state->parent;
 
-    window_t *win = parent->structure;
+    uC_window_t *win = parent->structure;
 
     int16_t mult;
 
@@ -242,7 +242,7 @@ static void value_name(void)
 
     if (ptype == STRUCT_WINDOW)
     {
-        ((window_t *)structure)->name = fnv_hash(name);
+        ((uC_window_t *)structure)->name = fnv_hash(name);
     }
     else if (ptype == STRUCT_MENU_ITEM)
     {
@@ -281,7 +281,7 @@ static void val_pd_flag(pulldown_t *pd)
 
 // -----------------------------------------------------------------------
 
-static void val_win_flag(window_t *win)
+static void val_win_flag(uC_window_t *win)
 {
     win->flags |= json_vars->key_value;
 
@@ -332,7 +332,7 @@ static void value_flag(void)
 static void value_border_type(void)
 {
     json_state_t *parent = json_state->parent;
-    window_t *win = parent->structure;
+    uC_window_t *win = parent->structure;
 
     if ((json_vars->key_value == BDR_SINGLE) ||
         (json_vars->key_value == BDR_DOUBLE) ||
@@ -373,7 +373,7 @@ static void value_shortcut(void)
 
 // -----------------------------------------------------------------------
 
-static const switch_t value_types[] =
+static const uC_switch_t value_types[] =
 {
     { KEY_FG,          value_fgbg        },
     { KEY_BG,          value_fgbg        },
@@ -526,7 +526,7 @@ void json_state_value(void)
         parse_number();
     }
 
-    re_switch(value_types, NUM_KEYS, json_state->struct_type);
+    uC_switch(value_types, NUM_KEYS, json_state->struct_type);
 
     if (json_vars->json_stack.count != 0)
     {

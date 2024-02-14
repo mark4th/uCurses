@@ -17,7 +17,7 @@
 // -----------------------------------------------------------------------
 // calculate address of line within window buffer
 
-static cell_t *win_line_addr(window_t *win, int16_t line)
+static cell_t *win_line_addr(uC_window_t *win, int16_t line)
 {
     int16_t index = (win->width) * line;
     return &win->buffer[index];
@@ -26,7 +26,7 @@ static cell_t *win_line_addr(window_t *win, int16_t line)
 // -----------------------------------------------------------------------
 // allocate buffer for window contents
 
-int16_t win_alloc(window_t *win)
+int16_t win_alloc(uC_window_t *win)
 {
     int16_t rv = -1;        // assume failure
     cell_t *p;
@@ -48,7 +48,7 @@ int16_t win_alloc(window_t *win)
 // -----------------------------------------------------------------------
 // close a window and free all associated allocated resources
 
-API void uC_win_close(window_t *win)
+API void uC_win_close(uC_window_t *win)
 {
     if (win != NULL)
     {
@@ -64,9 +64,9 @@ API void uC_win_close(window_t *win)
 // -----------------------------------------------------------------------
 // open a new window of given dimensions
 
-API window_t *uC_win_open(int16_t width, int16_t height)
+API uC_window_t *uC_win_open(int16_t width, int16_t height)
 {
-    window_t *win = calloc(1, sizeof(*win));
+    uC_window_t *win = calloc(1, sizeof(*win));
 
     if (win != NULL)
     {
@@ -94,11 +94,11 @@ API window_t *uC_win_open(int16_t width, int16_t height)
 // -----------------------------------------------------------------------
 // pop window to front in view
 
-API void uC_win_pop(window_t *win)
+API void uC_win_pop(uC_window_t *win)
 {
     if (win != NULL)
     {
-        screen_t *scr = win->screen;
+        uC_screen_t *scr = win->screen;
         uC_scr_win_detach(win);
         uC_scr_win_attach(scr, win);
     }
@@ -107,14 +107,14 @@ API void uC_win_pop(window_t *win)
 // -----------------------------------------------------------------------
 // push window to back
 
-API void uC_win_push(window_t *win)
+API void uC_win_push(uC_window_t *win)
 {
     if (win != NULL)
     {
-        screen_t *scr = win->screen;
+        uC_screen_t *scr = win->screen;
         uC_scr_win_detach(win);
 
-        if (list_push_head(&scr->windows, win) != true)
+        if (uC_list_push_head(&scr->windows, win) != true)
         {
             // oopts
             // internal error?
@@ -126,7 +126,7 @@ API void uC_win_push(window_t *win)
 // -----------------------------------------------------------------------
 // set new x/y position of window within parent screen
 
-API int16_t uC_win_set_pos(window_t *win, int16_t x, int16_t y)
+API int16_t uC_win_set_pos(uC_window_t *win, int16_t x, int16_t y)
 {
     int16_t scr_width, scr_height;
     int16_t win_width, win_height;
@@ -135,7 +135,7 @@ API int16_t uC_win_set_pos(window_t *win, int16_t x, int16_t y)
 
     if ((win != NULL) && (x >= 0) && (y >= 0))
     {
-        screen_t *scr = win->screen;
+        uC_screen_t *scr = win->screen;
 
         if (scr == NULL)
         {
@@ -172,7 +172,7 @@ API int16_t uC_win_set_pos(window_t *win, int16_t x, int16_t y)
 // -----------------------------------------------------------------------
 // erase one line of a window
 
-API void uC_win_erase_line(window_t *win, int16_t line)
+API void uC_win_erase_line(uC_window_t *win, int16_t line)
 {
     int16_t i;
     cell_t cell;
@@ -198,7 +198,7 @@ API void uC_win_erase_line(window_t *win, int16_t line)
 // -----------------------------------------------------------------------
 // clear entire window
 
-API void uC_win_clear(window_t *win)
+API void uC_win_clear(uC_window_t *win)
 {
     int16_t i;
 
@@ -216,7 +216,7 @@ API void uC_win_clear(window_t *win)
 // -----------------------------------------------------------------------
 // copy one line of window to another line in same window
 
-static void win_copy_line(window_t *win, int16_t sl, int16_t dl)
+static void win_copy_line(uC_window_t *win, int16_t sl, int16_t dl)
 {
     if (win != NULL)
     {
@@ -230,7 +230,7 @@ static void win_copy_line(window_t *win, int16_t sl, int16_t dl)
 // -----------------------------------------------------------------------
 // scroll window up one line
 
-API void uC_win_scroll_up(window_t *win)
+API void uC_win_scroll_up(uC_window_t *win)
 {
     int16_t i;
 
@@ -248,7 +248,7 @@ API void uC_win_scroll_up(window_t *win)
 // -----------------------------------------------------------------------
 // scroll widnow down one line
 
-API void uC_win_scroll_dn(window_t *win)
+API void uC_win_scroll_dn(uC_window_t *win)
 {
     int16_t i;
 
@@ -266,7 +266,7 @@ API void uC_win_scroll_dn(window_t *win)
 // -----------------------------------------------------------------------
 // pan window left one column
 
-API void uC_win_scroll_lt(window_t *win)
+API void uC_win_scroll_lt(uC_window_t *win)
 {
     int16_t i;
 
@@ -292,7 +292,7 @@ API void uC_win_scroll_lt(window_t *win)
 // -----------------------------------------------------------------------
 // pan window right one column
 
-API void uC_win_scroll_rt(window_t *win)
+API void uC_win_scroll_rt(uC_window_t *win)
 {
     int8_t i;
 
@@ -318,7 +318,7 @@ API void uC_win_scroll_rt(window_t *win)
 // -----------------------------------------------------------------------
 // set cursor position within window
 
-API void uC_win_cup(window_t *win, int16_t x, int16_t y)
+API void uC_win_cup(uC_window_t *win, int16_t x, int16_t y)
 {
     if ((win != NULL) && (x >= 0) && (y >= 0))
     {
@@ -333,7 +333,7 @@ API void uC_win_cup(window_t *win, int16_t x, int16_t y)
 // -----------------------------------------------------------------------
 // set cursor x position window window
 
-API void uC_win_set_cx(window_t *win, int16_t x)
+API void uC_win_set_cx(uC_window_t *win, int16_t x)
 {
     if ((win != NULL) && (x >= 0) && (x < win->width))
     {
@@ -344,7 +344,7 @@ API void uC_win_set_cx(window_t *win, int16_t x)
 // -----------------------------------------------------------------------
 // set cursor y position within window
 
-API void uC_win_set_cy(window_t *win, int16_t y)
+API void uC_win_set_cy(uC_window_t *win, int16_t y)
 {
     if ((win != NULL) && (y >= 0) && (y < win->height))
     {
@@ -355,7 +355,7 @@ API void uC_win_set_cy(window_t *win, int16_t y)
 // -----------------------------------------------------------------------
 // move cursor up one line in window
 
-API void uC_win_crsr_up(window_t *win)
+API void uC_win_crsr_up(uC_window_t *win)
 {
     if ((win != NULL) && (win->cy != 0))
     {
@@ -366,7 +366,7 @@ API void uC_win_crsr_up(window_t *win)
 // -----------------------------------------------------------------------
 // move cursor down one line in window
 
-API void uC_win_crsr_dn(window_t *win)
+API void uC_win_crsr_dn(uC_window_t *win)
 {
     if (win != NULL)
     {
@@ -384,7 +384,7 @@ API void uC_win_crsr_dn(window_t *win)
 // -----------------------------------------------------------------------
 // move cursor left one column in window
 
-API void uC_win_crsr_lt(window_t *win)
+API void uC_win_crsr_lt(uC_window_t *win)
 {
     if (win != NULL)
     {
@@ -403,7 +403,7 @@ API void uC_win_crsr_lt(window_t *win)
 // -----------------------------------------------------------------------
 // move cursor right one column in window
 
-API void uC_win_crsr_rt(window_t *win)
+API void uC_win_crsr_rt(uC_window_t *win)
 {
     if (win != NULL)
     {
@@ -425,7 +425,7 @@ API void uC_win_crsr_rt(window_t *win)
 // -----------------------------------------------------------------------
 // move cursor to start of next line (may cause a scroll)
 
-API void uC_win_cr(window_t *win)
+API void uC_win_cr(uC_window_t *win)
 {
     if (win != NULL)
     {
@@ -436,7 +436,7 @@ API void uC_win_cr(window_t *win)
 
 // -----------------------------------------------------------------------
 
-static void _win_emit(window_t *win, int32_t c)
+static void _win_emit(uC_window_t *win, int32_t c)
 {
     cell_t cell;
     cell_t *p;
@@ -488,7 +488,7 @@ static void _win_emit(window_t *win, int32_t c)
 
 // -----------------------------------------------------------------------
 
-API void uC_win_emit(window_t *win, int32_t c)
+API void uC_win_emit(uC_window_t *win, int32_t c)
 {
     if (win != NULL)
     {
@@ -503,7 +503,7 @@ API void uC_win_emit(window_t *win, int32_t c)
 
 // -----------------------------------------------------------------------
 
-API cell_t *uC_win_peek_xy(window_t *win, int16_t x, int16_t y)
+API cell_t *uC_win_peek_xy(uC_window_t *win, int16_t x, int16_t y)
 {
     cell_t *p;
 
@@ -518,7 +518,7 @@ API cell_t *uC_win_peek_xy(window_t *win, int16_t x, int16_t y)
 
 // -----------------------------------------------------------------------
 
-API cell_t *uC_win_peek(window_t *win)
+API cell_t *uC_win_peek(uC_window_t *win)
 {
     return uC_win_peek_xy(win, win->cx, win->cy);
 }
@@ -526,7 +526,7 @@ API cell_t *uC_win_peek(window_t *win)
 // -----------------------------------------------------------------------
 // erase to end of line
 
-API void uC_win_el(window_t *win)
+API void uC_win_el(uC_window_t *win)
 {
     if (win != NULL)
     {
@@ -539,7 +539,7 @@ API void uC_win_el(window_t *win)
 
 // -----------------------------------------------------------------------
 
-API void uC_win_set_flag(window_t *win, win_flags_t flag)
+API void uC_win_set_flag(uC_window_t *win, win_flags_t flag)
 {
     if (win != NULL)
     {
@@ -549,7 +549,7 @@ API void uC_win_set_flag(window_t *win, win_flags_t flag)
 
 // -----------------------------------------------------------------------
 
-API void uC_win_clr_flag(window_t *win, win_flags_t flag)
+API void uC_win_clr_flag(uC_window_t *win, win_flags_t flag)
 {
     if (win != NULL)
     {
@@ -559,7 +559,7 @@ API void uC_win_clr_flag(window_t *win, win_flags_t flag)
 
 // -----------------------------------------------------------------------
 
-API void uC_win_set_bold(window_t *win)
+API void uC_win_set_bold(uC_window_t *win)
 {
     if (win != NULL)
     {
@@ -569,7 +569,7 @@ API void uC_win_set_bold(window_t *win)
 
 // -----------------------------------------------------------------------
 
-API void uC_win_clr_bold(window_t *win)
+API void uC_win_clr_bold(uC_window_t *win)
 {
     if (win != NULL)
     {
@@ -579,7 +579,7 @@ API void uC_win_clr_bold(window_t *win)
 
 // -----------------------------------------------------------------------
 
-API void uC_win_set_rev(window_t *win)
+API void uC_win_set_rev(uC_window_t *win)
 {
     if (win != NULL)
     {
@@ -589,7 +589,7 @@ API void uC_win_set_rev(window_t *win)
 
 // -----------------------------------------------------------------------
 
-API void uC_win_clr_rev(window_t *win)
+API void uC_win_clr_rev(uC_window_t *win)
 {
     if (win != NULL)
     {
@@ -599,7 +599,7 @@ API void uC_win_clr_rev(window_t *win)
 
 // -----------------------------------------------------------------------
 
-API void uC_win_set_ul(window_t *win)
+API void uC_win_set_ul(uC_window_t *win)
 {
     if (win != NULL)
     {
@@ -609,7 +609,7 @@ API void uC_win_set_ul(window_t *win)
 
 // -----------------------------------------------------------------------
 
-API void uC_win_clr_ul(window_t *win)
+API void uC_win_clr_ul(uC_window_t *win)
 {
     if (win != NULL)
     {
@@ -619,7 +619,7 @@ API void uC_win_clr_ul(window_t *win)
 
 // -----------------------------------------------------------------------
 
-API void uC_win_set_bdr_bold(window_t *win)
+API void uC_win_set_bdr_bold(uC_window_t *win)
 {
     if (win != NULL)
     {
@@ -629,7 +629,7 @@ API void uC_win_set_bdr_bold(window_t *win)
 
 // -----------------------------------------------------------------------
 
-API void uC_win_clr_bdr_bold(window_t *win)
+API void uC_win_clr_bdr_bold(uC_window_t *win)
 {
     if (win != NULL)
     {
@@ -639,7 +639,7 @@ API void uC_win_clr_bdr_bold(window_t *win)
 
 // -----------------------------------------------------------------------
 
-API void uC_win_set_bdr_rev(window_t *win)
+API void uC_win_set_bdr_rev(uC_window_t *win)
 {
     if (win != NULL)
     {
@@ -649,7 +649,7 @@ API void uC_win_set_bdr_rev(window_t *win)
 
 // -----------------------------------------------------------------------
 
-API void uC_win_clr_bdr_rev(window_t *win)
+API void uC_win_clr_bdr_rev(uC_window_t *win)
 {
     if (win != NULL)
     {
@@ -659,7 +659,7 @@ API void uC_win_clr_bdr_rev(window_t *win)
 
 // -----------------------------------------------------------------------
 
-API void uC_win_set_bdr_ul(window_t *win)
+API void uC_win_set_bdr_ul(uC_window_t *win)
 {
     if (win != NULL)
     {
@@ -669,7 +669,7 @@ API void uC_win_set_bdr_ul(window_t *win)
 
 // -----------------------------------------------------------------------
 
-API void uC_win_clr_bdr_ul(window_t *win)
+API void uC_win_clr_bdr_ul(uC_window_t *win)
 {
     if (win != NULL)
     {
@@ -679,7 +679,7 @@ API void uC_win_clr_bdr_ul(window_t *win)
 
 // -----------------------------------------------------------------------
 
-API void uC_win_set_fg(window_t *win, color_t color)
+API void uC_win_set_fg(uC_window_t *win, color_t color)
 {
     if (win != NULL)
     {
@@ -690,7 +690,7 @@ API void uC_win_set_fg(window_t *win, color_t color)
 
 // -----------------------------------------------------------------------
 
-API void uC_win_set_bg(window_t *win, color_t color)
+API void uC_win_set_bg(uC_window_t *win, color_t color)
 {
     if (win != NULL)
     {
@@ -701,7 +701,7 @@ API void uC_win_set_bg(window_t *win, color_t color)
 
 // -----------------------------------------------------------------------
 
-API void uC_win_set_gray_fg(window_t *win, color_t color)
+API void uC_win_set_gray_fg(uC_window_t *win, color_t color)
 {
     if (win != NULL)
     {
@@ -712,7 +712,7 @@ API void uC_win_set_gray_fg(window_t *win, color_t color)
 
 // -----------------------------------------------------------------------
 
-API void uC_win_set_gray_bg(window_t *win, color_t color)
+API void uC_win_set_gray_bg(uC_window_t *win, color_t color)
 {
     if (win != NULL)
     {
@@ -723,7 +723,8 @@ API void uC_win_set_gray_bg(window_t *win, color_t color)
 
 // -----------------------------------------------------------------------
 
-API void uC_win_set_rgb_fg(window_t *win, color_t r, color_t g, color_t b)
+API void uC_win_set_rgb_fg(uC_window_t *win, color_t r, color_t g,
+    color_t b)
 {
     if (win != NULL)
     {
@@ -736,7 +737,8 @@ API void uC_win_set_rgb_fg(window_t *win, color_t r, color_t g, color_t b)
 
 // -----------------------------------------------------------------------
 
-API void uC_win_set_rgb_bg(window_t *win, color_t r, color_t g, color_t b)
+API void uC_win_set_rgb_bg(uC_window_t *win, color_t r, color_t g,
+    color_t b)
 {
     if (win != NULL)
     {
@@ -749,7 +751,7 @@ API void uC_win_set_rgb_bg(window_t *win, color_t r, color_t g, color_t b)
 
 // -----------------------------------------------------------------------
 
-API void uC_win_set_bdr_fg(window_t *win, color_t color)
+API void uC_win_set_bdr_fg(uC_window_t *win, color_t color)
 {
     if (win != NULL)
     {
@@ -759,7 +761,7 @@ API void uC_win_set_bdr_fg(window_t *win, color_t color)
 
 // -----------------------------------------------------------------------
 
-API void uC_win_set_bdr_bg(window_t *win, color_t color)
+API void uC_win_set_bdr_bg(uC_window_t *win, color_t color)
 {
     if (win != NULL)
     {
@@ -769,7 +771,7 @@ API void uC_win_set_bdr_bg(window_t *win, color_t color)
 
 // -----------------------------------------------------------------------
 
-API void uC_win_set_bdr_gray_fg(window_t *win, color_t color)
+API void uC_win_set_bdr_gray_fg(uC_window_t *win, color_t color)
 {
     if (win != NULL)
     {
@@ -780,7 +782,7 @@ API void uC_win_set_bdr_gray_fg(window_t *win, color_t color)
 
 // -----------------------------------------------------------------------
 
-API void uC_win_set_bdr_gray_bg(window_t *win, color_t color)
+API void uC_win_set_bdr_gray_bg(uC_window_t *win, color_t color)
 {
     if (win != NULL)
     {
@@ -791,7 +793,8 @@ API void uC_win_set_bdr_gray_bg(window_t *win, color_t color)
 
 // -----------------------------------------------------------------------
 
-API void uC_win_set_bdr_rgb_fg(window_t *win, color_t r, color_t g, color_t b)
+API void uC_win_set_bdr_rgb_fg(uC_window_t *win, color_t r, color_t g,
+    color_t b)
 {
     if (win != NULL)
     {
@@ -805,7 +808,8 @@ API void uC_win_set_bdr_rgb_fg(window_t *win, color_t r, color_t g, color_t b)
 
 // -----------------------------------------------------------------------
 
-API void uC_win_set_bdr_rgb_bg(window_t *win, color_t r, color_t g, color_t b)
+API void uC_win_set_bdr_rgb_bg(uC_window_t *win, color_t r, color_t g,
+    color_t b)
 {
     if (win != NULL)
     {

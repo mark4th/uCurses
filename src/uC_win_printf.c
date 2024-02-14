@@ -1,4 +1,4 @@
-// win_printf.c  printf strings into window_t
+// win_printf.c  printf strings into uC_window_t
 // -----------------------------------------------------------------------
 
 #include <inttypes.h>
@@ -15,12 +15,12 @@
 
 static va_list arg;
 static char *p;
-static window_t *w;
+static uC_window_t *w;
 
 // -----------------------------------------------------------------------
 // write string into specified window at its currnt cursor location
 
-API void uC_win_puts(window_t *win, char *p)
+API void uC_win_puts(uC_window_t *win, char *p)
 {
     uint8_t skip;
     int32_t codepoint;
@@ -178,6 +178,15 @@ static void rt(void)
 }
 
 // -----------------------------------------------------------------------
+// %8    draw UTF-8 codepoint
+
+static void utf8(void)
+{
+    int cc = va_arg(arg, int);
+    uC_win_emit(w, cc);
+}
+
+// -----------------------------------------------------------------------
 // %cu  %cd %cl %cr    move cursor up, down, left or right in window
 
 static void c(void)
@@ -257,13 +266,22 @@ static void rev(void)
 }
 
 // -----------------------------------------------------------------------
+// %e   write eol to window
 
-static switch_t commands[] =
+static void e(void)
+{
+   uC_win_emit(w, 0x0d);
+}
+
+// -----------------------------------------------------------------------
+
+static uC_switch_t commands[] =
 {
     { 'r', &rf   }, { 'f', &f     }, { 'b', &b      }, { '@', &xy },
     { 'x', &x    }, { 'y', &y     }, { 'u', &up     }, { 'd', &dn },
     { 'l', &lt   }, { 'r', &rt    }, { '0', &wclear }, { 'c', &c },
-    { 'B', &bold }, { 'U', &uline }, { 'R', rev     }, { 's', u_puts }
+    { 'B', &bold }, { 'U', &uline }, { 'R', rev     }, { 's', u_puts },
+    { '8', &utf8 }, { 'e', &e}
 };
 
 #define COMMANDS sizeof(commands) / sizeof(commands[0])
@@ -272,7 +290,7 @@ static switch_t commands[] =
 
 static void command(void)
 {
-    re_switch(commands, COMMANDS, *p++);
+    uC_switch(commands, COMMANDS, *p++);
 }
 
 // -----------------------------------------------------------------------
@@ -282,7 +300,7 @@ static void command(void)
 // your string into a buffer and escape the format tags within it that
 // you want passed to this function...
 
-API void uC_win_printf(window_t *win, char *format, ...)
+API void uC_win_printf(uC_window_t *win, char *format, ...)
 {
     int32_t codepoint;
     int8_t skip;

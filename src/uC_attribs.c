@@ -210,7 +210,6 @@ static inline void if_apply_fg(attr_grp_t *a, uint8_t changes)
 
 void apply_attribs(void)
 {
-
     uint8_t changes;        // detects alterations to attributes
 
     attr_grp_t *a = uC_attr_grp;

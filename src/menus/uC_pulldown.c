@@ -1,4 +1,4 @@
-// menu_pulldown.c
+// uC_pulldown.c  --  uCurses pulldown menus
 // -----------------------------------------------------------------------
 
 #include <inttypes.h>
@@ -12,7 +12,7 @@
 // -----------------------------------------------------------------------
 // find address of pulldown structure with specified name
 
-static pulldown_t *pd_find(screen_t *scr, char *name)
+static pulldown_t *pd_find(uC_screen_t *scr, char *name)
 {
     pulldown_t *pd = NULL;
     menu_bar_t *bar = scr->menu_bar;
@@ -40,7 +40,7 @@ static pulldown_t *pd_find(screen_t *scr, char *name)
 
 // -----------------------------------------------------------------------
 
-void pd_disable(screen_t *scr, char *name)
+void pd_disable(uC_screen_t *scr, char *name)
 {
     pulldown_t *pd;
 
@@ -57,7 +57,7 @@ void pd_disable(screen_t *scr, char *name)
 
 // -----------------------------------------------------------------------
 
-void pd_enable(screen_t *scr, char *name)
+void pd_enable(uC_screen_t *scr, char *name)
 {
     pulldown_t *pd;
 
@@ -77,9 +77,9 @@ void pd_enable(screen_t *scr, char *name)
 
 // pulldowns have no associated window until they become active
 
-int32_t bar_create_pd_win(screen_t *scr, pulldown_t *pd)
+int32_t bar_create_pd_win(uC_screen_t *scr, pulldown_t *pd)
 {
-    window_t *win;
+    uC_window_t *win;
     int32_t result = -1;
 
     win = uC_win_open(pd->width, pd->count);
@@ -112,7 +112,7 @@ int32_t bar_create_pd_win(screen_t *scr, pulldown_t *pd)
 // -----------------------------------------------------------------------
 // add a new pulldown to a menu bar
 
-int32_t new_pulldown(screen_t *scr, char *name)
+int32_t new_pulldown(uC_screen_t *scr, char *name)
 {
     int32_t result = -1;
     menu_bar_t *bar = scr->menu_bar;

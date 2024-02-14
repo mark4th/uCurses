@@ -20,7 +20,7 @@
 
 // -----------------------------------------------------------------------
 
-#define SHELL            // comment out to use quick sort from stdlib
+ #define SHELL            // comment out to use quick sort from stdlib
 
 #define ITEMS  1000000   // one million
 #define ITTERS 10000     // ten thousahd
@@ -117,7 +117,7 @@ void shell(uint32_t *p, uint32_t n)
     gap = n;
 
     while ((gap *= FUDGE_FACTOR) > 0)
-    //while((gap = new_gap(gap)) != 0)
+    // while ((gap = new_gap(gap)) != 0)
     {
         lo1 = 0;
         hi1 = gap;
@@ -236,7 +236,7 @@ int main(void)
     // assume success :)
     data =  calloc(ITEMS, sizeof(uint32_t));
 
-    for(i = 0; i < ITTERS; i++)
+    for (i = 0; i < ITTERS; i++)
     {
         make_data(data, ITEMS);
         uC_cup(7, 10);

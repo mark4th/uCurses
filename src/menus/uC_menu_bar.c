@@ -36,7 +36,7 @@ static void pd_set_attr(int16_t i, pulldown_t *pd, uint64_t *p,
 void bar_populdate_pd(pulldown_t *pd)
 {
     menu_item_t *item;
-    window_t *win;
+    uC_window_t *win;
     int16_t i;
 
     if ((pd != NULL) && (pd->count != 0) && (pd->window != NULL))
@@ -84,11 +84,11 @@ static void bar_set_attrs(int16_t i, menu_bar_t *bar, uint64_t *p,
 // -----------------------------------------------------------------------
 // draws menu bar text, does not draw bar into screen
 
-API void uC_bar_draw_text(screen_t *scr)
+API void uC_bar_draw_text(uC_screen_t *scr)
 {
     int16_t i;
     pulldown_t *pd;
-    window_t *win;
+    uC_window_t *win;
 
     menu_bar_t *bar = scr->menu_bar;
     win = bar->window;
@@ -147,7 +147,7 @@ static void bar_close_pds(menu_bar_t *bar)
 
 // -----------------------------------------------------------------------
 
-API void uC_bar_close(screen_t *scr)
+API void uC_bar_close(uC_screen_t *scr)
 {
     menu_bar_t *bar;
 
@@ -169,7 +169,7 @@ API void uC_bar_close(screen_t *scr)
 
 /// -----------------------------------------------------------------------
 
-static void init_bar(screen_t *scr, window_t *win, menu_bar_t *bar)
+static void init_bar(uC_screen_t *scr, uC_window_t *win, menu_bar_t *bar)
 {
     bar->window = win;
 
@@ -187,10 +187,10 @@ static void init_bar(screen_t *scr, window_t *win, menu_bar_t *bar)
 
 // -----------------------------------------------------------------------
 
-API int32_t uC_bar_open(screen_t *scr)
+API int32_t uC_bar_open(uC_screen_t *scr)
 {
     menu_bar_t *bar = NULL;
-    window_t *win;
+    uC_window_t *win;
 
     if (scr != NULL)
     {

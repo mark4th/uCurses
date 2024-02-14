@@ -19,7 +19,7 @@ static void populate_attribs(void *pstruct, int32_t ptype)
 {
     if((ptype == STRUCT_WINDOW) || (ptype == STRUCT_BACKDROP))
     {
-        ((window_t *)pstruct)->attr_grp.attrs.chunk =
+        ((uC_window_t *)pstruct)->attr_grp.attrs.chunk =
             *(int64_t *)json_state->structure;
     }
     else if(ptype == STRUCT_PULLDOWN)
@@ -38,7 +38,7 @@ static void populate_attribs(void *pstruct, int32_t ptype)
 
 // -----------------------------------------------------------------------
 
-static void populate_b_attribs(window_t *pstruct)
+static void populate_b_attribs(uC_window_t *pstruct)
 {
     pstruct->attr_grp.bdr_attrs.chunk =
         *(int64_t *)json_state->structure;
@@ -106,8 +106,8 @@ static void populate_menu_item(pulldown_t *gstruct)
 
 static void populate_window(json_state_t *parent)
 {
-    window_t *win;
-    screen_t *scr;
+    uC_window_t *win;
+    uC_screen_t *scr;
 
     json_state_t *gp = parent->parent;
     scr = gp->structure;
@@ -118,14 +118,14 @@ static void populate_window(json_state_t *parent)
 
 // -----------------------------------------------------------------------
 
-static void populate_backdrop(screen_t *pstruct)
+static void populate_backdrop(uC_screen_t *pstruct)
 {
     pstruct->backdrop = json_state->structure;
 }
 
 // -----------------------------------------------------------------------
 
-static void populate_bar(screen_t *scr)
+static void populate_bar(uC_screen_t *scr)
 {
     menu_bar_t *bar = json_state->structure;
     scr->menu_bar = bar;

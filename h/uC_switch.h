@@ -1,8 +1,8 @@
-// re_switch.h
+// uC_switch.h
 // -----------------------------------------------------------------------
 
-#ifndef RE_SWITCH_H
-#define RE_SWITCH_H
+#ifndef UC_SWITCH_H
+#define UC_SWITCH_H
 
 // -----------------------------------------------------------------------
 
@@ -19,15 +19,16 @@ typedef struct
 {
     int32_t option;
     opt_t vector;
-} switch_t;
+} uC_switch_t;
 
 // -----------------------------------------------------------------------
 // visibility hidden
 
-int re_switch(const switch_t *s, int size, int32_t option);
+int uC_switch(const uC_switch_t *s, int size, int32_t option);
 
 // -----------------------------------------------------------------------
 
-#endif // RE_SWITCH_H
+#else
+#endif // UC_SWITCH_H
 
 // =======================================================================

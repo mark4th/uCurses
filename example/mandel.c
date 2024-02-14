@@ -18,7 +18,7 @@
 
 #define max 1000
 
-extern screen_t *active_screen;
+extern uC_screen_t *active_screen;
 
 // -----------------------------------------------------------------------
 
@@ -121,7 +121,7 @@ uint8_t peek(rgb* buffer, rgb *fg, int x, int y, int width)
 
 // -----------------------------------------------------------------------
 
-static void draw_braille(window_t *win, rgb *buffer, int width, int height)
+static void draw_braille(uC_window_t *win, rgb *buffer, int width, int height)
 {
     int x, y;
     uint8_t c = 0;
@@ -144,7 +144,7 @@ static void draw_braille(window_t *win, rgb *buffer, int width, int height)
 
 // -----------------------------------------------------------------------
 
-static void mandel(window_t *win, double x_off, double y_off, double z_off)
+static void mandel(uC_window_t *win, double x_off, double y_off, double z_off)
 {
     int width  = win->width  * 2;
     int height = win->height * 4;
@@ -204,9 +204,9 @@ static void mandel(window_t *win, double x_off, double y_off, double z_off)
 void mandel_demo(void)
 {
     int i;
-    screen_t *scr;
-    window_t *win;
-    node_t *n;
+    uC_screen_t *scr;
+    uC_window_t *win;
+    uC_list_node_t *n;
 
     double x_off = 2.5;
     double y_off = -2;

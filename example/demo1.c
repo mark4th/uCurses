@@ -104,7 +104,7 @@ char *chinese[] =
 
 // -----------------------------------------------------------------------
 
-void print_lorem(window_t *win)
+void print_lorem(uC_window_t *win)
 {
     int16_t len;
 
@@ -138,7 +138,7 @@ void print_lorem(window_t *win)
 
 // -----------------------------------------------------------------------
 
-static void print_chinese(window_t *win)
+static void print_chinese(uC_window_t *win)
 {
     static int8_t inc = 1;
     static int8_t line = 0;
@@ -169,7 +169,7 @@ static void print_chinese(window_t *win)
 // -----------------------------------------------------------------------
 // switch which window is on top and which is behind
 
-static void flip_flop(window_t *win1, window_t *win2)
+static void flip_flop(uC_window_t *win1, uC_window_t *win2)
 {
     (0 == first)
         ? uC_win_pop(win2)
@@ -180,7 +180,7 @@ static void flip_flop(window_t *win1, window_t *win2)
 
 // -----------------------------------------------------------------------
 
-static void do_run_demo(screen_t *scr, window_t *win1, window_t *win2)
+static void do_run_demo(uC_screen_t *scr, uC_window_t *win1, uC_window_t *win2)
 {
     // write text into each window
     print_lorem(win1);
@@ -241,7 +241,7 @@ static void do_run_demo(screen_t *scr, window_t *win1, window_t *win2)
 // rotates two windows around the screen in opposite directions
 // can this even be done wtih ncurses?
 
-void run_demo1(screen_t *scr, window_t *win1, window_t *win2)
+void run_demo1(uC_screen_t *scr, uC_window_t *win1, uC_window_t *win2)
 {
     int8_t pause = 0;
     int8_t c;

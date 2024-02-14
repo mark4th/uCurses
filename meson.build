@@ -90,7 +90,7 @@ project_target = custom_target(
     command: [
         'bash', '-c',
         '''
-            strip -R .comment @INPUT@
+#            strip -R .comment @INPUT@ 
             touch @0@
             file @INPUT@ > /proc/$PPID/fd/1
             du -h @INPUT@ > /proc/$PPID/fd/1

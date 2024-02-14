@@ -67,7 +67,7 @@ static int8_t read_key(void)
 // -----------------------------------------------------------------------
 // read escape sequence or singke keypress character
 
-void read_keys(void)
+void uC_read_keys(void)
 {
     num_k = 0;
 

@@ -51,7 +51,7 @@ API int16_t uC_braille_xlat(uint8_t chr)
 // -----------------------------------------------------------------------
 // braille encode map that contains 8 bits per byte of data
 
-API void uC_braille_8(window_t *win, uint16_t *braille_data, uint8_t *map,
+API void uC_braille_8(uC_window_t *win, uint16_t *braille_data, uint8_t *map,
     uint16_t width)
 {
     uint8_t x, y, z;
@@ -107,7 +107,7 @@ API void uC_braille_8(window_t *win, uint16_t *braille_data, uint8_t *map,
 // -----------------------------------------------------------------------
 // braille encode map that contains 1 bits per byte of data
 
-API void uC_braille_1(window_t *win, uint16_t *braille_data, uint8_t *map,
+API void uC_braille_1(uC_window_t *win, uint16_t *braille_data, uint8_t *map,
     uint16_t width, uint16_t height)
 {
     uint8_t x, y;
@@ -144,7 +144,7 @@ API void uC_braille_1(window_t *win, uint16_t *braille_data, uint8_t *map,
 
 // -----------------------------------------------------------------------
 
-API void uC_draw_braille(window_t *win, uint16_t *braille_data)
+API void uC_draw_braille(uC_window_t *win, uint16_t *braille_data)
 {
     uint16_t x;
     uint16_t y;

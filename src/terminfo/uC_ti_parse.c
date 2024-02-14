@@ -631,7 +631,7 @@ static char next_c(void)
 // -----------------------------------------------------------------------
 // terminfo format string % codes
 
-static const switch_t p_codes[] =
+static const uC_switch_t p_codes[] =
 {
     { '%', &_percent }, { 'p', &_p      }, { 'd', &_d       },
     { 'c', &_c       }, { 'i', &_i      }, { 's', &_s       },
@@ -652,7 +652,7 @@ static const switch_t p_codes[] =
 
 static void cmd(char c1)
 {
-    re_switch(p_codes, PCOUNT, c1);
+    uC_switch(p_codes, PCOUNT, c1);
 }
 
 // -----------------------------------------------------------------------

@@ -1,8 +1,8 @@
 // parse.h    terminfo format string parsing
 // -----------------------------------------------------------------------
 
-#ifndef PARSE_H
-#define PARSE_H
+#ifndef UC_PARSE_H
+#define UC_PARSE_H
 
 #include <stdint.h>
 
@@ -38,6 +38,6 @@ API void uC_parse_format(const char *f);
 
 // -----------------------------------------------------------------------
 
-#endif // PARSE_H
+#endif // UC_PARSE_H
 
 // =======================================================================

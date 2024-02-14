@@ -15,13 +15,13 @@
 
 #include "demo.h"
 
-extern screen_t *active_screen;
+extern uC_screen_t *active_screen;
 
 // -----------------------------------------------------------------------
 
 #define MAX_POINTS 125          // max # pels in an object
 
-static window_t *dots_win;
+static uC_window_t *dots_win;
 
 extern int16_t dots_sin_tab[512];
 extern int point_counts[];             // number of points in each object
@@ -115,7 +115,7 @@ void draw_point(int16_t x, int16_t y, int8_t c)
 
         p = uC_win_peek(dots_win);
 
-        if(pel > p->code)
+        if (pel > p->code)
         {
             uC_win_set_rgb_fg(dots_win,
                 (z_off - px),
@@ -147,7 +147,7 @@ void rotate(int *px, int *py, int *pz)
 {
     int tx, ty, tz;        // temp store
 
-    if(x_angle != 0)      // rotate point about x axis...
+    if (x_angle != 0)      // rotate point about x axis...
     {
         ty = (*py * cos_x) - (*pz * sin_x);
         tz = (*py * sin_x) + (*pz * cos_x);
@@ -192,7 +192,7 @@ void project(int px, int py, int pz, int *x, int *y)
 
     ty = ((y_off * py) / (z_off + pz)) + (dots_win->height / 2);
 
-    if((ty > 0) && (ty < (25)))
+    if ((ty > 0) && (ty < (25)))
     {
         tx = ((x_off * px) / (z_off + pz)) + (dots_win->width / 2);
 
@@ -299,8 +299,8 @@ void change_angles(void)
 
 void do_dots(void)
 {
-    screen_t *scr;
-    node_t *n;
+    uC_screen_t *scr;
+    uC_list_node_t *n;
     char status[MAX_STATUS];
     int seconds;
     time_t start;
@@ -334,8 +334,8 @@ void do_dots(void)
         char c;
         int pause = 0;
 
-         zmin = 1000;
-         zmax = -1000;
+        zmin = 1000;
+        zmax = -1000;
 
         while (itters++ != 2000000)
         {

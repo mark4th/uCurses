@@ -54,7 +54,7 @@ static int32_t new_item(pulldown_t *pd, char *name, menu_fp_t fp,
 // -----------------------------------------------------------------------
 // add an entry to a pulldown
 
-int32_t new_menu_item(screen_t *scr, char *name, menu_fp_t fp,
+int32_t new_menu_item(uC_screen_t *scr, char *name, menu_fp_t fp,
     int16_t shortcut)
 {
     int32_t result = -1;    // assume failure

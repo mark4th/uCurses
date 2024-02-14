@@ -1,8 +1,8 @@
 // json.h
 // -----------------------------------------------------------------------
 
-#ifndef JSON_H
-#define JSON_H
+#ifndef UC_JSON_H
+#define UC_JSON_H
 
 #include <stdbool.h>
 
@@ -97,7 +97,7 @@ typedef struct
     char json_token[MAX_TOKEN_LEN];
     int32_t json_hash;
 
-    list_t json_stack;
+    uC_list_t json_stack;
 
     fp_finder_t fp_finder;
 
@@ -139,6 +139,6 @@ API void uC_json_create_ui(char *path, fp_finder_t fp);
 
 // -----------------------------------------------------------------------
 
-#endif // JSON_H
+#endif // UC_JSON_H
 
 // =======================================================================

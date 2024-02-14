@@ -18,13 +18,13 @@
 
 // -----------------------------------------------------------------------
 
-API screen_t *active_screen;
+API uC_screen_t *active_screen;
 
 extern attr_grp_t *uC_attr_grp;
 
 // -----------------------------------------------------------------------
 
-int16_t scr_alloc(screen_t *scr)
+int16_t scr_alloc(uC_screen_t *scr)
 {
     cell_t *p1, *p2;
 
@@ -47,9 +47,9 @@ int16_t scr_alloc(screen_t *scr)
 
 // -----------------------------------------------------------------------
 
-API screen_t *uC_scr_open(int16_t width, int16_t height)
+API uC_screen_t *uC_scr_open(int16_t width, int16_t height)
 {
-    screen_t *scr = calloc(1, sizeof(*scr));
+    uC_screen_t *scr = calloc(1, sizeof(*scr));
 
     if (scr != NULL)
     {
@@ -70,9 +70,9 @@ API screen_t *uC_scr_open(int16_t width, int16_t height)
 // -----------------------------------------------------------------------
 // deallocate all structures attached to screen
 
-API void uC_scr_close(screen_t *scr)
+API void uC_scr_close(uC_screen_t *scr)
 {
-    window_t *win;
+    uC_window_t *win;
 
     if (scr != NULL)
     {
@@ -86,7 +86,7 @@ API void uC_scr_close(screen_t *scr)
 
         do
         {
-            win = list_pop_head(&scr->windows);
+            win = uC_list_pop_head(&scr->windows);
             uC_win_close(win);
         } while (win != NULL);
 
@@ -98,7 +98,7 @@ API void uC_scr_close(screen_t *scr)
 
 // -----------------------------------------------------------------------
 
-static cell_t *scr_line_addr(screen_t *scr, int16_t line)
+static cell_t *scr_line_addr(uC_screen_t *scr, int16_t line)
 {
     int16_t index = (scr->width) * line;
     return &scr->buffer1[index];
@@ -107,12 +107,12 @@ static cell_t *scr_line_addr(screen_t *scr, int16_t line)
 // -----------------------------------------------------------------------
 // draw window into its parent screen with borders if it has them
 
-static void scr_draw_win(window_t *win)
+static void scr_draw_win(uC_window_t *win)
 {
     int16_t i;
     int16_t width;
     cell_t *src, *dst;
-    screen_t *scr;
+    uC_screen_t *scr;
 
     if (win != NULL)
     {
@@ -141,10 +141,10 @@ static void scr_draw_win(window_t *win)
 
 // -----------------------------------------------------------------------
 
-static void scr_draw_windows(screen_t *scr)
+static void scr_draw_windows(uC_screen_t *scr)
 {
-    window_t *win;
-    node_t *n = scr->windows.head;
+    uC_window_t *win;
+    uC_list_node_t *n = scr->windows.head;
 
     while (n != NULL)
     {
@@ -159,7 +159,7 @@ static void scr_draw_windows(screen_t *scr)
 
 // unless it is already there :)
 
-static void scr_cup(screen_t *scr, int16_t x, int16_t y)
+static void scr_cup(uC_screen_t *scr, int16_t x, int16_t y)
 {
     // would a single hpa / vpa be faster than a cup ?
 
@@ -174,7 +174,7 @@ static void scr_cup(screen_t *scr, int16_t x, int16_t y)
 
 // -----------------------------------------------------------------------
 
-void init_backdrop(screen_t *scr, window_t *win)
+void init_backdrop(uC_screen_t *scr, uC_window_t *win)
 {
     if ((win != NULL) && (scr != NULL))
     {
@@ -191,9 +191,9 @@ void init_backdrop(screen_t *scr, window_t *win)
 // -----------------------------------------------------------------------
 // add a backdrop window to the screen
 
-API void uC_scr_add_backdrop(screen_t *scr)
+API void uC_scr_add_backdrop(uC_screen_t *scr)
 {
-    window_t *win;
+    uC_window_t *win;
 
     if (scr != NULL)
     {
@@ -219,7 +219,7 @@ API void uC_scr_add_backdrop(screen_t *scr)
 
 // -----------------------------------------------------------------------
 
-static uint16_t scr_is_modified(screen_t *scr, uint16_t index)
+static uint16_t scr_is_modified(uC_screen_t *scr, uint16_t index)
 {
     cell_t *p1 = &scr->buffer1[index];
     cell_t *p2 = &scr->buffer2[index];
@@ -242,7 +242,7 @@ static void new_attrs(int64_t a)
 // -----------------------------------------------------------------------
 // emits charcter from screen buffer1 to the console
 
-static void scr_emit(screen_t *scr, int16_t index)
+static void scr_emit(uC_screen_t *scr, int16_t index)
 {
     cell_t *p1, *p2;
 
@@ -325,7 +325,7 @@ static void scr_emit(screen_t *scr, int16_t index)
 // -----------------------------------------------------------------------
 // inner loop of screen update
 
-static int16_t inner_update(screen_t *scr, int16_t index, int16_t end)
+static int16_t inner_update(uC_screen_t *scr, int16_t index, int16_t end)
 {
     cell_t *p1;
     int indx = 0;
@@ -358,7 +358,7 @@ static int16_t inner_update(screen_t *scr, int16_t index, int16_t end)
 // -----------------------------------------------------------------------
 // outer loop of screen update
 
-static void outer_update(screen_t *scr)
+static void outer_update(uC_screen_t *scr)
 {
     int16_t index = 0;
     int16_t end = scr->width * scr->height;
@@ -393,7 +393,7 @@ static void outer_update(screen_t *scr)
 
 // -----------------------------------------------------------------------
 
-static void scr_update_menus(screen_t *scr)
+static void scr_update_menus(uC_screen_t *scr)
 {
     menu_bar_t *bar;
     pulldown_t *pd;
@@ -415,14 +415,14 @@ static void scr_update_menus(screen_t *scr)
             // draw all text inside pulldown memus window
             bar_populdate_pd(pd);
             // draw pulldown window into screen
-            scr_draw_win((window_t *)pd->window);
+            scr_draw_win((uC_window_t *)pd->window);
         }
     }
 }
 
 // -----------------------------------------------------------------------
 
-API void uC_scr_draw_screen(screen_t *scr)
+API void uC_scr_draw_screen(uC_screen_t *scr)
 {
     uC_attr_grp->old_attrs.chunk = 0;
 
@@ -451,11 +451,18 @@ API void uC_scr_draw_screen(screen_t *scr)
 // -----------------------------------------------------------------------
 // attach a window to a screen
 
-API void uC_scr_win_attach(screen_t *scr, window_t *win)
+API void uC_scr_win_attach(uC_screen_t *scr, uC_window_t *win)
 {
+    uC_screen_t *scr2;
     win->screen = scr;
 
-    if (list_push_tail(&scr->windows, win) != true)
+    if (win->screen != NULL)
+    {
+        scr2 = win->screen;
+        uC_list_remove_node(&scr2->windows, win);
+    }
+
+    if (uC_list_push_tail(&scr->windows, win) != true)
     {
         // log error here?
         // insert more ram to conginue!
@@ -465,13 +472,13 @@ API void uC_scr_win_attach(screen_t *scr, window_t *win)
 // -----------------------------------------------------------------------
 // detach window from its parent screen
 
-API void uC_scr_win_detach(window_t *win)
+API void uC_scr_win_detach(uC_window_t *win)
 {
-    screen_t *scr = win->screen;
+    uC_screen_t *scr = win->screen;
 
     if (scr != NULL)
     {
-        list_remove_node(&scr->windows, win);
+        uC_list_remove_node(&scr->windows, win);
         win->screen = NULL;
     }
 }

@@ -29,7 +29,7 @@ API void uC_noop(void) { ; }
 
 // actually i think this is just fnv-1  not 1a : fix later
 
-int32_t fnv_hash(char *s)
+API int32_t fnv_hash(char *s)
 {
     uint32_t hash = FNV_BASIS;
 

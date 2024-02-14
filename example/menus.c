@@ -13,17 +13,17 @@
 
 #include "demo.h"
 
-extern screen_t *active_screen;
+extern uC_screen_t *active_screen;
 
 // -----------------------------------------------------------------------
 // just flipflops the border color of which ever window is on top
 
 static void window_demo(void)
 {
-    node_t *n;
-    window_t *win1;
-    window_t *win2;
-    screen_t *scr;
+    uC_list_node_t *n;
+    uC_window_t *win1;
+    uC_window_t *win2;
+    uC_screen_t *scr;
 
     uC_scr_close(active_screen);
     uC_json_create_ui("demo1.json", menu_address_cb);
@@ -63,7 +63,7 @@ static void exit_prog(void)
 
 // -----------------------------------------------------------------------
 
-static switch_t menu_vectors[] =
+static uC_switch_t menu_vectors[] =
 {
     { 0xfcb028fd, window_demo  },
     { 0x9999e2a1, dots_demo    },
@@ -81,7 +81,7 @@ static switch_t menu_vectors[] =
 opt_t menu_address_cb(int32_t hash)
 {
     int16_t i;
-    switch_t *s = menu_vectors;
+    uC_switch_t *s = menu_vectors;
 
     for(i = 0; i < VCOUNT; i++)
     {

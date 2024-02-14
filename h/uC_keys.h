@@ -1,10 +1,11 @@
 // keys.h
 // -----------------------------------------------------------------------
 
-#ifndef KEYS_H
-#define KEYS_H
+#ifndef UC_KEYS_H
+#define UC_KEYS_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 // -----------------------------------------------------------------------
 
@@ -20,24 +21,30 @@ typedef enum
 
 // -----------------------------------------------------------------------
 
-typedef void key_handler_t(void);
+typedef void uC_key_handler_t(void);
+typedef void (**uC_kh_t)(void);
 
 // -----------------------------------------------------------------------
 // visibility hidden
 
-void read_keys(void);
+void uC_read_keys(void);
 int16_t match_key(void);
+
+// -----------------------------------------------------------------------
+
+API API uC_kh_t uC_alloc_kh(void);
+API void uC_free_kh(void);
+API int8_t uC_test_keys(void);
+API uC_key_handler_t *uC_set_key_action(key_index_t index,
+    uC_key_handler_t *action);
+API uint8_t uC_key(void);
+API void uC_stuff_key(int8_t c);
+API bool uC_push_key_handler(uC_kh_t user_actions);
+API bool uC_pop_key_handler(void);
 void init_key_handlers(void);
 
 // -----------------------------------------------------------------------
 
-API int8_t uC_test_keys(void);
-API key_handler_t *uC_set_key_action(key_index_t index, key_handler_t *action);
-API uint8_t uC_key(void);
-API void uC_stuff_key(int8_t c);
-
-// -----------------------------------------------------------------------
-
-#endif // KEYS_H
+#endif // UC_KEYS_H
 
 // =======================================================================

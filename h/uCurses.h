@@ -8,8 +8,6 @@
 
 #include <stdint.h>
 
-#include "uCurses.h"
-
 // -----------------------------------------------------------------------
 // macro to make public API functions etc visible
 

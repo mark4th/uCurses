@@ -74,10 +74,10 @@ static border_t bdr_curved[] =
 // -----------------------------------------------------------------------
 // draw border character directly into screen buffer 1
 
-static void draw_char(window_t *win, int16_t cx, int16_t cy,
+static void draw_char(uC_window_t *win, int16_t cx, int16_t cy,
     int32_t code, int16_t force)
 {
-    screen_t *scr = win->screen;
+    uC_screen_t *scr = win->screen;
 
     int16_t index = (cy * scr->width) + cx;
 
@@ -105,7 +105,7 @@ static void draw_char(window_t *win, int16_t cx, int16_t cy,
 // -----------------------------------------------------------------------
 // draw one entire row of a border.
 
-static void draw_top_bottom(window_t *win, int32_t c1, int32_t c2,
+static void draw_top_bottom(uC_window_t *win, int32_t c1, int32_t c2,
     int32_t c3, int16_t cy)
 {
     int16_t cx = win->xco;
@@ -123,7 +123,7 @@ static void draw_top_bottom(window_t *win, int32_t c1, int32_t c2,
 
 // -----------------------------------------------------------------------
 
-static void draw_mid_row(window_t *win, int32_t c1, int32_t c3,
+static void draw_mid_row(uC_window_t *win, int32_t c1, int32_t c3,
     int16_t cy)
 {
     draw_char(win, win->xco - 1, cy, c1, NO_FORCE);
@@ -133,7 +133,7 @@ static void draw_mid_row(window_t *win, int32_t c1, int32_t c3,
 // -----------------------------------------------------------------------
 // window borders are not drawn into windows but directly into the screen
 
-void win_draw_borders(window_t *win)
+void win_draw_borders(uC_window_t *win)
 {
     int16_t height;
     int16_t cy;

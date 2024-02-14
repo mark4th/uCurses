@@ -42,7 +42,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //int dots_sin(int16_t angle);
 //int dots_cos(int16_t angle);
 
-extern screen_t *active_screen;
+extern uC_screen_t *active_screen;
 
 // -----------------------------------------------------------------------
 
@@ -60,8 +60,8 @@ static double rotSpeed;
 static double planeX = 0;      // the 2d raycaster version of camera plane
 static double planeY = 0.66;
 
-static screen_t *scr;
-static window_t *win;
+static uC_screen_t *scr;
+static uC_window_t *win;
 
 static uint8_t *dark_map;     // adjacent walls are different shades
 static uint8_t *color_map;    // what color to draw each column of screen
@@ -220,7 +220,7 @@ static void render_walls(void)
         deltaY = fabs(1 / rayDirY);
 
         // calculate step and initial sideDist
-        if(rayDirX < 0)
+        if (rayDirX < 0)
         {
             stepX = -1;
             sideDistX = (posX - mapX) * deltaX;
@@ -231,7 +231,7 @@ static void render_walls(void)
             sideDistX = (mapX + 1.0 - posX) * deltaX;
         }
 
-        if(rayDirY < 0)
+        if (rayDirY < 0)
         {
             stepY = -1;
             sideDistY = (posY - mapY) * deltaY;
@@ -246,7 +246,7 @@ static void render_walls(void)
 
         do
         {
-             if(sideDistX < sideDistY)
+             if (sideDistX < sideDistY)
              {
                  sideDistX += deltaX;
                  mapX += stepX;
@@ -258,9 +258,9 @@ static void render_walls(void)
                  mapY += stepY;
                  side = 1;
              }
-        } while(worldMap[mapX][mapY] == 0);
+        } while (worldMap[mapX][mapY] == 0);
 
-        if(side == 0)
+        if (side == 0)
         {
             wallDist = (mapX - posX + (1 - stepX) / 2) / rayDirX;
             dark_map[x] = 1;
@@ -277,7 +277,7 @@ static void render_walls(void)
 
         // calculate lowest and highest pixel to fill in current stripe
         drawStart = (fb_height / 2) - (lineHeight / 2);
-        while(drawStart < 1)
+        while (drawStart < 1)
         {
             drawStart++;
             lineHeight--;
@@ -285,7 +285,7 @@ static void render_walls(void)
 
         // drawEnd = (lineHeight / 2) + (fb_height / 2);
         drawEnd = drawStart + lineHeight;
-        while(drawEnd > fb_height - 2)
+        while (drawEnd > fb_height - 2)
         {
             drawEnd--;
             lineHeight--;
@@ -304,14 +304,14 @@ static void render_walls(void)
         wallX -= floor(wallX);
         texX = (int)(wallX * (double)32);
 
-        if(side == 0 && rayDirX > 0) texX = 32 - texX -1;
-        if(side == 1 && rayDirY < 0) texX = 32 - texX -1;
+        if (side == 0 && rayDirX > 0) texX = 32 - texX -1;
+        if (side == 1 && rayDirY < 0) texX = 32 - texX -1;
 
         step = 32.0 / lineHeight;
 
         texPos = (drawStart - (fb_height / 2) + (lineHeight / 2)) * step;
 
-        for(y = drawStart; y < drawEnd; y++)
+        for (y = drawStart; y < drawEnd; y++)
         {
             texY = (int)texPos & 0x1f;
             texPos += step;
@@ -331,12 +331,12 @@ void process_key(uint8_t keypress)
 
     // move forward if no wall in front of you
 
-    if(keypress == 'w')
+    if (keypress == 'w')
     {
         x = posX + dirX * moveSpeed;
         y = posY + dirY * moveSpeed;
 
-        if(worldMap[(int)x][(int)y] == 0)
+        if (worldMap[(int)x][(int)y] == 0)
         {
             posX = x;
             posY = y;
@@ -345,7 +345,7 @@ void process_key(uint8_t keypress)
 
     // move backwards if no wall behind you
 
-    if(keypress == 's')
+    if (keypress == 's')
     {
        x = posX - dirX * moveSpeed;
        y = posY - dirY * moveSpeed;
@@ -363,7 +363,7 @@ void process_key(uint8_t keypress)
     // both camera direction and camera plane must be rotated
     // rotate to the right
 
-    if(keypress == 'd')
+    if (keypress == 'd')
     {
         //both camera direction and camera plane must be rotated
         dirX   = dirX      * cos(-rotSpeed) - dirY   * sin(-rotSpeed);
@@ -372,7 +372,7 @@ void process_key(uint8_t keypress)
         planeY = oldPlaneX * sin(-rotSpeed) + planeY * cos(-rotSpeed);
     }
     //rotate to the left
-    if(keypress == 'a')
+    if (keypress == 'a')
     {
         //both camera direction and camera plane must be rotated
         dirX      = dirX      * cos(rotSpeed) - dirY   * sin(rotSpeed);
@@ -383,6 +383,7 @@ void process_key(uint8_t keypress)
 }
 
 // -----------------------------------------------------------------------
+// not currently used, does not look right
 
 static void render_floor(void)
 {
@@ -406,7 +407,7 @@ static void render_floor(void)
 
     posZ = 0.5 * (float)fb_height;
 
-    for(y = 0; y < fb_height / 2; y++)
+    for (y = 0; y < fb_height / 2; y++)
     {
         p = y - (fb_height / 2);
         rowDistance = posZ / p / 2;
@@ -417,7 +418,7 @@ static void render_floor(void)
         floorY = posX + rowDistance * rayDirX0;
         floorY = posY + rowDistance * rayDirY0;
 
-        for(x = 0; x < fb_width; x++)
+        for (x = 0; x < fb_width; x++)
         {
             cellX = floorX;
             cellY = floorY;
@@ -450,21 +451,21 @@ static void draw_walls(void)
 
     uC_braille_1(win, braile_data, fb, fb_width, fb_height);
 
-    for(x = 0; x < win->width; x++)
+    for (x = 0; x < win->width; x++)
     {
         color = color_map[x * 2];
 
-        if(dark_map[x * 2] != 2) { color *= 2; }
+        if (dark_map[x * 2] != 2) { color *= 2; }
 
         uC_win_set_gray_fg(win, color);
 
-        for(y = 0; y < win->height; y++)
+        for (y = 0; y < win->height; y++)
         {
             c = braile_data[(y * win->width) + x];
 
             cell = uC_win_peek_xy(win, x, y);
 
-            if(c != 0x2800)
+            if (c != 0x2800)
             {
                 uC_win_cup(win, x, y);
                 uC_win_emit(win, c);
@@ -477,7 +478,7 @@ static void draw_walls(void)
 
 void raycast(void)
 {
-    node_t *n;
+    uC_list_node_t *n;
     uint8_t keypress;
     struct timeval tv;
 
@@ -515,7 +516,7 @@ void raycast(void)
 
     char status[MAX_STATUS];
 
-    for(;;)
+    for (;;)
     {
         memset(dark_map, 0, fb_width);
         memset(fb, 0, fb_width * fb_height);
@@ -540,7 +541,7 @@ void raycast(void)
         gettimeofday(&tv, NULL);
         time = tv.tv_sec;
 
-        if(old_time != time)
+        if (old_time != time)
         {
             old_time = time;
             fps = framecount - old_count;
@@ -548,7 +549,7 @@ void raycast(void)
             frame_time = (1 / fps);
         }
 
-        if(frame_time == 0) { frame_time = 1; }
+        if (frame_time == 0) { frame_time = 1; }
 
         moveSpeed = frame_time * 0.2;
         rotSpeed  = frame_time * 0.08;
@@ -557,7 +558,7 @@ void raycast(void)
         {
             keypress = uC_key();
 
-            if(keypress == 0x1b)
+            if (keypress == 0x1b)
             {
                 break;
             }

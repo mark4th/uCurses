@@ -1,18 +1,18 @@
 // borders.h
 // -----------------------------------------------------------------------
 
-#ifndef BORDERS_H
-#define BORDERS_H
+#ifndef UC_BORDERS_H
+#define UC_BORDERS_H
 
 #include "uC_window.h"
 
 // -----------------------------------------------------------------------
 // visibility hidden
 
-void win_draw_borders(window_t *win);
+void win_draw_borders(uC_window_t *win);
 
 // -----------------------------------------------------------------------
 
-#endif // BORDERS_H
+#endif // UC_BORDERS_H
 
 // =======================================================================

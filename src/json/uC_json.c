@@ -19,7 +19,7 @@
 #include "uC_screen.h"
 #include "uC_json.h"
 
-extern screen_t *active_screen;
+extern uC_screen_t *active_screen;
 
 // -----------------------------------------------------------------------
 // memory map flags
@@ -121,7 +121,7 @@ const int32_t json_syntax[] =
 
 static void json_push(json_state_t *j)
 {
-    list_push_head(&json_vars->json_stack, json_state);
+    uC_list_push_head(&json_vars->json_stack, json_state);
     json_state = j;
 }
 
@@ -134,7 +134,7 @@ void json_pop(void)
 {
     free(json_state);
 
-    json_state = list_pop_head(&json_vars->json_stack);
+    json_state = uC_list_pop_head(&json_vars->json_stack);
 }
 
 // -----------------------------------------------------------------------
@@ -255,7 +255,7 @@ void json_state_r_brace(void)
 
 // -----------------------------------------------------------------------
 
-static const switch_t states[] =
+static const uC_switch_t states[] =
 {
     { STATE_L_BRACE, json_state_l_brace },
     { STATE_KEY,     json_state_key     },
@@ -282,7 +282,7 @@ static void json_state_machine(void)
         // the token does not define what the state is
         // the state defines what the token must be
 
-        f = re_switch(states, NUM_STATES, json_state->state);
+        f = uC_switch(states, NUM_STATES, json_state->state);
         if (f == -1)
         {
             json_error("Unknown or out of place token");

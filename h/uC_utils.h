@@ -1,8 +1,8 @@
 // utils.h
 // -----------------------------------------------------------------------
 
-#ifndef UTILS_H
-#define UTILS_H
+#ifndef UC_UTILS_H
+#define UC_UTILS_H
 
 #include <stdbool.h>
 
@@ -14,7 +14,7 @@
 // -----------------------------------------------------------------------
 // visibility hidden
 
-int32_t fnv_hash(char *s);
+API int32_t fnv_hash(char *s);
 void uC_assert(bool f, char *file, int line, char *msg);
 
 __attribute__((noreturn)) void xabort(char *msg);
@@ -32,6 +32,6 @@ API void uC_init_terminal(void);
 
 // -----------------------------------------------------------------------
 
-#endif // UTILS_H
+#endif // UC_UTILS_H
 
 // =======================================================================

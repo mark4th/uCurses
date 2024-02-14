@@ -14,12 +14,12 @@
 // -----------------------------------------------------------------------
 
 extern json_vars_t *json_vars;
-extern screen_t *active_screen;
+extern uC_screen_t *active_screen;
 
 // -----------------------------------------------------------------------
 // vereify window is within bounds of screen
 
-static void bounds_check(window_t *win)
+static void bounds_check(uC_window_t *win)
 {
     int16_t xco = win->xco;
     int16_t yco = win->yco;
@@ -41,10 +41,10 @@ static void bounds_check(window_t *win)
 // -----------------------------------------------------------------------
 // fix far window position
 
-static void fix_win(screen_t *scr, window_t *win)
+static void fix_win(uC_screen_t *scr, uC_window_t *win)
 {
     int16_t fudge = 1;
-    window_t *bd = scr->backdrop;
+    uC_window_t *bd = scr->backdrop;
 
     if ((bd != NULL) && ((bd->flags & WIN_BOXED) != 0))
     {
@@ -65,9 +65,9 @@ static void fix_win(screen_t *scr, window_t *win)
 // -----------------------------------------------------------------------
 // complete init of windows now we know width/height etc
 
-static void fix_windows(screen_t *scr)
+static void fix_windows(uC_screen_t *scr)
 {
-    window_t *win;
+    uC_window_t *win;
 
     if (scr->backdrop != NULL)
     {
@@ -76,7 +76,7 @@ static void fix_windows(screen_t *scr)
         uC_win_clear(scr->backdrop);
     }
 
-    node_t *n = scr->windows.head;
+    uC_list_node_t *n = scr->windows.head;
 
     while (n != NULL)
     {
@@ -92,11 +92,11 @@ static void fix_windows(screen_t *scr)
 
 // -----------------------------------------------------------------------
 
-static void fix_menus(screen_t *scr)
+static void fix_menus(uC_screen_t *scr)
 {
     menu_bar_t *bar = scr->menu_bar;
     pulldown_t *pd;
-    window_t *win;
+    uC_window_t *win;
 
     int16_t i, j;
     int16_t width;
@@ -144,7 +144,7 @@ static void fix_menus(screen_t *scr)
 void json_build_ui(void)
 {
     int16_t result;
-    screen_t *scr = active_screen;
+    uC_screen_t *scr = active_screen;
 
     result = scr_alloc(scr);
     if (result != 0)

@@ -1,4 +1,4 @@
-// list.c   - simple linked lists
+// uC_list.c   - simple linked lists
 // -----------------------------------------------------------------------
 
 #include <stdlib.h>
@@ -9,10 +9,10 @@
 // -----------------------------------------------------------------------
 // insert node2 into list after node1
 
-API bool list_insert_node(node_t *node1, void *payload)
+API bool uC_list_insert_node(uC_list_node_t *node1, void *payload)
 {
-    node_t *tmp, *node2;
-    list_t *list;
+    uC_list_node_t *tmp, *node2;
+    uC_list_t *list;
 
     bool result = false;
 
@@ -49,39 +49,49 @@ API bool list_insert_node(node_t *node1, void *payload)
 
 // -----------------------------------------------------------------------
 
-static void node_remove(node_t *node1)
+static void node_remove(uC_list_node_t *node1)
 {
-    node_t *tmp1, *tmp2;
-    list_t *list;
+    uC_list_node_t *tmp1, *tmp2;
+    uC_list_t *list;
 
-    if (node1 != NULL)
+    if (node1 == NULL) { return; }
+
+    list = node1->list;
+
+    if (list == NULL)  { return; }
+
+    tmp1 = node1->prev;
+    tmp2 = node1->next;
+
+    if (node1 == list->head)
     {
-        list = node1->list;
-
-        if (list != NULL)
-        {
-            tmp1 = node1->prev;
-            tmp2 = node1->next;
-
-            if (node1 == list->head) { list->head = tmp2; }
-            if (node1 == list->tail) { list->tail = tmp1; }
-
-            if (tmp1 != NULL) { tmp1->next = tmp2; }
-            if (tmp2 != NULL) { tmp2->prev = tmp1; }
-
-            node1->next = node1->prev = NULL;
-            node1->list = NULL;
-
-            list->count--;
-        }
+        list->head = tmp2;
     }
+    if (node1 == list->tail)
+    {
+        list->tail = tmp1;
+    }
+
+    if (tmp1 != NULL)
+    {
+        tmp1->next = tmp2;
+    }
+    if (tmp2 != NULL)
+    {
+        tmp2->prev = tmp1;
+    }
+
+    node1->next = node1->prev = NULL;
+    node1->list = NULL;
+
+    list->count--;
 }
 
 // -----------------------------------------------------------------------
 
-API void list_remove_node(list_t *list, void *payload)
+API void uC_list_remove_node(uC_list_t *list, void *payload)
 {
-    node_t *node1;
+    uC_list_node_t *node1;
 
     if (list != NULL)
     {
@@ -102,9 +112,9 @@ API void list_remove_node(list_t *list, void *payload)
 
 // -----------------------------------------------------------------------
 
-API bool list_push_head(list_t *list, void *payload)
+API bool uC_list_push_head(uC_list_t *list, void *payload)
 {
-    node_t *node1, *tmp;
+    uC_list_node_t *node1, *tmp;
 
     if (list == NULL)  { return false; }
 
@@ -133,9 +143,9 @@ API bool list_push_head(list_t *list, void *payload)
 
 // -----------------------------------------------------------------------
 
-API bool list_push_tail(list_t *list, void* payload)
+API bool uC_list_push_tail(uC_list_t *list, void* payload)
 {
-    node_t *node1, *tmp;
+    uC_list_node_t *node1, *tmp;
 
     if (list == NULL)  { return false; }
 
@@ -164,10 +174,10 @@ API bool list_push_tail(list_t *list, void* payload)
 
 // -----------------------------------------------------------------------
 
-static void *list_pop(list_t *list, bool whence)
+static void *list_pop(uC_list_t *list, bool whence)
 {
     void *payload = NULL;
-    node_t *node1;
+    uC_list_node_t *node1;
 
     if((list != NULL) && (list->count != 0))
     {
@@ -181,17 +191,33 @@ static void *list_pop(list_t *list, bool whence)
 
 // -----------------------------------------------------------------------
 
-API void *list_pop_head(list_t *list) { return list_pop(list, true);  }
-API void *list_pop_tail(list_t *list) { return list_pop(list, false); }
+API void *uC_list_pop_head(uC_list_t *list)
+{
+    return list_pop(list, true);
+}
 
 // -----------------------------------------------------------------------
 
-// API void *list_scan(list_t *list)
+API void *uC_list_pop_tail(uC_list_t *list)
+{
+    return list_pop(list, false);
+}
+
+// -----------------------------------------------------------------------
+// walk through every node in theist, return new payload on each call
+
+// def not thread safe :)
+
+// this needs work there is no way to tell when you get to the end of
+// the list and in fact when you do it will simply loop back to the
+// beginning.  bigger fish to fry still
+
+// API void *list_scan(uC_list_t *list)
 // {
-//     static node_t *node1;
+//     static uC_list_node_t *node1 = NULL;
 //     void *payload = NULL;
 //
-//     if (list != NULL)
+//     if ((node1 == NULL) && (list != NULL))
 //     {
 //         node1 = list->head;
 //     }

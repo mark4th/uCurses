@@ -1,8 +1,8 @@
 // win_printf.h
 // -----------------------------------------------------------------------
 
-#ifndef WIN_PRINTF_H
-#define WIN_PRINTF_H
+#ifndef UC_WIN_PRINTF_H
+#define UC_WIN_PRINTF_H
 
 // -----------------------------------------------------------------------
 
@@ -11,11 +11,11 @@
 
 // -----------------------------------------------------------------------
 
-API void uC_win_puts(window_t *win, char *p);
-API void uC_win_printf(window_t *win, char *format, ...);
+API void uC_win_puts(uC_window_t *win, char *p);
+API void uC_win_printf(uC_window_t *win, char *format, ...);
 
 // -----------------------------------------------------------------------
 
-#endif // WIN_PRINTF_H
+#endif // UC_WIN_PRINTF_H
 
 // =======================================================================

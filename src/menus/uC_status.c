@@ -64,11 +64,11 @@ API void uC_bar_set_status(char *s)
 API void uC_bar_draw_status(menu_bar_t *bar)
 {
     int16_t x;
-    screen_t *scr;
+    uC_screen_t *scr;
 
     if ((bar != NULL) && (status_line != NULL))
     {
-        window_t *win = bar->window;
+        uC_window_t *win = bar->window;
         scr = win->screen;
 
         // this x calculation needs work but this is close enough for now

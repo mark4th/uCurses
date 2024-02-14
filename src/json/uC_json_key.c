@@ -12,7 +12,7 @@
 
 // -----------------------------------------------------------------------
 
-extern screen_t *active_screen;
+extern uC_screen_t *active_screen;
 extern json_state_t *json_state;
 extern json_vars_t *json_vars;
 extern const int32_t json_syntax[3];
@@ -22,11 +22,11 @@ extern const int32_t json_syntax[3];
 
 static void struct_screen(void)
 {
-    screen_t *scr;
+    uC_screen_t *scr;
 
     if (json_vars->json_stack.count == 0)
     {
-        json_new_state_struct(sizeof(screen_t), STRUCT_SCREEN);
+        json_new_state_struct(sizeof(uC_screen_t), STRUCT_SCREEN);
         scr = json_state->structure;
 
         // you have no say in this
@@ -60,7 +60,7 @@ static void struct_window(void)
 {
     if (json_state->struct_type == STRUCT_WINDOWS)
     {
-        json_new_state_struct(sizeof(window_t), STRUCT_WINDOW);
+        json_new_state_struct(sizeof(uC_window_t), STRUCT_WINDOW);
         return;
     }
 
@@ -74,7 +74,7 @@ static void struct_backdrop(void)
 {
     if (json_state->struct_type == STRUCT_SCREEN)
     {
-        json_new_state_struct(sizeof(window_t), STRUCT_BACKDROP);
+        json_new_state_struct(sizeof(uC_window_t), STRUCT_BACKDROP);
         return;
     }
 
@@ -437,7 +437,7 @@ static void breakpoint(void)
 // programatically by running this library as an executable.
 // see ui_json.c
 
-static const switch_t key_types[] =
+static const uC_switch_t key_types[] =
 {
     { 0x6b77251c, key_fg     }, { 0xaa3b6788, key_gray_fg     },
     { 0x6f772ba0, key_bg     }, { 0xa63b61c4, key_gray_bg     },
@@ -454,7 +454,7 @@ static const switch_t key_types[] =
 
 // -----------------------------------------------------------------------
 
-static const switch_t object_types[] =
+static const uC_switch_t object_types[] =
 {
     { 0x2ff97421, struct_screen    }, { 0x1025ba8c, struct_windows   },
     { 0x8ae7f465, struct_window    }, { 0x3bacc0d7, struct_backdrop  },
@@ -486,7 +486,7 @@ static void is_key(void)
 {
     int f;
 
-    f = re_switch(key_types, NUM_KEYS, json_vars->json_hash);
+    f = uC_switch(key_types, NUM_KEYS, json_vars->json_hash);
     json_state->state = STATE_VALUE;
 
     if (f == -1)
@@ -532,10 +532,10 @@ void json_state_key(void)
     strip_quotes(len);
 
     // objects are a type of key which are a container for keys
-    f = re_switch(object_types, NUM_OBJECTS, json_vars->json_hash);
+    f = uC_switch(object_types, NUM_OBJECTS, json_vars->json_hash);
     json_state->state = STATE_L_BRACE;
 
-    // if reswitch returned -1 here then we did not just parse
+    // if uC_switch returned -1 here then we did not just parse
     // in an object name but a possible key name
 
     if (f == -1) { is_key(); }

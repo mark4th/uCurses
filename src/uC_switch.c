@@ -18,7 +18,7 @@
 // structure contains a option and a function vector.  for example
 // see parse.c
 
-int re_switch(const switch_t *s, int size, int32_t option)
+API int uC_switch(const uC_switch_t *s, int size, int32_t option)
 {
     int result = -1;
 

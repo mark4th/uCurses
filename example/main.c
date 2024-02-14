@@ -20,7 +20,7 @@
 
 #define SLEEP 15000000
 
-extern screen_t *active_screen;
+extern uC_screen_t *active_screen;
 
 // -----------------------------------------------------------------------
 
@@ -31,9 +31,9 @@ extern screen_t *active_screen;
 
 void main_screen(void)
 {
-    screen_t *scr;
-    window_t *win;
-    node_t *n;
+    uC_screen_t *scr;
+    uC_window_t *win;
+    uC_list_node_t *n;
 
     int16_t xco;
 
@@ -91,8 +91,8 @@ void main_screen(void)
 
 int main(void)
 {
-    screen_t *scr;
-    window_t *win;
+    uC_screen_t *scr;
+    uC_window_t *win;
 
     main_screen();
 

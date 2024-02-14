@@ -25,8 +25,8 @@ API void uCurses_init(void)
 // -----------------------------------------------------------------------
 
 API void uCurses_deInit(void)
-{
-    uC_restore_terminal();
+
+{    uC_restore_terminal();
 
     free_parse();
     free_info();

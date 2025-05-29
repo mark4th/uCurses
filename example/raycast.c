@@ -29,20 +29,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "uCurses.h"
-#include "uC_screen.h"
-#include "uC_window.h"
-#include "uC_menus.h"
-#include "uC_keys.h"
-#include "uC_json.h"
-#include "uC_braille.h"
-
 #include "demo.h"
 
-//int dots_sin(int16_t angle);
-//int dots_cos(int16_t angle);
+#include "uC_braille.h"
+
 
 extern uC_screen_t *active_screen;
+
+char status[33];
 
 // -----------------------------------------------------------------------
 
@@ -62,12 +56,12 @@ static double planeY = 0.66;
 
 static uC_screen_t *scr;
 static uC_window_t *win;
+static uC_window_t *status_win;
 
 static uint8_t *dark_map;     // adjacent walls are different shades
 static uint8_t *color_map;    // what color to draw each column of screen
 
 static uint8_t *fb;           // array of set "pixles" one bit per byte
-static uint8_t *fb_floor;     // floors rendered into different pixle buffer
 
 static uint16_t *braile_data; // interim state from fb to display
 
@@ -106,76 +100,75 @@ uint8_t worldMap[24][24]=
 
 // -----------------------------------------------------------------------
 
+#define O 1
+#define Z 0
+
 uint8_t wall[] =
 {
-    1,1,1,0,0,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,0,0,1,1,0,0,0,0,1,1,1,
-    1,1,1,1,0,0,0,1,1,1,1,1,1,1,0,1,1,1,1,1,1,0,1,1,1,1,1,0,1,1,1,1,
-    1,1,1,1,0,1,0,0,1,1,1,1,1,1,0,1,1,1,1,1,1,0,1,1,1,1,0,0,1,1,1,1,
-    1,1,0,0,0,1,1,0,0,0,0,1,1,1,0,1,1,1,1,1,0,0,1,1,1,0,0,1,1,1,1,1,
-    1,0,0,1,0,1,1,1,1,1,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,1,1,
-    0,0,1,1,0,1,1,1,1,1,1,0,0,0,0,0,1,1,1,1,1,1,0,0,0,1,1,1,0,0,1,0,
-    0,1,1,1,0,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,0,0,1,1,1,1,1,0,0,0,
-    0,1,1,1,0,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,0,0,0,0,1,1,0,0,0,1,1,
-    0,0,1,1,0,0,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,0,1,1,0,1,0,0,0,1,1,1,
-    1,0,0,1,1,0,0,1,1,1,1,1,1,0,0,0,1,1,1,1,0,0,1,1,0,0,0,1,1,1,1,1,
-    1,1,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,1,1,1,1,1,1,1,
-    1,1,0,0,0,0,1,1,1,1,0,1,1,1,1,1,1,1,0,0,0,1,1,1,0,1,1,1,1,1,1,1,
-    1,1,1,1,0,1,1,1,1,1,0,0,1,1,1,1,1,0,0,1,0,1,1,1,0,0,1,1,1,1,1,1,
-    0,0,0,0,0,1,1,1,1,0,0,0,0,1,1,1,0,0,1,1,0,1,1,1,0,0,0,0,0,0,0,0,
-    1,1,1,1,0,0,1,1,0,0,1,1,0,0,1,0,0,1,1,1,0,1,1,1,0,0,1,1,1,1,0,0,
-    1,1,1,1,1,0,0,0,0,1,1,1,1,0,0,0,1,1,1,1,0,1,1,1,0,1,1,1,1,1,1,0,
-    1,1,1,1,1,0,1,0,0,1,1,1,1,1,0,0,1,1,1,1,0,1,1,1,0,1,1,1,1,1,1,0,
-    1,1,1,1,0,0,1,1,0,0,0,1,1,0,0,0,0,1,1,1,0,0,1,1,0,1,1,1,1,1,1,0,
-    0,0,0,0,0,0,1,1,1,1,0,0,1,0,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,
-    1,1,1,1,0,0,1,1,1,1,1,0,0,0,1,1,1,1,1,0,0,1,0,0,0,0,0,0,0,0,0,1,
-    1,1,1,1,1,0,1,1,1,1,1,1,1,0,0,1,1,1,0,0,1,1,0,0,1,1,0,1,1,1,1,1,
-    1,1,1,1,1,0,1,1,1,1,1,1,1,1,0,0,1,0,0,1,1,1,0,1,1,1,0,0,1,1,1,1,
-    1,1,1,1,1,0,1,1,1,1,1,1,0,0,1,0,0,0,1,1,1,1,0,1,1,1,1,0,0,1,1,1,
-    1,1,1,1,0,0,0,1,1,1,1,0,0,1,1,1,1,0,1,1,1,1,0,1,1,1,1,1,0,1,1,1,
-    0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,1,1,1,1,0,1,1,1,1,1,0,0,1,0,
-    1,1,1,1,1,1,0,0,1,1,1,0,0,0,0,0,0,0,1,1,1,0,0,0,1,1,1,1,1,0,0,0,
-    1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,1,1,1,1,1,1,0,0,
-    1,1,1,1,1,1,0,0,1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,0,
-    1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,0,
-    1,1,1,1,0,0,1,1,1,1,1,1,0,0,1,1,1,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,
-    0,0,0,0,0,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,0,0,0,1,1,1,1,1,1,1,1,0,
-};
-
-uint8_t floor_tx[] =
-{
-    1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-    1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+    O,O,O,Z,Z,O,O,O,O,O,O,O,O,O,Z,O,O,O,O,O,O,Z,Z,O,O,Z,Z,Z,Z,O,O,O,O,O,O,Z,Z,O,O,O,O,O,O,O,O,O,Z,O,O,O,O,O,O,Z,Z,O,O,Z,Z,Z,Z,O,O,O,
+    O,O,O,O,Z,Z,Z,O,O,O,O,O,O,O,Z,O,O,O,O,O,O,Z,O,O,O,O,O,Z,O,O,O,O,O,O,O,O,Z,Z,Z,O,O,O,O,O,O,O,Z,O,O,O,O,O,O,Z,O,O,O,O,O,Z,O,O,O,O,
+    O,O,O,O,Z,O,Z,Z,O,O,O,O,O,O,Z,O,O,O,O,O,O,Z,O,O,O,O,Z,Z,O,O,O,O,O,O,O,O,Z,O,Z,Z,O,O,O,O,O,O,Z,O,O,O,O,O,O,Z,O,O,O,O,Z,Z,O,O,O,O,
+    O,O,Z,Z,Z,O,O,Z,Z,Z,Z,O,O,O,Z,O,O,O,O,O,Z,Z,O,O,O,Z,Z,O,O,O,O,O,O,O,Z,Z,Z,O,O,Z,Z,Z,Z,O,O,O,Z,O,O,O,O,O,Z,Z,O,O,O,Z,Z,O,O,O,O,O,
+    O,Z,Z,O,Z,O,O,O,O,O,Z,Z,O,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,O,Z,Z,Z,Z,Z,O,O,O,O,Z,Z,O,Z,O,O,O,O,O,Z,Z,O,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,O,Z,Z,Z,Z,Z,O,O,O,
+    Z,Z,O,O,Z,O,O,O,O,O,O,Z,Z,Z,Z,Z,O,O,O,O,O,O,Z,Z,Z,O,O,O,Z,Z,O,Z,Z,Z,O,O,Z,O,O,O,O,O,O,Z,Z,Z,Z,Z,O,O,O,O,O,O,Z,Z,Z,O,O,O,Z,Z,O,Z,
+    Z,O,O,O,Z,O,O,O,O,O,O,O,O,O,Z,O,O,O,O,O,O,O,Z,Z,O,O,O,O,O,Z,Z,Z,Z,O,O,O,Z,O,O,O,O,O,O,O,O,O,Z,O,O,O,O,O,O,O,Z,Z,O,O,O,O,O,Z,Z,Z,
+    Z,O,O,O,Z,O,O,O,O,O,O,O,O,O,Z,O,O,O,O,O,O,Z,Z,Z,Z,O,O,Z,Z,Z,O,O,Z,O,O,O,Z,O,O,O,O,O,O,O,O,O,Z,O,O,O,O,O,O,Z,Z,Z,Z,O,O,Z,Z,Z,O,O,
+    Z,Z,O,O,Z,Z,O,O,O,O,O,O,O,O,Z,O,O,O,O,O,O,Z,O,O,Z,O,Z,Z,Z,O,O,O,Z,Z,O,O,Z,Z,O,O,O,O,O,O,O,O,Z,O,O,O,O,O,O,Z,O,O,Z,O,Z,Z,Z,O,O,O,
+    O,Z,Z,O,O,Z,Z,O,O,O,O,O,O,Z,Z,Z,O,O,O,O,Z,Z,O,O,Z,Z,Z,O,O,O,O,O,O,Z,Z,O,O,Z,Z,O,O,O,O,O,O,Z,Z,Z,O,O,O,O,Z,Z,O,O,Z,Z,Z,O,O,O,O,O,
+    O,O,Z,O,O,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,O,O,O,Z,O,O,O,O,O,O,O,O,O,Z,O,O,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,O,O,O,Z,O,O,O,O,O,O,O,
+    O,O,Z,Z,Z,Z,O,O,O,O,Z,O,O,O,O,O,O,O,Z,Z,Z,O,O,O,Z,O,O,O,O,O,O,O,O,O,Z,Z,Z,Z,O,O,O,O,Z,O,O,O,O,O,O,O,Z,Z,Z,O,O,O,Z,O,O,O,O,O,O,O,
+    O,O,O,O,Z,O,O,O,O,O,Z,Z,O,O,O,O,O,Z,Z,O,Z,O,O,O,Z,Z,O,O,O,O,O,O,O,O,O,O,Z,O,O,O,O,O,Z,Z,O,O,O,O,O,Z,Z,O,Z,O,O,O,Z,Z,O,O,O,O,O,O,
+    Z,Z,Z,Z,Z,O,O,O,O,Z,Z,Z,Z,O,O,O,Z,Z,O,O,Z,O,O,O,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,O,O,O,O,Z,Z,Z,Z,O,O,O,Z,Z,O,O,Z,O,O,O,Z,Z,Z,Z,Z,Z,Z,Z,
+    O,O,O,O,Z,Z,O,O,Z,Z,O,O,Z,Z,O,Z,Z,O,O,O,Z,O,O,O,Z,Z,O,O,O,O,Z,Z,O,O,O,O,Z,Z,O,O,Z,Z,O,O,Z,Z,O,Z,Z,O,O,O,Z,O,O,O,Z,Z,O,O,O,O,Z,Z,
+    O,O,O,O,O,Z,Z,Z,Z,O,O,O,O,Z,Z,Z,O,O,O,O,Z,O,O,O,Z,O,O,O,O,O,O,Z,O,O,O,O,O,Z,Z,Z,Z,O,O,O,O,Z,Z,Z,O,O,O,O,Z,O,O,O,Z,O,O,O,O,O,O,Z,
+    O,O,O,O,O,Z,O,Z,Z,O,O,O,O,O,Z,Z,O,O,O,O,Z,O,O,O,Z,O,O,O,O,O,O,Z,O,O,O,O,O,Z,O,Z,Z,O,O,O,O,O,Z,Z,O,O,O,O,Z,O,O,O,Z,O,O,O,O,O,O,Z,
+    O,O,O,O,Z,Z,O,O,Z,Z,Z,O,O,Z,Z,Z,Z,O,O,O,Z,Z,O,O,Z,O,O,O,O,O,O,Z,O,O,O,O,Z,Z,O,O,Z,Z,Z,O,O,Z,Z,Z,Z,O,O,O,Z,Z,O,O,Z,O,O,O,O,O,O,Z,
+    Z,Z,Z,Z,Z,Z,O,O,O,O,Z,Z,O,Z,O,O,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,O,O,O,O,Z,Z,Z,Z,Z,Z,Z,Z,O,O,O,O,Z,Z,O,Z,O,O,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,O,O,O,O,Z,Z,
+    O,O,O,O,Z,Z,O,O,O,O,O,Z,Z,Z,O,O,O,O,O,Z,Z,O,Z,Z,Z,Z,Z,Z,Z,Z,Z,O,O,O,O,O,Z,Z,O,O,O,O,O,Z,Z,Z,O,O,O,O,O,Z,Z,O,Z,Z,Z,Z,Z,Z,Z,Z,Z,O,
+    O,O,O,O,O,Z,O,O,O,O,O,O,O,Z,Z,O,O,O,Z,Z,O,O,Z,Z,O,O,Z,O,O,O,O,O,O,O,O,O,O,Z,O,O,O,O,O,O,O,Z,Z,O,O,O,Z,Z,O,O,Z,Z,O,O,Z,O,O,O,O,O,
+    O,O,O,O,O,Z,O,O,O,O,O,O,O,O,Z,Z,O,Z,Z,O,O,O,Z,O,O,O,Z,Z,O,O,O,O,O,O,O,O,O,Z,O,O,O,O,O,O,O,O,Z,Z,O,Z,Z,O,O,O,Z,O,O,O,Z,Z,O,O,O,O,
+    O,O,O,O,O,Z,O,O,O,O,O,O,Z,Z,O,Z,Z,Z,O,O,O,O,Z,O,O,O,O,Z,Z,O,O,O,O,O,O,O,O,Z,O,O,O,O,O,O,Z,Z,O,Z,Z,Z,O,O,O,O,Z,O,O,O,O,Z,Z,O,O,O,
+    O,O,O,O,Z,Z,Z,O,O,O,O,Z,Z,O,O,O,O,Z,O,O,O,O,Z,O,O,O,O,O,Z,O,O,O,O,O,O,O,Z,Z,Z,O,O,O,O,Z,Z,O,O,O,O,Z,O,O,O,O,Z,O,O,O,O,O,Z,O,O,O,
+    Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,O,O,O,O,O,Z,O,O,O,O,Z,O,O,O,O,O,Z,Z,O,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,O,O,O,O,O,Z,O,O,O,O,Z,O,O,O,O,O,Z,Z,O,Z,
+    O,O,O,O,O,O,Z,Z,O,O,O,Z,Z,Z,Z,Z,Z,Z,O,O,O,Z,Z,Z,O,O,O,O,O,Z,Z,Z,O,O,O,O,O,O,Z,Z,O,O,O,Z,Z,Z,Z,Z,Z,Z,O,O,O,Z,Z,Z,O,O,O,O,O,Z,Z,Z,
+    O,O,O,O,O,O,Z,O,O,O,O,O,O,O,O,O,O,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,O,O,O,O,O,O,Z,O,O,O,O,O,O,O,O,O,O,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,
+    O,O,O,O,O,O,Z,O,O,O,O,O,O,O,O,O,O,Z,Z,O,O,O,O,O,O,O,O,O,O,O,Z,Z,O,O,O,O,O,O,Z,O,O,O,O,O,O,O,O,O,O,Z,Z,O,O,O,O,O,O,O,O,O,O,O,Z,Z,
+    O,O,O,O,O,O,Z,Z,O,O,O,O,O,O,O,O,Z,Z,O,O,O,O,O,O,O,O,O,O,O,O,O,Z,O,O,O,O,O,O,Z,Z,O,O,O,O,O,O,O,O,Z,Z,O,O,O,O,O,O,O,O,O,O,O,O,O,Z,
+    O,O,O,O,O,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,O,O,O,O,O,O,O,O,O,O,O,O,O,Z,O,O,O,O,O,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,O,O,O,O,O,O,O,O,O,O,O,O,O,Z,
+    O,O,O,O,Z,Z,O,O,O,O,O,O,Z,Z,O,O,O,Z,Z,Z,Z,O,O,O,O,O,O,O,O,O,O,Z,O,O,O,O,Z,Z,O,O,O,O,O,O,Z,Z,O,O,O,Z,Z,Z,Z,O,O,O,O,O,O,O,O,O,O,Z,
+    Z,Z,Z,Z,Z,O,O,O,O,O,O,O,O,Z,O,O,O,O,O,O,Z,Z,Z,O,O,O,O,O,O,O,O,Z,Z,Z,Z,Z,Z,O,O,O,O,O,O,O,O,Z,O,O,O,O,O,O,Z,Z,Z,O,O,O,O,O,O,O,O,Z,
+    O,O,O,Z,Z,O,O,O,O,O,O,O,O,O,Z,O,O,O,O,O,O,Z,Z,O,O,Z,Z,Z,Z,O,O,O,O,O,O,Z,Z,O,O,O,O,O,O,O,O,O,Z,O,O,O,O,O,O,Z,Z,O,O,Z,Z,Z,Z,O,O,O,
+    O,O,O,O,Z,Z,Z,O,O,O,O,O,O,O,Z,O,O,O,O,O,O,Z,O,O,O,O,O,Z,O,O,O,O,O,O,O,O,Z,Z,Z,O,O,O,O,O,O,O,Z,O,O,O,O,O,O,Z,O,O,O,O,O,Z,O,O,O,O,
+    O,O,O,O,Z,O,Z,Z,O,O,O,O,O,O,Z,O,O,O,O,O,O,Z,O,O,O,O,Z,Z,O,O,O,O,O,O,O,O,Z,O,Z,Z,O,O,O,O,O,O,Z,O,O,O,O,O,O,Z,O,O,O,O,Z,Z,O,O,O,O,
+    O,O,Z,Z,Z,O,O,Z,Z,Z,Z,O,O,O,Z,O,O,O,O,O,Z,Z,O,O,O,Z,Z,O,O,O,O,O,O,O,Z,Z,Z,O,O,Z,Z,Z,Z,O,O,O,Z,O,O,O,O,O,Z,Z,O,O,O,Z,Z,O,O,O,O,O,
+    O,Z,Z,O,Z,O,O,O,O,O,Z,Z,O,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,O,Z,Z,Z,Z,Z,O,O,O,O,Z,Z,O,Z,O,O,O,O,O,Z,Z,O,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,O,Z,Z,Z,Z,Z,O,O,O,
+    Z,Z,O,O,Z,O,O,O,O,O,O,Z,Z,Z,Z,Z,O,O,O,O,O,O,Z,Z,Z,O,O,O,Z,Z,O,Z,Z,Z,O,O,Z,O,O,O,O,O,O,Z,Z,Z,Z,Z,O,O,O,O,O,O,Z,Z,Z,O,O,O,Z,Z,O,Z,
+    Z,O,O,O,Z,O,O,O,O,O,O,O,O,O,Z,O,O,O,O,O,O,O,Z,Z,O,O,O,O,O,Z,Z,Z,Z,O,O,O,Z,O,O,O,O,O,O,O,O,O,Z,O,O,O,O,O,O,O,Z,Z,O,O,O,O,O,Z,Z,Z,
+    Z,O,O,O,Z,O,O,O,O,O,O,O,O,O,Z,O,O,O,O,O,O,Z,Z,Z,Z,O,O,Z,Z,Z,O,O,Z,O,O,O,Z,O,O,O,O,O,O,O,O,O,Z,O,O,O,O,O,O,Z,Z,Z,Z,O,O,Z,Z,Z,O,O,
+    Z,Z,O,O,Z,Z,O,O,O,O,O,O,O,O,Z,O,O,O,O,O,O,Z,O,O,Z,O,Z,Z,Z,O,O,O,Z,Z,O,O,Z,Z,O,O,O,O,O,O,O,O,Z,O,O,O,O,O,O,Z,O,O,Z,O,Z,Z,Z,O,O,O,
+    O,Z,Z,O,O,Z,Z,O,O,O,O,O,O,Z,Z,Z,O,O,O,O,Z,Z,O,O,Z,Z,Z,O,O,O,O,O,O,Z,Z,O,O,Z,Z,O,O,O,O,O,O,Z,Z,Z,O,O,O,O,Z,Z,O,O,Z,Z,Z,O,O,O,O,O,
+    O,O,Z,O,O,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,O,O,O,Z,O,O,O,O,O,O,O,O,O,Z,O,O,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,O,O,O,Z,O,O,O,O,O,O,O,
+    O,O,Z,Z,Z,Z,O,O,O,O,Z,O,O,O,O,O,O,O,Z,Z,Z,O,O,O,Z,O,O,O,O,O,O,O,O,O,Z,Z,Z,Z,O,O,O,O,Z,O,O,O,O,O,O,O,Z,Z,Z,O,O,O,Z,O,O,O,O,O,O,O,
+    O,O,O,O,Z,O,O,O,O,O,Z,Z,O,O,O,O,O,Z,Z,O,Z,O,O,O,Z,Z,O,O,O,O,O,O,O,O,O,O,Z,O,O,O,O,O,Z,Z,O,O,O,O,O,Z,Z,O,Z,O,O,O,Z,Z,O,O,O,O,O,O,
+    Z,Z,Z,Z,Z,O,O,O,O,Z,Z,Z,Z,O,O,O,Z,Z,O,O,Z,O,O,O,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,O,O,O,O,Z,Z,Z,Z,O,O,O,Z,Z,O,O,Z,O,O,O,Z,Z,Z,Z,Z,Z,Z,Z,
+    O,O,O,O,Z,Z,O,O,Z,Z,O,O,Z,Z,O,Z,Z,O,O,O,Z,O,O,O,Z,Z,O,O,O,O,Z,Z,O,O,O,O,Z,Z,O,O,Z,Z,O,O,Z,Z,O,Z,Z,O,O,O,Z,O,O,O,Z,Z,O,O,O,O,Z,Z,
+    O,O,O,O,O,Z,Z,Z,Z,O,O,O,O,Z,Z,Z,O,O,O,O,Z,O,O,O,Z,O,O,O,O,O,O,Z,O,O,O,O,O,Z,Z,Z,Z,O,O,O,O,Z,Z,Z,O,O,O,O,Z,O,O,O,Z,O,O,O,O,O,O,Z,
+    O,O,O,O,O,Z,O,Z,Z,O,O,O,O,O,Z,Z,O,O,O,O,Z,O,O,O,Z,O,O,O,O,O,O,Z,O,O,O,O,O,Z,O,Z,Z,O,O,O,O,O,Z,Z,O,O,O,O,Z,O,O,O,Z,O,O,O,O,O,O,Z,
+    O,O,O,O,Z,Z,O,O,Z,Z,Z,O,O,Z,Z,Z,Z,O,O,O,Z,Z,O,O,Z,O,O,O,O,O,O,Z,O,O,O,O,Z,Z,O,O,Z,Z,Z,O,O,Z,Z,Z,Z,O,O,O,Z,Z,O,O,Z,O,O,O,O,O,O,Z,
+    Z,Z,Z,Z,Z,Z,O,O,O,O,Z,Z,O,Z,O,O,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,O,O,O,O,Z,Z,Z,Z,Z,Z,Z,Z,O,O,O,O,Z,Z,O,Z,O,O,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,O,O,O,O,Z,Z,
+    O,O,O,O,Z,Z,O,O,O,O,O,Z,Z,Z,O,O,O,O,O,Z,Z,O,Z,Z,Z,Z,Z,Z,Z,Z,Z,O,O,O,O,O,Z,Z,O,O,O,O,O,Z,Z,Z,O,O,O,O,O,Z,Z,O,Z,Z,Z,Z,Z,Z,Z,Z,Z,O,
+    O,O,O,O,O,Z,O,O,O,O,O,O,O,Z,Z,O,O,O,Z,Z,O,O,Z,Z,O,O,Z,O,O,O,O,O,O,O,O,O,O,Z,O,O,O,O,O,O,O,Z,Z,O,O,O,Z,Z,O,O,Z,Z,O,O,Z,O,O,O,O,O,
+    O,O,O,O,O,Z,O,O,O,O,O,O,O,O,Z,Z,O,Z,Z,O,O,O,Z,O,O,O,Z,Z,O,O,O,O,O,O,O,O,O,Z,O,O,O,O,O,O,O,O,Z,Z,O,Z,Z,O,O,O,Z,O,O,O,Z,Z,O,O,O,O,
+    O,O,O,O,O,Z,O,O,O,O,O,O,Z,Z,O,Z,Z,Z,O,O,O,O,Z,O,O,O,O,Z,Z,O,O,O,O,O,O,O,O,Z,O,O,O,O,O,O,Z,Z,O,Z,Z,Z,O,O,O,O,Z,O,O,O,O,Z,Z,O,O,O,
+    O,O,O,O,Z,Z,Z,O,O,O,O,Z,Z,O,O,O,O,Z,O,O,O,O,Z,O,O,O,O,O,Z,O,O,O,O,O,O,O,Z,Z,Z,O,O,O,O,Z,Z,O,O,O,O,Z,O,O,O,O,Z,O,O,O,O,O,Z,O,O,O,
+    Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,O,O,O,O,O,Z,O,O,O,O,Z,O,O,O,O,O,Z,Z,O,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,O,O,O,O,O,Z,O,O,O,O,Z,O,O,O,O,O,Z,Z,O,Z,
+    O,O,O,O,O,O,Z,Z,O,O,O,Z,Z,Z,Z,Z,Z,Z,O,O,O,Z,Z,Z,O,O,O,O,O,Z,Z,Z,O,O,O,O,O,O,Z,Z,O,O,O,Z,Z,Z,Z,Z,Z,Z,O,O,O,Z,Z,Z,O,O,O,O,O,Z,Z,Z,
+    O,O,O,O,O,O,Z,O,O,O,O,O,O,O,O,O,O,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,O,O,O,O,O,O,Z,O,O,O,O,O,O,O,O,O,O,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,
+    O,O,O,O,O,O,Z,O,O,O,O,O,O,O,O,O,O,Z,Z,O,O,O,O,O,O,O,O,O,O,O,Z,Z,O,O,O,O,O,O,Z,O,O,O,O,O,O,O,O,O,O,Z,Z,O,O,O,O,O,O,O,O,O,O,O,Z,Z,
+    O,O,O,O,O,O,Z,Z,O,O,O,O,O,O,O,O,Z,Z,O,O,O,O,O,O,O,O,O,O,O,O,O,Z,O,O,O,O,O,O,Z,Z,O,O,O,O,O,O,O,O,Z,Z,O,O,O,O,O,O,O,O,O,O,O,O,O,Z,
+    O,O,O,O,O,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,O,O,O,O,O,O,O,O,O,O,O,O,O,Z,O,O,O,O,O,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,O,O,O,O,O,O,O,O,O,O,O,O,O,Z,
+    O,O,O,O,Z,Z,O,O,O,O,O,O,Z,Z,O,O,O,Z,Z,Z,Z,O,O,O,O,O,O,O,O,O,O,Z,O,O,O,O,Z,Z,O,O,O,O,O,O,Z,Z,O,O,O,Z,Z,Z,Z,O,O,O,O,O,O,O,O,O,O,Z,
+    Z,Z,Z,Z,Z,O,O,O,O,O,O,O,O,Z,O,O,O,O,O,O,Z,Z,Z,O,O,O,O,O,O,O,O,Z,Z,Z,Z,Z,Z,O,O,O,O,O,O,O,O,Z,O,O,O,O,O,O,Z,Z,Z,O,O,O,O,O,O,O,O,Z,
 };
 
 // -----------------------------------------------------------------------
@@ -201,6 +194,14 @@ static void render_walls(void)
     double rayDirY;
     double deltaX;
     double deltaY;
+
+    double wallX;
+    int texX;
+    int texY;
+    double step;
+    double texPos;
+    int y;
+
 
     for(x = 1; x < fb_width; x++)
     {
@@ -273,7 +274,7 @@ static void render_walls(void)
 
         // Calculate height of line to draw on screen
         lineHeight = (fb_height / wallDist);
-        lineHeight &= ~1;  // ensure symetrical jaggies
+        lineHeight &= ~1;      // ensure symetrical jaggies
 
         // calculate lowest and highest pixel to fill in current stripe
         drawStart = (fb_height / 2) - (lineHeight / 2);
@@ -291,23 +292,17 @@ static void render_walls(void)
             lineHeight--;
         }
 
-        double wallX;
-        int texX;
-        int texY;
-        double step;
-        double texPos;
-        int y;
-
         wallX = (side == 0)
            ? posY + (wallDist * rayDirY)
            : posX + (wallDist * rayDirX);
+
         wallX -= floor(wallX);
-        texX = (int)(wallX * (double)32);
+        texX = (int)(wallX * (double)64);
 
-        if (side == 0 && rayDirX > 0) texX = 32 - texX -1;
-        if (side == 1 && rayDirY < 0) texX = 32 - texX -1;
+        if (side == 0 && rayDirX > 0) texX = 64 - texX -1;
+        if (side == 1 && rayDirY < 0) texX = 64 - texX -1;
 
-        step = 32.0 / lineHeight;
+        step = 64.0 / lineHeight;
 
         texPos = (drawStart - (fb_height / 2) + (lineHeight / 2)) * step;
 
@@ -316,7 +311,7 @@ static void render_walls(void)
             texY = (int)texPos & 0x1f;
             texPos += step;
             color_map[x] = (23 - (int)(wallDist) % 23) / 2;
-            fb[y * fb_width + x] = wall[(texY * 32) + texX];
+            fb[y * fb_width + x] = wall[(texY * 64) + texX];
         }
     }
 }
@@ -383,60 +378,6 @@ void process_key(uint8_t keypress)
 }
 
 // -----------------------------------------------------------------------
-// not currently used, does not look right
-
-static void render_floor(void)
-{
-    float rayDirX0, rayDirY0, rayDirX1, rayDirY1;
-    float floorStepX, floorStepY;
-    float floorX, floorY;
-    float rowDistance;
-    float posZ;
-
-    int cellX, cellY;
-    int tx, ty;
-    int x, y;
-    int p;
-
-    int8_t c;
-
-    rayDirX0 = dirX - planeX;
-    rayDirY0 = dirY - planeY;
-    rayDirX1 = dirX + planeX;
-    rayDirY1 = dirY + planeY;
-
-    posZ = 0.5 * (float)fb_height;
-
-    for (y = 0; y < fb_height / 2; y++)
-    {
-        p = y - (fb_height / 2);
-        rowDistance = posZ / p / 2;
-
-        floorStepX = rowDistance * ((rayDirX1 - rayDirX0) / fb_width);
-        floorStepY = rowDistance * ((rayDirY1 - rayDirY0) / fb_width);
-
-        floorY = posX + rowDistance * rayDirX0;
-        floorY = posY + rowDistance * rayDirY0;
-
-        for (x = 0; x < fb_width; x++)
-        {
-            cellX = floorX;
-            cellY = floorY;
-            floorX += floorStepX;
-            floorY += floorStepY;
-
-            tx = 32 * ((int)(floorX - cellX)) & 0x1f;
-            ty = 32 * ((int)(floorY - cellY)) & 0x1f;
-
-            c = floor_tx[(ty * 32) + tx];
-
-            fb_floor[(y * fb_width) + x] = c;
-        }
-   }
-}
-
-// -----------------------------------------------------------------------
-// must be drawn after the floors below
 
 static void draw_walls(void)
 {
@@ -478,7 +419,6 @@ static void draw_walls(void)
 
 void raycast(void)
 {
-    uC_list_node_t *n;
     uint8_t keypress;
     struct timeval tv;
 
@@ -493,44 +433,30 @@ void raycast(void)
     gettimeofday(&tv, NULL);
     old_time = tv.tv_sec;
 
-    uC_json_create_ui("dots.json", NULL);
-
-    uC_alloc_status();
-    uC_bar_clr_status();
-    uC_menu_init();
-
-    scr = active_screen;
-    n   = scr->windows.head;
-    win = n->payload;
-
     fb_width     = win->width  * 2;
     fb_height    = win->height * 4;
 
     braile_data  = calloc((win->height    * win->width), 2);
     fb           = calloc(fb_height       * fb_width,    1);
-    fb_floor     = calloc((fb_height / 2) * fb_width,    1);
 
     // wall colors and shading
     dark_map     = calloc(fb_width, 1);
     color_map    = calloc(fb_width, 1);
 
-    char status[MAX_STATUS];
-
     for (;;)
     {
         memset(dark_map, 0, fb_width);
         memset(fb, 0, fb_width * fb_height);
-        memset(fb_floor, 0, fb_width * (fb_height / 2));
+
         memset(color_map, 0, fb_width);
 
         uC_win_clear(win);
-        render_floor();
         render_walls();
 
         draw_walls();
 
-        snprintf(status, MAX_STATUS, "FPS: %d", fps);
-        uC_bar_set_status(status);
+        snprintf(status, 32, "FPS: %d", fps);
+        uC_set_status(status_win, status);
 
         uC_scr_draw_screen(scr);
 
@@ -565,8 +491,76 @@ void raycast(void)
             process_key(keypress);
         }
     }
+}
+
+// -----------------------------------------------------------------------
+
+static void exit_prog(void)
+{
+    uC_set_key(0x1b);
+}
+
+// -----------------------------------------------------------------------
+
+static uC_switch_t menu_vectors[] =
+{
+    { 0x8d9c616c, exit_prog }
+};
+
+#define VCOUNT sizeof(menu_vectors) / sizeof(menu_vectors[0])
+
+// -----------------------------------------------------------------------
+
+opt_t menu_address_cb(int32_t hash)
+{
+    int16_t i;
+    uC_switch_t *s = menu_vectors;
+
+    for(i = 0; i < VCOUNT; i++)
+    {
+        if(hash == s->option)
+        {
+            return s->vector;
+        }
+        s++;
+    }
+
+    return NULL;
+}
+
+// -----------------------------------------------------------------------
+
+int main(void)
+{
+    uC_list_node_t *n;
+
+    uCurses_init();
+    uC_json_file_create_ui("json/dots.json", menu_address_cb);
+    uC_menu_init();
+
+    scr = active_screen;
+    n   = scr->windows.head;
+    win = n->payload;
+
+    status_win = uC_add_status(scr, 32, 55, 0);
+    uC_win_printf(status_win, "%fs%bs%0", 9, 3);
+
+    uC_set_status(status_win, status);
+    uC_clr_status(status_win);
+
+    raycast();
+
     uC_scr_close(active_screen);
-    main_screen();
+
+    uC_console_reset_attrs();
+    uC_clear();
+    uC_cup(10, 0);
+
+    uCurses_deInit();
+
+    printf("Au revoir!\n");
+
+    return 0;
 }
 
 // =======================================================================

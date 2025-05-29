@@ -126,7 +126,7 @@ static void json_push(json_state_t *j)
 }
 
 // -----------------------------------------------------------------------
-// deallocate current state structure and pop previous state off stack.
+// de-allocate current state structure and pop previous state off stack.
 // the compiled C structure associated with the destroyed state structure
 // remains intact
 
@@ -191,8 +191,8 @@ void json_new_state_struct(int struct_size, int32_t struct_type)
     // allocate a structure for the new state
     json_state_t *j = json_alloc(sizeof(*j));
 
-    // if there is one allocate buffer for C structure for subseqeuent
-    // keys to populate
+    // if there is supposed to be one then allocate a buffer for C
+    // structure for subsequent keys to populate
 
     structure = (struct_size != 0)
         ? json_alloc(struct_size)
@@ -265,19 +265,19 @@ static const uC_switch_t states[] =
 
 // -----------------------------------------------------------------------
 
-static void json_state_machine(void)
+static void run_state_machine(void)
 {
     int f;
 
-    json_state = json_alloc(sizeof(*json_state));
-
-    json_state->struct_type = -1;
-    json_state->state       = JSON_L_BRACE;
-
     do
     {
+        // read next space delimited token from json data
         token();
+
+        // compute fnv-1a hash for this token
+
         json_vars->json_hash = fnv_hash(json_vars->json_token);
+        json_state->token_id = json_vars->json_hash;
 
         // the token does not define what the state is
         // the state defines what the token must be
@@ -288,10 +288,64 @@ static void json_state_machine(void)
             json_error("Unknown or out of place token");
         }
     } while (json_state->state != STATE_DONE);
+}
+
+// -----------------------------------------------------------------------
+
+static void json_state_machine(void)
+{
+    json_state = json_alloc(sizeof(*json_state));
+
+    json_state->struct_type = -1;
+    json_state->state       = JSON_L_BRACE;
+
+    run_state_machine();
 
     json_pop();
-
     free(json_state);
+}
+
+// -----------------------------------------------------------------------
+
+static void open_json_file(char *path)
+{
+    int result;
+    struct stat st;
+
+    int fd = open(path, O_RDONLY);
+    if (fd < 0)
+    {
+        json_error("Cannot open JSON file");
+    }
+
+    result = fstat(fd, &st);
+    if (result != 0)
+    {
+        json_error("Cannot stat JSON file");
+    }
+
+    json_vars->json_len = st.st_size;
+    json_vars->json_data = mmap(NULL, json_vars->json_len,
+        MAP_FLAGS, MAP_PRIVATE, fd, 0);
+
+    close(fd);
+
+    if (json_vars->json_data == MAP_FAILED)
+    {
+        json_error("Unable to map JSON file");
+    }
+}
+
+// -----------------------------------------------------------------------
+
+static void parse_json_data(void)
+{
+    json_state_machine();
+
+    if (active_screen != NULL)
+    {
+        json_build_ui();
+    }
 }
 
 // -----------------------------------------------------------------------
@@ -305,53 +359,39 @@ static void json_state_machine(void)
 // function based off of a string.  The HOW of this needs better
 // documentation than im prepared to put in source file comments :)
 
-API void uC_json_create_ui(char *path, fp_finder_t fp)
+API void uC_json_file_create_ui(char *path, fp_finder_t fp)
 {
-    int result;
-    struct winsize w;
-    struct stat st;
-
     json_vars = calloc(1, sizeof(*json_vars));
 
-    ioctl(0, TIOCGWINSZ, &w);
-    json_vars->console_width  = w.ws_col;
-    json_vars->console_height = w.ws_row;
+    get_console_size(&json_vars->console_width,
+        &json_vars->console_height);
 
     json_vars->fp_finder = fp;
 
-    int fd = open(path, O_RDONLY);
-    if (fd < 0)
-    {
-        json_error("Cannot open JSON file");
-    }
-
-    result = fstat(fd, &st);
-    if (result != 0)
-    {
-        json_error("Cannot stat JSON file");
-    }
-    json_vars->json_len = st.st_size;
-    json_vars->json_data = mmap(NULL, json_vars->json_len,
-        MAP_FLAGS, MAP_PRIVATE, fd, 0);
-    close(fd);
-
-    if (json_vars->json_data == MAP_FAILED)
-    {
-        json_error("Unable to map JSON file");
-    }
+    open_json_file(path);
 
     json_de_tab(json_vars->json_data, json_vars->json_len);
     json_vars->line_no = 1;
 
-    json_state_machine();
+    parse_json_data();
 
     munmap(json_vars->json_data, json_vars->json_len);
 
-    if (active_screen != NULL)
-    {
-        json_build_ui();
-    }
+    free(json_vars);
+}
 
+// -----------------------------------------------------------------------
+// allows users to embed their json data into their .data section etc
+
+API void uC_json_mem_create_ui(char *json_data, int len, fp_finder_t fp)
+{
+    json_vars = calloc(1, sizeof(*json_vars));
+
+    json_vars->json_data = json_data;
+    json_vars->json_len  = len;
+    json_vars->fp_finder = fp;
+
+    parse_json_data();
     free(json_vars);
 }
 

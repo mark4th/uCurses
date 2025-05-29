@@ -17,19 +17,19 @@ extern json_state_t *json_state;
 
 static void populate_attribs(void *pstruct, int32_t ptype)
 {
-    if((ptype == STRUCT_WINDOW) || (ptype == STRUCT_BACKDROP))
+    if ((ptype == STRUCT_WINDOW) || (ptype == STRUCT_BACKDROP))
     {
-        ((uC_window_t *)pstruct)->attr_grp.attrs.chunk =
+        ((uC_window_t *)pstruct)->attrs.chunk =
             *(int64_t *)json_state->structure;
     }
-    else if(ptype == STRUCT_PULLDOWN)
+    else if (ptype == STRUCT_PULLDOWN)
     {
-        ((pulldown_t *)pstruct)->attr_grp.attrs.chunk =
+        ((pulldown_t *)pstruct)->attrs.chunk =
             *(int64_t *)json_state->structure;
     }
     else // ptype == STRUCT_MENU_BAR:
     {
-        ((menu_bar_t *)pstruct)->attr_grp.attrs.chunk =
+        ((menu_bar_t *)pstruct)->attrs.chunk =
             *(int64_t *)json_state->structure;
     }
 
@@ -40,7 +40,17 @@ static void populate_attribs(void *pstruct, int32_t ptype)
 
 static void populate_b_attribs(uC_window_t *pstruct)
 {
-    pstruct->attr_grp.bdr_attrs.chunk =
+    pstruct->bdr_attrs.chunk =
+        *(int64_t *)json_state->structure;
+
+    free(json_state->structure);
+}
+
+// -----------------------------------------------------------------------
+
+static void populate_f_attribs(uC_window_t *pstruct)
+{
+    pstruct->focus_attrs.chunk =
         *(int64_t *)json_state->structure;
 
     free(json_state->structure);
@@ -52,12 +62,12 @@ static void populate_s_attribs(void *pstruct, int32_t ptype)
 {
     if (ptype == STRUCT_PULLDOWN)
     {
-        ((pulldown_t *)pstruct)->attr_grp.selected.chunk =
+        ((pulldown_t *)pstruct)->selected_attrs.chunk =
             *(int64_t *)json_state->structure;
     }
     else // ptype == STRUCT_MENU_BAR:
     {
-        ((menu_bar_t *)pstruct)->attr_grp.selected.chunk =
+        ((menu_bar_t *)pstruct)->selected_attrs.chunk =
             *(int64_t *)json_state->structure;
     }
 
@@ -70,12 +80,12 @@ static void populate_d_attribs(void *pstruct, int32_t ptype)
 {
     if (ptype == STRUCT_PULLDOWN)
     {
-        ((pulldown_t *)pstruct)->attr_grp.disabled.chunk =
+        ((pulldown_t *)pstruct)->disabled_attrs.chunk =
             *(int64_t *)json_state->structure;
     }
     else // ptype == STRUCT_MENU_BAR:
     {
-        ((menu_bar_t *)pstruct)->attr_grp.disabled.chunk =
+        ((menu_bar_t *)pstruct)->disabled_attrs.chunk =
             *(int64_t *)json_state->structure;
     }
 
@@ -171,7 +181,7 @@ void populate_parent(void)
 
     // my main reason for not using them in this project is because
     // a switch statement usually produces a significantly larger
-    // blob of code compared to my re_switch() model and size is
+    // blob of code compared to my uC__switch() model and size is
     // what I am optimizing for here.
 
     // also... C switch statements just look FUGTLY
@@ -180,6 +190,7 @@ void populate_parent(void)
     {
         case STRUCT_ATTRIBS:   populate_attribs(pstruct, ptype);   break;
         case STRUCT_B_ATTRIBS: populate_b_attribs(pstruct);        break;
+        case STRUCT_F_ATTRIBS: populate_f_attribs(pstruct);        break;
         case STRUCT_S_ATTRIBS: populate_s_attribs(pstruct, ptype); break;
         case STRUCT_D_ATTRIBS: populate_d_attribs(pstruct, ptype); break;
         case STRUCT_PULLDOWN:  populate_pulldown(gstruct);         break;

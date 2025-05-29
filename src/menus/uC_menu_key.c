@@ -164,7 +164,7 @@ static void menu_cr(void)
 
     if ((bar != NULL) && (bar->active != 0))
     {
-        uC_stuff_key(-1);
+        uC_set_key(-1);
 
         bar->active = 0;
         pd = bar->items[bar->which];
@@ -181,7 +181,7 @@ static void menu_cr(void)
     }
     else // make inactive menus not eat the new line char
     {
-        uC_stuff_key(0x0a);
+        uC_set_key(0x0a);
     }
 }
 

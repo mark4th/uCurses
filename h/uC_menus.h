@@ -14,20 +14,11 @@ typedef void (*menu_fp_t)(void);
 typedef menu_fp_t (*fp_finder_t)(int32_t hash);
 
 // -----------------------------------------------------------------------
-// default attribs, not used by json parser, there are no defaults there
-
-#define ATTRS_NORMAL   (0x0004030000000080)
-#define ATTRS_SELECTED (0x0001060000000080)
-#define ATTRS_DISABLED (0x00080400000000c2)
-
-#define MAX_STATUS (39)
-
-// -----------------------------------------------------------------------
 // an anonymous enum with various constants
 
 // these will probably be split up later
 
-enum
+enum __attribute__((__packed__))
 {
     MENU_DISABLED  = 1,
     MAX_MENU_ITEMS = 10
@@ -35,7 +26,7 @@ enum
 
 // -----------------------------------------------------------------------
 
-enum
+enum __attribute__((__packed__))
 {
    MENU_UP    =  1,
    MENU_LEFT  =  1,
@@ -66,7 +57,9 @@ typedef struct
     // not a linked list of sub items. max 10
     menu_item_t *items[MAX_MENU_ITEMS];
     void *window;           // this is a uC_window_t honest!
-    win_attr_grp_t attr_grp;
+    uC_attribs_t attrs;
+    uC_attribs_t selected_attrs;
+    uC_attribs_t disabled_attrs;
 } pulldown_t;
 
 // -----------------------------------------------------------------------
@@ -81,7 +74,9 @@ typedef struct
 
     pulldown_t *items[MAX_MENU_ITEMS];
 
-    win_attr_grp_t attr_grp;
+    uC_attribs_t attrs;
+    uC_attribs_t selected_attrs;
+    uC_attribs_t disabled_attrs;
 } menu_bar_t;
 
 // -----------------------------------------------------------------------
@@ -98,7 +93,6 @@ void pd_disable(uC_screen_t *scr, char *name);
 void pd_enable(uC_screen_t *scr, char *name);
 int32_t bar_create_pd_win(uC_screen_t *scr, pulldown_t *pd);
 int32_t new_pulldown(uC_screen_t *scr, char *name);
-void free_status(void);
 
 // -----------------------------------------------------------------------
 
@@ -106,11 +100,6 @@ API void uC_bar_draw_text(uC_screen_t *scr);
 API void uC_bar_close(uC_screen_t *scr);
 API int32_t uC_bar_open(uC_screen_t *scr);
 API void uC_menu_init(void);
-
-API void uC_bar_clr_status(void);
-API void uC_alloc_status(void);
-API void uC_bar_set_status(char *s);
-API void uC_bar_draw_status(menu_bar_t *bar);
 
 // -----------------------------------------------------------------------
 

@@ -15,14 +15,20 @@
 typedef struct
 {
     uC_list_t windows;      // linked list of windows
+    // you can have more than one status line
+    uC_list_t status;       // 1 line windows to show minmal status info
+
     void *menu_bar;         // menu_bar_t
-    cell_t *buffer1;        // screen buffer 1 and 2
-    cell_t *buffer2;
-    void *backdrop;         // uC_window_t
+
+    void *backdrop;         // uC_window_t always drawn first
+
     int16_t width;          // screen dimensions
     int16_t height;
     int16_t cx;             // cursor corrdinates within screen
     int16_t cy;
+
+    cell_t *buffer1;        // screen buffer 1 and 2
+    cell_t *buffer2;
 } uC_screen_t;
 
 // -----------------------------------------------------------------------
@@ -30,6 +36,7 @@ typedef struct
 
 int16_t scr_alloc(uC_screen_t *scr);
 void init_backdrop(uC_screen_t *scr, uC_window_t *win);
+void scr_draw_win(uC_window_t *win);
 
 // -----------------------------------------------------------------------
 

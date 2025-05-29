@@ -6,24 +6,16 @@
 
 #include "uCurses.h"
 #include "uC_attribs.h"
+#include "uC_list.h"
 
 // -----------------------------------------------------------------------
 // structure of each cell of a window / screen
 
 typedef struct
 {
-    attribs_t attrs;        // bold, underline, gray scale, rgb
+    uC_attribs_t attrs;     // bold, underline, gray scale, rgb
     int32_t code;           // utf-8 codepoint
-} cell_t;
-
-// -----------------------------------------------------------------------
-
-enum
-{
-    BDR_SINGLE,
-    BDR_DOUBLE,
-    BDR_CURVED
-};
+} __attribute__((packed)) cell_t;
 
 // -----------------------------------------------------------------------
 
@@ -33,44 +25,16 @@ enum
 };
 
 // -----------------------------------------------------------------------
-// border.h ???
-
-typedef enum
-{
-    BDR_TOP_LEFT,    BDR_TOP_RIGHT,
-    BDR_BOTTOM_LEFT, BDR_BOTTOM_RIGHT,
-    BDR_HORIZONTAL,  BDR_VERTICAL,
-    BDR_LEFT_T,      BDR_RIGHT_T,
-    BDR_TOP_T,       BDR_BOTTOM_T,
-    BDR_CROSS,
-} border_t;
-
-// -----------------------------------------------------------------------
 // window flags
 
 typedef enum
 {
-    WIN_BOXED  = 1,         // has a border
-    WIN_LOCKED = 2,         // scroll locked
-    WIN_FILLED = 4          // backfilled with SOLID character
-} win_flags_t;
-
-// -----------------------------------------------------------------------
-
-typedef struct
-{
-    attribs_t attrs;
-    union
-    {
-        attribs_t selected;
-        attribs_t old_attrs;
-    };
-    union
-    {
-        attribs_t disabled;
-        attribs_t bdr_attrs;
-    };
-} win_attr_grp_t;
+    WIN_BOXED  = 1 << 0,       // has a border
+    WIN_LOCKED = 1 << 1,       // scroll locked
+    WIN_FILLED = 1 << 2,       // backfilled with SOLID character
+    WIN_HIDDEN = 1 << 3,
+    WIN_FOCUS  = 1 << 4
+} __attribute__((packed)) win_flags_t;
 
 // -----------------------------------------------------------------------
 
@@ -87,9 +51,22 @@ typedef struct
     int16_t yco;
     int16_t cx;             // cursor position within window
     int16_t cy;
-    int16_t bdr_type;
+    uint16_t border_type;   // cant include borders.h
 
-    win_attr_grp_t attr_grp;
+    // a window name is only drawn if the window has a border and will
+    // be drawn 2 characters to the right of the upper left corner of
+    // that border
+
+    char *display_name;
+
+    // if a window has any widget view groups attached to it they will be
+    // drawn when the window is drawn
+
+    uC_list_t widget_view_groups;
+
+    uC_attribs_t attrs;          // attribs for stuff drawn in window
+    uC_attribs_t bdr_attrs;      // normal attribs for window border
+    uC_attribs_t focus_attrs;    // focussed attribs for window border
 } uC_window_t;
 
 // -----------------------------------------------------------------------
@@ -103,7 +80,7 @@ API void uC_win_close(uC_window_t *win);
 API uC_window_t *uC_win_open(int16_t width, int16_t height);
 API void uC_win_pop(uC_window_t *win);
 API int16_t uC_win_set_pos(uC_window_t *win, int16_t x, int16_t y);
-API void uC_win_erase_line(uC_window_t *win, int16_t line);
+API void uC_win_clear_line(uC_window_t *win, int16_t line);
 API void uC_win_clear(uC_window_t *win);
 API void uC_win_scroll_up(uC_window_t *win);
 API void uC_win_scroll_dn(uC_window_t *win);
@@ -135,18 +112,19 @@ API void uC_win_set_bdr_rev(uC_window_t *win);
 API void uC_win_clr_bdr_rev(uC_window_t *win);
 API void uC_win_set_bdr_ul(uC_window_t *win);
 API void uC_win_clr_bdr_ul(uC_window_t *win);
-API void uC_win_set_fg(uC_window_t *win, color_t color);
-API void uC_win_set_bg(uC_window_t *win, color_t color);
-API void uC_win_set_gray_fg(uC_window_t *win, color_t color);
-API void uC_win_set_gray_bg(uC_window_t *win, color_t color);
-API void uC_win_set_rgb_fg(uC_window_t *win, color_t r, color_t g, color_t b);
-API void uC_win_set_rgb_bg(uC_window_t *win, color_t r, color_t g, color_t b);
-API void uC_win_set_bdr_fg(uC_window_t *win, color_t color);
-API void uC_win_set_bdr_bg(uC_window_t *win, color_t color);
-API void uC_win_set_bdr_gray_fg(uC_window_t *win, color_t color);
-API void uC_win_set_bdr_gray_bg(uC_window_t *win, color_t color);
-API void uC_win_set_bdr_rgb_fg(uC_window_t *win, color_t r, color_t g, color_t b);
-API void uC_win_set_bdr_rgb_bg(uC_window_t *win, color_t r, color_t g, color_t b);
+API void uC_win_set_fg(uC_window_t *win, uC_color_t color);
+API void uC_win_set_bg(uC_window_t *win, uC_color_t color);
+API void uC_win_set_gray_fg(uC_window_t *win, uC_color_t color);
+API void uC_win_set_gray_bg(uC_window_t *win, uC_color_t color);
+API void uC_win_set_rgb_fg(uC_window_t *win, uC_color_t r, uC_color_t g, uC_color_t b);
+API void uC_win_set_rgb_bg(uC_window_t *win, uC_color_t r, uC_color_t g, uC_color_t b);
+API void uC_win_set_bdr_fg(uC_window_t *win, uC_color_t color);
+API void uC_win_set_bdr_bg(uC_window_t *win, uC_color_t color);
+API void uC_win_set_bdr_gray_fg(uC_window_t *win, uC_color_t color);
+API void uC_win_set_bdr_gray_bg(uC_window_t *win, uC_color_t color);
+API void uC_win_set_bdr_rgb_fg(uC_window_t *win, uC_color_t r, uC_color_t g, uC_color_t b);
+API void uC_win_set_bdr_rgb_bg(uC_window_t *win, uC_color_t r, uC_color_t g, uC_color_t b);
+API void uC_win_set_border(uC_window_t *win, uint16_t border_type);
 
 // -----------------------------------------------------------------------
 

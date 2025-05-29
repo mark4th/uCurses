@@ -164,7 +164,7 @@ static void struct_attribs(void)
         (json_state->struct_type == STRUCT_PULLDOWN) ||
         (json_state->struct_type == STRUCT_MENU_BAR))
     {
-        json_new_state_struct(sizeof(attribs_t), STRUCT_ATTRIBS);
+        json_new_state_struct(sizeof(uC_attribs_t), STRUCT_ATTRIBS);
         return;
     }
 
@@ -179,7 +179,7 @@ static void struct_b_attribs(void)
     if ((json_state->struct_type == STRUCT_BACKDROP) ||
         (json_state->struct_type == STRUCT_WINDOW))
     {
-        json_new_state_struct(sizeof(attribs_t), STRUCT_B_ATTRIBS);
+        json_new_state_struct(sizeof(uC_attribs_t), STRUCT_B_ATTRIBS);
         return;
     }
 
@@ -194,7 +194,21 @@ static void struct_s_attribs(void)
     if ((json_state->struct_type == STRUCT_PULLDOWN) ||
         (json_state->struct_type == STRUCT_MENU_BAR))
     {
-        json_new_state_struct(sizeof(attribs_t), STRUCT_S_ATTRIBS);
+        json_new_state_struct(sizeof(uC_attribs_t), STRUCT_S_ATTRIBS);
+        return;
+    }
+
+    json_error("Requires parent pulldown or menu-bar");
+}
+
+// -----------------------------------------------------------------------
+// focussed attributes
+
+static void struct_f_attribs(void)
+{
+    if (json_state->struct_type == STRUCT_WINDOW)
+    {
+        json_new_state_struct(sizeof(uC_attribs_t), STRUCT_F_ATTRIBS);
         return;
     }
 
@@ -209,7 +223,7 @@ static void struct_d_attribs(void)
     if ((json_state->struct_type == STRUCT_PULLDOWN) ||
         (json_state->struct_type == STRUCT_MENU_BAR))
     {
-        json_new_state_struct(sizeof(attribs_t), STRUCT_D_ATTRIBS);
+        json_new_state_struct(sizeof(uC_attribs_t), STRUCT_D_ATTRIBS);
         return;
     }
 
@@ -223,6 +237,7 @@ static void struct_rgb_fg(void)
     if ((json_state->struct_type == STRUCT_ATTRIBS)   ||
         (json_state->struct_type == STRUCT_B_ATTRIBS) ||
         (json_state->struct_type == STRUCT_S_ATTRIBS) ||
+        (json_state->struct_type == STRUCT_F_ATTRIBS) ||
         (json_state->struct_type == STRUCT_D_ATTRIBS))
     {
         // there is no actual structure for this, as this item is
@@ -240,10 +255,11 @@ static void struct_rgb_fg(void)
 
 static void struct_rgb_bg(void)
 {
-    if ((json_state->struct_type == STRUCT_ATTRIBS)  ||
-       (json_state->struct_type == STRUCT_B_ATTRIBS) ||
-       (json_state->struct_type == STRUCT_S_ATTRIBS) ||
-       (json_state->struct_type == STRUCT_D_ATTRIBS))
+    if ((json_state->struct_type == STRUCT_ATTRIBS)   ||
+        (json_state->struct_type == STRUCT_B_ATTRIBS) ||
+        (json_state->struct_type == STRUCT_S_ATTRIBS) ||
+        (json_state->struct_type == STRUCT_F_ATTRIBS) ||
+        (json_state->struct_type == STRUCT_D_ATTRIBS))
     {
         // there is no actual structure for this, as this item is
         // populated through json this state_t's parent structure
@@ -260,7 +276,7 @@ static void struct_rgb_bg(void)
 
 static void struct_flags(void)
 {
-    if ((json_state->struct_type == STRUCT_BACKDROP) ||
+    if ((json_state->struct_type == STRUCT_BACKDROP)  ||
         (json_state->struct_type == STRUCT_WINDOW)    ||
         (json_state->struct_type == STRUCT_PULLDOWN)  ||
         (json_state->struct_type == STRUCT_MENU_BAR))
@@ -283,6 +299,7 @@ static void key_attr(uint16_t key)
     if ((json_state->struct_type == STRUCT_ATTRIBS)   ||
         (json_state->struct_type == STRUCT_B_ATTRIBS) ||
         (json_state->struct_type == STRUCT_S_ATTRIBS) ||
+        (json_state->struct_type == STRUCT_F_ATTRIBS) ||
         (json_state->struct_type == STRUCT_D_ATTRIBS))
     {
         json_new_state_struct(0, key);
@@ -429,7 +446,7 @@ static void key_flag(void)
 
 static void breakpoint(void)
 {
-    ;
+    uC_noop();
 }
 
 // -----------------------------------------------------------------------
@@ -462,8 +479,9 @@ static const uC_switch_t object_types[] =
     { 0x09159434, struct_pulldown  }, { 0x196fe4d3, struct_m_items   },
     { 0x90f9ece0, struct_m_item    }, { 0xbc6bca20, struct_attribs   },
     { 0x77d19b03, struct_b_attribs }, { 0x4d8ce0ce, struct_s_attribs },
-    { 0x19007641, struct_d_attribs }, { 0xea8606c2, struct_rgb_fg    },
-    { 0xe686003e, struct_rgb_bg    }, { 0x68cdf632, struct_flags     }
+    { 0x19007641, struct_d_attribs }, { 0x92db923b, struct_f_attribs },
+    { 0xea8606c2, struct_rgb_fg    }, { 0xe686003e, struct_rgb_bg    },
+    { 0x68cdf632, struct_flags     }
 };
 
 #define NUM_OBJECTS (sizeof(object_types) / sizeof(object_types[0]))
@@ -518,7 +536,8 @@ void json_state_key(void)
     size_t len;
 
     // allows for syntatically incorrect placement of commas on the last
-    // item within an object
+    // item within an object Thanks to Dwight Schaueer for this "fix"
+
     if (json_vars->json_token[0] == '}')
     {
         // user put in a trailing comma, hence the unexpected right brace

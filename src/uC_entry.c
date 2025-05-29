@@ -308,7 +308,7 @@ static void help(void)
 //     printf("0x%04x, ", c);
 //     count++;
 //
-//     if((count % 8) == 0)
+//     if ((count % 8) == 0)
 //     {
 //         printf("\n");
 //     }
@@ -322,7 +322,7 @@ static void help(void)
 //     blob += c;
 //     nblob++;
 //
-//     if(nblob == 3)
+//     if (nblob == 3)
 //     {
 //         emit(blob);
 //         blob = 0;
@@ -343,13 +343,13 @@ static void help(void)
 //         0x49, 0x53, 0x54, 0x59, 0x5b, 0x5d, 0x5f
 //     };
 //
-//     if(c == 0x20)
+//     if (c == 0x20)
 //     {
 //         smush(0);
 //         return;
 //     }
 //
-//     for(i = 0; i < sizeof(xlat); i++)
+//     for (i = 0; i < sizeof(xlat); i++)
 //     {
 //         if(c == xlat[i])
 //         {
@@ -368,10 +368,10 @@ static void help(void)
 //     printf("0x%04x,\n", (unsigned int)strlen(text));
 //     int count = 0;
 
-//     for(i = 0; i < strlen(message); i++)
+//     for (i = 0; i < strlen(message); i++)
 //     {
 //         c = message[i];
-//         if(c < 0x61)
+//         if (c < 0x61)
 //         {
 //             smusher(c);
 //         }

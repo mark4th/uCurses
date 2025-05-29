@@ -11,7 +11,7 @@ project_description = 'TUI app builder for consoles and terminals.'
 build_args = [
     '-fno-inline',
     '-Werror',
-#    '-Wno-extra-semi',
+    '-Wno-extra-semi',
     '-std=gnu17',
     '-pipe',
     '-fno-align-functions',
@@ -28,7 +28,7 @@ source_dir = run_command( python, '-c', 'import os; print(os.getcwd(), end="");'
 compiler = meson.get_compiler('c')
 
 if compiler.get_id() == 'gcc'
-    build_args += ['-Os', '-Wno-error=attributes']
+    build_args += ['-O2', '-Wno-error=attributes']
 elif compiler.get_id() == 'clang'
     build_args += ['-Oz']
 endif
@@ -41,7 +41,7 @@ build_args += [
 message('@0@: @1@'.format(compiler.get_id(), build_args))
 
 
-linker_args = ['-Wl,--entry=entry ']
+linker_args = ['-Wl,--entry=entry']
 
 #find_test_src = '''from glob import glob;print('\n'.join(glob('src/TEST/*.c')))'''
 #src_test_sources = run_command(python, '-c', find_test_src, check: true).stdout().strip().split('\n')
@@ -90,7 +90,7 @@ project_target = custom_target(
     command: [
         'bash', '-c',
         '''
-#            strip -R .comment @INPUT@ 
+#            strip -R .comment @INPUT@
             touch @0@
             file @INPUT@ > /proc/$PPID/fd/1
             du -h @INPUT@ > /proc/$PPID/fd/1

@@ -116,7 +116,7 @@
                     {
                         "menu-item" :
                         {
-                            "name"   : "Back",
+                            "name"   : "Exit",
                             "vector" : "exit_prog"
                         }
                     }

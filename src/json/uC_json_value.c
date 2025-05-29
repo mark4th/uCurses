@@ -9,6 +9,7 @@
 #include "uC_window.h"
 #include "uC_utils.h"
 #include "uC_switch.h"
+#include "uC_borders.h"
 
 // -----------------------------------------------------------------------
 
@@ -70,7 +71,7 @@ static void value_gray_fgbg(void)
     {
         if (ktype == KEY_GRAY_FG)
         {
-            i = FG;
+            i  = FG;
             m1 = FG_GRAY;
             m2 = ~FG_RGB;
         }
@@ -181,8 +182,6 @@ static void value_xy(void)
 }
 
 // -----------------------------------------------------------------------
-
-#define FILL 0xfa634be2
 
 static void value_wh(void)
 {
@@ -332,13 +331,13 @@ static void value_flag(void)
 static void value_border_type(void)
 {
     json_state_t *parent = json_state->parent;
-    uC_window_t *win = parent->structure;
+    uC_window_t  *win    = parent->structure;
 
     if ((json_vars->key_value == BDR_SINGLE) ||
         (json_vars->key_value == BDR_DOUBLE) ||
         (json_vars->key_value == BDR_CURVED))
     {
-        win->bdr_type = json_vars->key_value;
+        win->border_type = json_vars->key_value;
         return;
     }
 
@@ -404,7 +403,8 @@ static int32_t constant_hash[] =
     0x0ed8a8cf,       0xfa264646,  0x4e4f416d,  0x8cb49b59,
     // WIN_LOCKED     WIN_FILLED   WIN_BOXED    WIN_FAR,
     0x901cbb7a,       0xd6b11d20,  0x6f7f7df8,  0x264116fc,
-
+    // WIN_FOCUS
+    0x618e2ff0,
 
     // BLACK    RED         GREEN       BROWN
     0xdc51d022, 0x5a235332, 0xe3671392, 0x4ff50adb,
@@ -422,8 +422,10 @@ static int32_t constant_val[] =
 {
     MENU_DISABLED, BDR_SINGLE, BDR_DOUBLE, BDR_CURVED,
     WIN_LOCKED,    WIN_FILLED, WIN_BOXED,  WIN_FAR,
+    WIN_FOCUS,
 
     // color values
+
     0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
     0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f
 };

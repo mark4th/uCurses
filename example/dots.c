@@ -1,81 +1,78 @@
 // dots.c
 // -----------------------------------------------------------------------
 
+#include <sys/time.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <unistd.h>
-#include <inttypes.h>
-
-#include "uCurses.h"
-#include "uC_menus.h"
-#include "uC_json.h"
-#include "uC_keys.h"
-#include "uC_utils.h"
-#include "uC_json.h"
 
 #include "demo.h"
 
-extern uC_screen_t *active_screen;
 
 // -----------------------------------------------------------------------
 
 #define MAX_POINTS 125          // max # pels in an object
 
-static uC_window_t *dots_win;
+static uC_screen_t *scr;
+static uC_window_t *win;
+static uC_window_t *status_win;
 
+extern uC_screen_t *active_screen;
 extern int16_t dots_sin_tab[512];
 extern int point_counts[];             // number of points in each object
 extern xyz *obj_list[];                // pointers to each object
 
-int16_t dots_cos(int16_t angle);
-int16_t dots_sin(int16_t angle);
+static int16_t dots_cos(int16_t angle);
+static int16_t dots_sin(int16_t angle);
 
-int frame;
+static int frame;
 
-int32_t pel;
+static int32_t pel;
 
-int zmin;
-int zmax;
+static int zmin;
+static int zmax;
 
-int32_t pels[] =
+char status[33];
+
+static int32_t pels[] =
 {
     0x1390, 0x1390, 0x1390, 0x1390,    // ᎐
     0x1428, 0x1428, 0x1428, 0x1428,    // ᐩ
-    0x1540, 0x1540, 0x1540, 0x1540,    // ᕁ
+    0x2022, 0x2022, 0x2022, 0x2022,    // •
     0x2981, 0x2981, 0x2981, 0x2981,    // ⦁
-    0x29fb, 0x29fb, 0x29fb, 0x29fb,    // ⧻
-    0x2a68, 0x2a68, 0x2a68, 0x2a68,    // ⩨
+    0x25C6, 0x25C6, 0x25C6, 0x25C6,    // ◆
+    0x25CF, 0x25CF, 0x25CF, 0x25CF,    // ●
 };
 
 // -----------------------------------------------------------------------
 
-int x_angle = 0;            // angles of rotation in each axis
-int y_angle = 20;
-int z_angle = 45;
+static int x_angle = 0;            // angles of rotation in each axis
+static int y_angle = 20;
+static int z_angle = 45;
 
-short cos_x = 0;            // trig stuff
-short cos_y = 0;
-short cos_z = 0;
-short sin_x = 0;
-short sin_y = 0;
-short sin_z = 0;
+static short cos_x = 0;            // trig stuff
+static short cos_y = 0;
+static short cos_z = 0;
+static short sin_x = 0;
+static short sin_y = 0;
+static short sin_z = 0;
 
-int x_off = 30;             // world space position of object
-int y_off = 30;
-int z_off = 200;
+static int x_off = 30;             // world space position of object
+static int y_off = 30;
+static int z_off = 200;
 
-int delta_x = 1;            // rotational speed of object
-int delta_y = 1;
-int delta_z = 1;
+static int delta_x = 1;            // rotational speed of object
+static int delta_y = 1;
+static int delta_z = 1;
 
-int num_points = 0;         // number of points in object
-int obj_number = 0;
+static int num_points = 0;         // number of points in object
+static int obj_number = 0;
 
-xyz *object = NULL;         // pointer to current object
+static xyz *object = NULL;         // pointer to current object
 
 // -----------------------------------------------------------------------
 
-modifier w1 =               // changes x rotation speed
+static modifier w1 =               // changes x rotation speed
 {
     30,                     // count down counter
     34,                     // reset value for countdown counter
@@ -85,17 +82,17 @@ modifier w1 =               // changes x rotation speed
     1,                      // lower limit for item
 };
 
-modifier w2 =                   // changes y rotation speed
+static modifier w2 =                   // changes y rotation speed
 {
     20, 20, &delta_y, 1, 5, 1
 };
 
-modifier w3 =                   // changes z rotation speed
+static modifier w3 =                   // changes z rotation speed
 {
     40, 30, &delta_z, 1, 5, 1
 };
 
-modifier w4 =                   // zooms object in / out of window
+static modifier w4 =                   // zooms object in / out of window
 {
     4, 4, &z_off, -1, 200, 50
 };
@@ -103,25 +100,25 @@ modifier w4 =                   // zooms object in / out of window
 // -----------------------------------------------------------------------
 // draw a point at x/y in specified colour
 
-int px, py, pz;         // 3d coordinates to rotate
+static int px, py, pz;         // 3d coordinates to rotate
 
-void draw_point(int16_t x, int16_t y, int8_t c)
+static void draw_point(int16_t x, int16_t y, int8_t c)
 {
     cell_t *p;
 
     if (x != -1)
     {
-        uC_win_cup(dots_win, x, y);
+        uC_win_cup(win, x, y);
 
-        p = uC_win_peek(dots_win);
+        p = uC_win_peek(win);
 
         if (pel > p->code)
         {
-            uC_win_set_rgb_fg(dots_win,
+            uC_win_set_rgb_fg(win,
                 (z_off - px),
                 (z_off - py),
                 (z_off - pz));
-            uC_win_emit(dots_win, pel);
+            uC_win_emit(win, pel);
         }
     }
 }
@@ -129,7 +126,7 @@ void draw_point(int16_t x, int16_t y, int8_t c)
 // -----------------------------------------------------------------------
 // pre calculate sin and cosine values for x y and z angles of rotation
 
-void dots_sincos(void)
+static void dots_sincos(void)
 {
     sin_x = dots_sin(x_angle);
     sin_y = dots_sin(y_angle);
@@ -143,7 +140,7 @@ void dots_sincos(void)
 // -----------------------------------------------------------------------
 // roatate object about x y and z axis (in object space)
 
-void rotate(int *px, int *py, int *pz)
+static void rotate(int *px, int *py, int *pz)
 {
     int tx, ty, tz;        // temp store
 
@@ -178,7 +175,7 @@ void rotate(int *px, int *py, int *pz)
 // -----------------------------------------------------------------------
 // project point in 3d space onto plane in 2d space
 
-void project(int px, int py, int pz, int *x, int *y)
+static void project(int px, int py, int pz, int *x, int *y)
 {
     int tx, ty;             // temp store...
 
@@ -190,11 +187,11 @@ void project(int px, int py, int pz, int *x, int *y)
         return;
     }
 
-    ty = ((y_off * py) / (z_off + pz)) + (dots_win->height / 2);
+    ty = ((y_off * py) / (z_off + pz)) + (win->height / 2);
 
-    if ((ty > 0) && (ty < (25)))
+    if ((ty > 0) && (ty < (28)))
     {
-        tx = ((x_off * px) / (z_off + pz)) + (dots_win->width / 2);
+        tx = ((x_off * px) / (z_off + pz)) + (win->width / 2);
 
         if ((tx > 0) && (tx < 96))
         {
@@ -210,14 +207,14 @@ void project(int px, int py, int pz, int *x, int *y)
 #define min(a,b) (a < b) ? a : b;
 #define max(a,b) (a > b) ? a : b;
 
-void do_frame(void)
+static void do_frame(void)
 {
     int x, y, c;            // 2d coordiantes of point and colour
     int i;
 
     dots_sincos();          // calculate all sin/cos values
 
-    uC_win_clear(dots_win);
+    uC_win_clear(win);
 
     for (i = 0; i < num_points; i++)
     {
@@ -239,9 +236,8 @@ void do_frame(void)
         if (q == 0) { q = 1; }
 
         c = ((pz + w) / q) % 24;
-        c = 22 - c;
 
-        pel = pels[(c)];
+        pel = pels[(24 - c)];
 
         draw_point(x, y, c);
     }
@@ -251,7 +247,7 @@ void do_frame(void)
 // -----------------------------------------------------------------------
 // adjust rotational speeds / distance between min and max for each
 
-void modify(modifier *mod)
+static void modify(modifier *mod)
 {
     mod->counter--;
 
@@ -271,7 +267,7 @@ void modify(modifier *mod)
 // -----------------------------------------------------------------------
 // do the above on each of the 4 modifiers
 
-void do_deltas(void)
+static void do_deltas(void)
 {
     modify(&w1);            // modify x rotational speed
     modify(&w2);            // modify y rotational speed
@@ -282,7 +278,7 @@ void do_deltas(void)
 // -----------------------------------------------------------------------
 // adjust x y and z angles of ritation for next frame
 
-void change_angles(void)
+static void change_angles(void)
 {
     x_angle += delta_x;
     y_angle += delta_y;
@@ -295,13 +291,8 @@ void change_angles(void)
 
 // -----------------------------------------------------------------------
 
-#include <sys/time.h>
-
 void do_dots(void)
 {
-    uC_screen_t *scr;
-    uC_list_node_t *n;
-    char status[MAX_STATUS];
     int seconds;
     time_t start;
     struct timeval tv;
@@ -309,16 +300,7 @@ void do_dots(void)
     gettimeofday(&tv, NULL);
     start = tv.tv_sec;
 
-    uC_json_create_ui("dots.json", menu_address_cb);
-
-    uC_alloc_status();
-    uC_bar_clr_status();
-    uC_menu_init();
     int fps;
-
-    scr = active_screen;
-    n = scr->windows.head;
-    dots_win = n->payload;
 
     for (;;)               // only way out is to die
     {
@@ -344,11 +326,11 @@ void do_dots(void)
                 gettimeofday(&tv, NULL);
                 seconds = (tv.tv_sec - start);
 
-                snprintf(status, MAX_STATUS,
+                snprintf(status, 32,
                     "F: %8dk S: %5d FPS: %2dK",
                     frame / 1000, seconds, fps/1000);
 
-                uC_bar_set_status(status);
+                uC_set_status(status_win, status);
 
                 do_frame();        // draw object
 
@@ -384,6 +366,77 @@ void do_dots(void)
             break;
         }
     }
+}
+
+// -----------------------------------------------------------------------
+
+static void exit_prog(void)
+{
+    uC_set_key(0x1b);
+}
+
+// -----------------------------------------------------------------------
+
+static uC_switch_t menu_vectors[] =
+{
+    { 0x8d9c616c, exit_prog }
+};
+
+#define VCOUNT sizeof(menu_vectors) / sizeof(menu_vectors[0])
+
+// -----------------------------------------------------------------------
+
+opt_t menu_address_cb(int32_t hash)
+{
+    int16_t i;
+    uC_switch_t *s = menu_vectors;
+
+    for(i = 0; i < VCOUNT; i++)
+    {
+        if(hash == s->option)
+        {
+            return s->vector;
+        }
+        s++;
+    }
+
+    return NULL;
+}
+
+// -----------------------------------------------------------------------
+
+int main(void)
+{
+    uC_list_node_t *n;
+
+    uCurses_init();
+    uC_json_file_create_ui("json/dots.json", menu_address_cb);
+    uC_menu_init();
+
+    scr = active_screen;
+    n   = scr->windows.head;
+    win = n->payload;
+
+    status_win = uC_add_status(scr, 32, 55, 0);
+
+    uC_win_printf(status_win, "%fs%bs%0", 9, 3);
+
+    uC_set_status(status_win, status);
+    uC_clr_status(status_win);
+
+    do_dots();
+
+    uC_scr_close(active_screen);
+
+    uC_console_reset_attrs();
+    uC_clear();
+    uC_cup(10, 0);
+
+    uCurses_deInit();
+
+    printf("Au revoir!\n");
+
+    return 0;
 }
 
 // =======================================================================

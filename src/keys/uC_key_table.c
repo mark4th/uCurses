@@ -16,12 +16,18 @@
 extern ti_parse_t *uC_ti_parse;
 extern int8_t keybuff[KEY_BUFF_SZ];
 extern int16_t num_k;
-extern int8_t stuffed;
 extern void (*k_table[])(void);
 
 // -----------------------------------------------------------------------
+// the new widget editor extension needs to be able to redefied the
+// keyboard handling without ripping the rug out from under any user
+// application defined handlers
 
-static void set_kb0(int8_t c)
+static uC_kh_t saved_key_actions;
+
+// -----------------------------------------------------------------------
+
+API void uC_set_key(int8_t c)
 {
     keybuff[0] = c;
     num_k = 1;
@@ -30,23 +36,23 @@ static void set_kb0(int8_t c)
 // -----------------------------------------------------------------------
 // add delete char to keyboard input buffer
 
-static void k_bs(void)  { set_kb0(0x08); }
-static void k_ent(void) { set_kb0(0x0a); }
+static void k_bs(void)  { uC_set_key(0x08); }
+static void k_ent(void) { uC_set_key(0x0a); }
 
 // -----------------------------------------------------------------------
 // the system indirectly calls the function pointers pointed to by the
 // items in this array.  the end user does not get to modify this array as
 // the order of items within it is critical
 
-static uC_key_handler_t *default_key_actions[] =
+uC_key_handler_t *default_key_actions[] =
 {
-//  ENTER  UP     DOWN  LEFT  RIGHT BS    BS2
-    k_ent, uC_noop,  uC_noop, uC_noop, uC_noop, k_bs, k_bs,
-//  DEL    INSERT HOME  END   PDN   PUP   F1
+//  ENTER     UP        DOWN     LEFT     RIGHT    BS    BS2
+    k_ent,    uC_noop,  uC_noop, uC_noop, uC_noop, k_bs, k_bs,
+//  DEL       INSERT    HOME     END      PDN      PUP      F1
     uC_noop,  uC_noop,  uC_noop, uC_noop, uC_noop, uC_noop, uC_noop,
-//  F2     F3     F4    F5    F6    F7    F8
+//  F2        F3        F4       F5       F6       F7       F8
     uC_noop,  uC_noop,  uC_noop, uC_noop, uC_noop, uC_noop, uC_noop,
-//  F9     F10    F11   F12
+//  F9        F10       F11      F12
     uC_noop,  uC_noop,  uC_noop, uC_noop
 };
 
@@ -54,38 +60,58 @@ static uC_key_handler_t *default_key_actions[] =
 
 // -----------------------------------------------------------------------
 
-// static key_handler_t *user_key_actions[KEY_COUNT] = { NULL };
-
-static uC_kh_t user_key_actions = default_key_actions;
-static uC_kh_t k_stack = NULL;
+uC_kh_t user_key_actions = default_key_actions;
 
 // -----------------------------------------------------------------------
 
 API uC_kh_t uC_alloc_kh(void)
 {
     uC_kh_t kh = NULL;
-    int size = sizeof(default_key_actions);
+    int size;
 
-    if (k_stack == NULL)
+    if (user_key_actions != default_key_actions)
     {
-        kh = calloc(size, 1);
-        memcpy(kh, default_key_actions, size);
-        k_stack = user_key_actions;
-        user_key_actions = kh;
+        free(user_key_actions);
     }
+
+    size = sizeof(default_key_actions);
+    kh   = calloc(size, 1);
+
+    memcpy(kh, default_key_actions, size);
+
+    user_key_actions = kh;
+
     return kh;
 }
 
 // -----------------------------------------------------------------------
 
-API void uC_free_kh(void)
+uC_kh_t widget_alloc_kh(void)
 {
-    if (k_stack != NULL)
-    {
-        free(user_key_actions);
-        user_key_actions = k_stack;
-        k_stack = NULL;
-    }
+    uC_kh_t kh = NULL;
+    int size;
+
+    // dont release these user application handlers but we need to
+    // override them while editing widgets
+
+    saved_key_actions = user_key_actions;
+
+    size = sizeof(default_key_actions);
+    kh   = calloc(size, 1);
+
+    memcpy(kh, default_key_actions, size);
+
+    user_key_actions = kh;
+
+    return kh;
+}
+
+// -----------------------------------------------------------------------
+
+void widget_release_kh(void)
+{
+    free(user_key_actions);
+    user_key_actions = saved_key_actions;
 }
 
 // -----------------------------------------------------------------------
@@ -121,7 +147,10 @@ API uint8_t uC_key(void)
             // execute handler for keypress
             user_key_actions[c]();
 
-            // backspace or enter
+            // the above call to the user_key_actions() function
+            // can return a custom key press value for any of
+            // the key sequence keys.
+
             if (num_k == 1) { break; }
             num_k = 0;
             return 0;
@@ -130,15 +159,6 @@ API uint8_t uC_key(void)
 
     num_k = 0;
     return keybuff[0];
-}
-
-// -----------------------------------------------------------------------
-// manually stuff a key into the buffer as if a key had been pressed.
-
-API void uC_stuff_key(int8_t c)
-{
-    stuffed    = 1;
-    keybuff[num_k++] = c;
 }
 
 // -----------------------------------------------------------------------

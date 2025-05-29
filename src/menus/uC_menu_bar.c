@@ -22,12 +22,12 @@ static void pd_set_attr(int16_t i, pulldown_t *pd, uint64_t *p,
     // currently selected item?
     if (i == pd->which)
     {
-        *p = pd->attr_grp.selected.chunk;
+        *p = pd->selected_attrs.chunk;
         return;
     }
     *p = ((item->flags & MENU_DISABLED) != 0)
-        ? pd->attr_grp.disabled.chunk
-        : pd->attr_grp.attrs.chunk;
+        ? pd->disabled_attrs.chunk
+        : pd->attrs.chunk;
 }
 
 // -----------------------------------------------------------------------
@@ -48,7 +48,7 @@ void bar_populdate_pd(pulldown_t *pd)
         {
             item = pd->items[i];
 
-            pd_set_attr(i, pd, &win->attr_grp.attrs.chunk, item);
+            pd_set_attr(i, pd, &win->attrs.chunk, item);
             uC_win_cup(win, 0, i);
             uC_win_puts(win, item->name);
 
@@ -73,12 +73,12 @@ static void bar_set_attrs(int16_t i, menu_bar_t *bar, uint64_t *p,
 {
     if ((i == bar->which) && (bar->active != 0))
     {
-        *p = bar->attr_grp.selected.chunk;
+        *p = bar->selected_attrs.chunk;
         return;
     }
     *p = ((pd->flags & MENU_DISABLED) != 0)
-        ? bar->attr_grp.disabled.chunk
-        : bar->attr_grp.attrs.chunk;
+        ? bar->disabled_attrs.chunk
+        : bar->attrs.chunk;
 }
 
 // -----------------------------------------------------------------------
@@ -95,7 +95,7 @@ API void uC_bar_draw_text(uC_screen_t *scr)
 
     if ((bar != NULL) && (win != NULL))
     {
-        win->attr_grp.attrs.chunk = bar->attr_grp.attrs.chunk;
+        win->attrs.chunk = bar->attrs.chunk;
         uC_win_clear(win);
         uC_win_emit(win, win->blank);
 
@@ -103,7 +103,7 @@ API void uC_bar_draw_text(uC_screen_t *scr)
         {
             pd = bar->items[i];
 
-            bar_set_attrs(i, bar, &win->attr_grp.attrs.chunk, pd);
+            bar_set_attrs(i, bar, &win->attrs.chunk, pd);
 
             uC_win_emit(win, win->blank);
             uC_win_puts(win, pd->name);
@@ -160,7 +160,6 @@ API void uC_bar_close(uC_screen_t *scr)
             bar_close_pds(bar);
             uC_win_close(bar->window);
             bar->window = NULL;
-            free_status();
             free(bar);
             scr->menu_bar = NULL;
         }
@@ -180,9 +179,9 @@ static void init_bar(uC_screen_t *scr, uC_window_t *win, menu_bar_t *bar)
     win->screen   = scr;
     scr->menu_bar = bar;
 
-    bar->attr_grp.attrs.chunk    = ATTRS_NORMAL;
-    bar->attr_grp.selected.chunk = ATTRS_SELECTED;
-    bar->attr_grp.disabled.chunk = ATTRS_DISABLED;
+    bar->attrs.chunk          = uC_ATTRS_NORMAL;
+    bar->selected_attrs.chunk = uC_ATTRS_SELECTED;
+    bar->disabled_attrs.chunk = uC_ATTRS_DISABLED;
 }
 
 // -----------------------------------------------------------------------

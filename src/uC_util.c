@@ -8,6 +8,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <sys/ioctl.h>
 
 #include "uCurses.h"
 #include "uC_terminfo.h"
@@ -92,11 +93,23 @@ API void uC_init_terminal(void)
 
 // -----------------------------------------------------------------------
 
-__attribute__((noreturn)) void xabort(char *msg)
+API __attribute__((noreturn)) void xabort(char *msg)
 {
     fprintf(stderr, "%s\n", msg);
     uCurses_deInit();
     exit(1);
+}
+
+// -----------------------------------------------------------------------
+
+API void get_console_size(uint16_t *width, uint16_t *height)
+{
+    struct winsize w;
+
+    ioctl(0, TIOCGWINSZ, &w);
+
+    *width  = w.ws_col;
+    *height = w.ws_row;
 }
 
 // -----------------------------------------------------------------------

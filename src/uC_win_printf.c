@@ -12,6 +12,8 @@
 #include "uC_utils.h"
 
 // -----------------------------------------------------------------------
+// this file is a blatant MISRA C violation :
+// -----------------------------------------------------------------------
 
 static va_list arg;
 static char *p;
@@ -274,6 +276,21 @@ static void e(void)
 }
 
 // -----------------------------------------------------------------------
+// emit same char a number of times
+
+static void star(void)
+{
+    int l = va_arg(arg, int);
+    int c = va_arg(arg, int);
+
+    while (l != 0)
+    {
+        uC_win_emit(w, c);
+        l--;
+    }
+}
+
+// -----------------------------------------------------------------------
 
 static uC_switch_t commands[] =
 {
@@ -281,7 +298,7 @@ static uC_switch_t commands[] =
     { 'x', &x    }, { 'y', &y     }, { 'u', &up     }, { 'd', &dn },
     { 'l', &lt   }, { 'r', &rt    }, { '0', &wclear }, { 'c', &c },
     { 'B', &bold }, { 'U', &uline }, { 'R', rev     }, { 's', u_puts },
-    { '8', &utf8 }, { 'e', &e}
+    { '8', &utf8 }, { 'e', &e     }, { '*', star    }
 };
 
 #define COMMANDS sizeof(commands) / sizeof(commands[0])

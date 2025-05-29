@@ -7,6 +7,7 @@
 #include "uCurses.h"
 #include "uC_window.h"
 #include "uC_screen.h"
+#include "uC_borders.h"
 
 // -----------------------------------------------------------------------
 // force refresh of specific cell
@@ -22,7 +23,7 @@ enum
 // border plus the characters that you would use to segment up that window
 // the entries in these arrays are the utf8 codepoint for each char
 
-static border_t bdr_single[] =
+border_t bdr_single[] =
 {
     0x250f,                 // ┏        ┏━━━┳━━━┓
     0x2513,                 //  ┓       ┃   ┃   ┃
@@ -39,7 +40,7 @@ static border_t bdr_single[] =
 
 // -----------------------------------------------------------------------
 
-static border_t bdr_double[] =
+border_t bdr_double[] =
 {
     0x2554,                 // ╔        ╔═══╦═══╗
     0x2557,                 //  ╗       ║   ║   ║
@@ -56,7 +57,7 @@ static border_t bdr_double[] =
 
 // -----------------------------------------------------------------------
 
-static border_t bdr_curved[] =
+border_t bdr_curved[] =
 {
     0x256d,                 // ╭        ╭───┬───╮
     0x256e,                 //  ╮       │   │   │
@@ -72,6 +73,15 @@ static border_t bdr_curved[] =
 };
 
 // -----------------------------------------------------------------------
+
+border_t *const borders[] =
+{
+    &bdr_single[0],
+    &bdr_double[0],
+    &bdr_curved[0]
+};
+
+// -----------------------------------------------------------------------
 // draw border character directly into screen buffer 1
 
 static void draw_char(uC_window_t *win, int16_t cx, int16_t cy,
@@ -84,7 +94,10 @@ static void draw_char(uC_window_t *win, int16_t cx, int16_t cy,
     cell_t *p1 = &scr->buffer1[index];
     cell_t *p2 = &scr->buffer2[index];
 
-    p1->attrs.chunk = win->attr_grp.bdr_attrs.chunk;
+    p1->attrs.chunk = (win->flags & WIN_FOCUS)
+        ? win->focus_attrs.chunk
+        : win->bdr_attrs.chunk;
+
     p1->code        = code;
 
     // when a double width character is drawn underneath a pulled down
@@ -138,16 +151,9 @@ void win_draw_borders(uC_window_t *win)
     int16_t height;
     int16_t cy;
 
-    border_t *const borders[] =
-    {
-        &bdr_single[0],
-        &bdr_double[0],
-        &bdr_curved[0]
-    };
-
     border_t *bdr;
 
-    bdr = borders[win->bdr_type];
+    bdr = borders[win->border_type];
 
     height = win->height;
 

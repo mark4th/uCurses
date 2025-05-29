@@ -20,7 +20,7 @@
 
 // -----------------------------------------------------------------------
 
- #define SHELL            // comment out to use quick sort from stdlib
+//#define SHELL            // comment out to use quick sort from stdlib
 
 #define ITEMS  1000000   // one million
 #define ITTERS 10000     // ten thousahd
@@ -70,7 +70,7 @@
 // 0.70     24m18.513s
 
 // theoretically the fastest known gap seauence by Robert Sedgewick
-// my calculated gap seauence seems to be faster
+// my calculated gap sequence seems to be faster
 
 uint32_t gaps[] =
 {
@@ -109,7 +109,7 @@ int compare(const void *a, const void *b)
 
 void shell(uint32_t *p, uint32_t n)
 {
-    uint32_t i = 0, swapped;
+    uint32_t swapped;
     uint32_t tmp;
     int hi1, lo1, hi2, lo2;
     int gap;
@@ -147,11 +147,7 @@ void shell(uint32_t *p, uint32_t n)
             hi1++;
             lo1++;
         }
-        i++;
     }
-    uC_cup(7, 20);
-    uC_terminfo_flush();
-    printf("%8d\n", i);
 }
 
 // -----------------------------------------------------------------------

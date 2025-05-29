@@ -23,7 +23,7 @@ enum
 
 // -----------------------------------------------------------------------
 
-typedef enum
+typedef enum __attribute__((__packed__))
 {
     STATE_NONE,
     STATE_L_BRACE,
@@ -37,7 +37,7 @@ typedef enum
 // -----------------------------------------------------------------------
 // should really be two enums but that just complificates the code
 
-typedef enum
+typedef enum __attribute__((__packed__))
 {
     STRUCT_SCREEN = 1,
     STRUCT_WINDOW,
@@ -49,6 +49,7 @@ typedef enum
     STRUCT_B_ATTRIBS,       // border attribs
     STRUCT_S_ATTRIBS,       // selected attribs
     STRUCT_D_ATTRIBS,       // disabled attribs
+    STRUCT_F_ATTRIBS,       // focussed attribs
     STRUCT_FLAGS,
     STRUCT_RGB_FG,          // 3 bytes
     STRUCT_RGB_BG,          // 3 bytes
@@ -66,7 +67,7 @@ typedef enum
 // -----------------------------------------------------------------------
 // offsets into json_syntax array of hash values found in json.c
 
-typedef enum
+typedef enum __attribute__((__packed__))
 {
     JSON_COLON,
     JSON_L_BRACE,
@@ -82,27 +83,36 @@ typedef struct
     char *json_data;        // pointer to json data to be parsed
     int json_len;           // total size of json data
     int json_index;         // parse index into data (current line)
-    int32_t key_value;
-    bool percent;           // key value is expressed as a percentage
-    bool quoted;
 
+    uint32_t key_value;     // value of key being added to structure
+    bool percent;           // key value is expressed as a percentage
+    bool quoted;            // some key values must be quoted (strings)
+
+    // copy of current line of json data being parsed
     char line_buff[MAX_LINE_LEN];
 
     int16_t line_no;        // current line of json data
     int16_t line_index;     // line parse location
     int16_t line_left;      // number of chars left to parse in line
 
-    // space delimited token extracted from data - +1 for the null
+    // space delimited token extracted from data
 
     char json_token[MAX_TOKEN_LEN];
-    int32_t json_hash;
+    int32_t json_hash;      // fnv-1a hash of above token
 
-    uC_list_t json_stack;
+    uC_list_t json_stack;   // stack of json states, no recursive parsing
+
+    // pointer to function that allows linking of menu items to functions
+    // given a hash of the item name.   This allows the jason parser to
+    // fully populate pulldown menus with their associated functions
 
     fp_finder_t fp_finder;
 
-    int16_t console_width;
-    int16_t console_height;
+    // max dimensions ande positional boundries of any window being
+    // created via json
+
+    uint16_t console_width;
+    uint16_t console_height;
 } json_vars_t;
 
 // -----------------------------------------------------------------------
@@ -110,6 +120,7 @@ typedef struct
 typedef struct
 {
     int state;                // current state
+    uint32_t token_id;        // fnv-1a of current structures name
     void *parent;             // pointer to parent j_state_t
     void *structure;          // pointer to structure being populated
     json_type_t struct_type;  // type of structure being populated
@@ -132,10 +143,12 @@ void strip_quotes(int16_t len);
 void json_de_tab(char *s, int len);
 void token(void);
 void json_state_value(void);
+void json_validate(uint32_t parent, uint32_t child);
 
 // -----------------------------------------------------------------------
 
-API void uC_json_create_ui(char *path, fp_finder_t fp);
+API void uC_json_file_create_ui(char *path, fp_finder_t fp);
+API void uC_json_mem_create_ui(char *json_data, int len, fp_finder_t fp);
 
 // -----------------------------------------------------------------------
 

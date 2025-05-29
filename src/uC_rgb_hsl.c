@@ -83,7 +83,8 @@ static double hue2rgb(double p, double q, double t)
 // -----------------------------------------------------------------------
 // Converts HSL to RGB
 
-static void hsl2rgb(double h, double s, double l, double *r, double *g, double *b)
+static void hsl2rgb(double h, double s, double l,
+    double *r, double *g, double *b)
 {
     if(0 == s)
     {

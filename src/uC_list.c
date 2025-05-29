@@ -93,20 +93,19 @@ API void uC_list_remove_node(uC_list_t *list, void *payload)
 {
     uC_list_node_t *node1;
 
-    if (list != NULL)
-    {
-        node1 = list->head;
+    if (list == NULL) { return; }
 
-        while (node1 != NULL)
+    node1 = list->head;
+
+    while (node1 != NULL)
+    {
+        if (node1->payload == payload)
         {
-            if (node1->payload == payload)
-            {
-                node_remove(node1);
-                free(node1);
-                break;
-            }
-            node1 = node1->next;
+            node_remove(node1);
+            free(node1);
+            break;
         }
+        node1 = node1->next;
     }
 }
 
@@ -204,31 +203,55 @@ API void *uC_list_pop_tail(uC_list_t *list)
 }
 
 // -----------------------------------------------------------------------
-// walk through every node in theist, return new payload on each call
+// todo: insert_after() ??
 
-// def not thread safe :)
+API bool uC_list_insert_before(uC_list_node_t *n1, void *payload)
+{
+    uC_list_node_t *n2;
+    uC_list_node_t *prev;
 
-// this needs work there is no way to tell when you get to the end of
-// the list and in fact when you do it will simply loop back to the
-// beginning.  bigger fish to fry still
+    uC_list_t *list = n1->list;
 
-// API void *list_scan(uC_list_t *list)
-// {
-//     static uC_list_node_t *node1 = NULL;
-//     void *payload = NULL;
-//
-//     if ((node1 == NULL) && (list != NULL))
-//     {
-//         node1 = list->head;
-//     }
-//
-//     if (node1 != NULL)
-//     {
-//         payload = node1->payload;
-//         node1   = node1->next;
-//     }
-//
-//     return payload;
-// }
+    if (n1 == list->head)
+    {
+        return uC_list_push_head(list, payload);
+    }
+
+    n2 = calloc(1, sizeof(*n2));
+    if (n2 == NULL) { return false; }
+
+    n2->list    = list;
+    n2->payload = payload;
+    prev = n1->prev;
+
+    n2->prev    = prev;
+    prev->next  = n2;
+    n2->next    = n1;
+    n1->prev    = n2;
+
+    list->count++;
+
+    return true;
+}
+
+// -----------------------------------------------------------------------
+// walk through every node in the list, return next node on each call
+
+// caller must extract payload from node
+// first call must pass list to be scanned
+// subsequent calls must pass null for the list
+
+API uC_list_node_t *uC_list_scan(uC_list_t *list, uC_list_node_t *n1)
+{
+    if (list != NULL)
+    {
+        return list->head;
+    }
+    if (n1 != NULL)
+    {
+        return n1->next;
+    }
+    return n1;
+}
 
 // =======================================================================

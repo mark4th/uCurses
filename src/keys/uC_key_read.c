@@ -12,7 +12,6 @@
 
 int8_t keybuff[KEY_BUFF_SZ];
 int16_t num_k;
-int8_t stuffed;
 
 // -----------------------------------------------------------------------
 
@@ -28,19 +27,11 @@ static struct pollfd pfd =
 
 API int8_t uC_test_keys(void)
 {
-    int k = stuffed;        // has a key been manually stuffed ?
+    // see if any keys have been pressed
+    int8_t k = poll(&pfd, 1, 0);
+    if (k < 0) { k = 0; }   // no keys pressed
 
-    if (stuffed == 0)       // if not...
-    {
-        // see if any keys have been pressed
-        k = poll(&pfd, 1, 0);
-        if (k < 0)
-        {
-            k = 0;          // no keys pressed
-        }
-    }
-
-    return (int8_t)k;
+    return k;
 }
 
 // -----------------------------------------------------------------------
@@ -48,19 +39,15 @@ API int8_t uC_test_keys(void)
 
 static int8_t read_key(void)
 {
-    int8_t k = stuffed;
     int n;
+    uint8_t k;
 
-    if (stuffed == 0)
+    do
     {
-        do
-        {
-            n = read(1, &k, 1);
-            // todo this might be bad :)
-        } while (n == -1);
-    }
+        n = read(1, &k, 1);
+        // todo this might be bad :)
+    } while (n == -1);
 
-    stuffed = 0;
     return k;
 }
 

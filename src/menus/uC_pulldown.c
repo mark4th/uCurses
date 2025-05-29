@@ -8,6 +8,7 @@
 #include "uC_menus.h"
 #include "uC_utf8.h"
 #include "uC_utils.h"
+#include "uC_borders.h"
 
 // -----------------------------------------------------------------------
 // find address of pulldown structure with specified name
@@ -92,13 +93,13 @@ int32_t bar_create_pd_win(uC_screen_t *scr, pulldown_t *pd)
         win->flags = WIN_BOXED | WIN_LOCKED;
         win->blank = 0x20;
 
-        win->attr_grp.bdr_attrs.bytes[ATTR] = (FG_GRAY | BG_GRAY | BOLD);
-    win->attr_grp.bdr_attrs.bytes[FG] = 11;
-    win->attr_grp.bdr_attrs.bytes[BG] = 4;
-    // win->attr_grp.bdr_attrs.bytes[FG] = pd->attr_grp.attrs.bytes[FG];
-    // win->attr_grp.bdr_attrs.bytes[BG] = pd->attr_grp.attrs.bytes[BG];
+        win->bdr_attrs.bytes[ATTR] = (FG_GRAY | BG_GRAY | BOLD);
+    win->bdr_attrs.bytes[FG] = 11;
+    win->bdr_attrs.bytes[BG] = 4;
+    // win->bdr_attrs.bytes[FG] = pd->attrs.bytes[FG];
+    // win->bdr_attrs.bytes[BG] = pd->attrs.bytes[BG];
 
-        win->bdr_type = BDR_CURVED;
+        win->border_type = BDR_CURVED;
 
         win->screen = scr;
         pd->window  = win;
@@ -131,9 +132,9 @@ int32_t new_pulldown(uC_screen_t *scr, char *name)
 
             bar->xco += uC_utf8_strlen(name) + 2;
 
-            pd->attr_grp.attrs.chunk    = ATTRS_NORMAL;
-            pd->attr_grp.selected.chunk = ATTRS_SELECTED;
-            pd->attr_grp.disabled.chunk = ATTRS_DISABLED;
+            pd->attrs.chunk          = uC_ATTRS_NORMAL;
+            pd->selected_attrs.chunk = uC_ATTRS_SELECTED;
+            pd->disabled_attrs.chunk = uC_ATTRS_DISABLED;
 
             result = 0;
         }

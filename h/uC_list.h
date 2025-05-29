@@ -36,7 +36,9 @@ API bool uC_list_push_head(uC_list_t *list, void *payload);
 API bool uC_list_push_tail(uC_list_t *list, void* payload);
 API void *uC_list_pop_head(uC_list_t *list);
 API void *uC_list_pop_tail(uC_list_t *list);
-API void *uC_list_scan(uC_list_t *list);
+API bool uC_list_insert_before(uC_list_node_t *n1, void *payload);
+
+API uC_list_node_t *uC_list_scan(uC_list_t *list, uC_list_node_t *n1);
 
 // -----------------------------------------------------------------------
 

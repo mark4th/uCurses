@@ -64,11 +64,15 @@ static bool try_path(int i, const char *env_term)
     struct stat st;
 
     len = strlen(paths[i]);
-    strncpy(path, paths[i], len);
+    strncpy(path, paths[i], MAX_PATH);
     path[len++] = env_term[0];
     path[len] = '/';
-    len = strlen(env_term);
-    strncat(path, env_term, len);
+
+    if (strlen(path) + strlen(env_term) > MAX_PATH)
+    {
+        return false;
+    }
+    strcat(path, env_term);
 
     stat(path, &st);
     ti_file->ti_size = st.st_size;

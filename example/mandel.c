@@ -11,6 +11,7 @@
 #include "uC_braille.h"
 #include "uC_win_printf.h"
 #include "uC_braille.h"
+#include "uC_status.h"
 
 #include "demo.h"
 
@@ -20,7 +21,13 @@
 
 extern uC_screen_t *active_screen;
 
+uC_window_t *status_win;
+uC_screen_t *scr;
+uC_window_t *win;
+
 // -----------------------------------------------------------------------
+
+char status[33];
 
 double MinRe = -3.0;
 double MaxRe =  4.0;
@@ -204,39 +211,24 @@ static void mandel(uC_window_t *win, double x_off, double y_off, double z_off)
 void mandel_demo(void)
 {
     int i;
-    uC_screen_t *scr;
-    uC_window_t *win;
-    uC_list_node_t *n;
+    uint8_t k;
 
     double x_off = 2.5;
     double y_off = -2;
     double z_off = 1.0;
 
     double scale_factor = 0;
-    double sf = .0002;
+    double sf           = .0002;
 
-    uint8_t k;
-
-    char status[MAX_STATUS];
-
-    uC_scr_close(active_screen);
-    uC_json_create_ui("dots.json", menu_address_cb);
-    make_palette();
-    uC_alloc_status();
-    uC_bar_clr_status();
-    uC_menu_init();
-
-    scr = active_screen;
-    n   = scr->windows.head;
-    win = n->payload;
+    uC_clr_status(status_win);
 
     do
     {
-        snprintf(status, MAX_STATUS,
-             "X:%1.9f Y:%1.9f Z:%2.2f",
+        snprintf(status, 31,
+             "X:%1.5f  Y:%1.5f  Z:%2.2f",
               x_off, y_off, scale_factor);
 
-        uC_bar_set_status(status);
+        uC_set_status(status_win, status);
 
         mandel(win, x_off, y_off, z_off);
 
@@ -261,10 +253,80 @@ void mandel_demo(void)
             z_off = 1 / pow(2, scale_factor);
         }
     } while((k != 0x1b));
+}
+
+// -----------------------------------------------------------------------
+
+static void exit_prog(void)
+{
+    uC_set_key(0x1b);
+}
+
+// -----------------------------------------------------------------------
+
+static uC_switch_t menu_vectors[] =
+{
+    { 0x8d9c616c, exit_prog }
+};
+
+#define VCOUNT sizeof(menu_vectors) / sizeof(menu_vectors[0])
+
+// -----------------------------------------------------------------------
+
+opt_t menu_address_cb(int32_t hash)
+{
+    int16_t i;
+    uC_switch_t *s = menu_vectors;
+
+    for(i = 0; i < VCOUNT; i++)
+    {
+        if(hash == s->option)
+        {
+            return s->vector;
+        }
+        s++;
+    }
+
+    return NULL;
+}
+
+// -----------------------------------------------------------------------
+
+int main(void)
+{
+    uC_list_node_t *n;
+
+    uCurses_init();
+    uC_json_file_create_ui("json/dots.json", menu_address_cb);
+    uC_menu_init();
+
+    scr = active_screen;
+    n   = scr->windows.head;
+    win = n->payload;
+
+    make_palette();
+
+    status_win = uC_add_status(scr, 32, 55, 0);
+    uC_win_printf(status_win, "%fs%bs%0", 9, 3);
+
+    uC_set_status(status_win, status);
+    uC_clr_status(status_win);
+
+    mandel_demo();
 
     uC_scr_close(active_screen);
-    main_screen();
+
+    uC_console_reset_attrs();
+    uC_clear();
+    uC_cup(10, 0);
+
+    uCurses_deInit();
+
+    printf("Au revoir!\n");
+
+    return 0;
 }
+
 
 // =======================================================================
 

@@ -4,18 +4,25 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "uCurses.h"
-#include "uC_menus.h"
-#include "uC_utf8.h"
-#include "uC_utils.h"
-#include "uC_keys.h"
-#include "uC_win_printf.h"
 
 #include "demo.h"
 
 // -----------------------------------------------------------------------
 
 #define SLEEP 15000000
+
+// -----------------------------------------------------------------------
+
+char *window1_name = "window 1";
+char *window2_name = "window 2";
+
+uC_window_t *win1;
+uC_window_t *win2;
+uC_screen_t *scr;
+
+uC_window_t *status_win;
+
+char status[33];
 
 // -----------------------------------------------------------------------
 // global variables considered harmful unless you restrict yourself
@@ -104,6 +111,41 @@ char *chinese[] =
 
 // -----------------------------------------------------------------------
 
+static void exit_prog(void)
+{
+    uC_set_key(0x1b);
+}
+
+// -----------------------------------------------------------------------
+
+static uC_switch_t menu_vectors[] =
+{
+    { 0x8d9c616c, exit_prog }
+};
+
+#define VCOUNT sizeof(menu_vectors) / sizeof(menu_vectors[0])
+
+// -----------------------------------------------------------------------
+
+opt_t menu_address_cb(int32_t hash)
+{
+    int16_t i;
+    uC_switch_t *s = menu_vectors;
+
+    for(i = 0; i < VCOUNT; i++)
+    {
+        if(hash == s->option)
+        {
+            return s->vector;
+        }
+        s++;
+    }
+
+    return NULL;
+}
+
+// -----------------------------------------------------------------------
+
 void print_lorem(uC_window_t *win)
 {
     int16_t len;
@@ -163,13 +205,13 @@ static void print_chinese(uC_window_t *win)
 // -----------------------------------------------------------------------
 // furthest right and down a window can go and not move off screen
 
-#define X_MAX(win) (scr->width  - win->width  - 2)
-#define Y_MAX(win) (scr->height - win->height - 2)
+#define X_MAX(win) (active_screen->width  - win->width  - 2)
+#define Y_MAX(win) (active_screen->height - win->height - 2)
 
 // -----------------------------------------------------------------------
 // switch which window is on top and which is behind
 
-static void flip_flop(uC_window_t *win1, uC_window_t *win2)
+static void flip_flop(void)
 {
     (0 == first)
         ? uC_win_pop(win2)
@@ -180,7 +222,7 @@ static void flip_flop(uC_window_t *win1, uC_window_t *win2)
 
 // -----------------------------------------------------------------------
 
-static void do_run_demo(uC_screen_t *scr, uC_window_t *win1, uC_window_t *win2)
+static void do_win_demo(void)
 {
     // write text into each window
     print_lorem(win1);
@@ -189,8 +231,6 @@ static void do_run_demo(uC_screen_t *scr, uC_window_t *win1, uC_window_t *win2)
     // move each window and refrseh the screen display
     uC_win_set_pos(win1, x1, y1);
     uC_win_set_pos(win2, x2, y2);
-
-    uC_scr_draw_screen(scr);
 
     // add respective increments to x1, y1, x2, y2
     x1 += x1i;   y1 += y1i;
@@ -212,7 +252,7 @@ static void do_run_demo(uC_screen_t *scr, uC_window_t *win1, uC_window_t *win2)
     {
         if ((x1 == X_MAX(win1)) || (x1 == 2))
         {
-            flip_flop(win1, win2);
+            flip_flop();
 
             y1i = x1i;    x1i = 0;
             y2i = x2i;    x2i = 0;
@@ -241,13 +281,16 @@ static void do_run_demo(uC_screen_t *scr, uC_window_t *win1, uC_window_t *win2)
 // rotates two windows around the screen in opposite directions
 // can this even be done wtih ncurses?
 
-void run_demo1(uC_screen_t *scr, uC_window_t *win1, uC_window_t *win2)
+void win_demo(void)
 {
     int8_t pause = 0;
     int8_t c;
     uint32_t frames = 0;
 
-    char status[MAX_STATUS];
+    win1->display_name = window1_name;
+    win2->display_name = window2_name;
+
+    char status[33];
 
     x1 = 2;   y1 = 2;
     x2 = X_MAX(win2);
@@ -278,10 +321,10 @@ void run_demo1(uC_screen_t *scr, uC_window_t *win1, uC_window_t *win2)
         {
             frames++;
 
-            snprintf(status, MAX_STATUS, "Frame: %d", frames);
-            uC_bar_set_status(status);
-
-            do_run_demo(scr, win1, win2);
+            snprintf(status, 31, "Frame: %d", frames);
+            do_win_demo();
+            uC_set_status(status_win, status);
+            uC_scr_draw_screen(scr);
         }
 
         // if we did not do this the display would look like itsxz4
@@ -289,5 +332,43 @@ void run_demo1(uC_screen_t *scr, uC_window_t *win1, uC_window_t *win2)
         uC_clock_sleep(SLEEP);
     }
 }
+
+// -----------------------------------------------------------------------
+
+int main(void)
+{
+    uC_list_node_t *n;
+    uC_window_t *win;
+
+    uCurses_init();
+    uC_json_file_create_ui("json/window_demo.json", menu_address_cb);
+    uC_menu_init();
+
+    scr = active_screen;
+
+    status_win = uC_add_status(scr, 32, 55, 0);
+    uC_win_printf(status_win, "%fs%bs%0", 9, 3);
+
+    n = scr->windows.head;
+    win1 = n->payload;
+    n = n->next;
+    win2 = n->payload;
+
+    uC_set_status(status_win, status);
+    uC_clr_status(status_win);
+
+    win_demo();
+
+    uC_scr_close(active_screen);
+    uC_console_reset_attrs();
+    uC_clear();
+    uC_cup(10, 0);
+    uCurses_deInit();
+
+    printf("Au revoir!\n");
+
+    return 0;
+}
+
 
 // =======================================================================

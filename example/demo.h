@@ -1,9 +1,23 @@
 
 #include "uCurses.h"
-#include "uC_screen.h"
+#include "uC_menus.h"
+#include "uC_utf8.h"
+#include "uC_utils.h"
+#include "uC_keys.h"
+#include "uC_win_printf.h"
+#include "uC_status.h"
+#include "uC_terminfo.h"
+#include "uC_attribs.h"
 #include "uC_switch.h"
+#include "uC_json.h"
+#include "uC_braille.h"
 
 #define NUM_OBJECTS 5
+
+// -----------------------------------------------------------------------
+
+extern char status[33];
+extern uC_screen_t *active_screen;
 
 // -----------------------------------------------------------------------
 // typedefs...
@@ -35,11 +49,5 @@ typedef struct
 // -----------------------------------------------------------------------
 
 opt_t menu_address_cb(int32_t hash);
-void run_demo1(uC_screen_t *scr, uC_window_t *win1, uC_window_t *win2);
-void do_dots(void);
-void main_screen(void);
-void mandel_demo(void);
-void lion(void);
-void raycast(void);
 
 // =======================================================================

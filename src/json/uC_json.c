@@ -147,7 +147,7 @@ __attribute__((noreturn)) void json_error(const char *s)
         json_state->line_no,
         json_vars->line_no,
         json_vars->line_index, s);
-    xabort(msg);
+    uC_abort(msg);
 }
 
 // -----------------------------------------------------------------------

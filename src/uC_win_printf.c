@@ -54,7 +54,7 @@ static void rf(void)
         p++;
         return;
     }
-    xabort("Expected f or b on win_printf %r");
+    uC_abort("Expected f or b on win_printf %r");
 }
 
 // -----------------------------------------------------------------------
@@ -73,7 +73,7 @@ static void f(void)
         p++;
         return;
     }
-    xabort("Expected c or s on win_printf %f");
+    uC_abort("Expected c or s on win_printf %f");
 }
 
 // -----------------------------------------------------------------------
@@ -93,7 +93,7 @@ static void b(void)
         p++;
         return;
     }
-    xabort("Expected c or s on win_printf %b");
+    uC_abort("Expected c or s on win_printf %b");
 }
 
 // -----------------------------------------------------------------------
@@ -200,7 +200,7 @@ static void c(void)
         case 'l' :   uC_win_crsr_lt(w); break;
         case 'r' :   uC_win_crsr_rt(w); break;
         default :
-            xabort("Expected u, d, l or r on win_printf %c");
+            uC_abort("Expected u, d, l or r on win_printf %c");
     }
     p++;
 }
@@ -234,7 +234,7 @@ static void bold(void)
         p++;
         return;
     }
-    xabort("Expected + or - win_printf %%B");
+    uC_abort("Expected + or - win_printf %%B");
 }
 
 // -----------------------------------------------------------------------
@@ -249,7 +249,7 @@ static void uline(void)
         p++;
         return;
     }
-    xabort("Expected + or - win_printf %U");
+    uC_abort("Expected + or - win_printf %U");
 }
 
 // -----------------------------------------------------------------------
@@ -264,7 +264,7 @@ static void rev(void)
         p++;
         return;
     }
-    xabort("Expected + or - win_printf %R");
+    uC_abort("Expected + or - win_printf %R");
 }
 
 // -----------------------------------------------------------------------

@@ -14,6 +14,7 @@
 #include "uC_terminfo.h"
 #include "uC_utf8.h"
 #include "uC_utils.h"
+#include "uC_list.h"
 
 // -----------------------------------------------------------------------
 
@@ -93,7 +94,7 @@ API void uC_init_terminal(void)
 
 // -----------------------------------------------------------------------
 
-API __attribute__((noreturn)) void xabort(char *msg)
+API __attribute__((noreturn)) void uC_abort(char *msg)
 {
     fprintf(stderr, "%s\n", msg);
     uCurses_deInit();
@@ -101,6 +102,8 @@ API __attribute__((noreturn)) void xabort(char *msg)
 }
 
 // -----------------------------------------------------------------------
+
+// todo: if its part of the API it should have a uC_ prefix
 
 API void get_console_size(uint16_t *width, uint16_t *height)
 {

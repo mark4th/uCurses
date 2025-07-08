@@ -17,7 +17,7 @@
 API int32_t fnv_hash(char *s);
 void uC_assert(bool f, char *file, int line, char *msg);
 
-__attribute__((noreturn)) void xabort(char *msg);
+__attribute__((noreturn)) void uC_abort(char *msg);
 
 // -----------------------------------------------------------------------
 

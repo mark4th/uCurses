@@ -4,7 +4,6 @@
 #include <fcntl.h>
 #include <inttypes.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
@@ -18,6 +17,7 @@
 #include "uC_utils.h"
 #include "uC_screen.h"
 #include "uC_json.h"
+#include "uC_alloc.h"
 
 extern uC_screen_t *active_screen;
 
@@ -46,9 +46,9 @@ extern uC_screen_t *active_screen;
 // STATE_KEY.   If not... oopts!
 //
 // The handler for STATE_KEY expect to see one of several known tokens
-// which will either be a 'key' token or an 'object' token.  Only recobnized
-// tokens are valid, unrecognized tokens will cause the state machine to
-// puke.
+// which will either be a 'key' token or an 'object' token.  Only
+// recogized tokens are valid, unrecognized tokens will cause the state
+// machine to puke.
 //
 // All tokens are recognized by their 32 bit fnv-1a hash value, no string
 // compare functions are called.
@@ -98,7 +98,7 @@ extern uC_screen_t *active_screen;
 //
 // I have not given a way to define arrays in this parser and I have also
 // allowed for values to be expressed as a percentage.  For example you
-// can set a window within to a percentage of its parent screens width.
+// can set a window width to a percentage of its parent screens width.
 
 // -----------------------------------------------------------------------
 // should i make the state struct a child of the vars struct?
@@ -117,7 +117,7 @@ const int32_t json_syntax[] =
 };
 
 // -----------------------------------------------------------------------
-// push current state onto end of state stack
+// push current state onto state stack
 
 static void json_push(json_state_t *j)
 {
@@ -132,7 +132,7 @@ static void json_push(json_state_t *j)
 
 void json_pop(void)
 {
-    free(json_state);
+    uC_free(uC_MEM_ZONE_DEFAULT, json_state);
 
     json_state = uC_list_pop_head(&json_vars->json_stack);
 }
@@ -151,14 +151,16 @@ __attribute__((noreturn)) void json_error(const char *s)
 }
 
 // -----------------------------------------------------------------------
-// allocate a new structure.  this can be a state structure or a target c
-// structure.
+// allocate a new structure.
 
-void *json_alloc(uint32_t size)
+void *json_alloc(uC_mem_zone_t zone, uint32_t size)
 {
-    void *v = calloc(1, size);
+    void *v = uC_alloc(zone, size);
 
-    if (v != NULL)  { return v; }
+    if (v != NULL)
+    {
+        return v;
+    }
 
     json_error("Out of Memory!");
 }
@@ -170,6 +172,7 @@ static void json_state_l_brace(void)
 {
     // assert that the hash value of the most recently parsed json token
     // is equal to the expected left brace hash value
+
     if (json_vars->json_hash == json_syntax[JSON_L_BRACE])
     {
         json_state->state = STATE_KEY;
@@ -189,13 +192,13 @@ void json_new_state_struct(int struct_size, int32_t struct_type)
     void *structure;
 
     // allocate a structure for the new state
-    json_state_t *j = json_alloc(sizeof(*j));
+    json_state_t *j = json_alloc(uC_MEM_ZONE_DEFAULT, sizeof(*j));
 
     // if there is supposed to be one then allocate a buffer for C
     // structure for subsequent keys to populate
 
     structure = (struct_size != 0)
-        ? json_alloc(struct_size)
+        ? json_alloc(uC_MEM_ZONE_UI, struct_size)
         : NULL;
 
     j->parent      = json_state;
@@ -204,6 +207,7 @@ void json_new_state_struct(int struct_size, int32_t struct_type)
     j->line_no     = json_vars->line_no;
 
     // push previous state and make new state the current state
+
     json_push(j);
 }
 
@@ -294,15 +298,18 @@ static void run_state_machine(void)
 
 static void json_state_machine(void)
 {
-    json_state = json_alloc(sizeof(*json_state));
+    json_state = json_alloc(uC_MEM_ZONE_DEFAULT, sizeof(*json_state));
 
     json_state->struct_type = -1;
     json_state->state       = JSON_L_BRACE;
 
     run_state_machine();
 
+// this seems wrong to me now, why am i popping and freeing something
+// isnt the stack already empty?
+
     json_pop();
-    free(json_state);
+    uC_free(uC_MEM_ZONE_DEFAULT, json_state);
 }
 
 // -----------------------------------------------------------------------
@@ -361,7 +368,7 @@ static void parse_json_data(void)
 
 API void uC_json_file_create_ui(char *path, fp_finder_t fp)
 {
-    json_vars = calloc(1, sizeof(*json_vars));
+    json_vars = uC_alloc(uC_MEM_ZONE_DEFAULT, sizeof(*json_vars));
 
     get_console_size(&json_vars->console_width,
         &json_vars->console_height);
@@ -377,7 +384,7 @@ API void uC_json_file_create_ui(char *path, fp_finder_t fp)
 
     munmap(json_vars->json_data, json_vars->json_len);
 
-    free(json_vars);
+    uC_free(uC_MEM_ZONE_DEFAULT, json_vars);
 }
 
 // -----------------------------------------------------------------------
@@ -385,14 +392,15 @@ API void uC_json_file_create_ui(char *path, fp_finder_t fp)
 
 API void uC_json_mem_create_ui(char *json_data, int len, fp_finder_t fp)
 {
-    json_vars = calloc(1, sizeof(*json_vars));
+    json_vars = uC_alloc(uC_MEM_ZONE_DEFAULT, sizeof(*json_vars));
 
     json_vars->json_data = json_data;
     json_vars->json_len  = len;
     json_vars->fp_finder = fp;
 
     parse_json_data();
-    free(json_vars);
+
+    uC_free(uC_MEM_ZONE_DEFAULT, json_vars);
 }
 
 // =======================================================================

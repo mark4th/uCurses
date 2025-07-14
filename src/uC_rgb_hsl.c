@@ -1,7 +1,7 @@
 // rgb_hsl.c
 // -----------------------------------------------------------------------
 
-// used to calculate contrasting RGB colors for a given set of RGB colors
+// used to caculate contrasting RGB colors for a given set of RGB colors
 // not perfect, sometimes does not produce good contrasting colors
 
 // -----------------------------------------------------------------------

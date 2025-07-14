@@ -12,6 +12,7 @@
 #include "uC_win_printf.h"
 #include "uC_braille.h"
 #include "uC_status.h"
+#include "uC_alloc.h"
 
 #include "demo.h"
 
@@ -128,7 +129,8 @@ uint8_t peek(rgb* buffer, rgb *fg, int x, int y, int width)
 
 // -----------------------------------------------------------------------
 
-static void draw_braille(uC_window_t *win, rgb *buffer, int width, int height)
+static void draw_braille(uC_window_t *win, rgb *buffer,
+    int width, int height)
 {
     int x, y;
     uint8_t c = 0;
@@ -151,7 +153,8 @@ static void draw_braille(uC_window_t *win, rgb *buffer, int width, int height)
 
 // -----------------------------------------------------------------------
 
-static void mandel(uC_window_t *win, double x_off, double y_off, double z_off)
+static void mandel(uC_window_t *win, double x_off, double y_off,
+    double z_off)
 {
     int width  = win->width  * 2;
     int height = win->height * 4;
@@ -164,7 +167,8 @@ static void mandel(uC_window_t *win, double x_off, double y_off, double z_off)
 
     MaxIm = MinIm + (MaxRe - MinRe) * height / width;
 
-    rgb *buffer = calloc(width * height, sizeof(rgb));
+    rgb *buffer = uC_alloc(uC_MEM_ZONE_DEFAULT,
+        width * height * sizeof(rgb));
 
     int r, c, n;
 
@@ -203,7 +207,7 @@ static void mandel(uC_window_t *win, double x_off, double y_off, double z_off)
     }
 
     draw_braille(win, buffer, width, height);
-    free(buffer);
+    uC_free(uC_MEM_ZONE_DEFAULT, buffer);
 }
 
 // -----------------------------------------------------------------------

@@ -29,11 +29,11 @@ enum
 
 typedef enum
 {
-    WIN_BOXED  = 1 << 0,       // has a border
-    WIN_LOCKED = 1 << 1,       // scroll locked
-    WIN_FILLED = 1 << 2,       // backfilled with SOLID character
-    WIN_HIDDEN = 1 << 3,
-    WIN_FOCUS  = 1 << 4
+    WIN_BOXED    = 1 << 0,  // has a border
+    WIN_LOCKED   = 1 << 1,  // scroll locked
+    WIN_FILLED   = 1 << 2,  // backfilled with SOLID character
+    WIN_HIDDEN   = 1 << 3,  // window is not drawn
+    WIN_FOCUS    = 1 << 4,  // window has focus
 } __attribute__((packed)) win_flags_t;
 
 // -----------------------------------------------------------------------
@@ -45,12 +45,15 @@ typedef struct
     win_flags_t flags;
     int32_t name;           // fnv-1a of window name
     int32_t blank;          // window fill character for backdrop windows
+
     int16_t width;          // window dimensions
     int16_t height;
     int16_t xco;            // window x/y coordinat within screen
     int16_t yco;
+
     int16_t cx;             // cursor position within window
     int16_t cy;
+
     uint16_t border_type;   // cant include borders.h
 
     // a window name is only drawn if the window has a border and will
@@ -58,11 +61,6 @@ typedef struct
     // that border
 
     char *display_name;
-
-    // if a window has any widget view groups attached to it they will be
-    // drawn when the window is drawn
-
-    uC_list_t widget_view_groups;
 
     uC_attribs_t attrs;          // attribs for stuff drawn in window
     uC_attribs_t bdr_attrs;      // normal attribs for window border

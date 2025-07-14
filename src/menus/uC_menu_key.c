@@ -16,11 +16,14 @@ extern uC_screen_t *active_screen;
 
 static void redraw_pulldown(menu_bar_t *bar)
 {
+    int32_t f;
+
     pulldown_t *pd = bar->items[bar->which];
 
     if (pd->count != 0)
     {
-        if (bar_create_pd_win(active_screen, pd) != 0)
+        f = bar_create_pd_win(active_screen, pd);
+        if (f != 0)
         {
             bar_populdate_pd(pd);
         }

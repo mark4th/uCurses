@@ -16,6 +16,7 @@
 #include "uC_terminfo.h"
 #include "uC_parse.h"
 #include "uC_utils.h"
+#include "uC_alloc.h"
 
 // -----------------------------------------------------------------------
 
@@ -48,7 +49,6 @@ char *paths[] =
 void free_info(void)
 {
     munmap(ti_file->ti_map, ti_file->ti_size);
-    free(ti_file);
 }
 
 // -----------------------------------------------------------------------
@@ -96,7 +96,7 @@ static void map_tifile(void)
     int i;
     const char *env_term;
 
-    ti_file = calloc(1, sizeof(*ti_file));
+    ti_file = uC_alloc(uC_MEM_ZONE_UI, sizeof(*ti_file));
     uC_ASSERT(ti_file != NULL, "Out of Memory");
 
     env_term = getenv("TERM");
@@ -115,7 +115,7 @@ static void map_tifile(void)
         }
     }
 
-    free(ti_file);
+    uC_free(uC_MEM_ZONE_UI, ti_file);
     printf("No Terminfo File found for %s\n", env_term);
     exit(1);
 }

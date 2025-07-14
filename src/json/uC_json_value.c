@@ -52,7 +52,7 @@ static void value_fgbg(void)
         return;
     }
 
-    json_error("Value out of range");
+    json_error("FG/BG Value out of range");
 }
 
 // -----------------------------------------------------------------------
@@ -83,7 +83,7 @@ static void value_gray_fgbg(void)
         return;
     }
 
-    json_error("Value out of range");
+    json_error("Gray FG/BG Value out of range");
 }
 
 // -----------------------------------------------------------------------
@@ -150,7 +150,7 @@ static void value_rgb(void)
         return;
     }
 
-    json_error("Value out of range");
+    json_error("RGB FG/BG Value out of range");
 }
 
 // -----------------------------------------------------------------------
@@ -263,7 +263,7 @@ static void val_m_item_flag(menu_item_t *item)
         return;
     }
 
-    json_error("Invalid flag type");
+    json_error("Invalid menu-item flag type");
 }
 
 // -----------------------------------------------------------------------
@@ -275,7 +275,7 @@ static void val_pd_flag(pulldown_t *pd)
         pd->flags = json_vars->key_value;
     }
 
-    json_error("Invalid flag type");
+    json_error("Invalid pulldown flag type");
 }
 
 // -----------------------------------------------------------------------
@@ -431,7 +431,7 @@ static int32_t constant_val[] =
 };
 
 // -----------------------------------------------------------------------
-// allowing hex or deciamal. but hex must be stated with lower case chars
+// allows hex or deciamal but hex must be stated with lower case chars
 
 static void parse_number(void)
 {

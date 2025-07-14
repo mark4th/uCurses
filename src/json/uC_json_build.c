@@ -33,8 +33,6 @@ static void bounds_check(uC_window_t *win)
         return;
     }
 
-    // todo: shrink window to fit?
-
     json_error("Window outside bounds of screen");
 }
 
@@ -68,6 +66,7 @@ static void fix_win(uC_screen_t *scr, uC_window_t *win)
 static void fix_windows(uC_screen_t *scr)
 {
     uC_window_t *win;
+    uC_list_node_t *n1;
 
     if (scr->backdrop != NULL)
     {
@@ -76,17 +75,17 @@ static void fix_windows(uC_screen_t *scr)
         uC_win_clear(scr->backdrop);
     }
 
-    uC_list_node_t *n = scr->windows.head;
+    n1 = uC_list_scan(&scr->windows, NULL);
 
-    while (n != NULL)
+    while (n1 != NULL)
     {
-        win = n->payload;
+        win = n1->payload;
         fix_win(scr, win);
         bounds_check(win);
         win_alloc(win);
         win->blank = 0x20;
         uC_win_clear(win);
-        n = n->next;
+        n1 = uC_list_scan(NULL, n1);
     }
 }
 

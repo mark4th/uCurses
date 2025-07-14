@@ -5,7 +5,6 @@
 
 #include <inttypes.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <wchar.h>
 
@@ -14,6 +13,7 @@
 #include "uC_screen.h"
 #include "uC_attribs.h"
 #include "uC_borders.h"
+#include "uC_alloc.h"
 
 // -----------------------------------------------------------------------
 // calculate address of line within window buffer
@@ -31,10 +31,12 @@ int16_t win_alloc(uC_window_t *win)
 {
     int16_t rv = -1;        // assume failure
     cell_t *p;
+    size_t size;
 
     if (win != NULL)
     {
-        p = calloc((win->width * win->height), sizeof(cell_t));
+        size = (win->width * win->height) * sizeof(cell_t);
+        p = uC_alloc(uC_MEM_ZONE_UI, size);
 
         if (p != NULL)
         {
@@ -56,9 +58,9 @@ API void uC_win_close(uC_window_t *win)
         uC_scr_win_detach(win);
         if (win->buffer != NULL)
         {
-            free(win->buffer);
+            uC_free(uC_MEM_ZONE_UI, win->buffer);
         }
-        free(win);
+        uC_free(uC_MEM_ZONE_UI, win);
     }
 }
 
@@ -67,7 +69,7 @@ API void uC_win_close(uC_window_t *win)
 
 API uC_window_t *uC_win_open(int16_t width, int16_t height)
 {
-    uC_window_t *win = calloc(1, sizeof(*win));
+    uC_window_t *win = uC_alloc(uC_MEM_ZONE_UI, sizeof(*win));
 
     if (win != NULL)
     {
@@ -85,7 +87,7 @@ API uC_window_t *uC_win_open(int16_t width, int16_t height)
         }
         else
         {
-            free(win);
+            uC_free(uC_MEM_ZONE_UI, win);
             win = NULL;
         }
     }
@@ -110,16 +112,17 @@ API void uC_win_pop(uC_window_t *win)
 
 API void uC_win_push(uC_window_t *win)
 {
+    bool f;
+
     if (win != NULL)
     {
         uC_screen_t *scr = win->screen;
         uC_scr_win_detach(win);
 
-        if (uC_list_push_head(&scr->windows, win) != true)
+        f = uC_list_push_head(&scr->windows, win);
+        if (f != true)
         {
-            // oopts
-            // internal error?
-            // planetary alignment issue?
+            // guru meditation
         }
     }
 }
@@ -660,7 +663,7 @@ API void uC_win_clr_bdr_rev(uC_window_t *win)
 }
 
 // -----------------------------------------------------------------------
-// would anyone ever actually want a winder border underlined?
+// would anyone ever actually want a window border underlined?
 
 // API void uC_win_set_bdr_ul(uC_window_t *win)
 // {

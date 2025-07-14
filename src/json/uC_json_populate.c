@@ -2,18 +2,18 @@
 // -----------------------------------------------------------------------
 
 #include <inttypes.h>
-#include <stdlib.h>
 
 #include "uCurses.h"
 #include "uC_json.h"
 #include "uC_window.h"
 #include "uC_screen.h"
+#include "uC_alloc.h"
 
 extern json_state_t *json_state;
 
 // -----------------------------------------------------------------------
 // this series of IF statements produces significantly smaller code than
-// a switch statement does.   C sucks
+// a switch statement does.   C sucks (but so do c switch statements)
 
 static void populate_attribs(void *pstruct, int32_t ptype)
 {
@@ -33,7 +33,7 @@ static void populate_attribs(void *pstruct, int32_t ptype)
             *(int64_t *)json_state->structure;
     }
 
-    free(json_state->structure);
+    uC_free(uC_MEM_ZONE_UI, json_state->structure);
 }
 
 // -----------------------------------------------------------------------
@@ -43,7 +43,7 @@ static void populate_b_attribs(uC_window_t *pstruct)
     pstruct->bdr_attrs.chunk =
         *(int64_t *)json_state->structure;
 
-    free(json_state->structure);
+    uC_free(uC_MEM_ZONE_UI, json_state->structure);
 }
 
 // -----------------------------------------------------------------------
@@ -53,7 +53,7 @@ static void populate_f_attribs(uC_window_t *pstruct)
     pstruct->focus_attrs.chunk =
         *(int64_t *)json_state->structure;
 
-    free(json_state->structure);
+    uC_free(uC_MEM_ZONE_UI, json_state->structure);
 }
 
 // -----------------------------------------------------------------------
@@ -71,7 +71,7 @@ static void populate_s_attribs(void *pstruct, int32_t ptype)
             *(int64_t *)json_state->structure;
     }
 
-    free(json_state->structure);
+    uC_free(uC_MEM_ZONE_UI, json_state->structure);
 }
 
 // -----------------------------------------------------------------------
@@ -89,7 +89,7 @@ static void populate_d_attribs(void *pstruct, int32_t ptype)
             *(int64_t *)json_state->structure;
     }
 
-    free(json_state->structure);
+    uC_free(uC_MEM_ZONE_UI, json_state->structure);
 }
 
 // -----------------------------------------------------------------------

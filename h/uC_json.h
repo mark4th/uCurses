@@ -133,7 +133,7 @@ typedef struct
 __attribute__((noreturn)) void json_error(const char *s);
 
 void json_pop(void);
-void *json_alloc(uint32_t size);
+void *json_alloc(uC_mem_zone_t zone, uint32_t size);
 void json_new_state_struct(int struct_size, int32_t struct_type);
 void json_state_r_brace(void);
 void json_build_ui(void);

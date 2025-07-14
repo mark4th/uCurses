@@ -5,7 +5,6 @@
 
 #include <inttypes.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <wchar.h>
 
@@ -15,6 +14,7 @@
 #include "uC_borders.h"
 #include "uC_terminfo.h"
 #include "uC_utf8.h"
+#include "uC_alloc.h"
 
 // -----------------------------------------------------------------------
 
@@ -28,16 +28,19 @@ extern uC_attribs_t old_attrs;
 
 int16_t scr_alloc(uC_screen_t *scr)
 {
+    size_t size;
     cell_t *p1, *p2;
 
+    size = (scr->width * scr->height) * sizeof(*p1);
+
     // allocate buffers 1 and 2 for screen
-    p1 = calloc((scr->width * scr->height), sizeof(*p1));
-    p2 = calloc((scr->width * scr->height), sizeof(*p2));
+    p1 = uC_alloc(uC_MEM_ZONE_UI, size);
+    p2 = uC_alloc(uC_MEM_ZONE_UI, size);
 
     if ((p1 == NULL) || (p2 == NULL))
     {
-        free(p1);           // calling free on which ever one of these
-        free(p2);           // returned as null performs no operation
+        uC_free(uC_MEM_ZONE_UI, p1);
+        uC_free(uC_MEM_ZONE_UI, p2);
         return -1;          // so is safe
     }
 
@@ -51,7 +54,9 @@ int16_t scr_alloc(uC_screen_t *scr)
 
 API uC_screen_t *uC_scr_open(int16_t width, int16_t height)
 {
-    uC_screen_t *scr = calloc(1, sizeof(*scr));
+    uC_screen_t *scr;
+
+    scr = uC_alloc(uC_MEM_ZONE_UI, sizeof(*scr));
 
     if (scr != NULL)
     {
@@ -62,7 +67,7 @@ API uC_screen_t *uC_scr_open(int16_t width, int16_t height)
 
         if (scr_alloc(scr) != 0)
         {
-            free(scr);
+            uC_free(uC_MEM_ZONE_UI, scr);
             scr = NULL;
         }
     }
@@ -79,8 +84,8 @@ API void uC_scr_close(uC_screen_t *scr)
 
     if (scr != NULL)
     {
-        free(scr->buffer1);
-        free(scr->buffer2);
+        uC_free(uC_MEM_ZONE_UI, scr->buffer1);
+        uC_free(uC_MEM_ZONE_UI, scr->buffer2);
 
         scr->buffer1 = NULL;
         scr->buffer2 = NULL;
@@ -105,10 +110,9 @@ API void uC_scr_close(uC_screen_t *scr)
         {
             win = uC_list_pop_head(&scr->status);
             uC_win_close(win);
-        }
-        while (win != NULL);
+        } while (win != NULL);
 
-        free(scr);
+        uC_free(uC_MEM_ZONE_UI, scr);
     }
 }
 

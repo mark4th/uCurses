@@ -3,6 +3,8 @@
 #include <inttypes.h>
 #include <stdio.h>
 
+#include "uC_alloc.h"
+
 #include "demo.h"
 
 uC_screen_t *scr;
@@ -323,7 +325,8 @@ static void draw_lion(void)
     uint16_t code;
     uint16_t *braile_data;
 
-    braile_data = calloc(win->width * win->height, 2);
+    braile_data = uC_alloc(uC_MEM_ZONE_DEFAULT,
+        win->width * win->height * 2);
 
     uC_braille_8(win, braile_data, lion_data, LION_WIDTH);
 
@@ -331,7 +334,7 @@ static void draw_lion(void)
 
     uC_draw_braille(win, braile_data);
 
-    free(braile_data);
+    uC_free(uC_MEM_ZONE_DEFAULT, braile_data);
 }
 
 // -----------------------------------------------------------------------

@@ -341,7 +341,7 @@ int main(void)
     uC_window_t *win;
 
     uCurses_init();
-    uC_json_file_create_ui("json/window_demo.json", menu_address_cb);
+    uC_json_file_create_ui("json/window.json", menu_address_cb);
     uC_menu_init();
 
     scr = active_screen;

@@ -12,7 +12,7 @@
 #include "uC_utils.h"
 
 // -----------------------------------------------------------------------
-// this file is a blatant MISRA C violation :
+// this file is a blatant MISRA C violation :)
 // -----------------------------------------------------------------------
 
 static va_list arg;
@@ -36,25 +36,105 @@ API void uC_win_puts(uC_window_t *win, char *p)
 }
 
 // -----------------------------------------------------------------------
-// %rf   set 24 bit rgb fg / bg
+// %up  scroll window up specified amount
 
-static void rf(void)
+static void up(void)
+{
+    int y = va_arg(arg, int);
+
+    if (*p == 'p')
+    {
+        while (y-- != 0)
+        {
+            uC_win_scroll_up(w);
+        }
+        p++;
+        return;
+    }
+    uC_abort("Expected p on win_printf %u");
+}
+
+// -----------------------------------------------------------------------
+// %dn   scroll window down specified amount
+
+static void dn(void)
+{
+    int y = va_arg(arg, int);
+
+    if (*p == 'n')
+    {
+        while (y-- != 0)
+        {
+            uC_win_scroll_dn(w);
+        }
+        p++;
+        return;
+    }
+    uC_abort("Expected n on win_printf %d");
+}
+
+// -----------------------------------------------------------------------
+// %lt   scroll window left specified amount
+
+static void lt(void)
+{
+    int x = va_arg(arg, int);
+
+    if (*p == 't')
+    {
+
+        while (x-- != 0)
+        {
+            uC_win_scroll_lt(w);
+        }
+        p++;
+        return;
+    }
+    uC_abort("Expected t on win_printf %l");
+}
+
+// -----------------------------------------------------------------------
+// %rt    scroll window right specified amount
+
+static void rt(void)
+{
+    int x = va_arg(arg, int);
+
+    if (*p == 't')
+    {
+        while (x-- != 0)
+        {
+            uC_win_scroll_rt(w);
+        }
+        p++;
+        return;
+    }
+    uC_abort("Expected t or f or b on win_printf %r");
+}
+
+// -----------------------------------------------------------------------
+// %rf or %rb  set 24 bit rgb fg / bg   or %rt above
+
+static void r(void)
 {
     int r, g, b;
 
+    r = va_arg(arg, int) & 0xff;
+    g = va_arg(arg, int) & 0xff;
+    b = va_arg(arg, int) & 0xff;
+
     if (*p == 'f' || *p == 'b')
     {
-        r = va_arg(arg, int) & 0xff;
-        g = va_arg(arg, int) & 0xff;
-        b = va_arg(arg, int) & 0xff;
-
         (*p == 'f')
             ? uC_win_set_rgb_fg(w, r, g, b)
             : uC_win_set_rgb_bg(w, r, g, b);
         p++;
         return;
     }
-    uC_abort("Expected f or b on win_printf %r");
+    else
+    {
+        rt();
+    }
 }
 
 // -----------------------------------------------------------------------
@@ -128,58 +208,6 @@ static void y(void)
 }
 
 // -----------------------------------------------------------------------
-// %u  scroll window up specified amount
-
-static void up(void)
-{
-    int y = va_arg(arg, int);
-
-    while (y-- != 0)
-    {
-        uC_win_scroll_up(w);
-    }
-}
-
-// -----------------------------------------------------------------------
-// %d   scroll window down specified amount
-
-static void dn(void)
-{
-    int y = va_arg(arg, int);
-
-    while (y-- != 0)
-    {
-        uC_win_scroll_dn(w);
-    }
-}
-
-// -----------------------------------------------------------------------
-// %l   scroll window left specified amount
-
-static void lt(void)
-{
-    int x = va_arg(arg, int);
-
-    while (x-- != 0)
-    {
-        uC_win_scroll_lt(w);
-    }
-}
-
-// -----------------------------------------------------------------------
-// %r    scroll window right specified amount
-
-static void rt(void)
-{
-    int x = va_arg(arg, int);
-
-    while (x-- != 0)
-    {
-        uC_win_scroll_rt(w);
-    }
-}
-
-// -----------------------------------------------------------------------
 // %8    draw UTF-8 codepoint
 
 static void utf8(void)
@@ -189,7 +217,7 @@ static void utf8(void)
 }
 
 // -----------------------------------------------------------------------
-// %cu  %cd %cl %cr    move cursor up, down, left or right in window
+// %cu %cd %cl %cr    move cursor up, down, left or right in window
 
 static void c(void)
 {
@@ -223,6 +251,7 @@ static void u_puts(void)
 }
 
 // -----------------------------------------------------------------------
+// %B+ or %B-   turn bold on or off
 
 static void bold(void)
 {
@@ -238,6 +267,7 @@ static void bold(void)
 }
 
 // -----------------------------------------------------------------------
+// %U+ or %U-   turn underline on or off
 
 static void uline(void)
 {
@@ -253,6 +283,7 @@ static void uline(void)
 }
 
 // -----------------------------------------------------------------------
+// %R+ or %R-   turn reverse video on / off
 
 static void rev(void)
 {
@@ -272,7 +303,7 @@ static void rev(void)
 
 static void e(void)
 {
-   uC_win_emit(w, 0x0d);
+     uC_win_emit(w, 0x0d);
 }
 
 // -----------------------------------------------------------------------
@@ -294,11 +325,11 @@ static void star(void)
 
 static uC_switch_t commands[] =
 {
-    { 'r', &rf   }, { 'f', &f     }, { 'b', &b      }, { '@', &xy },
-    { 'x', &x    }, { 'y', &y     }, { 'u', &up     }, { 'd', &dn },
-    { 'l', &lt   }, { 'r', &rt    }, { '0', &wclear }, { 'c', &c },
-    { 'B', &bold }, { 'U', &uline }, { 'R', rev     }, { 's', u_puts },
-    { '8', &utf8 }, { 'e', &e     }, { '*', star    }
+    { 'r', &r     }, { 'f', &f      },  { 'b', &b     }, { '@', &xy     },
+    { 'x', &x     }, { 'y', &y      },  { 'u', &up    }, { 'd', &dn     },
+    { 'l', &lt    }, { '0', &wclear },  { 'c', &c     }, { 'B', &bold   },
+    { 'U', &uline }, { 'R', rev     },  { 's', u_puts }, { '8', &utf8   },
+    { 'e', &e     }, { '*', star    }
 };
 
 #define COMMANDS sizeof(commands) / sizeof(commands[0])

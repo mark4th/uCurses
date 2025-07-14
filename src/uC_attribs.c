@@ -3,7 +3,6 @@
 
 #include <inttypes.h>
 #include <stdio.h>
-#include <stdlib.h>
 
 #include "uCurses.h"
 #include "uC_attribs.h"

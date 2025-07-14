@@ -32,7 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "demo.h"
 
 #include "uC_braille.h"
-
+#include "uC_alloc.h"
 
 extern uC_screen_t *active_screen;
 
@@ -345,7 +345,7 @@ void process_key(uint8_t keypress)
        x = posX - dirX * moveSpeed;
        y = posY - dirY * moveSpeed;
 
-        if(worldMap[(int)x][(int)y] == 0)
+        if (worldMap[(int)x][(int)y] == 0)
         {
             posX = x;
             posY = y;
@@ -421,6 +421,7 @@ void raycast(void)
 {
     uint8_t keypress;
     struct timeval tv;
+    int32_t size;
 
     int fps;
 
@@ -436,12 +437,14 @@ void raycast(void)
     fb_width     = win->width  * 2;
     fb_height    = win->height * 4;
 
-    braile_data  = calloc((win->height    * win->width), 2);
-    fb           = calloc(fb_height       * fb_width,    1);
+    size         = (win->height * win->width) * 2;
+    braile_data  = uC_alloc(uC_MEM_ZONE_UI, size);
+    size         = fb_height    * fb_width;
+    fb           = uC_alloc(uC_MEM_ZONE_UI, size);
 
     // wall colors and shading
-    dark_map     = calloc(fb_width, 1);
-    color_map    = calloc(fb_width, 1);
+    dark_map     = uC_alloc(uC_MEM_ZONE_UI, fb_width);
+    color_map    = uC_alloc(uC_MEM_ZONE_UI, fb_width);
 
     for (;;)
     {

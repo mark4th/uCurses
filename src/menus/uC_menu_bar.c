@@ -3,10 +3,10 @@
 
 #include <inttypes.h>
 #include <stddef.h>
-#include <stdlib.h>
 
 #include "uC_menus.h"
 #include "uC_win_printf.h"
+#include "uC_alloc.h"
 
 // -----------------------------------------------------------------------
 // set attriutes to draw next pulldown item with
@@ -120,14 +120,14 @@ static void pd_close(pulldown_t *pd)
     {
         while (pd->count-- != 0)
         {
-            free(pd->items[pd->count]);
+            uC_free(uC_MEM_ZONE_UI, pd->items[pd->count]);
         }
 
         // window only exists if this pulldown is currently active
 
         uC_win_close(pd->window);
         pd->window = NULL;
-        free(pd);
+        uC_free(uC_MEM_ZONE_UI, pd);
     }
 }
 
@@ -160,7 +160,7 @@ API void uC_bar_close(uC_screen_t *scr)
             bar_close_pds(bar);
             uC_win_close(bar->window);
             bar->window = NULL;
-            free(bar);
+            uC_free(uC_MEM_ZONE_UI, bar);
             scr->menu_bar = NULL;
         }
     }
@@ -193,7 +193,7 @@ API int32_t uC_bar_open(uC_screen_t *scr)
 
     if (scr != NULL)
     {
-        bar = calloc(1, sizeof(menu_bar_t));
+        bar = uC_alloc(uC_MEM_ZONE_UI, sizeof(menu_bar_t));
         win = uC_win_open(scr->width, 1);
 
         if ((bar != NULL) && (win != NULL))
@@ -201,8 +201,8 @@ API int32_t uC_bar_open(uC_screen_t *scr)
             init_bar(scr, win, bar);
             return 0;
         }
-        free(bar);
-        free(win);
+        uC_free(uC_MEM_ZONE_UI, bar);
+        uC_free(uC_MEM_ZONE_UI, win);
     }
 
     return -1;

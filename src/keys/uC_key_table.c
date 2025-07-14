@@ -3,13 +3,13 @@
 
 #include <stdint.h>
 #include <string.h>
-#include <stdlib.h>
 
 #include "uCurses.h"
 #include "uC_keys.h"
 #include "uC_utils.h"
 #include "uC_parse.h"
 #include "uC_keys.h"
+#include "uC_alloc.h"
 
 // -----------------------------------------------------------------------
 
@@ -71,11 +71,11 @@ API uC_kh_t uC_alloc_kh(void)
 
     if (user_key_actions != default_key_actions)
     {
-        free(user_key_actions);
+        uC_free(uC_MEM_ZONE_DEFAULT, user_key_actions);
     }
 
     size = sizeof(default_key_actions);
-    kh   = calloc(size, 1);
+    kh   = uC_alloc(uC_MEM_ZONE_DEFAULT, size);
 
     memcpy(kh, default_key_actions, size);
 
@@ -97,7 +97,7 @@ uC_kh_t widget_alloc_kh(void)
     saved_key_actions = user_key_actions;
 
     size = sizeof(default_key_actions);
-    kh   = calloc(size, 1);
+    kh   = uC_alloc(uC_MEM_ZONE_DEFAULT, size);
 
     memcpy(kh, default_key_actions, size);
 
@@ -110,7 +110,7 @@ uC_kh_t widget_alloc_kh(void)
 
 void widget_release_kh(void)
 {
-    free(user_key_actions);
+    uC_free(uC_MEM_ZONE_DEFAULT, user_key_actions);
     user_key_actions = saved_key_actions;
 }
 

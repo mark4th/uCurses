@@ -3,12 +3,12 @@
 
 #include <inttypes.h>
 #include <stddef.h>
-#include <stdlib.h>
 
 #include "uC_menus.h"
 #include "uC_utf8.h"
 #include "uC_utils.h"
 #include "uC_borders.h"
+#include "uC_alloc.h"
 
 // -----------------------------------------------------------------------
 // find address of pulldown structure with specified name
@@ -18,6 +18,7 @@ static pulldown_t *pd_find(uC_screen_t *scr, char *name)
     pulldown_t *pd = NULL;
     menu_bar_t *bar = scr->menu_bar;
     int32_t name_hash = fnv_hash(name);
+    int32_t hash;
 
     int16_t i;
 
@@ -27,7 +28,8 @@ static pulldown_t *pd_find(uC_screen_t *scr, char *name)
 
         if (pd != NULL)
         {
-            if (fnv_hash(pd->name) == name_hash)
+            hash = fnv_hash(pd->name);
+            if (hash == name_hash)
             {
                 break;
             }
@@ -121,7 +123,7 @@ int32_t new_pulldown(uC_screen_t *scr, char *name)
 
     if ((bar != NULL) && (bar->count != MAX_MENU_ITEMS))
     {
-        pd = calloc(1, sizeof(pulldown_t));
+        pd = uC_alloc(uC_MEM_ZONE_UI, sizeof(pulldown_t));
 
         if (pd != NULL)
         {

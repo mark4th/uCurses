@@ -13,6 +13,7 @@
 #include "uC_utils.h"
 #include "uC_terminfo.h"
 #include "uC_utf8.h"
+#include "uC_alloc.h"
 
 // -----------------------------------------------------------------------
 
@@ -44,19 +45,19 @@ void alloc_parse(void)
 {
     bool result;
 
-    uC_ti_parse = calloc(1, sizeof(*uC_ti_parse));
+    uC_ti_parse = uC_alloc(uC_MEM_ZONE_UI, sizeof(*uC_ti_parse));
     result      = (uC_ti_parse != NULL);
 
     // allocate 64k for compiled escape sequences
     if (result)
     {
-        uC_ti_parse->esc_buff = calloc(1, ESC_SIZE);
+        uC_ti_parse->esc_buff = uC_alloc(uC_MEM_ZONE_UI, ESC_SIZE);
         result = (uC_ti_parse->esc_buff != NULL);
     }
 
     if (result)
     {
-        vars = calloc(1, sizeof(*vars));
+        vars = uC_alloc(uC_MEM_ZONE_UI, sizeof(*vars));
         result = (vars != NULL);
     }
 
@@ -65,14 +66,6 @@ void alloc_parse(void)
         printf("uCurses: Out of Memory allocating buffers\r\n");
         exit(1);
     }
-}
-
-// -----------------------------------------------------------------------
-
-void free_parse(void)
-{
-    free(uC_ti_parse->esc_buff);
-    free(uC_ti_parse);
 }
 
 // -----------------------------------------------------------------------

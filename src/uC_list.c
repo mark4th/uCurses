@@ -1,10 +1,9 @@
 // uC_list.c   - simple linked lists
 // -----------------------------------------------------------------------
 
-#include <stdlib.h>
-
 #include "uCurses.h"
 #include "uC_list.h"
+#include "uC_alloc.h"
 
 // -----------------------------------------------------------------------
 // insert node2 into list after node1
@@ -13,16 +12,21 @@ API bool uC_list_insert_node(uC_list_node_t *node1, void *payload)
 {
     uC_list_node_t *tmp, *node2;
     uC_list_t *list;
+    uC_mem_zone_t zone;
 
     bool result = false;
 
     if (node1 != NULL)
     {
         list = node1->list;
+        zone = list->zone;
 
-        if (list == NULL) { return result; }
+        if (list == NULL)
+        {
+            return result;
+        }
 
-        node2 = calloc(1, sizeof(*node2));
+        node2 = uC_alloc(zone, sizeof(*node2));
 
         if (node2 != NULL)
         {
@@ -54,11 +58,17 @@ static void node_remove(uC_list_node_t *node1)
     uC_list_node_t *tmp1, *tmp2;
     uC_list_t *list;
 
-    if (node1 == NULL) { return; }
+    if (node1 == NULL)
+    {
+        return;
+    }
 
     list = node1->list;
 
-    if (list == NULL)  { return; }
+    if (list == NULL)
+    {
+        return;
+    }
 
     tmp1 = node1->prev;
     tmp2 = node1->next;
@@ -92,17 +102,22 @@ static void node_remove(uC_list_node_t *node1)
 API void uC_list_remove_node(uC_list_t *list, void *payload)
 {
     uC_list_node_t *node1;
+    uC_mem_zone_t zone;
 
-    if (list == NULL) { return; }
+    if (list == NULL)
+    {
+        return;
+    }
 
     node1 = list->head;
+    zone  = list->zone;
 
     while (node1 != NULL)
     {
         if (node1->payload == payload)
         {
             node_remove(node1);
-            free(node1);
+            uC_free(zone, node1);
             break;
         }
         node1 = node1->next;
@@ -113,12 +128,23 @@ API void uC_list_remove_node(uC_list_t *list, void *payload)
 
 API bool uC_list_push_head(uC_list_t *list, void *payload)
 {
+    uC_mem_zone_t zone;
+
     uC_list_node_t *node1, *tmp;
 
-    if (list == NULL)  { return false; }
+    if (list == NULL)
+    {
+        return false;
+    }
 
-    node1 = calloc(1, sizeof(*node1));
-    if (node1 == NULL) { return false; }
+    zone  = list->zone;
+
+    node1 = uC_alloc(zone, sizeof(*node1));
+
+    if (node1 == NULL)
+    {
+        return false;
+    }
 
     node1->list    = list;
     node1->payload = payload;
@@ -144,12 +170,20 @@ API bool uC_list_push_head(uC_list_t *list, void *payload)
 
 API bool uC_list_push_tail(uC_list_t *list, void* payload)
 {
+    uC_mem_zone_t zone;
     uC_list_node_t *node1, *tmp;
 
-    if (list == NULL)  { return false; }
+    if (list == NULL)
+    {
+        return false;
+    }
 
-    node1 = calloc(1, sizeof(*node1));
-    if (node1 == NULL) { return false; }
+    zone  = list->zone;
+    node1 = uC_alloc(zone, sizeof(*node1));
+    if (node1 == NULL)
+    {
+        return false;
+    }
 
     node1->list    = list;
     node1->payload = payload;
@@ -183,7 +217,7 @@ static void *list_pop(uC_list_t *list, bool whence)
         node1   = (whence) ? list->head : list->tail;
         payload = node1->payload;
         node_remove(node1);
-        free(node1);
+        uC_free(list->zone, node1);
     }
     return payload;
 }
@@ -207,18 +241,29 @@ API void *uC_list_pop_tail(uC_list_t *list)
 
 API bool uC_list_insert_before(uC_list_node_t *n1, void *payload)
 {
+    uC_mem_zone_t zone;
     uC_list_node_t *n2;
     uC_list_node_t *prev;
+    uC_list_t *list;
 
-    uC_list_t *list = n1->list;
+    if (n1 == NULL)
+    {
+        return false;
+    }
+
+    list = n1->list;
+    zone = list->zone;
 
     if (n1 == list->head)
     {
         return uC_list_push_head(list, payload);
     }
 
-    n2 = calloc(1, sizeof(*n2));
-    if (n2 == NULL) { return false; }
+    n2 = uC_alloc(zone, sizeof(*n2));
+    if (n2 == NULL)
+    {
+        return false;
+    }
 
     n2->list    = list;
     n2->payload = payload;

@@ -37,7 +37,7 @@ static void struct_screen(void)
         return;
     }
 
-    json_error("There can be only one!");
+    json_error("There can be only one screen! (for now?)");
 }
 
 // -----------------------------------------------------------------------
@@ -50,7 +50,7 @@ static void struct_windows(void)
         return;
     }
 
-    json_error("Requires parent screen");
+    json_error("Windows require parent screen");
 }
 
 // -----------------------------------------------------------------------
@@ -64,7 +64,7 @@ static void struct_window(void)
         return;
     }
 
-    json_error("Requires parent windows structure");
+    json_error("Window requires parent windows");
 }
 
 // -----------------------------------------------------------------------
@@ -78,7 +78,7 @@ static void struct_backdrop(void)
         return;
     }
 
-    json_error("Requires parent screen");
+    json_error("Backdrop requires parent screen");
 }
 
 // -----------------------------------------------------------------------
@@ -91,7 +91,7 @@ static void struct_m_bar(void)
         return;
     }
 
-    json_error("Requires parent screen");
+    json_error("Menu-bar requires parent screen");
 }
 
 // -----------------------------------------------------------------------
@@ -108,7 +108,7 @@ static void struct_pulldowns(void)
         return;
     }
 
-    json_error("Requires parent menu-bar");
+    json_error("Pulldowns require parent menu-bar");
 }
 
 // -----------------------------------------------------------------------
@@ -121,7 +121,7 @@ static void struct_pulldown(void)
         return;
     }
 
-    json_error("Requires parent pulldowns structure");
+    json_error("Pulldown requires parent pulldowns");
 }
 
 // -----------------------------------------------------------------------
@@ -138,7 +138,7 @@ static void struct_m_items(void)
         return;
     }
 
-    json_error("Requires parent pulldown structure");
+    json_error("Menu-items require parent pulldown");
 }
 
 // -----------------------------------------------------------------------
@@ -151,7 +151,7 @@ static void struct_m_item(void)
         return;
     }
 
-    json_error("Requires parent menu-items");
+    json_error("Menu item Requires parent menu-items");
 }
 
 // -----------------------------------------------------------------------
@@ -168,7 +168,8 @@ static void struct_attribs(void)
         return;
     }
 
-    json_error("Requires parent backdrop, window, pulldown or menu-bar");
+    json_error("Attribs require parent backdrop, window,"
+               " pulldown or menu-bar");
 }
 
 // -----------------------------------------------------------------------
@@ -183,7 +184,7 @@ static void struct_b_attribs(void)
         return;
     }
 
-    json_error("Requires parent backdrop or window");
+    json_error("Border attribs require parent backdrop or window");
 }
 
 // -----------------------------------------------------------------------
@@ -198,7 +199,7 @@ static void struct_s_attribs(void)
         return;
     }
 
-    json_error("Requires parent pulldown or menu-bar");
+    json_error("Attribs require parent pulldown or menu-bar");
 }
 
 // -----------------------------------------------------------------------
@@ -212,7 +213,7 @@ static void struct_f_attribs(void)
         return;
     }
 
-    json_error("Requires parent pulldown or menu-bar");
+    json_error("Focussed attribs require parent pulldown or menu-bar");
 }
 
 // -----------------------------------------------------------------------
@@ -227,7 +228,7 @@ static void struct_d_attribs(void)
         return;
     }
 
-    json_error("Requires parent pulldown or menu bar");
+    json_error("Disabled attribs require parent pulldown or menu-bar");
 }
 
 // -----------------------------------------------------------------------
@@ -248,7 +249,7 @@ static void struct_rgb_fg(void)
         return;
     }
 
-    json_error("Requires parent atrribs structure");
+    json_error("RGB foreground attribs require parent attribs");
 }
 
 // -----------------------------------------------------------------------
@@ -269,7 +270,7 @@ static void struct_rgb_bg(void)
         return;
     }
 
-    json_error("Requires parent atrribs structure");
+    json_error("RGB background attribs require parent attribs");
 }
 
 // -----------------------------------------------------------------------
@@ -289,7 +290,8 @@ static void struct_flags(void)
         return;
     }
 
-    json_error("Requires parent backdrop, window, pulldown or menu-bar");
+    json_error("Flags require parent backdrop, window,"
+               " pulldown or menu-bar");
 }
 
 // -----------------------------------------------------------------------
@@ -306,7 +308,7 @@ static void key_attr(uint16_t key)
         return;
     }
 
-    json_error("Requires parent atrribs structure");
+    json_error("Attrib Keys require parent attribs");
 }
 
 // -----------------------------------------------------------------------
@@ -327,7 +329,7 @@ static void key_rgb(uint16_t key)
         return;
     }
 
-    json_error("Requires parent RGB");
+    json_error("RGB Keys Require parent RGB attribs");
 }
 
 // -----------------------------------------------------------------------
@@ -346,7 +348,7 @@ static void key_xywh(uint16_t key)
         return;
     }
 
-    json_error("Requires parent window");
+    json_error("X/Y/W/H Keys require parent window");
 }
 
 // -----------------------------------------------------------------------
@@ -368,7 +370,7 @@ static void key_name(void)
         return;
     }
 
-    json_error("Requires parent pulldown or menu-item");
+    json_error("Key-name requires parent pulldown or menu-item");
 }
 
 // -----------------------------------------------------------------------
@@ -383,7 +385,7 @@ static void key_flags(void)
         return;
     }
 
-    json_error("Requires parent window, pulldown or menu-item");
+    json_error("Key-flags require parent window, pulldown or menu-item");
 }
 
 // -----------------------------------------------------------------------
@@ -397,7 +399,7 @@ static void key_border_type(void)
         return;
     }
 
-    json_error("Requires parent window or backdrop");
+    json_error("Key-border-type requires parent window or backdrop");
 }
 
 // -----------------------------------------------------------------------
@@ -410,10 +412,11 @@ static void key_vector(void)
         return;
     }
 
-    json_error("Requires parent menu-item");
+    json_error("Key-vector requires parent menu-item");
 }
 
 // -----------------------------------------------------------------------
+// todo: incompplete? I dont think a shortcut actually works yet?
 
 static void key_shortcut(void)
 {
@@ -423,7 +426,7 @@ static void key_shortcut(void)
         return;
     }
 
-    json_error("Requires parent menu-item");
+    json_error("Key-shortcut requires parent menu-item");
 }
 
 // -----------------------------------------------------------------------
@@ -436,7 +439,7 @@ static void key_flag(void)
         return;
     }
 
-    json_error("Requires parent flags structure");
+    json_error("Key-flag requires parent flags");
 }
 
 // -----------------------------------------------------------------------

@@ -2,10 +2,10 @@
 // -----------------------------------------------------------------------
 
 #include <inttypes.h>
-#include <stdlib.h>
 
 #include "uC_menus.h"
 #include "uC_utf8.h"
+#include "uC_alloc.h"
 
 // -----------------------------------------------------------------------
 
@@ -39,7 +39,7 @@ static int32_t new_item(pulldown_t *pd, char *name, menu_fp_t fp,
 
     if (pd->count != MAX_MENU_ITEMS)
     {
-        menu_item_t *item = calloc(1, sizeof(menu_item_t));
+        menu_item_t *item = uC_alloc(uC_MEM_ZONE_UI, sizeof(menu_item_t));
 
         if (item != NULL)
         {

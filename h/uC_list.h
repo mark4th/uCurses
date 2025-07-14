@@ -9,6 +9,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include <uC_alloc.h>
+
 // -----------------------------------------------------------------------
 
 typedef struct
@@ -16,6 +18,7 @@ typedef struct
     void *head;
     void *tail;
     uint32_t count;
+    uC_mem_zone_t zone;
 } uC_list_t;
 
 // -----------------------------------------------------------------------

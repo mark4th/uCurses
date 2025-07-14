@@ -8,11 +8,18 @@
 #include "uC_ti_file.h"
 #include "uC_attribs.h"
 #include "uC_utils.h"
+#include "uC_alloc.h"
+
+void uC_alloc_init(uC_mem_zone_t zone);
 
 // -----------------------------------------------------------------------
 
 API void uCurses_init(void)
 {
+    // initialize allocation tracking
+    uC_alloc_init(uC_MEM_ZONE_DEFAULT);
+    uC_alloc_init(uC_MEM_ZONE_UI);
+
     alloc_parse();           // initialie terminfo parser
     alloc_info();
 
@@ -24,12 +31,11 @@ API void uCurses_init(void)
 // -----------------------------------------------------------------------
 
 API void uCurses_deInit(void)
-
 {
     uC_restore_terminal();
-
-    free_parse();
     free_info();
+    uC_mem_purge(uC_MEM_ZONE_UI);
+    uC_mem_purge(uC_MEM_ZONE_DEFAULT);
 }
 
 // =======================================================================

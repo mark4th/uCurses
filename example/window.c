@@ -9,20 +9,23 @@
 
 // -----------------------------------------------------------------------
 
-#define SLEEP 15000000
+#define SLEEP     (15000000)
 
 // -----------------------------------------------------------------------
 
 char *window1_name = "window 1";
 char *window2_name = "window 2";
 
-uC_window_t *win1;
-uC_window_t *win2;
-uC_screen_t *scr;
+uC_window_t *win1 = NULL;
+uC_window_t *win2 = NULL;
+uC_screen_t *scr  = NULL;
 
-uC_window_t *status_win;
+uC_window_t *status_win = NULL;
 
-char status[33];
+char status[STAT_SIZE] =
+{
+    0x20
+};
 
 // -----------------------------------------------------------------------
 // global variables considered harmful unless you restrict yourself
@@ -77,7 +80,7 @@ uint8_t sintab[] =
 
 // -----------------------------------------------------------------------
 
-char lorem[69][14] =
+char *lorem[] =
 {
     "Lorem ", "ipsum ", "dolor ", "sit ", "amet, ", "consectetur ",
     "adipiscing ", "elit, ", "sed ", "do ", "eiusmod ", "tempor ",
@@ -90,7 +93,9 @@ char lorem[69][14] =
     "fugiat ", "nulla ", "pariatur. ", "Excepteur ", "sint ", "occaecat ",
     "cupidatat ", "non ", "proident, ", "sunt ", "in ", "culpa ",
     "qui ", "officia ", "deserunt ", "mollit ", "anim ", "id ",
-    "est ", "laborum."
+    "est ", "laborum.",
+
+    NULL
 };
 
 // -----------------------------------------------------------------------
@@ -132,7 +137,7 @@ opt_t menu_address_cb(int32_t hash)
     int16_t i;
     uC_switch_t *s = menu_vectors;
 
-    for(i = 0; i < VCOUNT; i++)
+    for (i = 0; i < VCOUNT; i++)
     {
         if(hash == s->option)
         {
@@ -154,7 +159,7 @@ void print_lorem(uC_window_t *win)
     static uint8_t r1 = 105, g1 = 100, b1 = 45;
     static uint8_t r2, g2, b2;
 
-    if (i == 70) { i = 0; }
+    if (lorem[i] == NULL) { i = 0; }
 
     // how many character cells will this string use.
     // this accounts for double width characters
@@ -290,8 +295,6 @@ void win_demo(void)
     win1->display_name = window1_name;
     win2->display_name = window2_name;
 
-    char status[33];
-
     x1 = 2;   y1 = 2;
     x2 = X_MAX(win2);
     y2 = Y_MAX(win2);
@@ -321,9 +324,9 @@ void win_demo(void)
         {
             frames++;
 
-            snprintf(status, 31, "Frame: %d", frames);
-            do_win_demo();
+            snprintf(status, STAT_SIZE - 1, "Frame: %d", frames);
             uC_set_status(status_win, status);
+            do_win_demo();
             uC_scr_draw_screen(scr);
         }
 
@@ -340,29 +343,27 @@ int main(void)
     uC_list_node_t *n;
     uC_window_t *win;
 
-    uCurses_init();
-    uC_json_file_create_ui("json/window.json", menu_address_cb);
-    uC_menu_init();
+    uCurses_init("json/window.json", NULL, menu_address_cb);
 
     scr = active_screen;
 
-    status_win = uC_add_status(scr, 32, 55, 0);
+    status_win = uC_add_status(scr, STAT_SIZE, 55, 0);
     uC_win_printf(status_win, "%fs%bs%0", 9, 3);
 
-    n = scr->windows.head;
+    n    = scr->windows.head;
     win1 = n->payload;
-    n = n->next;
+    n    = n->next;
     win2 = n->payload;
 
     uC_set_status(status_win, status);
-    uC_clr_status(status_win);
 
     win_demo();
 
-    uC_scr_close(active_screen);
     uC_console_reset_attrs();
     uC_clear();
     uC_cup(10, 0);
+
+    uC_scr_close(active_screen);
     uCurses_deInit();
 
     printf("Au revoir!\n");

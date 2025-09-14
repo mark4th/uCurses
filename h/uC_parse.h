@@ -1,25 +1,16 @@
-// parse.h    terminfo format string parsing
+// uC_parse.h    terminfo format string parsing
 // -----------------------------------------------------------------------
 
 #ifndef UC_PARSE_H
 #define UC_PARSE_H
+
+// -----------------------------------------------------------------------
 
 #include <stdint.h>
 
 // -----------------------------------------------------------------------
 
 #define MAX_PARAM (9)
-
-// -----------------------------------------------------------------------
-
-typedef struct
-{
-    char *esc_buff;             // format string compilation output buffer
-    uint16_t num_esc;           // max of 64k of compiled escape seq bytes
-    uint16_t max_esc;           // for profiling
-    int64_t params[MAX_PARAM];  // format string parametesr
-    const char *f_str;          // pointer to next char of format string
-} ti_parse_t;
 
 // -----------------------------------------------------------------------
 // visibility hidden

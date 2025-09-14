@@ -1,0 +1,68 @@
+{
+    "screen" :
+    {
+        "backdrop" :
+        {
+            "attribs" :
+            {
+                "gray-fg"   : 1,
+                "gray-bg"   : 6
+            },
+
+            "border-attribs" :
+            {
+                "gray-fg"   : 12,
+                "gray-bg"   : 3
+            },
+            "border-type"   : "BDR_DOUBLE"
+        },
+        "menu-bar" :
+        {
+            "attribs" :
+            {
+                "fg"      : "BROWN",
+                "gray-bg" : 5
+            },
+            "selected-attribs" :
+            {
+                "fg"      : "CYAN",
+                "gray-bg" : 8
+            },
+            "disabled-attribs" :
+            {
+                "gray-fg" : 8,
+                "gray-bg" : 4
+            },
+            "pulldowns" :
+            {
+                "pulldown" :
+                {
+                    "name"    : "Demos",
+                    "attribs" :
+                    {
+                        "fg"      : "BROWN",
+                        "gray-bg" : 5
+                    },
+                    "selected-attribs" :
+                    {
+                        "fg"      : "CYAN",
+                        "gray-bg" : 8
+                    },
+                    "disabled-attribs" :
+                    {
+                        "gray-fg" : 8,
+                        "gray-bg" : 4
+                    },
+                    "menu-items" :
+                    {
+                        "menu-item" :
+                        {
+                            "name"   : "Exit",
+                            "vector" : "exit_prog"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

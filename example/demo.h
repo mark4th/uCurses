@@ -9,14 +9,14 @@
 #include "uC_terminfo.h"
 #include "uC_attribs.h"
 #include "uC_switch.h"
-#include "uC_json.h"
 #include "uC_braille.h"
 
 #define NUM_OBJECTS 5
 
 // -----------------------------------------------------------------------
+#define STAT_SIZE (40)
 
-extern char status[33];
+extern char status[STAT_SIZE];
 extern uC_screen_t *active_screen;
 
 // -----------------------------------------------------------------------
@@ -25,14 +25,14 @@ extern uC_screen_t *active_screen;
 typedef struct              // a point in 3d space
 {
     char x, y, z;
-} xyz;
+} __attribute__((__packed__))xyz;
 
 // -----------------------------------------------------------------------
 
 typedef struct              // a point in 2d space
 {
     int x, y;
-} xy;
+} __attribute__((__packed__))xy;
 
 // -----------------------------------------------------------------------
 
@@ -44,7 +44,7 @@ typedef struct
     int delta;              // ammount to change item by
     int upper;              // upper limit for item
     int lower;              // lower limit for item
-} modifier;
+} __attribute__((__packed__))modifier;
 
 // -----------------------------------------------------------------------
 

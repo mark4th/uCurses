@@ -3,15 +3,16 @@
 #include <inttypes.h>
 #include <stdio.h>
 
-#include "uC_alloc.h"
-
 #include "demo.h"
+
+#define LION_WIDTH  (25)
+#define LION_HEIGHT (120)
 
 uC_screen_t *scr;
 uC_window_t *win;
 uC_window_t *status_win;
 
-char status[33];
+char status[STAT_SIZE];
 
 extern uC_screen_t *active_screen;
 
@@ -19,9 +20,6 @@ extern uC_screen_t *active_screen;
 // this image is 100 dots wide and 120 dots high.  the glyphs above are
 // all two pixles wide and four high.  as each character is four dots high
 // we only need 30 rows.
-
-#define LION_WIDTH  25
-#define LION_HEIGHT 120
 
 uint8_t lion_data[] =
 {
@@ -396,15 +394,13 @@ int main(void)
 {
     uC_list_node_t *n;
 
-    uCurses_init();
-    uC_json_file_create_ui("json/dots.json", menu_address_cb);
-    uC_menu_init();
+    uCurses_init("json/dots.json", NULL, menu_address_cb);
 
     scr = active_screen;
     n   = scr->windows.head;
     win = n->payload;
 
-    status_win = uC_add_status(scr, 32, 55, 0);
+    status_win = uC_add_status(scr, STAT_SIZE, 55, 0);
 
     uC_win_printf(status_win, "%fs%bs%0", 9, 3);
 
@@ -413,12 +409,11 @@ int main(void)
 
     lion();
 
-    uC_scr_close(active_screen);
-
     uC_console_reset_attrs();
     uC_clear();
     uC_cup(10, 0);
 
+    uC_scr_close(active_screen);
     uCurses_deInit();
 
     printf("Au revoir!\n");

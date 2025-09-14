@@ -1,4 +1,4 @@
-// keys.c   - terminal keyboard handler
+// uC_key_table.c   - terminal keyboard handler
 // -----------------------------------------------------------------------
 
 #include <stdint.h>
@@ -10,13 +10,16 @@
 #include "uC_parse.h"
 #include "uC_keys.h"
 #include "uC_alloc.h"
+#include "uC_terminfo.h"
 
 // -----------------------------------------------------------------------
 
-extern ti_parse_t *uC_ti_parse;
+extern ti_vars_t *ti_vars;
 extern int8_t keybuff[KEY_BUFF_SZ];
 extern int16_t num_k;
 extern void (*k_table[])(void);
+
+bool stuffed;
 
 // -----------------------------------------------------------------------
 // the new widget editor extension needs to be able to redefied the
@@ -31,6 +34,14 @@ API void uC_set_key(int8_t c)
 {
     keybuff[0] = c;
     num_k = 1;
+    stuffed = true;
+}
+
+// -----------------------------------------------------------------------
+
+API void uC_flush_keys(void)
+{
+    num_k = 0;
 }
 
 // -----------------------------------------------------------------------
@@ -71,11 +82,11 @@ API uC_kh_t uC_alloc_kh(void)
 
     if (user_key_actions != default_key_actions)
     {
-        uC_free(uC_MEM_ZONE_DEFAULT, user_key_actions);
+        uC_free(uC_MEM_ZONE_UI, user_key_actions);
     }
 
     size = sizeof(default_key_actions);
-    kh   = uC_alloc(uC_MEM_ZONE_DEFAULT, size);
+    kh   = uC_alloc(uC_MEM_ZONE_UI, size);
 
     memcpy(kh, default_key_actions, size);
 
@@ -97,7 +108,7 @@ uC_kh_t widget_alloc_kh(void)
     saved_key_actions = user_key_actions;
 
     size = sizeof(default_key_actions);
-    kh   = uC_alloc(uC_MEM_ZONE_DEFAULT, size);
+    kh   = uC_alloc(uC_MEM_ZONE_UI, size);
 
     memcpy(kh, default_key_actions, size);
 
@@ -110,7 +121,7 @@ uC_kh_t widget_alloc_kh(void)
 
 void widget_release_kh(void)
 {
-    uC_free(uC_MEM_ZONE_DEFAULT, user_key_actions);
+    uC_free(uC_MEM_ZONE_UI, user_key_actions);
     user_key_actions = saved_key_actions;
 }
 
@@ -142,7 +153,7 @@ API uint8_t uC_key(void)
         if (c != -1)        // if escape sequence is one we handle
         {                   // internally
             // flush the escape buffer
-            uC_ti_parse->num_esc = 0;
+            ti_vars->num_esc = 0;
 
             // execute handler for keypress
             user_key_actions[c]();

@@ -1,4 +1,4 @@
-// key_read.c
+// uC_key_read.c
 // -----------------------------------------------------------------------
 
 #include <poll.h>
@@ -12,6 +12,8 @@
 
 int8_t keybuff[KEY_BUFF_SZ];
 int16_t num_k;
+
+extern bool stuffed;
 
 // -----------------------------------------------------------------------
 
@@ -27,9 +29,18 @@ static struct pollfd pfd =
 
 API int8_t uC_test_keys(void)
 {
-    // see if any keys have been pressed
+    if (stuffed == true)
+    {
+        stuffed = false;
+        return num_k;
+    }
+
     int8_t k = poll(&pfd, 1, 0);
-    if (k < 0) { k = 0; }   // no keys pressed
+
+    if (k < 0)
+    {
+        k = 0;              // no keys pressed
+    }
 
     return k;
 }

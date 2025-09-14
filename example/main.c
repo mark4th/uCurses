@@ -10,45 +10,132 @@
 
 #include "demo.h"
 
-#define SLEEP 15000000
+#define SLEEP      (15000000)
+#define STATUS_X   (55)
+#define STATUS_Y   (0)
+#define WINCH_KEY  (0xec)  // randomly chosen value
 
 uC_window_t *status_win;
 
-char status[33];
+extern bool winch;
 
 // -----------------------------------------------------------------------
 
 void hello(void);
 
 // -----------------------------------------------------------------------
+// user winch handler registered with the library (can be only one)
 
-int main(void)
+// we cant process a winch here because it would take way too long so
+// instead we inject a key into the input stream to be handled in the main
+// loop below
+
+void my_winch(void)
 {
-    uC_screen_t *scr;
-    uC_window_t *win;
+    uC_set_key(WINCH_KEY);
+}
+
+// -----------------------------------------------------------------------
+
+static void init_main(void)
+{
+    uCurses_init("json/main.json", NULL, menu_address_cb);
+
+    status_win = uC_add_status(active_screen, STAT_SIZE,
+        STATUS_X, STATUS_Y);
+
+    uC_win_printf(status_win, "%fs%bs%0", 9, 3);
+
+    uC_register_winch(my_winch);
+}
+
+// -----------------------------------------------------------------------
+// called by the main loop when it receives notification
+
+static void do_winch(void)
+{
+    uCurses_deInit();
+    init_main();
 
     hello();
 
+    winch = false;
+}
+
+// -----------------------------------------------------------------------
+// lazy wait for key (spends a lot of time sleeping!)
+
+static void wait_key(void)
+{
+    while (uC_test_keys() == 0)
+    {
+        uC_clock_sleep(SLEEP);
+    }
+}
+
+// -----------------------------------------------------------------------
+
+static void main_loop(void)
+{
+    size_t z1;
+    size_t z2;
+    size_t z3;
+    uint8_t k = 0;
+    char status[33];
+
+    uC_screen_t *scr;
+
     do
     {
-        // we need to do this inside this loop because when we run one of
-        // the demos it will kill our screen and all our windows but will
-        // reactivate them for us when it returns (the call to key is what
-        // actually calls the selected demo).
-
         scr = active_screen;
+
+        z1 = uC_zone_query(uC_MEM_ZONE_DEFAULT);
+        z2 = uC_zone_query(uC_MEM_ZONE_UI);
+        z3 = uC_zone_query(uC_MEM_ZONE_JSON);
+
+        sprintf(status, "%zu %zu %zu ", z1, z2, z3);
+        uC_set_status(status_win, status);
+
         uC_scr_draw_screen(scr);
 
-        while(uC_test_keys() == 0)
-        {
-            uC_clock_sleep(SLEEP);
-        }
-    } while(uC_key() != 0x1b);
+        wait_key();
+        k = uC_key();
 
-    uC_scr_close(active_screen);
+        // the user winch handler above cannot resize the user interface
+        // so it injects a randomly selected non-sensical key into the
+        // input stream which tells this main loop that it now needs to
+        // destroy and recreate the entire user interface.
+
+        if (k == WINCH_KEY)
+        {
+            do_winch();
+        }
+
+    } while (k != 0x1b);
+}
+
+// -----------------------------------------------------------------------
+
+int main(void)
+{
+    uint16_t y;
+
+    uC_screen_t *scr;
+    uC_window_t *win;
+
+    init_main();
+
+    y = active_screen->height;
+
+    hello();
+
+    main_loop();
+
     uC_console_reset_attrs();
     uC_clear();
-    uC_cup(10, 0);
+    uC_cup(y - 3, 0);
+
+    uC_scr_close(active_screen);
     uCurses_deInit();
 
     printf("Au revoir!\n");

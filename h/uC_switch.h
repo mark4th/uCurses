@@ -19,7 +19,7 @@ typedef struct
 {
     int32_t option;
     opt_t vector;
-} uC_switch_t;
+} __attribute__((__packed__)) uC_switch_t;
 
 // -----------------------------------------------------------------------
 // visibility hidden
@@ -28,7 +28,6 @@ int uC_switch(const uC_switch_t *s, int size, int32_t option);
 
 // -----------------------------------------------------------------------
 
-#else
 #endif // UC_SWITCH_H
 
 // =======================================================================

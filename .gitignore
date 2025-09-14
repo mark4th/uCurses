@@ -1,6 +1,11 @@
 *.sublime*
 *~
 *demo
+example/dots
+example/lion
+example/mandel
+example/raycast
+example/window
 build
 obj
 default.profraw

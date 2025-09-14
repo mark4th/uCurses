@@ -1,8 +1,10 @@
-// utils.h
+// uC_utils.h
 // -----------------------------------------------------------------------
 
 #ifndef UC_UTILS_H
 #define UC_UTILS_H
+
+// -----------------------------------------------------------------------
 
 #include <stdbool.h>
 
@@ -30,6 +32,7 @@ API void uC_clock_sleep(int32_t when);
 API void uC_restore_terminal(void);
 API void uC_init_terminal(void);
 API void get_console_size(uint16_t *width, uint16_t *height);
+API void uC_assert(bool f, char *file, int line, char *msg);
 
 // -----------------------------------------------------------------------
 

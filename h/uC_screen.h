@@ -1,4 +1,4 @@
-// screen.h
+// uC_screen.h
 // -----------------------------------------------------------------------
 
 #ifndef UC_SCREEN_H
@@ -15,11 +15,10 @@
 typedef struct
 {
     uC_list_t windows;      // linked list of windows
-    // you can have more than one status line
-    uC_list_t status;       // 1 line windows to show minmal status info
+    uC_list_t status;       // linked list of 1 line status windows
+    uC_list_t view_groups;  // linked list of widget view groups
 
     void *menu_bar;         // menu_bar_t
-
     void *backdrop;         // uC_window_t always drawn first
 
     int16_t width;          // screen dimensions
@@ -29,7 +28,7 @@ typedef struct
 
     cell_t *buffer1;        // screen buffer 1 and 2
     cell_t *buffer2;
-} uC_screen_t;
+} __attribute__((__packed__)) uC_screen_t;
 
 // -----------------------------------------------------------------------
 // visibility hidden

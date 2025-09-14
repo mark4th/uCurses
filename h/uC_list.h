@@ -9,27 +9,27 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include <uC_alloc.h>
+#include "uC_alloc.h"
 
 // -----------------------------------------------------------------------
 
 typedef struct
 {
-    void *head;
+    void *head;             // head and tail both point to uC_list_node_t
     void *tail;
-    uint32_t count;
-    uC_mem_zone_t zone;
-} uC_list_t;
+    uint32_t count;         // number of items in the list
+    uC_mem_zone_t zone;     // all nodes allocated within this zone
+} __attribute__((__packed__)) uC_list_t;
 
 // -----------------------------------------------------------------------
 
 typedef struct
 {
+    void *prev;             // prev and next are botth uC_list_node_t
     void *next;
-    void *prev;
-    uC_list_t *list;
-    void *payload;
-} uC_list_node_t;
+    uC_list_t *list;        // parent list of this node
+    void *payload;          // data associated with this node
+} __attribute__((__packed__)) uC_list_node_t;
 
 // -----------------------------------------------------------------------
 

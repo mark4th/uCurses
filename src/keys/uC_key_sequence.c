@@ -1,3 +1,4 @@
+// uC_key_sequence.c    - key sequence read (one keypress, multiple chars)
 // -----------------------------------------------------------------------
 
 #include "uCurses.h"
@@ -5,7 +6,9 @@
 #include "uC_terminfo.h"
 #include "uC_utils.h"
 
-extern ti_parse_t *uC_ti_parse;
+// -----------------------------------------------------------------------
+
+extern ti_vars_t *ti_vars;
 extern int8_t keybuff[KEY_BUFF_SZ];
 extern int16_t num_k;
 
@@ -14,8 +17,8 @@ extern int16_t num_k;
 
 static void set_esc0(uint8_t c)
 {
-    uC_ti_parse->esc_buff[0] = c;
-    uC_ti_parse->num_esc = 1;
+    ti_vars->esc_buff[0] = c;
+    ti_vars->num_esc = 1;
 }
 
 // -----------------------------------------------------------------------
@@ -40,8 +43,8 @@ static void kbs2(void) { set_esc0(0x7f); }
 
 // -----------------------------------------------------------------------
 
-// each of these puts a key sequence in the esc_buff terminfo escape
-// sequence buffer which is usually used to compile output data.
+// each of these puts a key escape sequence in the esc_buff terminfo
+// escape sequence buffer which is usually used to compile output data.
 // these allow us to determine which key was pressed by comparing the
 // actual sequence that was input with the data returned by each of these
 
@@ -80,7 +83,7 @@ void (*k_table[])(void) =
     kent,  kcuu1, kcud1, kcub1, kcuf1, kbs,  kbs2,
     kdch1, kich1, khome, kend,  knp,   kpp,  kf1,
     kf2,   kf3,   kf4,   kf5,   kf6,   kf7,  kf8,
-    kf9,   kf10,  kf11, kf12
+    kf9,   kf10,  kf11,  kf12
 };
 
 #define KEY_COUNT (sizeof(k_table) / sizeof(k_table[0]))
@@ -98,7 +101,7 @@ int16_t match_key(void)
     for (i = 0; i < KEY_COUNT; i++)
     {
         // number chars in escape sequence buffer
-        uC_ti_parse->num_esc = 0;
+        ti_vars->num_esc = 0;
 
         // this isnt even a little bit obfuscated... honest!
         (*(*k_table[i]))(); // compile escape sequence for ith entry
@@ -108,12 +111,12 @@ int16_t match_key(void)
         // keyboard input buffer which is the escape sequence or a single
         // character of the key that was pressed
 
-        if (num_k == uC_ti_parse->num_esc)
+        if (num_k == ti_vars->num_esc)
         {
-            uC_ti_parse->esc_buff[uC_ti_parse->num_esc] = '\0';
+            ti_vars->esc_buff[ti_vars->num_esc] = '\0';
             // memcmp not safe
             hash1 = fnv_hash((char *)&keybuff[0]);
-            hash2 = fnv_hash(&uC_ti_parse->esc_buff[0]);
+            hash2 = fnv_hash(&ti_vars->esc_buff[0]);
 
             if (hash1 == hash2) { return i; }
         }

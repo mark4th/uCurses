@@ -23,33 +23,33 @@ uC_attribs_t attrs =
 uC_attribs_t old_attrs;
 
 // -----------------------------------------------------------------------
-// normal attribs for menus and widgets
+// normal attribs for menus and widgets (maybe)
 
 API uC_attribs_t uC_attrs_normal =
 {
     .flags.bits = ATTR_FLAG_GRAY_BG,
     .fg         = uC_COLOR_BROWN,
-    .bg_gray    = uC_GRAY_04,
+    .bg_gray    = uC_GRAY_05,
 };
 
 // -----------------------------------------------------------------------
-// seleccted attribs for menus and widgets
+// seleccted attribs for menus and widgets (maybe)
 
 API uC_attribs_t uC_attrs_selected =
 {
     .flags.bits = ATTR_FLAG_GRAY_BG,
     .fg         = uC_COLOR_CYAN,
-    .bg_gray    = uC_GRAY_01,
+    .bg_gray    = uC_GRAY_08,
 };
 
 // -----------------------------------------------------------------------
-// disabled attribs for menus and widgets
+// disabled attribs for menus and widgets (maybe)
 
 API uC_attribs_t uC_attrs_disabled =
 {
     .flags.bits = (ATTR_FLAG_GRAY_BG | ATTR_FLAG_GRAY_FG),
-    .fg_gray    = uC_GRAY_04,
-    .bg_gray    = uC_GRAY_08,
+    .fg_gray    = uC_GRAY_08,
+    .bg_gray    = uC_GRAY_04,
 };
 
 // -----------------------------------------------------------------------
@@ -86,6 +86,8 @@ static void rgb_bg(void)
 
 // -----------------------------------------------------------------------
 // hard coded format string to set a gray fg
+
+// known to not work in a utf8 enabled rxvt  why?
 
 static void gray_fg(void)
 {
@@ -149,7 +151,7 @@ static void apply_fg(void)
     // be outputting a setf here based on xterms infocmp
 
     // the magic number is the terminfo strings section offset to the
-    // format string for setaf.  if it is null we need to use setf
+    // format string for setaf.  if it is 0xffff we need to use setf
     // instead
 
     (ti_vars->ti_file.ti_strings[359] != -1)
@@ -177,31 +179,16 @@ static void apply_bg(void)
     }
 
     // the magic number is the terminfo strings section offset to the
-    // format string for setab.  if it is null we need to use setb
-    // instead.   im not sure of the correct way to handle this, are
+    // format string for setab.  if it is 0xffff we need to use setb
+    // instead.
+
+    // im not actually sure of the correct way to handle this, are
     // there any terminals that support both satab and setb and if so
     // which one should be called?
 
     (ti_vars->ti_file.ti_strings[360] != -1)
         ? ti_setab()
         : ti_setb();
-}
-
-// -----------------------------------------------------------------------
-// conditionally apply background changes
-
-static inline void if_apply_bg(uint8_t changes)
-{
-    uint8_t diff =
-        (attrs.bg   ^ old_attrs.bg)   |
-        (attrs.bg_r ^ old_attrs.bg_r) |
-        (attrs.bg_g ^ old_attrs.bg_g) |
-        (attrs.bg_b ^ old_attrs.bg_b);
-
-    if ((changes | diff) != 0)
-    {
-        apply_bg();
-    }
 }
 
 // -----------------------------------------------------------------------
@@ -218,6 +205,23 @@ static inline void if_apply_fg(uint16_t changes)
     if ((changes | diff) != 0)
     {
         apply_fg();
+    }
+}
+
+// -----------------------------------------------------------------------
+// conditionally apply background changes
+
+static inline void if_apply_bg(uint8_t changes)
+{
+    uint8_t diff =
+        (attrs.bg   ^ old_attrs.bg)   |
+        (attrs.bg_r ^ old_attrs.bg_r) |
+        (attrs.bg_g ^ old_attrs.bg_g) |
+        (attrs.bg_b ^ old_attrs.bg_b);
+
+    if ((changes | diff) != 0)
+    {
+        apply_bg();
     }
 }
 
@@ -266,7 +270,7 @@ void apply_attribs(void)
 // -----------------------------------------------------------------------
 // disable attribes that are mutually exclusive with the one being set
 
-uC_ti_attr_flags_t attr_add_flags(uC_ti_attr_flags_t flags, uint16_t bits)
+static uC_ti_attr_flags_t attr_add_flags(uC_ti_attr_flags_t flags, uint16_t bits)
 {
     uC_ti_attr_flags_t f;
 
@@ -293,6 +297,60 @@ API void uC_attr_set_attr(uC_attribs_t *attribs, uint16_t bits)
 API void uC_attr_clr_attr(uC_attribs_t *attribs, uint16_t bits)
 {
     attribs->flags.bits &= ~bits;
+}
+
+// -----------------------------------------------------------------------
+
+void set_fg(uC_attribs_t *attr, uC_color_t color)
+{
+    attr->fg = color;
+    uC_attr_clr_attr(attr, (ATTR_FLAG_RGB_FG | ATTR_FLAG_GRAY_FG));
+}
+
+// -----------------------------------------------------------------------
+
+void set_bg(uC_attribs_t *attr, uC_color_t color)
+{
+    attr->bg = color;
+    uC_attr_clr_attr(attr, (ATTR_FLAG_RGB_FG | ATTR_FLAG_GRAY_FG));
+}
+
+// -----------------------------------------------------------------------
+
+void set_gray_fg(uC_attribs_t *attr, uC_colors_gray_t color)
+{
+    attr->fg_gray = color;
+    uC_attr_set_attr(attr, ATTR_FLAG_GRAY_FG);
+}
+
+// -----------------------------------------------------------------------
+
+void set_gray_bg(uC_attribs_t *attr, uC_colors_gray_t color)
+{
+    attr->bg_gray = color;
+    uC_attr_set_attr(attr, ATTR_FLAG_GRAY_BG);
+}
+
+// -----------------------------------------------------------------------
+
+void set_rgb_fg(uC_attribs_t *attr, uC_color_t r, uC_color_t g,
+    uC_color_t b)
+{
+    attr->fg_r = r;
+    attr->fg_g = g;
+    attr->fg_b = b;
+    uC_attr_set_attr(attr, ATTR_FLAG_RGB_FG);
+}
+
+// -----------------------------------------------------------------------
+
+void set_rgb_bg(uC_attribs_t *attr, uC_color_t r, uC_color_t g,
+    uC_color_t b)
+{
+    attr->bg_r = r;
+    attr->bg_g = g;
+    attr->bg_b = b;
+    uC_attr_set_attr(attr, ATTR_FLAG_RGB_BG);
 }
 
 // =======================================================================

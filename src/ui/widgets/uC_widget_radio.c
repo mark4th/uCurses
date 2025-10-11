@@ -15,6 +15,36 @@
 // -----------------------------------------------------------------------
 
 extern widget_state_t widget_state;
+extern uint16_t radio_on[];
+extern uint16_t radio_off[];
+
+// -----------------------------------------------------------------------
+
+void draw_radio(uC_window_t *win, uC_widget_t *widget,
+    uint16_t x, uint16_t y)
+{
+    uint16_t c;
+
+    c = ((*widget->radio.select & (1 << widget->radio.bit)))
+       ? radio_on[widget->radio.type]
+       : radio_off[widget->radio.type];
+
+    win->attrs = (widget->focused == true)
+       ? widget->focus_attrs
+       : widget->attrs;
+
+    // %@ set cursor x / y within window
+    // %* write multiple repetitions of char
+    // %x set cursor x location on current window line
+    // %8 emit single utf8 character
+    // %s write string
+
+    uC_win_printf(win, "%@%*%x%8 %s",
+        x, y,
+        widget->width, 0x20,
+        x, c,
+        widget->name);
+}
 
 // -----------------------------------------------------------------------
 

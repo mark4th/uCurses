@@ -1,8 +1,6 @@
 // uC_terminfo.c
 // -----------------------------------------------------------------------
 
-// -----------------------------------------------------------------------
-
 #include <string.h>
 
 #include "uCurses.h"
@@ -34,7 +32,8 @@ API void uC_clear(void)
         active_screen->cx = 0;   // reset position of cursor
         active_screen->cy = 0;
 
-        size = (active_screen->width * active_screen->height * sizeof(cell_t));
+        size = (active_screen->width * active_screen->height *
+            sizeof(cell_t));
 
         memset(active_screen->buffer2, 0, size);
     }
@@ -222,18 +221,14 @@ API void uC_cr(void)
 // -----------------------------------------------------------------------
 // enable / disable cursor keys
 
-API bool smkx;
-
 API void uC_smkx(void)
 {
     ti_smkx();
-    smkx = true;
 }
 
 API void uC_rmkx(void)
 {
     ti_rmkx();
-    smkx = false;
 }
 
 // =======================================================================

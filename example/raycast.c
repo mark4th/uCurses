@@ -202,7 +202,6 @@ static void render_walls(void)
     double texPos;
     int y;
 
-
     for(x = 1; x < fb_width; x++)
     {
         //  calculate ray position and direction

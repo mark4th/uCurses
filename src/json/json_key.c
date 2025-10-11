@@ -332,6 +332,7 @@ static void key_bg(void)      { key_attr(KEY_BG);      }
 static void key_gray_fg(void) { key_attr(KEY_GRAY_FG); }
 static void key_gray_bg(void) { key_attr(KEY_GRAY_BG); }
 
+
 // -----------------------------------------------------------------------
 
 static void key_rgb(uint16_t key)
@@ -351,6 +352,19 @@ static void key_rgb(uint16_t key)
 static void key_red(void)   { key_rgb(KEY_RED);   }
 static void key_green(void) { key_rgb(KEY_GREEN); }
 static void key_blue(void)  { key_rgb(KEY_BLUE);  }
+
+// -----------------------------------------------------------------------
+
+static void key_blank(void)
+{
+    if ((json_state->struct_type == STRUCT_BACKDROP) ||
+       (json_state->struct_type == STRUCT_WINDOW))
+    {
+        json_new_state_struct(0, KEY_BLANK);
+        return;
+    }
+    json_error("Blank Keys require parent window");
+}
 
 // -----------------------------------------------------------------------
 
@@ -430,7 +444,7 @@ static void key_vector(void)
 }
 
 // -----------------------------------------------------------------------
-// todo: incompplete? I dont think a shortcut actually works yet?
+// todo: incompplete
 
 static void key_shortcut(void)
 {
@@ -482,6 +496,7 @@ static const uC_switch_t key_types[] =
     { 0x68cdf632, key_flags  }, { 0x362bb2fc, key_border_type },
     { 0x0ee694b4, key_vector }, { 0x1c13e01f, key_shortcut    },
     { 0xaeb95d5b, key_flag   }, { 0x1441d80c, breakpoint      },
+    { 0xe960add1, key_blank  }
 };
 
 #define NUM_KEYS (sizeof(key_types) / sizeof(key_types[0]))
@@ -522,7 +537,7 @@ static void is_key(void)
     int f;
 
     f = uC_switch(key_types, NUM_KEYS, json_vars->json_hash);
-    json_state->state = STATE_VALUE;
+    json_state->state = JSON_STATE_VALUE;
 
     if (f == -1)
     {
@@ -569,7 +584,7 @@ void json_state_key(void)
 
     // objects are a type of key which are a container for keys
     f = uC_switch(object_types, NUM_OBJECTS, json_vars->json_hash);
-    json_state->state = STATE_L_BRACE;
+    json_state->state = JSON_STATE_L_BRACE;
 
     // if uC_switch returned -1 here then we did not just parse
     // in an object name but a possible key name

@@ -162,6 +162,9 @@ static void draw_braille(uC_window_t *win, rgb *buffer,
             c = peek(buffer, /*&fg, */x, y, width);
             cc = uC_braille_xlat(c);
 
+            // %@ set cursor location within window
+            // %rf set window foreground to a 24 bit rgb color
+
             uC_win_printf(win, "%@%rf",
                 x / 2, y / 4,
                 r, g, b);

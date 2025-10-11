@@ -44,9 +44,13 @@ static void init_main(void)
     status_win = uC_add_status(active_screen, STAT_SIZE,
         STATUS_X, STATUS_Y);
 
+    // %fs set window forground to a gray scale color
+    // %bs set winndow background to a gray scale color
+    // %0 clear the window
+
     uC_win_printf(status_win, "%fs%bs%0", 9, 3);
 
-    uC_register_winch(my_winch);
+//    uC_register_winch(my_winch);
 }
 
 // -----------------------------------------------------------------------

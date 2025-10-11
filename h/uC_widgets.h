@@ -24,11 +24,11 @@
 
 typedef enum
 {
-    INPUT_ALPHA   = 1,        // 0-9 a-z A-Z _
-    INPUT_BINARY  = 2,        // 0-1
-    INPUT_OCTAL   = 3,        // 0-7
-    INPUT_DECIMAL = 4,        // 0-9
-    INPUT_HEX     = 5,        // 0-9 a-f A-F
+    INPUT_BINARY  = 0,        // 0-1
+    INPUT_OCTAL   = 1,        // 0-7
+    INPUT_DECIMAL = 2,        // 0-9
+    INPUT_HEX     = 3,        // 0-9 a-f A-F
+    INPUT_ALPHA   = 4,        // 0-9 a-z A-Z _
 } __attribute__((__packed__)) uC_textbox_radix_t;
 
 // -----------------------------------------------------------------------
@@ -54,22 +54,24 @@ typedef enum
 // -----------------------------------------------------------------------
 // visual chars for radio buttons and checkbox's
 
+// i could add triangles to this too
+
 typedef enum
 {
     uC_RADIO_CHECKBOX,    // ☐  ☑
     uC_RADIO_XBOX,        // ☐  ☒
-    uC_RADIO_BIGSOLID,    // □  ■
     uC_RADIO_BOX,         // □  ▣
+    uC_RADIO_BIGBOX,      // □  ■
+    uC_RADIO_SMALLBOX,    // ▫  ▪
     uC_RADIO_DIAMOND,     // ◇  ◈
-    uC_RADIO_SMALLBOX     // ▫  ▪
 } __attribute__((__packed__)) uC_radio_type_t;
 
 // -----------------------------------------------------------------------
 
 // view groups are containers for views.  A view can only have one type
-// if widget associated with it but a view group can have many different
-// associated views.   The view group contains the window into which all
-// views are drawn.
+// of widget associated with it but a view group can have many different
+// associated views.   The view group is the window into which all views
+// associated with it are drawn.
 
 typedef struct
 {
@@ -94,9 +96,8 @@ typedef struct
     int16_t yco;
 
     // if there are more widgets associated with this view than can fit in
-    // the vertical space defined above then that view is scrollable
-    // views can only scroll up and down and only views with radio buttons
-    // or check boxes can scroll (for now?)
+    // the vertical space defined above then that view can be scrollable,
+    // views can only scroll up and down not left or right
 
     uint16_t sequence;      // whole view gets same sequence number
     uint16_t top;           // index to widget at top of view
@@ -112,7 +113,6 @@ typedef struct
 typedef struct
 {
     char letter;            // keyboard shortcut
-    uint16_t bit;           // which bit of *select to toggle
     uint16_t *select;       // widget sequence of butten written here
 } __attribute__((__packed__)) uC_widget_button_t;
 
@@ -121,7 +121,7 @@ typedef struct
 typedef struct
 {
     uint16_t bit;           // which bit of *select to toggle
-    uint32_t *select;       // only one in the list can be active
+    uint32_t *select;       // only one bit can be active
     uC_radio_type_t type;
 } __attribute__((__packed__)) uC_widget_radio_t;
 
@@ -129,9 +129,9 @@ typedef struct
 
 typedef struct
 {
-    uint16_t bit;           // bit in *select is associated with this radio
-    uint32_t *select;       // only one in the list can be active
-    uC_radio_type_t type;
+    uint16_t bit;           // which bit of *select to toggle
+    uint32_t *select;       // any can be active
+    uC_radio_type_t type;   // which graphc to display for on / off state
 } __attribute__((__packed__)) uC_widget_check_t;
 
 // -----------------------------------------------------------------------
@@ -142,11 +142,12 @@ typedef struct
 
     // width is defined in the widget structure, size can be wider
 
-    uint8_t size;           // how large is the edit buffer
+    bool insert;
+    uint8_t size;           // size of text edit buffer
     uint8_t count;          // how many chars are in the edit buffer
     uint8_t cx;             // cursor position within edit buffer
-    uint8_t offset;         // offset to char at start of input text
-    char *data;
+    uint8_t offset;         // offset to char at start of widget display
+    char *data;             // where to store the string
 } __attribute__((__packed__)) uC_widget_textbox_t;
 
 // -----------------------------------------------------------------------
@@ -159,18 +160,18 @@ typedef struct
     uint16_t sequence;      // position in tab focus sequence
 
     bool focused;           // true if widget has focus
+    bool disabled;          // allows for mutual exclusion
 
     uC_attribs_t attrs;
     uC_attribs_t focus_attrs;
 
-    uC_widget_type_t type;  // one of the following
+    char *name;             // display name for widget
 
-    char *name;
+    uC_widget_type_t type;  // one of the following
 
     // i hate unions, they make the code look like a cluster fuck
     // and this blob is as large as the largest of is elements which
-    // makes this very non space efficicent.  i am toying with the
-    // idea of making this a void pointer instead
+    // makes this very non space efficicent.
 
     union
     {
@@ -189,21 +190,22 @@ typedef struct
 
     uC_widget_vg_t *vg;
     uC_widget_view_t *view;
-    uC_widget_t *widget;    // current widget with focus within above
+    uC_widget_t *widget;    // current widget with focus in view
 } __attribute__((__packed__)) widget_state_t;
 
 // -----------------------------------------------------------------------
 
 enum
 {
-    WIDGET_KEY_UP = 1,
+    WIDGET_KEY_BS   = 0x08,
+    WIDGET_KEY_UP   = 0x81,
     WIDGET_KEY_DOWN,
     WIDGET_KEY_LEFT,
     WIDGET_KEY_RIGHT,
     WIDGET_KEY_INSERT,
     WIDGET_KEY_DELETE,
     WIDGET_KEY_HOME,
-    WIDGET_KEY_END
+    WIDGET_KEY_END,
 };
 
 // -----------------------------------------------------------------------
@@ -220,6 +222,16 @@ uint8_t handle_radio(uint8_t k);
 uint8_t handle_text(uint8_t k);
 void widget_close_view(uC_widget_view_t *view);
 void widget_scroll_view(uint8_t k);
+void tab_next_widget(void);
+
+void draw_button(uC_window_t *win, uC_widget_t *widget,
+    uint16_t x, uint16_t y);
+void draw_check(uC_window_t *win, uC_widget_t *widget,
+    uint16_t x, uint16_t y);
+void draw_radio(uC_window_t *win, uC_widget_t *widget,
+    uint16_t x, uint16_t y);
+void draw_textbox(uC_window_t *win, uC_widget_t *widget,
+    uint16_t x, uint16_t y);
 
 // -----------------------------------------------------------------------
 
@@ -283,7 +295,7 @@ API uC_widget_t *uC_widget_text_create(
 
 // -----------------------------------------------------------------------
 
-API uint8_t uC_widget_main(void);
+API char uC_widget_main(void);
 
 // -----------------------------------------------------------------------
 

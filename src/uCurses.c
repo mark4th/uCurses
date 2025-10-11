@@ -29,6 +29,9 @@ extern uC_screen_t *active_screen;
 
 API void uCurses_init(char *file, json_mem_t *json, void *fp)
 {
+    uint16_t width;
+    uint16_t height;
+
 #ifdef UC_JSON
     // gcc will no longer compile these sources because of some ultra
     // fucking bullshit ISO standard that mandates that you cannot be
@@ -48,6 +51,7 @@ API void uCurses_init(char *file, json_mem_t *json, void *fp)
 
     fp_finder_t finder = (fp_finder_t) fp;
 #endif
+
     setlocale(LC_ALL, "C.UTF-8");
 
     uC_init_terminal();
@@ -74,9 +78,17 @@ API void uCurses_init(char *file, json_mem_t *json, void *fp)
 #endif
 
 #ifdef UC_MENUS
-    if (active_screen->menu_bar != NULL)
+    if (active_screen != NULL)
     {
-        menu_init_keys();
+        if (active_screen->menu_bar != NULL)
+        {
+            uC_menu_init_keys();
+        }
+    }
+    else
+    {
+        uC_get_console_size(&width, &height);
+        active_screen = uC_scr_open(width, height);
     }
 #endif
 }
@@ -91,6 +103,9 @@ API void uCurses_deInit(void)
     uC_mem_purge(uC_MEM_ZONE_JSON);
     uC_mem_purge(uC_MEM_ZONE_UI);
     uC_mem_purge(uC_MEM_ZONE_DEFAULT);
+
+    // should this also purge all allocations associated with the user
+    // defined memory zones?
 }
 
 // =======================================================================

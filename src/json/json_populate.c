@@ -7,6 +7,7 @@
 #include "uC_window.h"
 #include "uC_screen.h"
 #include "uC_alloc.h"
+#include "uC_utils.h"
 #include "json.h"
 
 #ifdef UC_JSON
@@ -42,7 +43,7 @@ static void populate_attribs(void *pstruct, int32_t ptype)
             *(uC_attribs_t *)json_state->structure;
     } while (0);
 
-    uC_free(uC_MEM_ZONE_UI, json_state->structure);
+    uC_ui_free(json_state->structure);
 }
 
 // -----------------------------------------------------------------------
@@ -52,7 +53,7 @@ static void populate_b_attribs(uC_window_t *pstruct)
     pstruct->bdr_attrs =
         *(uC_attribs_t *)json_state->structure;
 
-    uC_free(uC_MEM_ZONE_UI, json_state->structure);
+    uC_ui_free(json_state->structure);
 }
 
 // -----------------------------------------------------------------------
@@ -62,7 +63,7 @@ static void populate_f_attribs(uC_window_t *pstruct)
     pstruct->focus_attrs =
         *(uC_attribs_t *)json_state->structure;
 
-    uC_free(uC_MEM_ZONE_UI, json_state->structure);
+    uC_ui_free(json_state->structure);
 }
 
 // -----------------------------------------------------------------------
@@ -80,7 +81,7 @@ static void populate_s_attribs(void *pstruct, int32_t ptype)
             *(uC_attribs_t *)json_state->structure;
     }
 
-    uC_free(uC_MEM_ZONE_UI, json_state->structure);
+    uC_ui_free(json_state->structure);
 }
 
 // -----------------------------------------------------------------------
@@ -98,7 +99,7 @@ static void populate_d_attribs(void *pstruct, int32_t ptype)
             *(uC_attribs_t *)json_state->structure;
     }
 
-    uC_free(uC_MEM_ZONE_UI, json_state->structure);
+    uC_ui_free(json_state->structure);
 }
 
 // -----------------------------------------------------------------------
@@ -174,9 +175,9 @@ void populate_parent(void)
     ptype = parent->struct_type;
 
     // when a psudo structure is completed all of the key values
-    // specified within that psudo structure will have been
+    // specified within that pseudo structure will have been
     // added to its parent - in this case this function will
-    // be called to add that psudo structure to its parent but
+    // be called to add that pseudo structure to its parent but
     // it will not be any of the types specified below.  this is
     // an inconseauential waste of time as no action will be
     // taken below - this entire function becomes a NOP in that

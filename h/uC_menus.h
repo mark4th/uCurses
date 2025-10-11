@@ -83,24 +83,19 @@ typedef struct
 // -----------------------------------------------------------------------
 // visibility hidden
 
-void bar_populdate_pd(pulldown_t *pd);
-int32_t new_menu_item(uC_screen_t *scr, char *name, menu_fp_t fp,
-    int16_t shortcut);
-void menu_up(void);
-void menu_down(void);
-void menu_left(void);
-void menu_right(void);
-void pd_disable(uC_screen_t *scr, char *name);
-void pd_enable(uC_screen_t *scr, char *name);
+void draw_pd(pulldown_t *pd);
 int32_t bar_create_pd_win(uC_screen_t *scr, pulldown_t *pd);
-int32_t new_pulldown(uC_screen_t *scr, char *name);
-void menu_init_keys(void);
 
 // -----------------------------------------------------------------------
 
-API void uC_bar_draw_text(uC_screen_t *scr);
-API void uC_bar_close(uC_screen_t *scr);
-API int32_t uC_bar_open(uC_screen_t *scr);
+API int32_t uC_menu_bar_open(uC_screen_t *scr);
+API void uC_menu_bar_close(uC_screen_t *scr);
+API int32_t uC_menu_new_pd(uC_screen_t *scr, char *name);
+API int32_t uC_menu_new_item(uC_screen_t *scr, char *name, menu_fp_t fp,
+    int16_t shortcut);
+API void uC_menu_pd_disable(uC_screen_t *scr, char *name);
+API void uC_menu_pd_enable(uC_screen_t *scr, char *name);
+API void uC_menu_init_keys(void);
 
 // -----------------------------------------------------------------------
 

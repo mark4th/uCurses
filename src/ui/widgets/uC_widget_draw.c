@@ -19,123 +19,25 @@ extern widget_state_t widget_state;
 extern border_t *const borders[];
 
 // -----------------------------------------------------------------------
+// for radio button and check box widgets
 
 uint16_t radio_off[] =
-{   //   ☐       ☐       □       □       ◇       ▫
-    0x25fb, 0x25fb, 0x25a1, 0x25a1, 0x25c7, 0x25ab,
+{   //   ☐       ☐       □       □       ▫       ◇
+    0x25fb, 0x25fb, 0x25a1, 0x25a1, 0x25ab, 0x25c7,
+    //   △       ▽       ◁       ▷
+    0x25b3, 0x25bd, 0x25c1, 0x25b7,
+    //   ▵       ▿       ◃       ▹
+    0x25b5, 0x25bf, 0x25c3, 0x25b9
 };
 
-uint16_t radio_on[] =
-{   //   ☑       ☒       ■       ▣       ◈       ▪
-    0x2611, 0x2612, 0x25a0, 0x25a3, 0x25c8, 0x25aa,
+uint16_t radio_on[]  =
+{   //   ☑       ☒       ▣       ■       ▪       ◈
+    0x2611, 0x2612, 0x25a3, 0x25a0, 0x25aa, 0x25c8,
+    //   ▲       ▼       ◀       ▶
+    0x25b2, 0x25bc, 0x25c0, 0x25b6,
+    //   ▴       ▾       ◂       ▸
+    0x25b4, 0x25be, 0x25c2, 0x25b8
 };
-
-// -----------------------------------------------------------------------
-// draws the text on a button and underlines the keyboard shortcut key
-
-static void draw_btn_txt(uC_window_t *win, uint16_t x, uint16_t y,
-    uint16_t width, char *name, char key)
-{
-    bool ul = false;
-    uint16_t pad = (width / 2) - (strlen(name) / 2);
-
-    // %@ set cursor location in window
-    // %* emit single char multiple times
-    uC_win_printf(win, "%@%*", x, y, width, 0x20);
-
-    // %x set cursor X location on current line
-    // %* emit single char multiple times
-    uC_win_printf(win, "%x%*", x, pad, 0x20);
-
-    while ((*name != '\0') && (width-- != 0))
-    {
-        if ((ul != true) && (*name == key))
-        {
-           ul = true;
-
-           // %U+ turn on underlining of text
-           // %8  output a single char
-           // %U- turn underling of text off
-
-           uC_win_printf(win, "%U+%8%U-", *name++);
-
-           continue;
-        }
-        uC_win_emit(win, *name++);
-    }
-}
-
-// -----------------------------------------------------------------------
-
-static void draw_button(uC_window_t *win, uC_widget_t *widget,
-    uint16_t x, uint16_t y)
-{
-    win->attrs = (widget->focused == true)
-          ? widget->focus_attrs
-          : widget->attrs;
-
-    draw_btn_txt(win, x, y, widget->width, widget->name,
-        widget->button.letter);
-}
-
-// -----------------------------------------------------------------------
-
-void draw_radio(uC_window_t *win, uC_widget_t *widget,
-    uint16_t x, uint16_t y)
-{
-    uint16_t c;
-
-    c = ((*widget->radio.select & (1 << widget->radio.bit)))
-       ? radio_on[widget->radio.type]
-       : radio_off[widget->radio.type];
-
-    win->attrs = (widget->focused == true)
-          ? widget->focus_attrs
-          : widget->attrs;
-
-    // %@ set cursor x / y within window
-    // %8 emit single utf8 character
-    // %s write string
-
-    uC_win_printf(win, "%@%8 %s", x, y, c,
-        widget->name);
-}
-
-// -----------------------------------------------------------------------
-
-static void draw_check(uC_window_t *win, uC_widget_t *widget,
-    uint16_t x, uint16_t y)
-{
-    uint16_t c;
-
-    c = ((*widget->check.select & (1 << widget->check.bit)))
-       ? radio_on[widget->check.type]
-       : radio_off[widget->check.type];
-
-    win->attrs = (widget->focused == true)
-          ? widget->focus_attrs
-          : widget->attrs;
-
-    uC_win_printf(win, "%@%8 %s", x, y, c,
-        widget->name);
-}
-
-// -----------------------------------------------------------------------
-
-static void draw_textbox(uC_window_t *win, uC_widget_t *widget,
-    uint16_t x, uint16_t y)
-{
-    // display widget name using windows normal attributes
-    uC_win_printf(win, "%@%s",x ,y, widget->name);
-
-    win->attrs = (widget->focused == true)
-      ? widget->focus_attrs
-      : widget->attrs;
-
-    uC_win_printf(win, "%x%*",
-        x + strlen(widget->name) + 1,
-        widget->width, 0x20);
-}
 
 // -----------------------------------------------------------------------
 
@@ -147,6 +49,8 @@ static void draw_widget(uC_window_t *win, uC_widget_t *widget,
 
     // widget coordinates are relative to the view position within its
     // parent window. position the cursor to the widgets location.
+
+    // %@ set cursor x / y location within window
 
     uC_win_printf(win, "%@", x, y);
 
@@ -165,7 +69,9 @@ static void draw_widget(uC_window_t *win, uC_widget_t *widget,
 }
 
 // -----------------------------------------------------------------------
-// clear an arbitary rectangular area within a window
+// clear a specified rectangular area within a window
+
+// make this an API call?
 
 void clear_box(uC_window_t *win, uint16_t xco, uint16_t yco,
     uint16_t width, uint16_t height)
@@ -173,7 +79,7 @@ void clear_box(uC_window_t *win, uint16_t xco, uint16_t yco,
     while (height--)
     {
         // %@ set cursor x / y location within window
-        // %* print char multiple times
+        // %* print multiple repetitions of char
 
         uC_win_printf(win, "%@%*", xco, yco++, width, 0x20);
     }
@@ -219,17 +125,18 @@ static void draw_view_box(uC_window_t *win, uC_widget_view_t *view)
 {
     border_t *b;
 
-    win_draw_box(win,
-        view->xco - 1,
-        view->yco - 1,
-        view->width,
-        view->height,
-        view->box_type,
-        view->box_attrs);
+    win_draw_box(win, view->xco - 1, view->yco - 1,
+        view->width, view->height,
+        view->box_type, view->box_attrs);
 
     if (view->name != NULL)
     {
         b = borders[view->box_type];
+
+        // %@ set cursor x / y location within window
+        // %8 emit single utf8 character
+        // %s write a string
+        // %8 emit single utf8 character
 
         uC_win_printf(win, "%@%8%s%8",
             view->xco, view->yco - 1,

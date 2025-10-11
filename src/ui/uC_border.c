@@ -1,4 +1,4 @@
-// border.c  -- draw border round window
+// border.c  -- draw border around window
 // -----------------------------------------------------------------------
 
 #include <inttypes.h>
@@ -15,14 +15,14 @@
 
 enum
 {
-    NO_FORCE,
-    FORCE
+    NO_FORCE,               // this is ultra complex to explain and may
+    FORCE                   // have a better solution (maybe?)
 };
 
 // -----------------------------------------------------------------------
 // these three borders give the outer edge characters for a window
 // border plus the characters that you would use to segment up that window
-// the entries in these arrays are the utf8 codepoint for each char
+// the entries in these arrays are the utf8 codepoints for each char
 
 border_t bdr_single[] =
 {
@@ -107,7 +107,7 @@ static void draw_char(uC_window_t *win, int16_t cx, int16_t cy,
     // of said double width character we must force an update of the
     // menu character as this will also cause us to write a space into
     // the DEADC0DE slot of the covered double wide char.
-    // if we did not foce the right edge of the pulldown menus to be
+    // if we did not force the right edge of the pulldown menus to be
     // updated we would get glitches in the following DEAD slot
     // as it would not be updated.
 

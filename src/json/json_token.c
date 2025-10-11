@@ -28,7 +28,7 @@ void strip_quotes(int16_t len)
     for (i = 0; i < len - 2; i++)
     {
         json_vars->json_token[i] =
-        json_vars->json_token[i + 1];
+            json_vars->json_token[i + 1];
     }
 
     json_vars->json_token[i] = '\0';
@@ -111,7 +111,7 @@ static void skip_white(void)
                 json_vars->line_left = 0;
             }
         }
-    } while(json_vars->line_left == 0);
+    } while (json_vars->line_left == 0);
 }
 
 // -----------------------------------------------------------------------

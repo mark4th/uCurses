@@ -51,7 +51,7 @@ static pulldown_t *pd_find(uC_screen_t *scr, char *name)
 
 // -----------------------------------------------------------------------
 
-void pd_disable(uC_screen_t *scr, char *name)
+API void uC_menu_pd_disable(uC_screen_t *scr, char *name)
 {
     pulldown_t *pd;
 
@@ -68,7 +68,7 @@ void pd_disable(uC_screen_t *scr, char *name)
 
 // -----------------------------------------------------------------------
 
-void pd_enable(uC_screen_t *scr, char *name)
+API void uC_menu_pd_enable(uC_screen_t *scr, char *name)
 {
     pulldown_t *pd;
 
@@ -105,8 +105,10 @@ int32_t bar_create_pd_win(uC_screen_t *scr, pulldown_t *pd)
 
         win->bdr_attrs.flags.bits =
             (ATTR_FLAG_GRAY_FG | ATTR_FLAG_GRAY_BG | ATTR_FLAG_BOLD);
+
         win->bdr_attrs.fg = 11;
         win->bdr_attrs.bg = 4;
+
         // win->bdr_attrs.fg = pd->attrs.fg;
         // win->bdr_attrs.bg = pd->attrs.bg;
 
@@ -124,9 +126,14 @@ int32_t bar_create_pd_win(uC_screen_t *scr, pulldown_t *pd)
 // -----------------------------------------------------------------------
 // add a new pulldown to a menu bar
 
-int32_t new_pulldown(uC_screen_t *scr, char *name)
+// this seems to be surplus to requirements and Im not sure what I was
+// thinking when I wrote it.  it is not referenced anywhere and i did not
+// mark it as part of the public API... was I supposed to?
+
+API int32_t uC_menu_new_pd(uC_screen_t *scr, char *name)
 {
     int32_t result = -1;
+
     menu_bar_t *bar = scr->menu_bar;
     pulldown_t *pd;
 

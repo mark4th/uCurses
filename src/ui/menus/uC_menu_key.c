@@ -29,7 +29,7 @@ static void redraw_pulldown(menu_bar_t *bar)
         f = bar_create_pd_win(active_screen, pd);
         if (f != 0)
         {
-            bar_populdate_pd(pd);
+            draw_pd(pd);
         }
     }
 }
@@ -194,18 +194,16 @@ static void menu_cr(void)
 
 // -----------------------------------------------------------------------
 
-void menu_up(void)    { menu_up_down(MENU_UP);    }
-void menu_down(void)  { menu_up_down(MENU_DOWN);  }
-void menu_left(void)  { menu_left_rt(MENU_LEFT);  }
-void menu_right(void) { menu_left_rt(MENU_RIGHT); }
+static void menu_up(void)    { menu_up_down(MENU_UP);    }
+static void menu_down(void)  { menu_up_down(MENU_DOWN);  }
+static void menu_left(void)  { menu_left_rt(MENU_LEFT);  }
+static void menu_right(void) { menu_left_rt(MENU_RIGHT); }
 
 // -----------------------------------------------------------------------
 // you should not modify these pointers... but i can! (tm)
 
-void menu_init_keys(void)
+API void uC_menu_init_keys(void)
 {
-    init_key_handlers();
-
     uC_set_key_action(K_ENT,  menu_cr);
     uC_set_key_action(K_CUU1, menu_up);
     uC_set_key_action(K_CUD1, menu_down);

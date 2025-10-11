@@ -31,6 +31,7 @@
 #include "uC_terminfo.h"
 #include "uC_utils.h"
 #include "uC_switch.h"
+#include "uC_menus.h"
 
 // -----------------------------------------------------------------------
 
@@ -64,6 +65,9 @@ char bin_data[NUMERICAL_WIDTH];
 char alpha_data[ALPHA_WIDTH];
 
 // -----------------------------------------------------------------------
+
+// if your buttons do not have a defined keyboard shortcut you can tell
+// which one was pressed by which widget sequence value is written to here
 
 uint16_t which_button;
 
@@ -121,8 +125,10 @@ static uC_widget_vg_t *init_vg(uint16_t xco, uint16_t yco)
 // the key character is used as a visual indication of which key press
 // will act like a button press on that button.  It is also the value
 // returned by the widget button handler when that button is pressed
-// so this is not an optional parameter.
-
+// so this is not an optional parameter.  If no button key is defined
+// the button handler will write the buttons sequence value into the
+// widgets *select address for the application to interpret
+//
 // If the button name contains this character then the first instance
 // of that character will be displayed with an underline on the button
 
@@ -152,7 +158,7 @@ static void view_add_buttons(uC_widget_view_t *view, uint16_t sequence)
 }
 
 // -----------------------------------------------------------------------
-// helper function
+// helper function used to create each radio button in the view
 
 #define RADIO_WIDTH (10)
 #define NO_XCO      (0)    // the radio buttons are part of a scrollable
@@ -213,8 +219,10 @@ static uC_widget_t *create_check_button(char *name,
 {
     uC_widget_t *w = uC_widget_check_create(
         sequence, &check, check_bit,
+
         // or we can have uC_RADIO_BOX uC_RADIO_CHECKBOX etc
-        name, uC_RADIO_XBOX,
+
+        name, uC_RADIO_BOX,
         RADIO_WIDTH, NO_XCO, NO_YCO,
         radio_attrs, radio_focus_attrs);
 
@@ -253,29 +261,24 @@ static void view_add_check_buttons(uC_widget_view_t *view,
 }
 
 // -----------------------------------------------------------------------
-// this is a minor todo item
-
-
-
-// API uC_widget_t *uC_widget_text_create(
-//     uint16_t sequence, char *data, char *name,
-//     uint16_t size, uC_textbox_radix_t radix,
-//     uint16_t width, uint8_t xco, uint8_t yco,
-//     uC_attribs_t attrs, uC_attribs_t focus)
 
 #define NUMERICAL_WIDGET_SIZE  (16)
 #define NUMERICAL_WIDGET_WIDTH (8)
 #define ALPHA_WIDGET_SIZE      (32)
 #define ALPHA_WIDGET_WIDTH     (16)
 
-#define HEX_X (0)
-#define HEX_Y (0)
-#define OCT_Y (0)
-#define OCT_X (18)
-#define DEC_X (0)
-#define DEC_Y (1)
-#define BIN_X (18)
-#define BIN_Y (1)
+#define HEX_X   (0)
+#define HEX_Y   (0)
+#define OCT_Y   (0)
+#define OCT_X   (18)
+#define DEC_X   (0)
+#define DEC_Y   (1)
+#define BIN_X   (18)
+#define BIN_Y   (1)
+#define ALPHA_X (0)
+#define ALPHA_Y (3)
+
+// -----------------------------------------------------------------------
 
 static void view_add_text_boxes(uC_widget_view_t *view, uint16_t sequence)
 {
@@ -304,7 +307,7 @@ static void view_add_text_boxes(uC_widget_view_t *view, uint16_t sequence)
         text_attrs, text_focus_attrs);
 
     uC_widget_t *t5 = uC_widget_text_create(
-        sequence++, (char *)&alpha_data, "Text   :",
+        sequence++, (char *)&alpha_data, "Alpha  :",
         ALPHA_WIDGET_SIZE, INPUT_ALPHA,
         NUMERICAL_WIDGET_WIDTH, 0, 3,
         text_attrs, text_focus_attrs);
@@ -413,39 +416,62 @@ static void init_widgets(void)
 
 // -----------------------------------------------------------------------
 
-void widget_loop(void)
+static inline void handle_key(char k)
 {
-    uint8_t k;
-
-    do
+    switch (k)
     {
-        k = uC_widget_main();
-
-        switch (k)
-        {
-            case 'w':
-                uC_widget_vg_attach(active_screen, vg1);
-                break;
-
-            case 'o':  case 'O':
+        case 'w':
+            // toggle widget activation
+            (active_screen->view_groups.count == 0)
+                ? uC_widget_vg_attach(active_screen, vg1)
+                : uC_widget_vg_detach(active_screen, vg1);
+            break;
+        case 'o':  case 'O':
+            // only valid if widgets are active
+            if (active_screen->view_groups.count != 0)
+            {
                 check_final = check;
                 radio_final = radio;
                 uC_widget_vg_detach(active_screen, vg1);
-                break;
-
-            case 'c':  case 'C':
+            }
+            break;
+        case 'c':  case 'C':
+            // only valid if widgets are active
+            if (active_screen->view_groups.count != 0)
+            {
                 radio = radio_final;
                 check = check_final;
                 uC_widget_vg_detach(active_screen, vg1);
-                break;
-        }
+            }
+            break;
+    }
+}
 
-        sprintf(status, "K:%c R:%02x C:%02x",
-            k, radio_final, check_final);
+// -----------------------------------------------------------------------
 
+void widget_loop(void)
+{
+    char k;
+
+    uC_scr_draw_screen(active_screen);
+
+    do
+    {
+        // the F10 menus are disabled here when widgets are active
+        // but they do not need to be, you could change the menu
+        // context based on whether or not widgets were active or not
+
+        k = (active_screen->view_groups.count == 0)
+            ? uC_key()
+            : uC_widget_main();
+
+        handle_key(k);
+
+        sprintf(status, "R:%04x C:%04x K:%02x",
+            radio_final, check_final, k);
         uC_set_status(status_win, status);
-        uC_scr_draw_screen(active_screen);
 
+        uC_scr_draw_screen(active_screen);
     } while (k != 0x1b);
 }
 
@@ -457,31 +483,51 @@ static void exit_prog(void)
 }
 
 // -----------------------------------------------------------------------
+// programatically initialize some do nothing eample pulldown menus
 
-static uC_switch_t menu_vectors[] =
+static void init_menus(void)
 {
-    { 0x8d9c616c, exit_prog }
-};
+    int32_t f;
 
-#define VCOUNT sizeof(menu_vectors) / sizeof(menu_vectors[0])
+    // create a menu bar and attach it to the active screen
 
-// -----------------------------------------------------------------------
+    f = uC_menu_bar_open(active_screen);
 
-opt_t menu_address_cb(int32_t hash)
-{
-    int16_t i;
-    uC_switch_t *s = menu_vectors;
-
-    for(i = 0; i < VCOUNT; i++)
+    if (f != -1)
     {
-        if(hash == s->option)
-        {
-            return s->vector;
-        }
-        s++;
-    }
+        // create a pulldown menu and attach it to the menu bar
 
-    return NULL;
+        f = uC_menu_new_pd(active_screen, "File");
+        if (f != -1)
+        {
+            // create menu items in this pulldown
+            uC_menu_new_item(active_screen, "Open",  uC_noop, 0);
+            uC_menu_new_item(active_screen, "Close", uC_noop, 0);
+            uC_menu_new_item(active_screen, "Save",  uC_noop, 0);
+            uC_menu_new_item(active_screen, "Exit",  exit_prog, 0);
+        }
+
+        f = uC_menu_new_pd(active_screen, "Edit");
+        if (f != -1)
+        {
+            uC_menu_new_item(active_screen, "Cut",       uC_noop, 0);
+            uC_menu_new_item(active_screen, "Copy",      uC_noop, 0);
+            uC_menu_new_item(active_screen, "Paste",     uC_noop, 0);
+            uC_menu_new_item(active_screen, "Delete",    uC_noop, 0);
+            uC_menu_new_item(active_screen, "Insert",    uC_noop, 0);
+            uC_menu_new_item(active_screen, "Overwrite", uC_noop, 0);
+        }
+
+        f = uC_menu_new_pd(active_screen, "Help");
+        if (f != -1)
+        {
+            uC_menu_new_item(active_screen, "Helpful",   uC_noop, 0);
+            uC_menu_new_item(active_screen, "Helpless",  uC_noop, 0);
+            uC_menu_new_item(active_screen, "Self Help", uC_noop, 0);
+        }
+
+        uC_menu_init_keys();
+    }
 }
 
 // -----------------------------------------------------------------------
@@ -492,10 +538,12 @@ int main(void)
     uint8_t k;
     uC_window_t *win;
 
-    uCurses_init("json/wtest.json", NULL, menu_address_cb);
+    uCurses_init("json/wtest.json", NULL, NULL);
 
     status_win = uC_add_status(active_screen, STAT_SIZE,
         STATUS_X, STATUS_Y);
+
+    init_menus();
 
     // set the foreground and background attributes for the
     // status window

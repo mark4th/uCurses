@@ -7,8 +7,11 @@
 // -----------------------------------------------------------------------
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #include "uC_parse.h"
+
+#define KEY_BUFF_SZ (32)
 
 // -----------------------------------------------------------------------
 
@@ -42,8 +45,12 @@ typedef struct
     char *esc_buff;             // format string compilation output buffer
     uint16_t num_esc;           // max of 64k of compiled escape seq bytes
     const char *f_str;          // pointer to next char of format string
-
     ti_file_t ti_file;
+
+    bool stuffed;           // true if a key has been manually injected
+
+    int8_t keybuff[KEY_BUFF_SZ];
+    int16_t num_k;
 } ti_vars_t;
 
 // -----------------------------------------------------------------------
@@ -122,7 +129,7 @@ typedef struct
 #define ti_krmir() uC_format(62)  // sent by rmir or smir in insert mode
 #define ti_kel()   uC_format(63)  // clear-to-end-of-line key
 #define ti_ked()   uC_format(64)  // clear-to-end-of-screen key
-#define ti_kf0()   uC_format(65)  // F0 function key
+#define ti_kf0()   uC_format(65)  // F0 function key ????
 #define ti_kf1()   uC_format(66)  // F1 function key
 #define ti_kf10()  uC_format(67)  // F10 function key
 #define ti_kf2()   uC_format(68)  // F2 function key
@@ -273,59 +280,65 @@ typedef struct
 #define ti_kSPD()  uC_format(213)  // shift suspend key
 #define ti_kUND()  uC_format(214)  // shift undo key
 #define ti_rfi()   uC_format(215)  // send next input char (for ptys)
-#define ti_kf11()  uC_format(216)  // insane function key numbers
-#define ti_kf12()  uC_format(217)  // insane function key numbers
-#define ti_kf13()  uC_format(218)  // insane function key numbers
-#define ti_kf14()  uC_format(219)  // insane function key numbers
-#define ti_kf15()  uC_format(220)  // insane function key numbers
-#define ti_kf16()  uC_format(221)  // insane function key numbers
-#define ti_kf17()  uC_format(222)  // insane function key numbers
-#define ti_kf18()  uC_format(223)  // insane function key numbers
-#define ti_kf19()  uC_format(224)  // insane function key numbers
-#define ti_kf20()  uC_format(225)  // insane function key numbers
-#define ti_kf21()  uC_format(226)  // insane function key numbers
-#define ti_kf22()  uC_format(227)  // insane function key numbers
-#define ti_kf23()  uC_format(228)  // insane function key numbers
-#define ti_kf24()  uC_format(229)  // insane function key numbers
-#define ti_kf25()  uC_format(230)  // insane function key numbers
-#define ti_kf26()  uC_format(231)  // insane function key numbers
-#define ti_kf27()  uC_format(232)  // insane function key numbers
-#define ti_kf28()  uC_format(233)  // insane function key numbers
-#define ti_kf29()  uC_format(234)  // insane function key numbers
-#define ti_kf30()  uC_format(235)  // insane function key numbers
-#define ti_kf31()  uC_format(236)  // insane function key numbers
-#define ti_kf32()  uC_format(237)  // insane function key numbers
-#define ti_kf33()  uC_format(238)  // insane function key numbers
-#define ti_kf34()  uC_format(239)  // insane function key numbers
-#define ti_kf35()  uC_format(240)  // insane function key numbers
-#define ti_kf36()  uC_format(241)  // insane function key numbers
-#define ti_kf37()  uC_format(242)  // insane function key numbers
-#define ti_kf38()  uC_format(243)  // insane function key numbers
-#define ti_kf39()  uC_format(244)  // insane function key numbers
-#define ti_kf40()  uC_format(245)  // insane function key numbers
-#define ti_kf41()  uC_format(246)  // insane function key numbers
-#define ti_kf42()  uC_format(247)  // insane function key numbers
-#define ti_kf43()  uC_format(248)  // insane function key numbers
-#define ti_kf44()  uC_format(249)  // insane function key numbers
-#define ti_kf45()  uC_format(250)  // insane function key numbers
-#define ti_kf46()  uC_format(251)  // insane function key numbers
-#define ti_kf47()  uC_format(252)  // insane function key numbers
-#define ti_kf48()  uC_format(253)  // insane function key numbers
-#define ti_kf49()  uC_format(254)  // insane function key numbers
-#define ti_kf50()  uC_format(255)  // insane function key numbers
-#define ti_kf51()  uC_format(256)  // insane function key numbers
-#define ti_kf52()  uC_format(257)  // insane function key numbers
-#define ti_kf53()  uC_format(258)  // insane function key numbers
-#define ti_kf54()  uC_format(259)  // insane function key numbers
-#define ti_kf55()  uC_format(260)  // insane function key numbers
-#define ti_kf56()  uC_format(261)  // insane function key numbers
-#define ti_kf57()  uC_format(262)  // insane function key numbers
-#define ti_kf58()  uC_format(263)  // insane function key numbers
-#define ti_kf59()  uC_format(264)  // insane function key numbers
-#define ti_kf60()  uC_format(265)  // insane function key numbers
-#define ti_kf61()  uC_format(266)  // insane function key numbers
-#define ti_kf62()  uC_format(267)  // insane function key numbers
-#define ti_kf63()  uC_format(268)  // utterly insane in fact
+#define ti_kf11()  uC_format(216)  //
+#define ti_kf12()  uC_format(217)  //
+
+#define ti_kf13()  uC_format(218)  // Shift + function keys
+#define ti_kf14()  uC_format(219)  //
+#define ti_kf15()  uC_format(220)  //
+#define ti_kf16()  uC_format(221)  //
+#define ti_kf17()  uC_format(222)  //
+#define ti_kf18()  uC_format(223)  //
+#define ti_kf19()  uC_format(224)  //
+#define ti_kf20()  uC_format(225)  //
+#define ti_kf21()  uC_format(226)  //
+#define ti_kf22()  uC_format(227)  //
+#define ti_kf23()  uC_format(228)  //
+#define ti_kf24()  uC_format(229)  //
+
+#define ti_kf25()  uC_format(230)  // Control + function keys
+#define ti_kf26()  uC_format(231)  //
+#define ti_kf27()  uC_format(232)  //
+#define ti_kf28()  uC_format(233)  //
+#define ti_kf29()  uC_format(234)  //
+#define ti_kf30()  uC_format(235)  //
+#define ti_kf31()  uC_format(236)  //
+#define ti_kf32()  uC_format(237)  //
+#define ti_kf33()  uC_format(238)  //
+#define ti_kf34()  uC_format(239)  //
+#define ti_kf35()  uC_format(240)  //
+#define ti_kf36()  uC_format(241)  //
+
+#define ti_kf37()  uC_format(242)  // shfift + control + function keys
+#define ti_kf38()  uC_format(243)  //
+#define ti_kf39()  uC_format(244)  //
+#define ti_kf40()  uC_format(245)  //
+#define ti_kf41()  uC_format(246)  //
+#define ti_kf42()  uC_format(247)  //
+#define ti_kf43()  uC_format(248)  //
+#define ti_kf44()  uC_format(249)  //
+#define ti_kf45()  uC_format(250)  //
+#define ti_kf46()  uC_format(251)  //
+#define ti_kf47()  uC_format(252)  //
+#define ti_kf48()  uC_format(253)  //
+
+#define ti_kf49()  uC_format(254)  // shift + alt + control + f key?
+#define ti_kf50()  uC_format(255)  //
+#define ti_kf51()  uC_format(256)  //
+#define ti_kf52()  uC_format(257)  //
+#define ti_kf53()  uC_format(258)  //
+#define ti_kf54()  uC_format(259)  //
+#define ti_kf55()  uC_format(260)  //
+#define ti_kf56()  uC_format(261)  //
+#define ti_kf57()  uC_format(262)  //
+#define ti_kf58()  uC_format(263)  //
+#define ti_kf59()  uC_format(264)  //
+#define ti_kf60()  uC_format(265)  //
+
+#define ti_kf61()  uC_format(266)  //  ???
+#define ti_kf62()  uC_format(267)  //  ???
+#define ti_kf63()  uC_format(268)  //  ???
+
 #define ti_el1()   uC_format(269)  // clear to beginning of line
 #define ti_mgc()   uC_format(270)  // clear left / right soft margins
 #define ti_smgl()  uC_format(271)  // set left soft margin

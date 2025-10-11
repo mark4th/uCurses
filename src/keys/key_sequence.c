@@ -9,8 +9,6 @@
 // -----------------------------------------------------------------------
 
 extern ti_vars_t *ti_vars;
-extern int8_t keybuff[KEY_BUFF_SZ];
-extern int16_t num_k;
 
 // -----------------------------------------------------------------------
 // set index zero of the escape buffer to specified char
@@ -24,22 +22,30 @@ static void set_esc0(uint8_t c)
 // -----------------------------------------------------------------------
 // ti_kent seems to return 3 bytes for me and none of them are 0x0a
 
+// I am not using the terminfo format string for this key press (or the
+// next one), an enter returns a 0x0a and a backspace... dont get me
+// started
+
 static void kent(void) { set_esc0(0x0a); }
 
 // -----------------------------------------------------------------------
-// due to "design decisions" made elsewhere your backspace key may return
-// either an 0x08 as specified in the terminfo file (^h) or it may return
-// a 0x7f.
+// due to "design decisions" made elsewhere, your backspace key may return
+// either a 0x08 as specified in the terminfo file (^h) or it may return a
+// 0x7f.
+//
 // this is not based on what terminal you are using, the same terminal
 // might return one value on one system but the other value on another
-// system.
-// LUNACY like this is why libncurses is 200k in size.. NOT because TED
+// system.  Or, depending on the maintainers of your distribution, one or
+// other value based on build or maybe its planetary alignment?
+//
+// LUNACY like this is why libncurses is 200++k in size.. NOT because TED
 // is incompetent but because the people upstream from him are.  So those
 // of you who are ranting and raving against TED have picked the wrong
 // target </2c>
+//
+// you had to get me started... didnt you!
 
 static void kbs(void)  { set_esc0(0x08); }
-static void kbs2(void) { set_esc0(0x7f); }
 
 // -----------------------------------------------------------------------
 
@@ -58,6 +64,7 @@ static void kdch1(void) { ti_kdch1(); }
 static void kich1(void) { ti_kich1(); }
 static void khome(void) { ti_khome(); }
 static void kend(void)  { ti_kend();  }
+static void kcbt(void)  { ti_kcbt();  }
 static void knp(void)   { ti_knp();   }
 static void kpp(void)   { ti_kpp();   }
 static void kf1(void)   { ti_kf1();   }
@@ -80,10 +87,10 @@ static void kf12(void)  { ti_kf12();  }
 
 void (*k_table[])(void) =
 {
-    kent,  kcuu1, kcud1, kcub1, kcuf1, kbs,  kbs2,
-    kdch1, kich1, khome, kend,  knp,   kpp,  kf1,
-    kf2,   kf3,   kf4,   kf5,   kf6,   kf7,  kf8,
-    kf9,   kf10,  kf11,  kf12
+    kent,  kcuu1, kcud1, kcub1, kcuf1, kbs,  kdch1,
+    kich1, khome, kend,  knp,   kpp,   kcbt,
+    kf1,   kf2,   kf3,   kf4,   kf5,   kf6,
+    kf7,   kf8,   kf9,   kf10,  kf11,  kf12
 };
 
 #define KEY_COUNT (sizeof(k_table) / sizeof(k_table[0]))
@@ -111,11 +118,13 @@ int16_t match_key(void)
         // keyboard input buffer which is the escape sequence or a single
         // character of the key that was pressed
 
-        if (num_k == ti_vars->num_esc)
+        if (ti_vars->num_k == ti_vars->num_esc)
         {
             ti_vars->esc_buff[ti_vars->num_esc] = '\0';
+
             // memcmp not safe
-            hash1 = fnv_hash((char *)&keybuff[0]);
+
+            hash1 = fnv_hash((char *)&ti_vars->keybuff[0]);
             hash2 = fnv_hash(&ti_vars->esc_buff[0]);
 
             if (hash1 == hash2) { return i; }

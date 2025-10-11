@@ -52,7 +52,10 @@ API void uC_widget_vg_add_border(uC_widget_vg_t *vg,
     if (vg != NULL)
     {
         vg->window.flags |= WIN_BOXED;
-        // a view group window always has focus when it is active
+
+        // a view group window always has focus when it contains the
+        // widget that has focus
+
         vg->window.border_type = bdr_type;
         vg->window.bdr_attrs   = bdr_attrs;
         vg->window.focus_attrs = focus_attrs;

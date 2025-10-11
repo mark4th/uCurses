@@ -1,4 +1,4 @@
-// uC_window_attr.c   - set or clearn window attributes
+// uC_window_attr.c   - set or clear window attributes
 // -----------------------------------------------------------------------
 
 #include "uCurses.h"
@@ -26,6 +26,26 @@ API void uC_win_clr_bold(uC_window_t *win)
 
 // -----------------------------------------------------------------------
 
+API void uC_win_set_bdr_bold(uC_window_t *win)
+{
+    if (win != NULL)
+    {
+        uC_attr_set_attr(&win->bdr_attrs, ATTR_FLAG_BOLD);
+    }
+}
+
+// -----------------------------------------------------------------------
+
+API void uC_win_clr_bdr_bold(uC_window_t *win)
+{
+    if (win != NULL)
+    {
+        uC_attr_clr_attr(&win->bdr_attrs, ATTR_FLAG_BOLD);
+    }
+}
+
+// -----------------------------------------------------------------------
+
 API void uC_win_set_rev(uC_window_t *win)
 {
     if (win != NULL)
@@ -44,6 +64,28 @@ API void uC_win_clr_rev(uC_window_t *win)
     }
 }
 
+// -----------------------------------------------------------------------
+
+API void uC_win_set_bdr_rev(uC_window_t *win)
+{
+    if (win != NULL)
+    {
+        uC_attr_set_attr(&win->bdr_attrs, ATTR_FLAG_REV);
+    }
+}
+
+// -----------------------------------------------------------------------
+
+API void uC_win_clr_bdr_rev(uC_window_t *win)
+{
+    if (win != NULL)
+    {
+        uC_attr_clr_attr(&win->bdr_attrs, ATTR_FLAG_REV);
+    }
+}
+
+// -----------------------------------------------------------------------
+// if anyone wants to apply an underline to the border they are nuts
 // -----------------------------------------------------------------------
 
 API void uC_win_set_ul(uC_window_t *win)
@@ -70,8 +112,7 @@ API void uC_win_set_fg(uC_window_t *win, uC_color_t color)
 {
     if (win != NULL)
     {
-        win->attrs.fg = color;
-        uC_attr_clr_attr(&win->attrs, (ATTR_FLAG_RGB_FG | ATTR_FLAG_GRAY_FG));
+        set_fg(&win->attrs, color);
     }
 }
 
@@ -81,8 +122,7 @@ API void uC_win_set_bg(uC_window_t *win, uC_color_t color)
 {
     if (win != NULL)
     {
-        win->attrs.bg = color;
-        uC_attr_clr_attr(&win->attrs, (ATTR_FLAG_RGB_BG | ATTR_FLAG_GRAY_BG));
+        set_bg(&win->attrs, color);
     }
 }
 
@@ -92,8 +132,7 @@ API void uC_win_set_gray_fg(uC_window_t *win, uC_colors_gray_t color)
 {
     if (win != NULL)
     {
-        win->attrs.fg_gray = color;
-        uC_attr_set_attr(&win->attrs, ATTR_FLAG_GRAY_FG);
+        set_gray_fg(&win->attrs, color);
     }
 }
 
@@ -103,8 +142,7 @@ API void uC_win_set_gray_bg(uC_window_t *win, uC_colors_gray_t color)
 {
     if (win != NULL)
     {
-        win->attrs.bg_gray = color;
-        uC_attr_set_attr(&win->attrs, ATTR_FLAG_GRAY_BG);
+        set_gray_bg(&win->attrs, color);
     }
 }
 
@@ -115,10 +153,7 @@ API void uC_win_set_rgb_fg(uC_window_t *win, uC_color_t r, uC_color_t g,
 {
     if (win != NULL)
     {
-        win->attrs.fg_r = r;
-        win->attrs.fg_g = g;
-        win->attrs.fg_b = b;
-        uC_attr_set_attr(&win->attrs, ATTR_FLAG_RGB_FG);
+        set_rgb_fg(&win->attrs, r, g, b);
     }
 }
 
@@ -129,50 +164,7 @@ API void uC_win_set_rgb_bg(uC_window_t *win, uC_color_t r, uC_color_t g,
 {
     if (win != NULL)
     {
-        win->attrs.bg_r = r;
-        win->attrs.bg_g = g;
-        win->attrs.bg_b = b;
-        uC_attr_set_attr(&win->attrs, ATTR_FLAG_RGB_BG);
-    }
-}
-
-// -----------------------------------------------------------------------
-
-API void uC_win_set_bdr_bold(uC_window_t *win)
-{
-    if (win != NULL)
-    {
-        uC_attr_set_attr(&win->bdr_attrs, ATTR_FLAG_BOLD);
-    }
-}
-
-// -----------------------------------------------------------------------
-
-API void uC_win_clr_bdr_bold(uC_window_t *win)
-{
-    if (win != NULL)
-    {
-        uC_attr_clr_attr(&win->bdr_attrs, ATTR_FLAG_BOLD);
-    }
-}
-
-// -----------------------------------------------------------------------
-
-API void uC_win_set_bdr_rev(uC_window_t *win)
-{
-    if (win != NULL)
-    {
-        uC_attr_set_attr(&win->bdr_attrs, ATTR_FLAG_REV);
-    }
-}
-
-// -----------------------------------------------------------------------
-
-API void uC_win_clr_bdr_rev(uC_window_t *win)
-{
-    if (win != NULL)
-    {
-        uC_attr_clr_attr(&win->bdr_attrs, ATTR_FLAG_REV);
+        set_rgb_bg(&win->attrs, r, g, b);
     }
 }
 
@@ -182,7 +174,7 @@ API void uC_win_set_bdr_fg(uC_window_t *win, uC_color_t color)
 {
     if (win != NULL)
     {
-        win->bdr_attrs.fg = color;
+        set_fg(&win->bdr_attrs, color);
     }
 }
 
@@ -192,7 +184,7 @@ API void uC_win_set_bdr_bg(uC_window_t *win, uC_color_t color)
 {
     if (win != NULL)
     {
-        win->bdr_attrs.bg = color;
+        set_bg(&win->bdr_attrs, color);
     }
 }
 
@@ -202,8 +194,7 @@ API void uC_win_set_bdr_gray_fg(uC_window_t *win, uC_colors_gray_t color)
 {
     if (win != NULL)
     {
-        win->bdr_attrs.fg_gray = color;
-        uC_attr_set_attr(&win->bdr_attrs, ATTR_FLAG_GRAY_FG);
+        set_gray_fg(&win->bdr_attrs, color);
     }
 }
 
@@ -220,31 +211,86 @@ API void uC_win_set_bdr_gray_bg(uC_window_t *win, uC_colors_gray_t color)
 
 // -----------------------------------------------------------------------
 
-API void uC_win_set_bdr_rgb_fg(uC_window_t *win, uC_color_t r, uC_color_t g,
-    uC_color_t b)
+API void uC_win_set_bdr_rgb_fg(uC_window_t *win, uC_color_t r,
+    uC_color_t g, uC_color_t b)
 {
     if (win != NULL)
     {
-        win->bdr_attrs.fg_r = r;
-        win->bdr_attrs.fg_g = g;
-        win->bdr_attrs.fg_b = b;
-
-        uC_attr_set_attr(&win->bdr_attrs, ATTR_FLAG_RGB_FG);
+        set_rgb_fg(&win->bdr_attrs, r, g, b);
     }
 }
 
 // -----------------------------------------------------------------------
 
-API void uC_win_set_bdr_rgb_bg(uC_window_t *win, uC_color_t r, uC_color_t g,
-    uC_color_t b)
+API void uC_win_set_bdr_rgb_bg(uC_window_t *win, uC_color_t r,
+    uC_color_t g, uC_color_t b)
 {
     if (win != NULL)
     {
-        win->bdr_attrs.bg_r = r;
-        win->bdr_attrs.bg_g = g;
-        win->bdr_attrs.bg_b = b;
+        set_rgb_bg(&win->bdr_attrs, r, g, b);
+    }
+}
 
-        uC_attr_set_attr(&win->bdr_attrs, ATTR_FLAG_RGB_BG);
+// -----------------------------------------------------------------------
+
+API void uC_win_set_focus_fg(uC_window_t *win, uC_color_t color)
+{
+    if (win != NULL)
+    {
+        set_fg(&win->focus_attrs, color);
+    }
+}
+
+
+// -----------------------------------------------------------------------
+
+API void uC_win_set_focus_bg(uC_window_t *win, uC_color_t color)
+{
+    if (win != NULL)
+    {
+        set_bg(&win->focus_attrs, color);
+    }
+}
+
+// -----------------------------------------------------------------------
+
+API void uC_win_set_focus_gray_fg(uC_window_t *win, uC_colors_gray_t color)
+{
+    if (win != NULL)
+    {
+        set_gray_fg(&win->focus_attrs, color);
+    }
+}
+
+// -----------------------------------------------------------------------
+
+API void uC_win_set_focus_gray_bg(uC_window_t *win, uC_colors_gray_t color)
+{
+    if (win != NULL)
+    {
+        set_gray_bg(&win->focus_attrs, color);
+    }
+}
+
+// -----------------------------------------------------------------------
+
+API void uC_win_set_focus_rgb_fg(uC_window_t *win, uC_color_t r,
+    uC_color_t g, uC_color_t b)
+{
+    if (win != NULL)
+    {
+        set_rgb_fg(&win->focus_attrs, r, g, b);
+    }
+}
+
+// -----------------------------------------------------------------------
+
+API void uC_win_set_focus_rgb_bg(uC_window_t *win, uC_color_t r,
+    uC_color_t g, uC_color_t b)
+{
+    if (win != NULL)
+    {
+        set_rgb_bg(&win->focus_attrs, r, g, b);
     }
 }
 

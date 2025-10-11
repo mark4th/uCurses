@@ -28,6 +28,7 @@ static void init_item(pulldown_t *pd, menu_item_t *item,
     // determine the width of the pulldown window
 
     width = uC_utf8_strlen(name);
+
     if (width > pd->width)
     {
         pd->width = width;
@@ -58,7 +59,7 @@ static int32_t new_item(pulldown_t *pd, char *name, menu_fp_t fp,
 // -----------------------------------------------------------------------
 // add an entry to a pulldown
 
-int32_t new_menu_item(uC_screen_t *scr, char *name, menu_fp_t fp,
+API int32_t uC_menu_new_item(uC_screen_t *scr, char *name, menu_fp_t fp,
     int16_t shortcut)
 {
     int32_t result = -1;    // assume failure

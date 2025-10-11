@@ -143,7 +143,6 @@ API void uC_list_remove_node(uC_list_t *list, void *payload)
 API bool uC_list_push_head(uC_list_t *list, void *payload)
 {
     uC_mem_zone_t zone;
-
     uC_list_node_t *node1, *tmp;
 
     if (list == NULL)
@@ -152,7 +151,6 @@ API bool uC_list_push_head(uC_list_t *list, void *payload)
     }
 
     zone  = list->zone;
-
     node1 = uC_alloc(zone, sizeof(*node1));
 
     if (node1 == NULL)

@@ -35,7 +35,7 @@ static void exit_prog(void)
 
 static void run_demo(char *demo)
 {
-    uC_deregister_winch(my_winch);
+//    uC_deregister_winch(my_winch);
     uC_restore_terminal();
 
     int s = system(demo);
@@ -44,7 +44,7 @@ static void run_demo(char *demo)
     uC_curoff();
     uC_flush_keys();
     uC_clear();
-    uC_register_winch(my_winch);
+//    uC_register_winch(my_winch);
 }
 
 // -----------------------------------------------------------------------

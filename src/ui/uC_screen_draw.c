@@ -31,14 +31,6 @@ void scr_update_menus(uC_screen_t *scr);
 void draw_view_groups(uC_screen_t *scr);
 
 // -----------------------------------------------------------------------
-
-static cell_t *scr_line_addr(uC_screen_t *scr, int16_t line)
-{
-    int16_t index = (scr->width) * line;
-    return &scr->buffer1[index];
-}
-
-// -----------------------------------------------------------------------
 // draw name of window in its border - must have border
 
 static void draw_win_name(uC_window_t *win)
@@ -96,10 +88,12 @@ void scr_draw_win(uC_window_t *win)
 {
     int16_t i;
     int16_t width;
+    int16_t index;
+
     cell_t *src, *dst;
     uC_screen_t *scr;
 
-    if (win != NULL)
+    if ((win != NULL) && (win->screen != NULL))
     {
         scr = win->screen;
 
@@ -116,11 +110,12 @@ void scr_draw_win(uC_window_t *win)
             }
         }
 
-        dst = scr_line_addr(scr, win->yco);
+        index = (scr->width * win->yco);
+        dst = &scr->buffer1[index];
         dst += win->xco;
         src = win->buffer;
 
-        width = win->width * sizeof(cell_t);
+        width = (win->width * sizeof(cell_t));
 
         for (i = 0; i < win->height; i++)
         {
@@ -161,9 +156,12 @@ static void scr_cup(uC_screen_t *scr, int16_t x, int16_t y)
     if ((x >= 0) && (y >= 0) &&
         (x < scr->width) && (y < scr->height))
     {
-        uC_cup(y, x);
-        scr->cx = x;
-        scr->cy = y;
+        if ((scr->cx != x) || (scr->cy != y))
+        {
+            uC_cup(y, x);
+            scr->cx = x;
+            scr->cy = y;
+        }
     }
 }
 
@@ -286,6 +284,8 @@ static int16_t inner_update(uC_screen_t *scr, int16_t index, int16_t end)
     int indx = 0;
     bool f;
 
+    uC_attribs_t a;
+
     // select current attributes and write out every character in
     // the screen buffer that has these atrributes, no matter where
     // they are located.   it is significantly faster to repeatedly
@@ -293,31 +293,33 @@ static int16_t inner_update(uC_screen_t *scr, int16_t index, int16_t end)
     // activate new attrbute values.
 
     p1 = &scr->buffer1[index];
-    new_attrs(p1->attrs);
+    a.blob = p1->attrs.blob;
+
+    new_attrs(a);
 
     do
     {
-        if (winch) { break; }
+        // if (winch) { break; }
 
-        if (attrs.blob == p1->attrs.blob)
+        f = scr_is_modified(scr, index);
+
+        if (f == true)
         {
-            f = scr_is_modified(scr, index);
-
-            if (f == true)
+            if (a.blob == p1->attrs.blob)
             {
                 scr_emit(scr, index);
             }
-        }
+            else if (indx == 0)
+            {
+                // we will later return the index of this character which
+                // is the first modified character that has different
+                // attributes to those we are currently updating.  this
+                // means that the outer loop does not need to scan over
+                // all the unmofified characters we have alredy scanned
+                // past in within this loop.
 
-        // we will later return the index of this character which is
-        // the first character that has different attributes than those
-        // we are currently updating.  this means that the outer loop
-        // does not need to scan over all the characters we have updated
-        // in this loop to find the next non updated character.
-
-        else if (indx == 0)
-        {
-            indx = index;
+                indx = index;
+            }
         }
 
         index++;
@@ -344,10 +346,10 @@ static void outer_update(uC_screen_t *scr)
 
     do
     {
-        if (winch)          // abort mission?
-        {
-            break;
-        }
+        // if (winch)          // abort mission?
+        // {
+        //     break;
+        // }
 
         // if char at index is modified then output everey char in the
         // screen that shares its attributes.
@@ -371,6 +373,12 @@ static void outer_update(uC_screen_t *scr)
             }
             continue;       // skip the ++
         }
+
+        // this part of the loop is litreally only executed when scanning
+        // the screen state for the first modified character.  The indicies
+        // of subesquent modified characters are returned to us by the
+        // inner loop.
+
         index++;
     } while (index != end);
 }
@@ -430,9 +438,12 @@ API void uC_scr_draw_screen(uC_screen_t *scr)
         // todo: rename flush because it sounds like its doing the same
         // thing as purge.
 
-        (winch)
-            ? terminfo_purge()
-            : uC_terminfo_flush();
+        // (winch)
+            // ? terminfo_purge()
+            // : uC_terminfo_flush();
+
+        // winch not working yet
+        uC_terminfo_flush();
     }
 }
 

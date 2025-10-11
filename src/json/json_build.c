@@ -68,12 +68,20 @@ static void fix_win(uC_screen_t *scr, uC_window_t *win)
 
 static void fix_windows(uC_screen_t *scr)
 {
-    uC_window_t *win;
+    uC_window_t *win = scr->backdrop;
     uC_list_node_t *n1;
 
-    if (scr->backdrop != NULL)
+    if (win != NULL)
     {
-        init_backdrop(scr, scr->backdrop);
+        win->xco         = 1;
+        win->yco         = 1;
+        win->width       = scr->width - 2;
+        win->height      = scr->height - 2;
+        // win->blank       = 0x20; // SOLID;
+        win->screen      = scr;
+        scr->backdrop    = win;
+
+        // init_backdrop(scr, scr->backdrop);
         win_alloc(scr->backdrop);
         uC_win_clear(scr->backdrop);
     }

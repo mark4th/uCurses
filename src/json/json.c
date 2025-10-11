@@ -1,8 +1,6 @@
 // uC_json.c  - uCurses json parsing for user interface layout
 // -----------------------------------------------------------------------
 
-// -----------------------------------------------------------------------
-
 #include <fcntl.h>
 #include <inttypes.h>
 #include <stdio.h>
@@ -33,22 +31,22 @@ extern bool winch;
 
 // There are 5 states in this state machine as follows
 //
-//      STATE_L_BRACE
-//      STATE_KEY
-//      STATE_VALUE
-//      STATE_R_BRACE
-//      STATE_DONE
+//      JSON_STATE_L_BRACE
+//      JSON_STATE_KEY
+//      JSON_STATE_VALUE
+//      JSON_STATE_R_BRACE
+//      JSON_STATE_DONE
 //
 // As the json text is parsed the text does not define the state, rather,
 // the state defines what the next character must be.  All parsing is done
 // on a space delimited token by token basis.
 //
-// The initial state is STATE_L_BRACE which expects the next token parsed
-// to be the left brace '{' char.  If it is then the state is set to
-// STATE_KEY.   If not... oopts!
+// The initial state is JSON_STATE_L_BRACE which expects the next token
+// parsed to be the left brace '{' char.  If it is then the state is set
+// to JSON_STATE_KEY.   If not... oopts!
 //
-// The handler for STATE_KEY expect to see one of several known tokens
-// which will either be a 'key' token or an 'object' token.  Only
+// The handler for JSON_STATE_KEY expect to see one of several known
+// tokens which will either be a 'key' token or an 'object' token.  Only
 // recogized tokens are valid, unrecognized tokens will cause the state
 // machine to puke.
 //
@@ -58,16 +56,16 @@ extern bool winch;
 // If the parsed token is recognized as a key...
 //
 //      That specifc key is handled (see below) and the next state is set
-//      to STATE_VALUE where we extract the value to be stored in the
+//      to JSON_STATE_VALUE where we extract the value to be stored in the
 //      specified key.  note: while the ':' character between a key and
 //      its associated value are required there is no state ':'
 //
 // If the parsed token is one of the recognized objects...
 //
-//      The state is set once again to STATE_L_BRACE.
+//      The state is set once again to JSON_STATE_L_BRACE.
 //
-// Almost every STATE_L_BRACE indicates that a new object and thereby an
-// associated C structure is being created.
+// Almost every JSON_STATE_L_BRACE indicates that a new object and thereby
+// an associated C structure is being created.
 //
 // For every object and every key the machine will transition into a new
 // state.  If the previous state was an object then that object state is
@@ -76,7 +74,8 @@ extern bool winch;
 //
 // Any time a new object or key token is parsed we check to see if there
 // is a comma on it.  If there is no comma the next state will
-// instead be STATE_R_BRACE which pops the previous state off the stack.
+// instead be JSON_STATE_R_BRACE which pops the previous state off the
+// stack.
 //
 // As key values are parsed we immediately set the specified item in
 // their parents C structure.  When an object is completed we store
@@ -84,7 +83,7 @@ extern bool winch;
 // structure types of both specify how and where.
 //
 // When all states have been popped off the stack we transition into
-// STATE_DONE and the state machine terminates.
+// JSON_STATE_DONE and the state machine terminates.
 //
 // The following is WHY I wrote a custom json parser (which literally
 // doubled the size of my "micro" sized library)
@@ -109,7 +108,7 @@ json_vars_t *json_vars;
 json_state_t *json_state;
 
 // -----------------------------------------------------------------------
-// fnv-1a hash values for various json syntax chars
+// fnv-1a hash values for various json syntax entities
 
 const int32_t json_syntax[] =
 {
@@ -178,7 +177,7 @@ static void json_state_l_brace(void)
 
     if (json_vars->json_hash == json_syntax[JSON_L_BRACE])
     {
-        json_state->state = STATE_KEY;
+        json_state->state = JSON_STATE_KEY;
         return;
     }
     json_error("Opening brace missing");
@@ -244,7 +243,7 @@ void json_state_r_brace(void)
         json_error("Closing brace missing");
     }
 
-    json_state->state = STATE_DONE;
+    json_state->state = JSON_STATE_DONE;
 
     if (json_state->struct_type != STRUCT_SCREEN)
     {
@@ -254,8 +253,8 @@ void json_state_r_brace(void)
         if (json_state != NULL)
         {
             json_state->state = (has_comma)
-                ? STATE_KEY
-                : STATE_R_BRACE;
+                ? JSON_STATE_KEY
+                : JSON_STATE_R_BRACE;
         }
     }
 }
@@ -264,10 +263,10 @@ void json_state_r_brace(void)
 
 static const uC_switch_t states[] =
 {
-    { STATE_L_BRACE, json_state_l_brace },
-    { STATE_KEY,     json_state_key     },
-    { STATE_VALUE,   json_state_value   },
-    { STATE_R_BRACE, json_state_r_brace },
+    { JSON_STATE_L_BRACE, json_state_l_brace },
+    { JSON_STATE_KEY,     json_state_key     },
+    { JSON_STATE_VALUE,   json_state_value   },
+    { JSON_STATE_R_BRACE, json_state_r_brace },
 };
 
 // -----------------------------------------------------------------------
@@ -291,12 +290,12 @@ static void run_state_machine(void)
         // the token does not define what the state is
         // the state defines what the token must be
 
-        f = uC_switch(states, NUM_STATES, json_state->state);
+        f = uC_switch(states, JSON_NUM_STATES, json_state->state);
         if (f == -1)
         {
             json_error("Unknown or out of place JSON token");
         }
-    } while (json_state->state != STATE_DONE);
+    } while (json_state->state != JSON_STATE_DONE);
 }
 
 // -----------------------------------------------------------------------
@@ -385,7 +384,7 @@ void json_file_create_ui(char *path, fp_finder_t fp)
 
     json_vars->json_stack.zone = uC_MEM_ZONE_UI;
 
-    get_console_size(&json_vars->console_width,
+    uC_get_console_size(&json_vars->console_width,
         &json_vars->console_height);
 
     json_vars->fp_finder = fp;
@@ -410,7 +409,7 @@ void json_mem_create_ui(char *json_data, int len, fp_finder_t fp)
 {
     json_vars = uC_alloc(uC_MEM_ZONE_JSON, sizeof(*json_vars));
 
-    get_console_size(&json_vars->console_width,
+    uC_get_console_size(&json_vars->console_width,
         &json_vars->console_height);
 
     json_vars->json_data       = json_data;

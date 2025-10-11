@@ -10,6 +10,9 @@
 
 // -----------------------------------------------------------------------
 
+// type     = BUTTON, RADIO, CHECK, TEXTBOX
+// sequence = selection sequence on tab key
+
 uC_widget_t *create_widget(uC_widget_type_t type,
     char *name, uint16_t sequence,
     uint16_t xco, uint16_t yco, uint16_t width,

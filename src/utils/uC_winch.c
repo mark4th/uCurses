@@ -32,7 +32,6 @@ void winch_handler(int sig)
 
 // -----------------------------------------------------------------------
 
-
 void init_winch(void)
 {
     struct sigaction new_action;

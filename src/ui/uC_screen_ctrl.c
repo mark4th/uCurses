@@ -1,4 +1,3 @@
-
 // uC_screen_ctrl.c
 // -----------------------------------------------------------------------
 
@@ -7,6 +6,11 @@
 #include "uC_menus.h"
 #include "uC_borders.h"
 #include "uC_attribs.h"
+#include "uC_utils.h"
+
+#ifdef UC_WIDGETS
+#include "uC_widgets.h"
+#endif // UC_WIDGETS
 
 extern uC_screen_t *active_screen;
 
@@ -26,9 +30,9 @@ int16_t scr_alloc(uC_screen_t *scr)
 
     if ((p1 == NULL) || (p2 == NULL))
     {
-        uC_free(uC_MEM_ZONE_UI, p1);
-        uC_free(uC_MEM_ZONE_UI, p2);
-        return -1;          // so is safe
+        uC_ui_free(p1);
+        uC_ui_free(p2);
+        return -1;
     }
 
     scr->buffer1 = p1;
@@ -57,7 +61,7 @@ API uC_screen_t *uC_scr_open(int16_t width, int16_t height)
 
         if (scr_alloc(scr) != 0)
         {
-            uC_free(uC_MEM_ZONE_UI, scr);
+            uC_ui_free(scr);
             scr = NULL;
         }
     }
@@ -68,6 +72,38 @@ API uC_screen_t *uC_scr_open(int16_t width, int16_t height)
 }
 
 // -----------------------------------------------------------------------
+// close all widgets, views and view groups associated with screen
+
+#ifdef UC_WIDGETS
+
+static void close_view_groups(uC_screen_t *scr)
+{
+    uC_widget_vg_t *vg;
+    uC_widget_view_t *v;
+    uC_widget_t *w;
+
+    while (scr->view_groups.count != 0)
+    {
+        vg = (uC_widget_vg_t *)uC_list_pop_head(&scr->view_groups);
+
+        while (vg->views.count != 0)
+        {
+            v = (uC_widget_view_t *)uC_list_pop_head(&vg->views);
+
+            while (v->widgets.count != 0)
+            {
+                w = (uC_widget_t *)uC_list_pop_head(&v->widgets);
+                uC_ui_free(w);
+            }
+            uC_ui_free(v);
+        }
+        uC_ui_free(vg);
+    }
+}
+
+#endif // UC_WIDGETS
+
+// -----------------------------------------------------------------------
 // deallocate all structures attached to screen
 
 API void uC_scr_close(uC_screen_t *scr)
@@ -76,8 +112,8 @@ API void uC_scr_close(uC_screen_t *scr)
 
     if (scr != NULL)
     {
-        uC_free(uC_MEM_ZONE_UI, scr->buffer1);
-        uC_free(uC_MEM_ZONE_UI, scr->buffer2);
+        uC_ui_free(scr->buffer1);
+        uC_ui_free(scr->buffer2);
 
         scr->buffer1 = NULL;
         scr->buffer2 = NULL;
@@ -85,19 +121,18 @@ API void uC_scr_close(uC_screen_t *scr)
         // safe to call this on a null window
         uC_win_close(scr->backdrop);
 
-        do
+        while (scr->windows.count != 0)
         {
-            win = uC_list_pop_head(&scr->windows);
+            win = (uC_window_t *)uC_list_pop_head(&scr->windows);
             uC_win_close(win);
-        } while (win != NULL);
+        }
 
-        // do
-        // {
-        //     close all widget views
-        // } while(...);
+#ifdef UC_WIDGETS
+        close_view_groups(scr);
+#endif
 
 #ifdef UC_MENUS
-        uC_bar_close(scr);
+        uC_menu_bar_close(scr);
 #endif
 
         do
@@ -106,29 +141,44 @@ API void uC_scr_close(uC_screen_t *scr)
             uC_win_close(win);
         } while (win != NULL);
 
-        uC_free(uC_MEM_ZONE_UI, scr);
+        uC_ui_free(scr);
     }
 
     // technically we could have more than one screen but that would need
     // some kind of list push when opening a new one and a list pop here
     // todo?
 
-    active_screen = NULL;
+    if (scr == active_screen)
+    {
+        active_screen = NULL;
+    }
 }
 
 // -----------------------------------------------------------------------
 
 void init_backdrop(uC_screen_t *scr, uC_window_t *win)
 {
+    uC_attribs_t bdr_attrs =
+    {
+        .flags.bits = (ATTR_FLAG_GRAY_FG | ATTR_FLAG_GRAY_BG),
+        .fg         = uC_GRAY_12,
+        .bg         = uC_GRAY_06,
+    };
+
     if ((win != NULL) && (scr != NULL))
     {
-        win->xco      = 1;
-        win->yco      = 1;
-        win->width    = scr->width - 2;
-        win->height   = scr->height - 2;
-        win->flags    = (WIN_BOXED | WIN_LOCKED);
-        win->blank    = SOLID;
-        win->screen   = scr;
+        win->xco         = 1;
+        win->yco         = 1;
+        win->width       = scr->width - 2;
+        win->height      = scr->height - 2;
+        win->flags       = (WIN_BOXED | WIN_LOCKED);
+        win->border_type = BDR_SINGLE;
+        win->blank       = 0x20; // SOLID;
+        win->screen      = scr;
+        win->bdr_attrs   = bdr_attrs;
+
+        uC_win_set_gray_fg(win, uC_GRAY_12);
+
         scr->backdrop = win;
     }
  }
@@ -137,7 +187,7 @@ void init_backdrop(uC_screen_t *scr, uC_window_t *win)
 // add a backdrop window to the screen
 
 // a backdrop is a window you usually do not draw into that gives a place
-// to draw other things over without it any windows that move leave trails
+// to draw other things over. without it any windows that move leave trails
 // behind but with it they do not.  This window always takes up the entire
 // size of the screen and is always framed with a single line border
 
@@ -148,23 +198,12 @@ API void uC_scr_add_backdrop(uC_screen_t *scr)
 {
     uC_window_t *win;
 
-    uC_attribs_t bdr_attrs =
-    {
-        .flags.bits = (ATTR_FLAG_GRAY_FG | ATTR_FLAG_GRAY_BG),
-        .fg         = uC_GRAY_12,
-        .bg         = uC_GRAY_06,
-    };
-
     if (scr != NULL)
     {
         win = uC_win_open(scr->width - 2, scr->height - 2);
 
         if (win != NULL)
         {
-            win->bdr_attrs   = bdr_attrs;
-            win->border_type = BDR_SINGLE;
-
-            uC_win_set_gray_fg(win, uC_GRAY_12);
             init_backdrop(scr, win);
             uC_win_clear(win);
         }
@@ -172,26 +211,87 @@ API void uC_scr_add_backdrop(uC_screen_t *scr)
 }
 
 // -----------------------------------------------------------------------
+// verify that a windows position is within bounds
+
+int16_t win_chk_pos(uC_window_t *win, uC_screen_t *scr,
+    uint16_t x, uint16_t y)
+{
+    int16_t xx;
+    int16_t yy;
+    int16_t width;
+    int16_t height;
+
+    int16_t rv = -1;
+
+    width  = win->width;
+    height = win->height;
+
+    // if window is boxed account for border
+    if (win->flags & WIN_BOXED)
+    {
+        // of the border exists then the lowest X / Y coordinate
+        // the window can be placed at is 1 / 1.
+
+        if ((x <= 0) || (y < 0))
+        {
+            return rv;
+        }
+        else
+        {
+            // count the border as part of the windows width and
+            // position for the following calculation
+
+            width  += 2;
+            height += 2;
+            x--;
+            y--;
+        }
+    }
+
+    xx = (x + width);
+    yy = (y + height);
+
+    // ensure that window is entirely within the screen
+    if ((xx <= scr->width) && (yy <= scr->height))
+    {
+        rv = 0;
+    }
+
+    return rv;
+}
+
+// -----------------------------------------------------------------------
 // attach a window to a screen
 
 API void uC_scr_win_attach(uC_screen_t *scr, uC_window_t *win)
 {
-    uC_screen_t *scr2;
-    win->screen = scr;
+    int16_t rv;
     bool f;
 
-    if (win->screen != NULL)
+    if ((scr != NULL) && (win != NULL))
     {
-        scr2 = win->screen;
-        uC_list_remove_node(&scr2->windows, win);
-    }
+        rv = win_chk_pos(win, scr, win->xco, win->yco);
+        if (rv != 0)
+        {
+            return;
+        }
 
-    f = uC_list_push_tail(&scr->windows, win);
+        // we can move a window from one screen to another
+        // simply by attaching it to the new one.  I may in
+        // the future implement multi screen interfaces.
+        // no promises though.
 
-    if (f != true)
-    {
-        // log error here?
-        // insert more ram to continue!
+        if (win->screen != NULL)
+        {
+            uC_list_remove_node(&scr->windows, win);
+        }
+
+        f = uC_list_push_tail(&scr->windows, win);
+
+        if (f == true)
+        {
+            win->screen = scr;
+        }
     }
 }
 
@@ -200,12 +300,17 @@ API void uC_scr_win_attach(uC_screen_t *scr, uC_window_t *win)
 
 API void uC_scr_win_detach(uC_window_t *win)
 {
-    uC_screen_t *scr = win->screen;
+    uC_screen_t *scr;
 
-    if (scr != NULL)
+    if (win != NULL)
     {
-        uC_list_remove_node(&scr->windows, win);
-        win->screen = NULL;
+        scr = win->screen;
+
+        if (scr != NULL)
+        {
+            uC_list_remove_node(&scr->windows, win);
+            win->screen = NULL;
+        }
     }
 }
 

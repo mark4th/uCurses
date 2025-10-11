@@ -4,6 +4,7 @@
 #include "uCurses.h"
 #include "uC_screen.h"
 #include "uC_window.h"
+#include "uC_utils.h"
 
 // -----------------------------------------------------------------------
 // allocate buffer for window contents
@@ -27,24 +28,6 @@ int16_t win_alloc(uC_window_t *win)
     }
 
     return rv;
-}
-
-// -----------------------------------------------------------------------
-// close a window and free all associated allocated resources
-
-API void uC_win_close(uC_window_t *win)
-{
-    if (win != NULL)
-    {
-        uC_scr_win_detach(win);
-
-        if (win->buffer != NULL)
-        {
-            uC_free(uC_MEM_ZONE_UI, win->buffer);
-        }
-
-        uC_free(uC_MEM_ZONE_UI, win);
-    }
 }
 
 // -----------------------------------------------------------------------
@@ -74,12 +57,30 @@ API uC_window_t *uC_win_open(int16_t width, int16_t height)
         }
         else
         {
-            uC_free(uC_MEM_ZONE_UI, win);
+            uC_ui_free(win);
             win = NULL;
         }
     }
 
     return win;
+}
+
+// -----------------------------------------------------------------------
+// close a window and free all associated allocated resources
+
+API void uC_win_close(uC_window_t *win)
+{
+    if (win != NULL)
+    {
+        uC_scr_win_detach(win);
+
+        if (win->buffer != NULL)
+        {
+            uC_ui_free(win->buffer);
+        }
+
+        uC_ui_free(win);
+    }
 }
 
 // -----------------------------------------------------------------------
@@ -125,55 +126,27 @@ API int16_t uC_win_set_pos(uC_window_t *win, int16_t x, int16_t y)
 {
     int16_t rv = -1;
 
+    uC_screen_t *scr;
+
     // the windows dimensions as stored within its structure accounts only
     // for the drawable region of the window, not its border. we need to
     // account for the border if there is one here.
 
-    int16_t win_width;
-    int16_t win_height;
-    int16_t win_x;
-    int16_t win_y;
-
     if ((win != NULL) && (x >= 0) && (y >= 0))
     {
-        uC_screen_t *scr = win->screen;
+        scr = win->screen;
 
-        if (scr == NULL)
+        if (scr != NULL)
         {
-            return rv;
-        }
-
-        win_width  = win->width;
-        win_height = win->height;
-        win_x      = win->xco;
-        win_y      = win->yco;
-
-        // if window is boxed account for border
-        if (win->flags & WIN_BOXED)
-        {
-            if ((win->xco <= 0) || (win->yco < 0))
+            rv = win_chk_pos(win, scr, x, y);
+            if (rv == 0)
             {
-                return rv;
+                win->xco = x;
+                win->yco = y;
             }
-            else
-            {
-                win_width  += 2;
-                win_height += 2;
-                win_x--;
-                win_y--;
-            }
-        }
-
-        // ensure that window is entirely within the screen
-        if ((win_x + win_width  < scr->width) &&
-            (win_y + win_height < scr->height))
-        {
-            win->xco = x;
-            win->yco = y;
-
-            rv = 0;
         }
     }
+
     return rv;
 }
 
@@ -200,10 +173,11 @@ API void uC_win_clr_flag(uC_window_t *win, win_flags_t flag)
 // -----------------------------------------------------------------------
 
 API void uC_win_set_border(uC_window_t *win, uint16_t border_type,
-    uC_attribs_t bdr_attrs)
+    uC_attribs_t bdr_attrs, uC_attribs_t focus_attrs)
 {
     win->border_type = border_type;
     win->bdr_attrs   = bdr_attrs;
+    win->focus_attrs = focus_attrs;
     win->flags      |= WIN_BOXED;
 }
 

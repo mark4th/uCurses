@@ -242,7 +242,7 @@ API void uC_win_crsr_lt(uC_window_t *win)
 {
     if (win != NULL)
     {
-        if (win->cx == 0)
+        if (win->cx != 0)
         {
             win->cx--;
         }

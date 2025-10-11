@@ -420,7 +420,12 @@ int main(void)
 
     status_win = uC_add_status(scr, STAT_SIZE, 55, 0);
 
-    uC_win_printf(status_win, "%fs%bs%0", uC_GRAY_09, uC_GRAY_03);
+    // %fs set window forground to a gray scale color
+    // %bs set window background to a gray scale color
+    // %0 clear the window
+
+    uC_win_printf(status_win, "%fs%bs%0",
+        uC_GRAY_09, uC_GRAY_03);
 
     uC_set_status(status_win, status);
     uC_clr_status(status_win);

@@ -17,24 +17,33 @@
 
 // -----------------------------------------------------------------------
 
-API uC_window_t *uC_add_status(uC_screen_t *scr,
-    uint16_t w, uint16_t x, uint16_t y)
+API uC_window_t *uC_add_status(uC_screen_t *scr, uint16_t width,
+    uint16_t xco, uint16_t yco)
 {
-    uC_window_t *win = NULL;
+    int16_t f;
 
-    if ((x + w) < scr->width)
+    uC_window_t *win = uC_win_open(width, 1);
+
+    if (win != NULL)
     {
-        win = uC_win_open(w, 1);
+        // verify that this window can actually fit in
+        // this position on the screen.  if not, then
+        // abort mission.
 
-        if (win != NULL)
+        f = win_chk_pos(win, scr, xco, yco);
+
+        if (f == -1)
         {
-            win->xco = x;
-            win->yco = y;
-            win->screen = scr;
-            win->flags |= WIN_LOCKED;
-
-            uC_list_push_tail(&scr->status, win);
+            uC_win_close(win);
+            return NULL;
         }
+
+        win->xco = xco;
+        win->yco = yco;
+        win->screen = scr;
+        win->flags |= WIN_LOCKED;
+
+        uC_list_push_tail(&scr->status, win);
     }
 
     return win;
@@ -57,6 +66,8 @@ API void uC_set_status(uC_window_t *win, char *s)
 {
     if (win != NULL)
     {
+        // %0 clear window
+        // %s display string in window
         uC_win_printf(win, "%0%s", s);
     }
 }

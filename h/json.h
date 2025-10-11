@@ -28,13 +28,13 @@ enum
 
 typedef enum
 {
-    STATE_NONE,             // state machine inactive
-    STATE_L_BRACE,          // next token expected to be {
-    STATE_KEY,              // next token expected to be a key name
-    STATE_VALUE,            // next token expected to be a key value
-    STATE_R_BRACE,          // next token expected to be }
-    STATE_DONE,             // state machine complete
-    NUM_STATES
+    JSON_STATE_NONE,             // state machine inactive
+    JSON_STATE_L_BRACE,          // next token expected to be {
+    JSON_STATE_KEY,              // next token expected to be a key name
+    JSON_STATE_VALUE,            // next token expected to be a key value
+    JSON_STATE_R_BRACE,          // next token expected to be }
+    JSON_STATE_DONE,             // state machine complete
+    JSON_NUM_STATES
 } __attribute__((__packed__)) json_states;
 
 // -----------------------------------------------------------------------
@@ -64,7 +64,7 @@ typedef enum
     KEY_RED,   KEY_GREEN,       KEY_BLUE,     KEY_XCO,
     KEY_YCO,   KEY_WIDTH,       KEY_HEIGHT,   KEY_NAME,
     KEY_FLAGS, KEY_BORDER_TYPE, KEY_VECTOR,   KEY_SHORTCUT,
-    KEY_FLAG
+    KEY_FLAG,  KEY_BLANK
 } __attribute__((__packed__)) json_type_t;
 
 // -----------------------------------------------------------------------
@@ -87,7 +87,7 @@ typedef struct
     int json_len;           // total size of json data
     int json_index;         // parse index into data (current line)
 
-    uint32_t key_value;     // value of key being added to structure
+    int32_t key_value;     // value of key being added to structure
     bool percent;           // key value is expressed as a percentage
     bool quoted;            // some key values must be quoted (strings)
 

@@ -88,9 +88,9 @@ uC_attribs_t radio_focus_attrs =
 
 uC_attribs_t text_attrs =
 {
-    .flags.bits = (ATTR_FLAG_BOLD | ATTR_FLAG_GRAY_BG),
-    .fg         = uC_COLOR_CYAN,
-    .bg_gray    = uC_GRAY_06,
+    .flags.bits = (ATTR_FLAG_GRAY_BG),
+    .fg         = uC_COLOR_BROWN,
+    .bg_gray    = uC_GRAY_04,
 };
 
 // -----------------------------------------------------------------------
@@ -100,7 +100,7 @@ uC_attribs_t text_focus_attrs =
 {
     .flags.bits = (ATTR_FLAG_GRAY_BG),
     .fg         = uC_COLOR_BROWN,
-    .bg         = uC_COLOR_BLUE,
+    .bg         = uC_GRAY_06,
 };
 
 // =======================================================================

@@ -43,7 +43,7 @@ void win_draw_borders(uC_window_t *win);
 // visibility normal
 
 // a box is like a border but is drawn directly into a window but must fit
-// entirely within that window.   the x and y coordinates here are witin
+// entirely within that window.   the x and y coordinates here are within
 // the window not the screen.
 
 API void win_draw_box(uC_window_t *win,

@@ -8,6 +8,7 @@
 #include "uC_win_printf.h"
 #include "uC_alloc.h"
 #include "uC_attribs.h"
+#include "uC_utils.h"
 
 // -----------------------------------------------------------------------
 
@@ -29,20 +30,20 @@ static void pd_set_attr(int16_t i, pulldown_t *pd, uC_attribs_t *p,
     menu_item_t *item)
 {
     // currently selected item?
-    if (i == pd->which)
-    {
-        *p = pd->selected_attrs;
-        return;
-    }
-    *p = ((item->flags & MENU_DISABLED) != 0)
-        ? pd->disabled_attrs
-        : pd->attrs;
+    // disabled item?
+    // Enabled but not selected?
+
+    *p = (i == pd->which)
+        ? pd->selected_attrs
+        : ((item->flags & MENU_DISABLED) != 0)
+            ? pd->disabled_attrs
+            : pd->attrs;
 }
 
 // -----------------------------------------------------------------------
-// populate pulldown window with menu items
+// draw menu items into pulldown window
 
-void bar_populdate_pd(pulldown_t *pd)
+void draw_pd(pulldown_t *pd)
 {
     menu_item_t *item;
     uC_window_t *win;
@@ -51,7 +52,6 @@ void bar_populdate_pd(pulldown_t *pd)
     if ((pd != NULL) && (pd->count != 0) && (pd->window != NULL))
     {
         win = pd->window;
-        uC_win_clear(win);
 
         for (i = 0; i != pd->count; i++)
         {
@@ -60,6 +60,9 @@ void bar_populdate_pd(pulldown_t *pd)
             pd_set_attr(i, pd, &win->attrs, item);
             uC_win_cup(win, 0, i);
             uC_win_puts(win, item->name);
+
+            // this ensures that the highlight on the selected menu item
+            // spans the entire width of the pulldown window
 
             while ((win->cx != win->width) && (win->cx != 0))
             {
@@ -70,7 +73,7 @@ void bar_populdate_pd(pulldown_t *pd)
 }
 
 // -----------------------------------------------------------------------
-// set attributes to draw meny bar item with
+// set attributes to draw menu bar item with
 
 // i   = currently selectd meny bar item
 // bar = pointer to menu bar structure
@@ -80,20 +83,17 @@ void bar_populdate_pd(pulldown_t *pd)
 static void bar_set_attrs(int16_t i, menu_bar_t *bar, uC_attribs_t *p,
     pulldown_t *pd)
 {
-    if ((i == bar->which) && (bar->active != 0))
-    {
-        *p = bar->selected_attrs;
-        return;
-    }
-    *p = ((pd->flags & MENU_DISABLED) != 0)
-        ? bar->disabled_attrs
-        : bar->attrs;
+    *p = ((i == bar->which) && (bar->active != 0))
+        ? bar->selected_attrs
+        : ((pd->flags & MENU_DISABLED) != 0)
+            ? bar->disabled_attrs
+            : bar->attrs;
 }
 
 // -----------------------------------------------------------------------
 // draws menu bar text, does not draw bar into screen
 
-API void uC_bar_draw_text(uC_screen_t *scr)
+static void bar_draw_text(uC_screen_t *scr)
 {
     int16_t i;
     pulldown_t *pd;
@@ -112,11 +112,17 @@ API void uC_bar_draw_text(uC_screen_t *scr)
         {
             pd = bar->items[i];
 
+            // set windows attributes according to the state of
+            // this pulldown.  the pulldown may be active, inactive
+            // or disabled.
+
             bar_set_attrs(i, bar, &win->attrs, pd);
 
-            uC_win_emit(win, win->blank);
-            uC_win_puts(win, pd->name);
-            uC_win_emit(win, win->blank);
+            // todo: keyboard shortcut indicated by an underline?
+            // same function as is used for button wigets?
+
+            uC_win_printf(win, "%8%s%8", win->blank,
+                pd->name, win->blank);
         }
     }
 }
@@ -125,18 +131,22 @@ API void uC_bar_draw_text(uC_screen_t *scr)
 
 static void pd_close(pulldown_t *pd)
 {
+    menu_item_t *item;
+
     if (pd != NULL)
     {
         while (pd->count-- != 0)
         {
-            uC_free(uC_MEM_ZONE_UI, pd->items[pd->count]);
+            item = pd->items[pd->count];
+            pd->items[pd->count] = NULL;
+            uC_ui_free(item);
         }
 
         // window only exists if this pulldown is currently active
 
         uC_win_close(pd->window);
         pd->window = NULL;
-        uC_free(uC_MEM_ZONE_UI, pd);
+        uC_ui_free(pd);
     }
 }
 
@@ -150,13 +160,14 @@ static void bar_close_pds(menu_bar_t *bar)
     while (bar->count-- != 0)
     {
         pd = bar->items[bar->count];
+        bar->items[bar->count] = NULL;
         pd_close(pd);
     }
 }
 
 // -----------------------------------------------------------------------
 
-API void uC_bar_close(uC_screen_t *scr)
+API void uC_menu_bar_close(uC_screen_t *scr)
 {
     menu_bar_t *bar;
 
@@ -168,10 +179,9 @@ API void uC_bar_close(uC_screen_t *scr)
         {
             bar_close_pds(bar);
             uC_win_close(bar->window);
-            bar->window = NULL;
-            uC_free(uC_MEM_ZONE_UI, bar);
-            scr->menu_bar = NULL;
+            uC_ui_free(bar);
         }
+        scr->menu_bar = NULL;
     }
 }
 
@@ -188,6 +198,7 @@ static void init_bar(uC_screen_t *scr, uC_window_t *win, menu_bar_t *bar)
     win->screen   = scr;
     scr->menu_bar = bar;
 
+    bar->xco            = 2;
     bar->attrs          = uC_attrs_normal;
     bar->selected_attrs = uC_attrs_selected;
     bar->disabled_attrs = uC_attrs_disabled;
@@ -195,7 +206,7 @@ static void init_bar(uC_screen_t *scr, uC_window_t *win, menu_bar_t *bar)
 
 // -----------------------------------------------------------------------
 
-API int32_t uC_bar_open(uC_screen_t *scr)
+API int32_t uC_menu_bar_open(uC_screen_t *scr)
 {
     menu_bar_t *bar = NULL;
     uC_window_t *win;
@@ -210,8 +221,8 @@ API int32_t uC_bar_open(uC_screen_t *scr)
             init_bar(scr, win, bar);
             return 0;
         }
-        uC_free(uC_MEM_ZONE_UI, bar);
-        uC_free(uC_MEM_ZONE_UI, win);
+        uC_ui_free(bar);
+        uC_ui_free(win);
     }
 
     return -1;
@@ -231,7 +242,7 @@ void scr_update_menus(uC_screen_t *scr)
 
         // draw all text into memu bar window then write that to
         // the screen buffer
-        uC_bar_draw_text(scr);
+        bar_draw_text(scr);
         scr_draw_win(bar->window);
 
         if (bar->active != 0)
@@ -239,7 +250,7 @@ void scr_update_menus(uC_screen_t *scr)
             pd = bar->items[bar->which];
 
             // draw all text inside pulldown memus window
-            bar_populdate_pd(pd);
+            draw_pd(pd);
             // draw pulldown window into screen
             scr_draw_win((uC_window_t *)pd->window);
         }

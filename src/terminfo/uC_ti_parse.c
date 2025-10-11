@@ -111,7 +111,13 @@ static int64_t fs_pop(void)
 // -----------------------------------------------------------------------
 // as a hardcore forth programmer i cannot help but notice how all of the
 // primitves in here have forth counterparts.  RPN ftw!
-// -----------------------------------------------------------------------
+//
+// p.s. it was either use RPN here or write some sort of recursive descent
+// parser to compile escape sequences.   the original implementers chose
+// to use the simplest solution and go with RPN.  IMHO so should every
+// other programming language.  RDP has never been anything other than an
+// ultra complexificated mountain of a solution to a freakishly miniscule
+// mole hill of a problem.
 
 // -----------------------------------------------------------------------
 // format = %%
@@ -194,7 +200,9 @@ static void _bang(void)
 
     n1 = fs_pop();
 
-    fs_push(!n1);
+    n1 = (n1) ? 0 : 1;
+
+    fs_push(n1);
 }
 
 // -----------------------------------------------------------------------
@@ -204,8 +212,8 @@ static void _caret(void)
 {
     int64_t n1, n2;
 
-    n1 = fs_pop();
     n2 = fs_pop();
+    n1 = fs_pop();
 
     fs_push(n1 ^ n2);
 }
@@ -217,8 +225,8 @@ static void _plus(void)
 {
     int64_t n1, n2;
 
-    n1 = fs_pop();
     n2 = fs_pop();
+    n1 = fs_pop();
 
     fs_push(n1 + n2);
 }
@@ -230,10 +238,10 @@ static void _minus(void)
 {
     int64_t n1, n2;
 
-    n1 = fs_pop();
     n2 = fs_pop();
+    n1 = fs_pop();
 
-    fs_push(n2 - n1);
+    fs_push(n1 - n2);
 }
 
 // -----------------------------------------------------------------------
@@ -243,10 +251,10 @@ static void _star(void)
 {
     int64_t n1, n2;
 
-    n1 = fs_pop();
     n2 = fs_pop();
+    n1 = fs_pop();
 
-    fs_push(n2 * n1);
+    fs_push(n1 * n2);
 }
 
 // -----------------------------------------------------------------------
@@ -256,11 +264,11 @@ static void _slash(void)
 {
     int64_t n1, n2;
 
-    n1 = fs_pop();
     n2 = fs_pop();
+    n1 = fs_pop();
 
     (n1 != 0)
-        ? fs_push(n2 / n1)
+        ? fs_push(n1 / n2)
         : fs_push(0);
 }
 
@@ -271,11 +279,11 @@ static void _mod(void)
 {
     int64_t n1, n2;
 
-    n1 = fs_pop();
     n2 = fs_pop();
+    n1 = fs_pop();
 
     (n1 != 0)
-        ? fs_push(n2 % n1)
+        ? fs_push(n1 % n2)
         : fs_push(0);
 }
 
@@ -286,8 +294,8 @@ static void _equals(void)
 {
     int64_t n1, n2;
 
-    n1 = fs_pop();
     n2 = fs_pop();
+    n1 = fs_pop();
 
     n1 = (n2 == n1) ? 1 : 0;
 
@@ -301,10 +309,10 @@ static void _greater(void)
 {
     int64_t n1, n2;
 
-    n1 = fs_pop();
     n2 = fs_pop();
+    n1 = fs_pop();
 
-    n1 = (n2 > n1) ? 1 : 0;
+    n1 = (n1 > n2) ? 1 : 0;
 
     fs_push(n1);
 }
@@ -316,10 +324,10 @@ static void _less(void)
 {
     int64_t n1, n2;
 
-    n1 = fs_pop();
     n2 = fs_pop();
+    n1 = fs_pop();
 
-    n1 = (n2 < n1) ? 1 : 0;
+    n1 = (n1 < n2) ? 1 : 0;
 
     fs_push(n1);
 }
@@ -601,6 +609,7 @@ static char next_c(void)
         // this should be a d ... should i test that?
         c1 = *ti_vars->f_str++;
     }
+
     return c1;
 }
 
@@ -640,9 +649,12 @@ API void uC_parse_format(const char *f)
 
     ti_vars->f_str = f;
 
-    while (*ti_vars->f_str)
+    while (*ti_vars->f_str != '\0')
     {
         c1 = *ti_vars->f_str++;
+
+        // if the following code is confusing or unreadable to you then
+        // you need to rethink your career choice kthxbai
 
         (c1 == '%')
             ? cmd(next_c())
@@ -653,12 +665,14 @@ API void uC_parse_format(const char *f)
 // -----------------------------------------------------------------------
 // parse a terminfo format string from the terminfo files strings section
 
+#define TI_NULL (-1)
+
 void uC_format(int16_t i)
 {
     i = ti_vars->ti_file.ti_strings[i];
 
     // it is not an error for a format string to be blank
-    if (i != -1)
+    if (i != TI_NULL)
     {
         uC_parse_format(&ti_vars->ti_file.ti_table[i]);
     }

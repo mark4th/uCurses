@@ -6,7 +6,7 @@
             "attribs" :
             {
                 "gray-fg"   : 1,
-                "gray-bg"   : 6
+                "gray-bg"   : 4
             },
 
             "border-attribs" :
@@ -14,7 +14,16 @@
                 "gray-fg"   : 12,
                 "gray-bg"   : 3
             },
-            "border-type"   : "BDR_DOUBLE"
+
+            "blank" : 9618,
+
+            "border-type"   : "BDR_DOUBLE",
+
+            "flags" :
+            {
+               "flag" : "WIN_BOXED",
+               "flag" : "WIN_LOCKED"
+            }
         },
 
         "windows" :
@@ -31,7 +40,7 @@
 
                 "attribs" :
                 {
-                    "fg" : "LT_WHITE",
+                    "fg" : "WHITE",
                     "bg" : "BROWN"
                 },
 

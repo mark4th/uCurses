@@ -33,10 +33,15 @@ enum
 
 typedef enum
 {
-    WIN_BOXED    = 1 << 0,  // has a border
-    WIN_LOCKED   = 1 << 1,  // scroll locked
-    WIN_FILLED   = 1 << 2,  // backfilled with SOLID character
-    WIN_FOCUS    = 1 << 3,  // window has focus
+    // bit positions
+    BOXED     = 0,   LOCKED    = 1,
+    FILLED    = 2,   FOCUS     = 3,
+
+    // bit masks
+    WIN_BOXED    = 1 << BOXED,   // has a border
+    WIN_LOCKED   = 1 << LOCKED,  // scroll locked
+    WIN_FILLED   = 1 << FILLED,  // backfilled with SOLID character
+    WIN_FOCUS    = 1 << FOCUS,   // window has focus
 } __attribute__((packed)) win_flags_t;
 
 // -----------------------------------------------------------------------
@@ -126,7 +131,7 @@ API void uC_win_set_bdr_gray_bg(uC_window_t *win, uC_colors_gray_t color);
 API void uC_win_set_bdr_rgb_fg(uC_window_t *win, uC_color_t r, uC_color_t g, uC_color_t b);
 API void uC_win_set_bdr_rgb_bg(uC_window_t *win, uC_color_t r, uC_color_t g, uC_color_t b);
 API void uC_win_set_border(uC_window_t *win, uint16_t border_type,
-    uC_attribs_t bdr_attrs);
+    uC_attribs_t bdr_attrs, uC_attribs_t focus_attrs);
 
 // -----------------------------------------------------------------------
 

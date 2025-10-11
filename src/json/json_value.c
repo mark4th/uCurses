@@ -43,14 +43,9 @@ static void value_fgbg(void)
             ? ~(ATTR_FLAG_RGB_FG | ATTR_FLAG_GRAY_FG)
             : ~(ATTR_FLAG_RGB_BG | ATTR_FLAG_GRAY_BG);
 
-        if (ktype == KEY_FG)
-        {
-            pstruct->fg = json_vars->key_value;
-        }
-        else
-        {
-            pstruct->bg = json_vars->key_value;
-        }
+        (ktype == KEY_FG)
+            ? (pstruct->fg = json_vars->key_value)
+            : (pstruct->bg = json_vars->key_value);
 
         return;
     }
@@ -66,7 +61,7 @@ static void value_gray_fgbg(void)
     json_state_t *parent  = json_state->parent;
     uC_attribs_t *pstruct = parent->structure;
 
-    if ((json_vars->key_value <= 23) && (json_vars->key_value > 0))
+    if ((json_vars->key_value <= 23) && (json_vars->key_value >= 0))
     {
         pstruct->flags.bits |= (ktype == KEY_GRAY_FG)
             ? ATTR_FLAG_GRAY_FG
@@ -76,14 +71,9 @@ static void value_gray_fgbg(void)
             ? ~ATTR_FLAG_RGB_FG
             : ~ATTR_FLAG_RGB_BG;
 
-        if (ktype == KEY_GRAY_FG)
-        {
-            pstruct->fg_gray = json_vars->key_value;
-        }
-        else
-        {
-            pstruct->bg_gray = json_vars->key_value;
-        }
+        (ktype == KEY_GRAY_FG)
+            ? (pstruct->fg_gray = json_vars->key_value)
+            : (pstruct->bg_gray = json_vars->key_value);
 
         return;
     }
@@ -164,7 +154,7 @@ static void value_rgb(void)
 static void value_xy(void)
 {
     json_state_t *parent = json_state->parent;
-    uC_window_t *win        = parent->structure;
+    uC_window_t *win     = parent->structure;
 
     int16_t mult;
 
@@ -177,14 +167,9 @@ static void value_xy(void)
         json_vars->key_value /= 100;
     }
 
-    if (json_state->struct_type == KEY_XCO)
-    {
-        win->xco = json_vars->key_value;
-    }
-    else
-    {
-        win->yco = json_vars->key_value;
-    }
+    (json_state->struct_type == KEY_XCO)
+        ? (win->xco = json_vars->key_value)
+        : (win->yco = json_vars->key_value);
 }
 
 // -----------------------------------------------------------------------
@@ -208,14 +193,9 @@ static void value_wh(void)
         json_vars->key_value |= 0x8000;
     }
 
-    if (json_state->struct_type == KEY_WIDTH)
-    {
-        win->width = json_vars->key_value;
-    }
-    else
-    {
-        win->height = json_vars->key_value;
-    }
+    (json_state->struct_type == KEY_WIDTH)
+        ? (win->width = json_vars->key_value)
+        : (win->height = json_vars->key_value);
 }
 
 // -----------------------------------------------------------------------
@@ -351,6 +331,16 @@ static void value_border_type(void)
 
 // -----------------------------------------------------------------------
 
+static void value_blank(void)
+{
+    json_state_t *parent = json_state->parent;
+    uC_window_t  *win    = parent->structure;
+
+    win->blank = json_vars->key_value;
+}
+
+// -----------------------------------------------------------------------
+
 static void value_vector(void)
 {
     json_state_t *parent = json_state->parent;
@@ -395,7 +385,8 @@ static const uC_switch_t value_types[] =
     { KEY_BORDER_TYPE, value_border_type },
     { KEY_VECTOR,      value_vector      },
     { KEY_SHORTCUT,    value_shortcut    },
-    { KEY_FLAG,        value_flag        }
+    { KEY_FLAG,        value_flag        },
+    { KEY_BLANK,       value_blank       }
 };
 
 #define NUM_KEYS (sizeof(value_types) / sizeof(value_types[0]))
@@ -540,17 +531,14 @@ void json_state_value(void)
         json_pop();
 
         json_state->state = (has_comma != 0)
-            ? STATE_KEY
-            : STATE_R_BRACE;
+            ? JSON_STATE_KEY
+            : JSON_STATE_R_BRACE;
     }
     else // dont think this is possible but.... ya. this is C so it is
     {
         json_error("Whiskey Tango Foxtrot!");
     }
 }
-
-// -----------------------------------------------------------------------
-
 
 // =======================================================================
 

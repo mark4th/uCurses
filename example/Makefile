@@ -21,8 +21,8 @@ clean:
 shell: shell.o
 	$(CC) $(CFLAGS) -L /usr/local/lib64 -lm -luCurses -o shell shell.c
 
-wtest: wtest.o
-	$(CC) $(CFLAGS) -L /usr/local/lib64 -lm -luCurses -o wtest wtest.c
+widgets: widgets.o
+	$(CC) $(CFLAGS) -L /usr/local/lib64 -lm -luCurses -o widgets widgets.c
 
 window: window.o
 	$(CC) $(CFLAGS) -L /usr/local/lib64 -lm -luCurses -o window window.c

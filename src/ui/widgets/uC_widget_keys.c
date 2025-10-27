@@ -31,10 +31,15 @@ static uint8_t handle_widget(uint8_t k)
         return k;
     }
 
-    if (widget_state.view != NULL)
+    // if the currently focused widget view is scrollable
+
+    if ((widget_state.view != NULL) &&
+        (widget_state.view->flags & (1 << VIEW_SCROLL)))
     {
-        if (((k == WIDGET_KEY_UP) || (k == WIDGET_KEY_DOWN)) &&
-            (widget_state.view->flags & (1 << VIEW_SCROLL)))
+        // if the key pressed is a cursor movement then scroll
+        // the view, otherwise fall through
+
+        if ((k == WIDGET_KEY_UP) || (k == WIDGET_KEY_DOWN))
         {
             widget_scroll_view(k);
             return k;
@@ -69,18 +74,19 @@ static uint8_t widget_key(void)
         ;
     }
 
+    // this while loop ensures that when an escape sequence key
+    // is pressed and translated into a single character we
+    // read and interpret that single character
+
     while (uC_test_keys() != 0)
     {
         k = uC_key();
 
-        if (k == 0x09) // && (active_screen->view_groups.count != 0))
+        if (k != 0x1b)
         {
-            tab_next_widget();
-        }
-
-        else if (k != 0x1b)
-        {
-            k = handle_widget(k);
+            k = (k == 0x09)
+                ? tab_next_widget()
+                : handle_widget(k);
         }
     }
 
@@ -97,8 +103,8 @@ static uint8_t widget_key(void)
 // Each of these functions will inject a single value back into the
 // uCurses keyboard input buffer to be handled as a single key press.
 // this injected value will be returned to widget_key() above.
-// The enumeration (at the top of this file) contains values that cannot
-// be returned by a normal keypress so are safe to use
+// The enumeration in uC_widgets.h contains values that cannot be returned
+// by a normal keypress so are safe to use
 
 // stuff one of the above uCurses black magic key values into the keyboard
 // input buffers to be returned to widget_key() above
@@ -136,6 +142,12 @@ static void set_widget_key_actions(void)
 }
 
 // -----------------------------------------------------------------------
+
+// there might be a problem with the widget state variable maintaining a
+// memory of which widgets had focus on the previos call to this function
+// because all widgets are destroyed when the call is made by the app to
+// uC_widget_vg_close() and recreated prior to calling this function
+// again.
 
 API char uC_widget_main(void)
 {

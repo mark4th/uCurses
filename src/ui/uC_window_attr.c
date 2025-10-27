@@ -10,7 +10,7 @@ API void uC_win_set_bold(uC_window_t *win)
 {
     if (win != NULL)
     {
-        uC_attr_set_attr(&win->attrs, ATTR_FLAG_BOLD);
+        uC_attr_set_flags(&win->attrs, ATTR_FLAG_BOLD);
     }
 }
 
@@ -20,7 +20,7 @@ API void uC_win_clr_bold(uC_window_t *win)
 {
     if (win != NULL)
     {
-        uC_attr_clr_attr(&win->attrs, ATTR_FLAG_BOLD);
+        uC_attr_clr_flags(&win->attrs, ATTR_FLAG_BOLD);
     }
 }
 
@@ -30,7 +30,7 @@ API void uC_win_set_bdr_bold(uC_window_t *win)
 {
     if (win != NULL)
     {
-        uC_attr_set_attr(&win->bdr_attrs, ATTR_FLAG_BOLD);
+        uC_attr_set_flags(&win->bdr_attrs, ATTR_FLAG_BOLD);
     }
 }
 
@@ -40,7 +40,7 @@ API void uC_win_clr_bdr_bold(uC_window_t *win)
 {
     if (win != NULL)
     {
-        uC_attr_clr_attr(&win->bdr_attrs, ATTR_FLAG_BOLD);
+        uC_attr_clr_flags(&win->bdr_attrs, ATTR_FLAG_BOLD);
     }
 }
 
@@ -50,7 +50,7 @@ API void uC_win_set_rev(uC_window_t *win)
 {
     if (win != NULL)
     {
-        uC_attr_set_attr(&win->attrs, ATTR_FLAG_REV);
+        uC_attr_set_flags(&win->attrs, ATTR_FLAG_REV);
     }
 }
 
@@ -60,7 +60,7 @@ API void uC_win_clr_rev(uC_window_t *win)
 {
     if (win != NULL)
     {
-        uC_attr_clr_attr(&win->attrs, ATTR_FLAG_REV);
+        uC_attr_clr_flags(&win->attrs, ATTR_FLAG_REV);
     }
 }
 
@@ -70,7 +70,7 @@ API void uC_win_set_bdr_rev(uC_window_t *win)
 {
     if (win != NULL)
     {
-        uC_attr_set_attr(&win->bdr_attrs, ATTR_FLAG_REV);
+        uC_attr_set_flags(&win->bdr_attrs, ATTR_FLAG_REV);
     }
 }
 
@@ -80,7 +80,7 @@ API void uC_win_clr_bdr_rev(uC_window_t *win)
 {
     if (win != NULL)
     {
-        uC_attr_clr_attr(&win->bdr_attrs, ATTR_FLAG_REV);
+        uC_attr_clr_flags(&win->bdr_attrs, ATTR_FLAG_REV);
     }
 }
 
@@ -92,7 +92,7 @@ API void uC_win_set_ul(uC_window_t *win)
 {
     if (win != NULL)
     {
-        uC_attr_set_attr(&win->attrs, ATTR_FLAG_UL);
+        uC_attr_set_flags(&win->attrs, ATTR_FLAG_UL);
     }
 }
 
@@ -102,7 +102,7 @@ API void uC_win_clr_ul(uC_window_t *win)
 {
     if (win != NULL)
     {
-        uC_attr_clr_attr(&win->attrs, ATTR_FLAG_UL);
+        uC_attr_clr_flags(&win->attrs, ATTR_FLAG_UL);
     }
 }
 
@@ -205,7 +205,7 @@ API void uC_win_set_bdr_gray_bg(uC_window_t *win, uC_colors_gray_t color)
     if (win != NULL)
     {
         win->bdr_attrs.bg_gray = color;
-        uC_attr_set_attr(&win->bdr_attrs, ATTR_FLAG_GRAY_BG);
+        uC_attr_set_flags(&win->bdr_attrs, ATTR_FLAG_GRAY_BG);
     }
 }
 

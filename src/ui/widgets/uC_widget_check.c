@@ -19,6 +19,7 @@ extern uint16_t radio_on[];
 extern uint16_t radio_off[];
 
 // -----------------------------------------------------------------------
+// draw checkbox widvget
 
 void draw_check(uC_window_t *win, uC_widget_t *widget,
     uint16_t x, uint16_t y)

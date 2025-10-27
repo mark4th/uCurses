@@ -55,6 +55,7 @@ static void refill(void)
     {
         json_vars->line_buff[i++] =
             json_vars->json_data[json_vars->json_index++];
+
         if (i == MAX_LINE_LEN)
         {
             json_error("JSON Line Too Long");

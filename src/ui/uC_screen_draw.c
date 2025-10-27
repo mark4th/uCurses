@@ -36,16 +36,11 @@ void draw_view_groups(uC_screen_t *scr);
 static void draw_win_name(uC_window_t *win)
 {
     char *p1;
-    border_t *b;
-    cell_t cell;
     cell_t *p2;
+    border_t *b;
     uC_screen_t *scr;
+    cell_t cell;
     uint16_t index, x, y;
-
-    if (win->border_type == BDR_NONE)
-    {
-        return;
-    }
 
     scr = win->screen;
 
@@ -389,7 +384,7 @@ API void uC_scr_draw_screen(uC_screen_t *scr)
 {
     // this sgr0 fixes a bug where the most recent write to the console
     // was of an underlined character and the underline attribute is still
-    // set
+    // set (for reasons unknown)
 
     ti_sgr0();
 

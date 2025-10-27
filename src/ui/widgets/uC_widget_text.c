@@ -17,6 +17,22 @@
 extern widget_state_t widget_state;
 
 // -----------------------------------------------------------------------
+// which characters are valid in various bases
+
+char * const radix_chars =
+    "0123456789abcdefABCDEF"
+    "ghijklmnopqrstuvwxyz"
+    "GHIJKLMNOPQRSTUVWXYZ"
+    "!@#$%^&*()-=_+[]{}|\\\"';:`,./?<> ";
+
+// length within above string with valid characters for each base
+
+uint8_t radix_lengths[] =
+{
+    2, 8, 10, 22, strlen(radix_chars)
+};
+
+// -----------------------------------------------------------------------
 
 // currently widget name is displayed to the left of the edit box.  i
 // could add an option to display the name above the edit box
@@ -35,34 +51,44 @@ void draw_textbox(uC_window_t *win, uC_widget_t *widget,
     // %@ set cursor x / y location in window
     // %s write string
 
-    uC_win_printf(win, "%@%s",x ,y, widget->name);
+    uC_win_printf(win, "%@%s", x, y, widget->name);
 
     win->attrs = (widget->focused == true)
         ? widget->focus_attrs
         : widget->attrs;
 
+    q = x + strlen(widget->name) + 1;
+
     // %x set cursor x location on current line of window
     // %* write multiple repetitions of same character
+    // %x move cursor back to initial %x position above
 
-    q = x + strlen(widget->name);
-
-    uC_win_printf(win, "%x%*%x", q + 1,
-        widget->width, 0x20, q + 1);
+    uC_win_printf(win, "%x%*%x", q, widget->width, 0x20, q);
 
     for (i = 0; i != widget->width; i++)
     {
-        q = (i + t->offset);
-
-        // if (q >= t->size)      { break; }
-        // if (q == t->count + 1) { break; }
+        q = (t->offset + i);
 
         c = t->data[q];
 
         if (((i == t->cx) && (widget->focused)) || (q >= t->size))
         {
+
+            // %R+ turn on reverse video
+            // %8  print single UTF-8 character
+            // %R- turn off reverse video
+
+            // or...
+
+            // %U+ turn on underline
+            // %8  print single UTF-8 character
+            // %U- turn off underline
+
             uC_win_printf(win,
                 (t->insert) ? "%R+%8%R-" : "%U+%8%U-",
-                (c == '\0') ? 0x20       : c);
+                // if character is null print a space
+                // else print character underlined or rev
+                (c == '\0') ? 0x20 : c);
         }
         else
         {
@@ -75,22 +101,6 @@ void draw_textbox(uC_window_t *win, uC_widget_t *widget,
         }
     }
 }
-
-// -----------------------------------------------------------------------
-// which characters are valid in various bases
-
-char * const radix_chars =
-    "0123456789abcdefABCDEF"
-    "ghijklmnopqrstuvwxyz"
-    "GHIJKLMNOPQRSTUVWXYZ"
-    "!@#$%^&*()-=_+[]{}|\\\"';:',./?<> ";
-
-// length within above string with valid characters for each base
-
-uint8_t radix_lengths[] =
-{
-    2, 8, 10, 22, strlen(radix_chars)
-};
 
 // -----------------------------------------------------------------------
 // veriry that input character is valid in current radix
@@ -148,7 +158,7 @@ static void rt(uC_widget_textbox_t *t)
 
 // -----------------------------------------------------------------------
 
-static void insert_space(uC_widget_textbox_t *t, uint8_t k)
+static void insert_char(uC_widget_textbox_t *t, uint8_t k)
 {
     int i;
 
@@ -156,12 +166,13 @@ static void insert_space(uC_widget_textbox_t *t, uint8_t k)
 
     for (i = t->cx; i != t->count; i++)
     {
-        if (i + t->offset == t->size)
+        if (t->offset + i == t->size)
         {
             break;
         }
-        c2 = t->data[i + t->offset];
-        t->data[i + t->offset] = k;
+
+        c2 = t->data[t->offset + i];
+        t->data[t->offset + i] = k;
         k = c2;
     }
 }
@@ -171,23 +182,23 @@ static void insert_space(uC_widget_textbox_t *t, uint8_t k)
 static uint8_t write_char(uC_widget_textbox_t *t, uint8_t k)
 {
     bool f;
+    int q;
 
     f = test_char(t, k);
-
-    int q = (t->cx + t->offset);
 
     if (f == false)
     {
         return k;
     }
 
+    q = (t->offset + t->cx);
+
     if (q != t->size)
     {
         if (t->insert)
         {
-            insert_space(t, k);
+            insert_char(t, k);
         }
-
         t->data[q] = k;
         t->count++;
         rt(t);

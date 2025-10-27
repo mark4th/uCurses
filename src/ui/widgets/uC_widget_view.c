@@ -19,60 +19,6 @@
 extern widget_state_t widget_state;
 
 // -----------------------------------------------------------------------
-
-static void view_up(void)
-{
-    if (widget_state.view->cy != 0)
-    {
-        widget_state.view->cy--;
-        widget_state.view->view_node =
-            widget_state.view->view_node->prev;
-    }
-    else if (widget_state.view->top != 0)
-    {
-        widget_state.view->top--;
-        widget_state.view->view_node =
-            widget_state.view->view_node->prev;
-    }
-}
-
-// -----------------------------------------------------------------------
-
-static void view_down(void)
-{
-    uint16_t n;
-
-    if (widget_state.view->cy != widget_state.view->height - 1)
-    {
-        widget_state.view->cy++;
-        widget_state.view->view_node =
-            widget_state.view->view_node->next;
-    }
-    else
-    {
-        n = widget_state.view->top + widget_state.view->cy;
-
-        if (n != widget_state.view->widgets.count - 1)
-        {
-            widget_state.view->view_node =
-                widget_state.view->view_node->next;
-            widget_state.view->top++;
-        }
-    }
-}
-
-// -----------------------------------------------------------------------
-
-void widget_scroll_view(uint8_t k)
-{
-    switch (k)
-    {
-        case WIDGET_KEY_UP:      view_up();    break;
-        case WIDGET_KEY_DOWN:    view_down();  break;
-    }
-}
-
-// -----------------------------------------------------------------------
 // create a widget view as a container for one type of widget
 
 API uC_widget_view_t *uC_widget_view_create(char *name,
@@ -122,14 +68,6 @@ API bool uC_widget_view_add_widget(uC_widget_view_t *view, uC_widget_t *w)
     uC_list_node_t *n1;
     uC_widget_t *widget;
 
-    if (view->flags & (1 << VIEW_SCROLL))
-    {
-        if (view->sequence == 0)
-        {
-            view->sequence = w->sequence;
-        }
-    }
-
     // all widgets added to the view must be of the same type
     // as the first widget added to the view
 
@@ -141,6 +79,14 @@ API bool uC_widget_view_add_widget(uC_widget_view_t *view, uC_widget_t *w)
         if (widget->type != w->type)
         {
             return false;
+        }
+    }
+
+    if (view->flags & (1 << VIEW_SCROLL))
+    {
+        if (view->sequence == 0)
+        {
+            view->sequence = w->sequence;
         }
     }
 
@@ -160,6 +106,62 @@ void widget_close_view(uC_widget_view_t *view)
     } while (widget != NULL);
 
     uC_free(uC_MEM_ZONE_UI, view);
+}
+
+// -----------------------------------------------------------------------
+// move the focus up one line in a scrollable view
+
+static void view_up(void)
+{
+    if (widget_state.view->cy != 0)
+    {
+        widget_state.view->cy--;
+        widget_state.view->view_node =
+            widget_state.view->view_node->prev;
+    }
+    else if (widget_state.view->top != 0)
+    {
+        widget_state.view->top--;
+        widget_state.view->view_node =
+            widget_state.view->view_node->prev;
+    }
+}
+
+// -----------------------------------------------------------------------
+// move the focus down one line in a scrollable view
+
+static void view_down(void)
+{
+    uint16_t n;
+
+    if (widget_state.view->cy != widget_state.view->height - 1)
+    {
+        widget_state.view->cy++;
+        widget_state.view->view_node =
+            widget_state.view->view_node->next;
+    }
+    else
+    {
+        n = widget_state.view->top + widget_state.view->cy;
+
+        if (n != widget_state.view->widgets.count - 1)
+        {
+            widget_state.view->view_node =
+                widget_state.view->view_node->next;
+            widget_state.view->top++;
+        }
+    }
+}
+
+// -----------------------------------------------------------------------
+
+void widget_scroll_view(uint8_t k)
+{
+    switch (k)
+    {
+        case WIDGET_KEY_UP:      view_up();    break;
+        case WIDGET_KEY_DOWN:    view_down();  break;
+    }
 }
 
 // -----------------------------------------------------------------------

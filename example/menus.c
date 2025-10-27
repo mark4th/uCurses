@@ -49,11 +49,12 @@ static void run_demo(char *demo)
 
 // -----------------------------------------------------------------------
 
-void window_demo(void) { run_demo("./window");  }
-void dots_demo(void)   { run_demo("./dots");    }
-void mandel_demo(void) { run_demo("./mandel");  }
-void lion(void)        { run_demo("./lion");    }
-void raycast(void)     { run_demo("./raycast"); }
+void window_demo(void)  { run_demo("./window");  }
+void dots_demo(void)    { run_demo("./dots");    }
+void mandel_demo(void)  { run_demo("./mandel");  }
+void lion_demo(void)    { run_demo("./lion");    }
+void raycast_demo(void) { run_demo("./raycast"); }
+void widgets_demo(void) { run_demo("./widgets"); }
 
 // -----------------------------------------------------------------------
 
@@ -62,8 +63,9 @@ static uC_switch_t menu_vectors[] =
     { 0xfcb028fd, window_demo  },
     { 0x9999e2a1, dots_demo    },
     { 0xa3e38b20, mandel_demo  },
-    { 0x0920ad33, lion         },
-    { 0xaeef1976, raycast      },
+    { 0x0920ad33, lion_demo    },
+    { 0xaeef1976, raycast_demo },
+    { 0xf379ef44, widgets_demo },
     { 0x8d9c616c, exit_prog    }
 };
 

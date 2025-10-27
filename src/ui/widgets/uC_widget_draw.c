@@ -71,9 +71,7 @@ static void draw_widget(uC_window_t *win, uC_widget_t *widget,
 // -----------------------------------------------------------------------
 // clear a specified rectangular area within a window
 
-// make this an API call?
-
-void clear_box(uC_window_t *win, uint16_t xco, uint16_t yco,
+static void clear_box(uC_window_t *win, uint16_t xco, uint16_t yco,
     uint16_t width, uint16_t height)
 {
     while (height--)
@@ -82,6 +80,32 @@ void clear_box(uC_window_t *win, uint16_t xco, uint16_t yco,
         // %* print multiple repetitions of char
 
         uC_win_printf(win, "%@%*", xco, yco++, width, 0x20);
+    }
+}
+
+// -----------------------------------------------------------------------
+
+static void draw_view_box(uC_window_t *win, uC_widget_view_t *view)
+{
+    border_t *b;
+
+    win_draw_box(win, view->xco - 1, view->yco - 1,
+        view->width, view->height,
+        view->box_type, view->box_attrs);
+
+    if (view->name != NULL)
+    {
+        b = borders[view->box_type];
+
+        // %@ set cursor x / y location within window
+        // %8 emit single utf8 character
+        // %s write a string
+        // %8 emit single utf8 character
+
+        uC_win_printf(win, "%@%8%s%8",
+            view->xco, view->yco - 1,
+            b[BDR_RIGHT_T], view->name,
+            b[BDR_LEFT_T]);
     }
 }
 
@@ -121,51 +145,9 @@ static void draw_scrollable(uC_window_t *win, uC_widget_view_t *view)
 
 // -----------------------------------------------------------------------
 
-static void draw_view_box(uC_window_t *win, uC_widget_view_t *view)
-{
-    border_t *b;
-
-    win_draw_box(win, view->xco - 1, view->yco - 1,
-        view->width, view->height,
-        view->box_type, view->box_attrs);
-
-    if (view->name != NULL)
-    {
-        b = borders[view->box_type];
-
-        // %@ set cursor x / y location within window
-        // %8 emit single utf8 character
-        // %s write a string
-        // %8 emit single utf8 character
-
-        uC_win_printf(win, "%@%8%s%8",
-            view->xco, view->yco - 1,
-            b[BDR_RIGHT_T], view->name,
-            b[BDR_LEFT_T]);
-    }
-}
-
-// -----------------------------------------------------------------------
-
-static void draw_view(uC_window_t *win, uC_widget_view_t *view)
+static void draw_nonscrollable(uC_window_t *win, uC_widget_view_t *view)
 {
     uC_list_node_t *n1;
-
-    win->attrs = view->attrs;
-
-    clear_box(win, view->xco, view->yco,
-        view->width, view->height);
-
-    if (view->flags & (1 << VIEW_BOXED))
-    {
-        draw_view_box(win, view);
-    }
-
-    if (view->flags & (1 << VIEW_SCROLL))
-    {
-        draw_scrollable(win, view);
-        return;
-    }
 
     n1 = uC_list_scan(&view->widgets, NULL);
 
@@ -176,6 +158,25 @@ static void draw_view(uC_window_t *win, uC_widget_view_t *view)
 
         n1 = uC_list_scan(NULL, n1);
     }
+}
+
+// -----------------------------------------------------------------------
+
+static void draw_view(uC_window_t *win, uC_widget_view_t *view)
+{
+    win->attrs = view->attrs;
+
+    clear_box(win, view->xco, view->yco,
+        view->width, view->height);
+
+    if (view->flags & (1 << VIEW_BOXED))
+    {
+        draw_view_box(win, view);
+    }
+
+    (view->flags & (1 << VIEW_SCROLL))
+        ? draw_scrollable(win, view)
+        : draw_nonscrollable(win, view);
 }
 
 // -----------------------------------------------------------------------

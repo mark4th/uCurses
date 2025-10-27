@@ -72,13 +72,10 @@ API void uC_win_clear(uC_window_t *win)
 
 static void win_copy_line(uC_window_t *win, int16_t sl, int16_t dl)
 {
-    if (win != NULL)
-    {
-        cell_t *src = win_line_addr(win, sl);
-        cell_t *dst = win_line_addr(win, dl);
+    cell_t *src = win_line_addr(win, sl);
+    cell_t *dst = win_line_addr(win, dl);
 
-        memcpy(dst, src, win->width * sizeof(cell_t));
-    }
+    memcpy(dst, src, win->width * sizeof(cell_t));
 }
 
 // -----------------------------------------------------------------------
@@ -135,8 +132,8 @@ API void uC_win_scroll_lt(uC_window_t *win)
 
         for (i = 0; i < win->height; i++)
         {
-            src = dst = win_line_addr(win, i);
-            src++;
+            src = win_line_addr(win, i);
+            dst = src++;
             memcpy(dst, src, (win->width - 1) * sizeof(cell_t));
             dst[win->width - 1] = cell;
         }
@@ -161,8 +158,8 @@ API void uC_win_scroll_rt(uC_window_t *win)
 
         for (i = 0; i < win->height; i++)
         {
-            src = dst = win_line_addr(win, i);
-            dst++;
+            dst = win_line_addr(win, i);
+            src = dst++;
             memmove(&dst[1], src, (win->width - 1) * sizeof(cell_t));
             src[0] = cell;
         }
@@ -310,7 +307,7 @@ static void _win_emit(uC_window_t *win, int32_t c)
     }
 
     cell.attrs = win->attrs;
-    cell.code = c;
+    cell.code  = c;
 
     p = win_line_addr(win, win->cy);
     p[win->cx] = cell;

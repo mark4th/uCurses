@@ -108,7 +108,7 @@ API __attribute__((noreturn)) void uC_abort(char *msg)
 // -----------------------------------------------------------------------
 // the story I hear now is that this is unreliable and that I should
 // be setting the cursor position to something like x = 999, y = 999 (move
-// in x first, then in y) then asking the terminal to report back to me
+// in x first, then in y) then ask the terminal to report back to me
 // what the actual cursor location is.
 //
 // I need to know if this ever actually fails because I am not implementing

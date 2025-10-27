@@ -70,27 +70,27 @@ API void uC_console_set_rgb_bg(uC_color_t r, uC_color_t g, uC_color_t b)
 
 // -----------------------------------------------------------------------
 
-API void console_clr_attr(uint16_t flags)
+API void console_clr_flags(uint16_t flags)
 {
-    uC_attr_clr_attr(&attrs, flags);
+    uC_attr_clr_flags(&attrs, flags);
     apply_attribs();
 }
 
 // -----------------------------------------------------------------------
 
-void console_set_attr(uint16_t flags)
+void console_set_flags(uint16_t flags)
 {
-    uC_attr_set_attr(&attrs, flags);
+    uC_attr_set_flags(&attrs, flags);
     apply_attribs();
 }
 
 // -----------------------------------------------------------------------
 
-API void uC_console_set_ul(void)   { console_set_attr(ATTR_FLAG_UL);   }
-API void uC_console_set_rev(void)  { console_set_attr(ATTR_FLAG_REV);  }
-API void uC_console_set_bold(void) { console_set_attr(ATTR_FLAG_BOLD); }
-API void uC_console_clr_ul(void)   { console_clr_attr(ATTR_FLAG_UL);   }
-API void uC_console_clr_rev(void)  { console_clr_attr(ATTR_FLAG_REV);  }
-API void uC_console_clr_bold(void) { console_clr_attr(ATTR_FLAG_BOLD); }
+API void uC_console_set_ul(void)   { console_set_flags(ATTR_FLAG_UL);   }
+API void uC_console_set_rev(void)  { console_set_flags(ATTR_FLAG_REV);  }
+API void uC_console_set_bold(void) { console_set_flags(ATTR_FLAG_BOLD); }
+API void uC_console_clr_ul(void)   { console_clr_flags(ATTR_FLAG_UL);   }
+API void uC_console_clr_rev(void)  { console_clr_flags(ATTR_FLAG_REV);  }
+API void uC_console_clr_bold(void) { console_clr_flags(ATTR_FLAG_BOLD); }
 
 // =======================================================================

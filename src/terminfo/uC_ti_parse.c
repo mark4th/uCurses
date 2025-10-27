@@ -457,47 +457,13 @@ static void _brace(void) // parse number between { and } in decimal
 }
 
 // -----------------------------------------------------------------------
-// skip forward in format string to next % command
+// scan format string to next format specifier
 
-static void to_cmd(void)
+static char scan(void)
 {
     while (*ti_vars->f_str++ != '%')
         ;
-}
-
-// -----------------------------------------------------------------------
-
-void scan_to_endif(void)
-{
-    char c1;
-    int8_t nest;            // not sure if any terminfo has nested %?
-
-    nest = 0;
-
-    for (;;)
-    {
-        // scan format string for next % char
-        to_cmd();
-        c1 = *ti_vars->f_str++;
-
-        // if we are nesting if's count depth
-        if (c1 == '?') { nest++; }
-
-        // if we are at the else or endif....
-        if ((c1 == 'e') || (c1 == ';'))
-        {
-            if (nest == 0) // break out of loop if at else or endif
-            {              // and we have scanned past all nested %?
-                break;
-            }
-            // we are within a nested %? -
-            // must scan t0 %; before we break
-            else if (c1 == ';')
-            {
-                nest--;
-            }
-        }
-    }
+    return *ti_vars->f_str++;
 }
 
 // -----------------------------------------------------------------------
@@ -505,11 +471,26 @@ void scan_to_endif(void)
 
 static void _t(void)
 {
+    char c1;
+
     int64_t f1 = fs_pop();  // if this is non 0 we dont do anything
 
-    if (f1 == 0)            // if it is 0 we skip past then part
+    if (f1 != 0)            // if it is 0 we skip past then part
     {
-        scan_to_endif();
+        return;
+    }
+
+    // false condition exists, scan to the %e or the %;
+
+    for (;;)
+    {
+        c1 = scan();
+
+        // break if we are at the else or endif....
+        if ((c1 == 'e') || (c1 == ';'))
+        {
+            break;
+        }
     }
 }
 
@@ -519,22 +500,14 @@ static void _t(void)
 static void _e(void)
 {
     char c1;
-    int8_t nest = 0;
 
     for (;;)
     {
-        to_cmd();
+        c1 = scan();
 
-        c1 = *ti_vars->f_str++;
-
-        if (c1 == '?')
+        if (c1 == ';')
         {
-            nest++;
-        }
-        else if (c1 == ';')
-        {
-            if (nest == 0) { break; }
-            nest--;
+            break;
         }
     }
 }
@@ -635,7 +608,7 @@ static const uC_switch_t p_codes[] =
 // -----------------------------------------------------------------------
 // process a % command char from format string c1 = char following %
 
-static inline void cmd(char c1)
+static inline void specifier(char c1)
 {
     uC_switch(p_codes, PCOUNT, c1);
 }
@@ -657,7 +630,7 @@ API void uC_parse_format(const char *f)
         // you need to rethink your career choice kthxbai
 
         (c1 == '%')
-            ? cmd(next_c())
+            ? specifier(next_c())
             : c_emit(c1);
     }
 }

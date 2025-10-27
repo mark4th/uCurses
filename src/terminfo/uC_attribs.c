@@ -270,12 +270,13 @@ void apply_attribs(void)
 // -----------------------------------------------------------------------
 // disable attribes that are mutually exclusive with the one being set
 
-static uC_ti_attr_flags_t attr_add_flags(uC_ti_attr_flags_t flags, uint16_t bits)
+static uC_ti_attr_flags_t attr_add_flags(uC_ti_attr_flags_t flags,
+    uint16_t bits)
 {
-    uC_ti_attr_flags_t f;
+    uC_ti_attr_flags_t f;  // exists so we can test
 
     flags.bits |= bits;
-    f.bits      = bits;
+    f.bits      = bits;    // convert bits to flags
 
     if (f.rgb_fg)    { flags.gray_fg = 0; }
     if (f.rgb_bg)    { flags.gray_bg = 0; }
@@ -287,32 +288,32 @@ static uC_ti_attr_flags_t attr_add_flags(uC_ti_attr_flags_t flags, uint16_t bits
 
 // -----------------------------------------------------------------------
 
-API void uC_attr_set_attr(uC_attribs_t *attribs, uint16_t bits)
+API void uC_attr_set_flags(uC_attribs_t *attribs, uint16_t bits)
 {
     attribs->flags = attr_add_flags(attribs->flags, bits);
 }
 
 // -----------------------------------------------------------------------
 
-API void uC_attr_clr_attr(uC_attribs_t *attribs, uint16_t bits)
+API void uC_attr_clr_flags(uC_attribs_t *attribs, uint16_t bits)
 {
     attribs->flags.bits &= ~bits;
 }
 
 // -----------------------------------------------------------------------
 
-void set_fg(uC_attribs_t *attr, uC_color_t color)
+void set_fg(uC_attribs_t *attribs, uC_color_t color)
 {
-    attr->fg = color;
-    uC_attr_clr_attr(attr, (ATTR_FLAG_RGB_FG | ATTR_FLAG_GRAY_FG));
+    attribs->fg = color;
+    uC_attr_clr_flags(attribs, (ATTR_FLAG_RGB_FG | ATTR_FLAG_GRAY_FG));
 }
 
 // -----------------------------------------------------------------------
 
-void set_bg(uC_attribs_t *attr, uC_color_t color)
+void set_bg(uC_attribs_t *attribs, uC_color_t color)
 {
-    attr->bg = color;
-    uC_attr_clr_attr(attr, (ATTR_FLAG_RGB_FG | ATTR_FLAG_GRAY_FG));
+    attribs->bg = color;
+    uC_attr_clr_flags(attribs, (ATTR_FLAG_RGB_BG | ATTR_FLAG_GRAY_BG));
 }
 
 // -----------------------------------------------------------------------
@@ -320,7 +321,7 @@ void set_bg(uC_attribs_t *attr, uC_color_t color)
 void set_gray_fg(uC_attribs_t *attr, uC_colors_gray_t color)
 {
     attr->fg_gray = color;
-    uC_attr_set_attr(attr, ATTR_FLAG_GRAY_FG);
+    uC_attr_set_flags(attr, ATTR_FLAG_GRAY_FG);
 }
 
 // -----------------------------------------------------------------------
@@ -328,7 +329,7 @@ void set_gray_fg(uC_attribs_t *attr, uC_colors_gray_t color)
 void set_gray_bg(uC_attribs_t *attr, uC_colors_gray_t color)
 {
     attr->bg_gray = color;
-    uC_attr_set_attr(attr, ATTR_FLAG_GRAY_BG);
+    uC_attr_set_flags(attr, ATTR_FLAG_GRAY_BG);
 }
 
 // -----------------------------------------------------------------------
@@ -339,7 +340,7 @@ void set_rgb_fg(uC_attribs_t *attr, uC_color_t r, uC_color_t g,
     attr->fg_r = r;
     attr->fg_g = g;
     attr->fg_b = b;
-    uC_attr_set_attr(attr, ATTR_FLAG_RGB_FG);
+    uC_attr_set_flags(attr, ATTR_FLAG_RGB_FG);
 }
 
 // -----------------------------------------------------------------------
@@ -350,7 +351,7 @@ void set_rgb_bg(uC_attribs_t *attr, uC_color_t r, uC_color_t g,
     attr->bg_r = r;
     attr->bg_g = g;
     attr->bg_b = b;
-    uC_attr_set_attr(attr, ATTR_FLAG_RGB_BG);
+    uC_attr_set_flags(attr, ATTR_FLAG_RGB_BG);
 }
 
 // =======================================================================

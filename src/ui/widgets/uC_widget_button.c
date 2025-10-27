@@ -1,3 +1,4 @@
+
 // uC_widget_button.c
 // -----------------------------------------------------------------------
 
@@ -24,34 +25,38 @@ extern widget_state_t widget_state;
 static void draw_btn_txt(uC_window_t *win, uint16_t x, uint16_t y,
     uint16_t width, char *name, char key)
 {
+    char c;
     bool ul = false;
     uint16_t pad = (width / 2) - (strlen(name) / 2);
 
     // %@ set cursor location in window
     // %* emit single char multiple times
-
-    uC_win_printf(win, "%@%*", x, y, width, 0x20);
-
     // %x set cursor X location on current line
     // %* emit single char multiple times
 
-    uC_win_printf(win, "%x%*", x, pad, 0x20);
+    uC_win_printf(win, "%@%*%x%*",
+        x, y, width, 0x20, x, pad, 0x20);
 
     while ((*name != '\0') && (width-- != 0))
     {
+        c = *name++;
+
         if ((ul != true) && (*name == key))
         {
-           ul = true;
+            // make sure only first instance of letter is
+            // actually underlined
 
-           // %U+ turn on underlining of text
-           // %8  output a single char
-           // %U- turn underling of text off
+            ul = true;
 
-           uC_win_printf(win, "%U+%8%U-", *name++);
+            // %U+ turn on underlining of text
+            // %8  output a single char
+            // %U- turn underling of text off
 
-           continue;
+            uC_win_printf(win, "%U+%8%U-", c);
+
+            continue;
         }
-        uC_win_emit(win, *name++);
+        uC_win_emit(win, c);
     }
 }
 

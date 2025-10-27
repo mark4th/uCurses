@@ -98,6 +98,11 @@
                         },
                         "menu-item" :
                         {
+                            "name"   : "Widgets",
+                            "vector" : "widgets"
+                        },
+                        "menu-item" :
+                        {
                             "name"   : "Exit Program",
                             "vector" : "exit_prog"
                         }

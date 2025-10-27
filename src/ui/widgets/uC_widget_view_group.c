@@ -17,8 +17,7 @@
 // -----------------------------------------------------------------------
 
 API uC_widget_vg_t *uC_widget_vg_create(char *name,
-    uint16_t width, uint16_t height,
-    uint16_t xco, uint16_t yco,
+    uint16_t width, uint16_t height, uint16_t xco, uint16_t yco,
     uC_attribs_t attrs)
 {
     uC_widget_vg_t *vg = uC_alloc(uC_MEM_ZONE_UI, sizeof(*vg));
@@ -32,7 +31,9 @@ API uC_widget_vg_t *uC_widget_vg_create(char *name,
         vg->window.xco           = xco;
         vg->window.yco           = yco;
         vg->window.attrs         = attrs;
+
         // no scrolling this window
+
         vg->window.flags         = WIN_LOCKED;
 
         vg->window.blank         = 0x20;
@@ -46,8 +47,7 @@ API uC_widget_vg_t *uC_widget_vg_create(char *name,
 
 API void uC_widget_vg_add_border(uC_widget_vg_t *vg,
     uC_border_type_t bdr_type,
-    uC_attribs_t bdr_attrs,
-    uC_attribs_t focus_attrs)
+    uC_attribs_t bdr_attrs, uC_attribs_t focus_attrs)
 {
     if (vg != NULL)
     {
@@ -94,15 +94,11 @@ API void uC_widget_vg_close(uC_screen_t *scr, uC_widget_vg_t *vg)
 {
     uC_widget_view_t *view;
 
-    do
+    while (vg->views.count != 0)
     {
         view = uC_list_pop_head(&vg->views);
-        if (view != NULL)
-        {
-            widget_close_view(view);
-            uC_free(uC_MEM_ZONE_UI, view);
-        }
-    } while (view != NULL);
+        widget_close_view(view);
+    }
 
     uC_list_remove_node(&scr->view_groups, vg);
     uC_win_close(&vg->window);

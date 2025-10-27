@@ -11,9 +11,9 @@
 
 int16_t win_alloc(uC_window_t *win)
 {
-    int16_t rv = -1;        // assume failure
     cell_t *p;
     size_t size;
+    int16_t rv = -1;        // assume failure
 
     if (win != NULL)
     {
@@ -139,6 +139,7 @@ API int16_t uC_win_set_pos(uC_window_t *win, int16_t x, int16_t y)
         if (scr != NULL)
         {
             rv = win_chk_pos(win, scr, x, y);
+
             if (rv == 0)
             {
                 win->xco = x;

@@ -198,6 +198,11 @@ typedef struct
 enum
 {
     WIDGET_KEY_BS   = 0x08,
+
+    // keys which return escape sequences are translated into the
+    // following values.  no key can actually return any of these
+    // so they are safe to use.
+
     WIDGET_KEY_UP   = 0x81,
     WIDGET_KEY_DOWN,
     WIDGET_KEY_LEFT,
@@ -220,9 +225,10 @@ uint8_t handle_button(uint8_t k);
 uint8_t handle_check(uint8_t k);
 uint8_t handle_radio(uint8_t k);
 uint8_t handle_text(uint8_t k);
+
 void widget_close_view(uC_widget_view_t *view);
 void widget_scroll_view(uint8_t k);
-void tab_next_widget(void);
+char tab_next_widget(void);
 
 void draw_button(uC_window_t *win, uC_widget_t *widget,
     uint16_t x, uint16_t y);

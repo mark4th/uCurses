@@ -41,7 +41,7 @@ API void uCurses_init(char *file, json_mem_t *json, void *fp)
     // the "fp" variable absolutely has to be passed as void because the
     // entire fucking menu system is OPTIONAL so even if I could make
     // it of type fp_finder_t that fucking typedef is not going always
-    // to exist
+    // exist
 
     // ISO C forbids conversion of object pointer to function pointer
     // type
@@ -103,9 +103,6 @@ API void uCurses_deInit(void)
     uC_mem_purge(uC_MEM_ZONE_JSON);
     uC_mem_purge(uC_MEM_ZONE_UI);
     uC_mem_purge(uC_MEM_ZONE_DEFAULT);
-
-    // should this also purge all allocations associated with the user
-    // defined memory zones?
 }
 
 // =======================================================================

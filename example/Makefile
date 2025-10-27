@@ -8,7 +8,7 @@ OBJECTS = $(addprefix $(OBJDIR)/, main.o menus.o hello.o)
 
 $(shell   mkdir -p obj)
 
-demo : $(OBJECTS) window raycast dots mandel lion
+demo : $(OBJECTS) window raycast dots mandel lion widgets
 	$(CC) -L /usr/local/lib64 -o demo $(OBJECTS) -lm -luCurses 
 #	strip -R .comment demo
 
@@ -16,7 +16,7 @@ $(OBJDIR)/%.o : %.c demo.h $(SOURCES)
 	$(CC) -c $(CFLAGS) -o $@ $<
 
 clean:
-	@rm -fr obj demo shell wtest window raycast dots mandel lion *.o
+	@rm -fr obj demo shell wtest window raycast dots mandel lion widgets *.o
 
 shell: shell.o
 	$(CC) $(CFLAGS) -L /usr/local/lib64 -lm -luCurses -o shell shell.c

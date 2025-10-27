@@ -79,25 +79,11 @@ API uC_screen_t *uC_scr_open(int16_t width, int16_t height)
 static void close_view_groups(uC_screen_t *scr)
 {
     uC_widget_vg_t *vg;
-    uC_widget_view_t *v;
-    uC_widget_t *w;
 
     while (scr->view_groups.count != 0)
     {
-        vg = (uC_widget_vg_t *)uC_list_pop_head(&scr->view_groups);
-
-        while (vg->views.count != 0)
-        {
-            v = (uC_widget_view_t *)uC_list_pop_head(&vg->views);
-
-            while (v->widgets.count != 0)
-            {
-                w = (uC_widget_t *)uC_list_pop_head(&v->widgets);
-                uC_ui_free(w);
-            }
-            uC_ui_free(v);
-        }
-        uC_ui_free(vg);
+        vg = (uC_widget_vg_t *)scr->view_groups.head;
+        uC_widget_vg_close(scr, vg);
     }
 }
 

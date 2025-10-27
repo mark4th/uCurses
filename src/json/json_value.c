@@ -61,19 +61,13 @@ static void value_gray_fgbg(void)
     json_state_t *parent  = json_state->parent;
     uC_attribs_t *pstruct = parent->structure;
 
-    if ((json_vars->key_value <= 23) && (json_vars->key_value >= 0))
+    // gray scale values must be between 0 and 23
+
+    if ((json_vars->key_value >= 0) && (json_vars->key_value <= 23))
     {
-        pstruct->flags.bits |= (ktype == KEY_GRAY_FG)
-            ? ATTR_FLAG_GRAY_FG
-            : ATTR_FLAG_GRAY_BG;
-
-        pstruct->flags.bits &= (ktype == KEY_GRAY_FG)
-            ? ~ATTR_FLAG_RGB_FG
-            : ~ATTR_FLAG_RGB_BG;
-
         (ktype == KEY_GRAY_FG)
-            ? (pstruct->fg_gray = json_vars->key_value)
-            : (pstruct->bg_gray = json_vars->key_value);
+            ? set_gray_fg(pstruct, json_vars->key_value)
+            : set_gray_bg(pstruct, json_vars->key_value);
 
         return;
     }

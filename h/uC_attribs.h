@@ -1,4 +1,4 @@
-// attribs.h
+// uC_attribs.h
 // -----------------------------------------------------------------------
 
 #ifndef UC_ATTRIBS_H
@@ -10,56 +10,76 @@
 
 // -----------------------------------------------------------------------
 
-typedef enum __attribute__((__packed__))
+typedef enum
 {
-    BLACK,   RED,        GREEN,    BROWN,
-    BLUE,    MAGENTA,    CYAN,     WHITE,
-    GRAY,    LT_RED,     LT_GREEN, YELLOW,
-    LT_BLUE, LT_MAGENTA, LT_CYAN,  LT_WHITE
-} uC_color_t;
+   uC_COLOR_BLACK,    uC_COLOR_RED,
+   uC_COLOR_GREEN,    uC_COLOR_BROWN,
+   uC_COLOR_BLUE,     uC_COLOR_MAGENTA,
+   uC_COLOR_CYAN,     uC_COLOR_WHITE,
+   uC_COLOR_GRAY,     uC_COLOR_LT_RED,
+   uC_COLOR_LT_GREEN, uC_COLOR_YELLOW,
+   uC_COLOR_LT_BLUE,  uC_COLOR_LT_MAGENTA,
+   uC_COLOR_LT_CYAN,  uC_COLOR_LT_WHITE
+} __attribute__((__packed__))  uC_color_t;
 
 // -----------------------------------------------------------------------
 
-typedef enum __attribute__((__packed__))
+typedef enum
 {
-    DEFAULT_FG = WHITE,
-    DEFAULT_BG = BLACK
-} uC_default_clr_t;
+    uC_GRAY_00, uC_GRAY_01, uC_GRAY_02, uC_GRAY_03,
+    uC_GRAY_04, uC_GRAY_05, uC_GRAY_06, uC_GRAY_07,
+    uC_GRAY_08, uC_GRAY_09, uC_GRAY_10, uC_GRAY_11,
+    uC_GRAY_12, uC_GRAY_13, uC_GRAY_14, uC_GRAY_15,
+    uC_GRAY_16, uC_GRAY_17, uC_GRAY_18, uC_GRAY_19,
+    uC_GRAY_20, uC_GRAY_21, uC_GRAY_22, uC_GRAY_23
+} __attribute__((__packed__)) uC_colors_gray_t;
 
 // -----------------------------------------------------------------------
 
-typedef enum __attribute__((__packed__))
+typedef enum
 {
-    TI_UNDERLINE,
-    TI_REVERSE,
-    TI_BOLD,
-
-    TI_FG_RGB,
-    TI_BG_RGB,
-    TI_FG_GRAY,
-    TI_BG_GRAY,
-
-    UNDERLINE = (1 << TI_UNDERLINE),
-    REVERSE   = (1 << TI_REVERSE),
-    BOLD      = (1 << TI_BOLD),
-
-    FG_RGB    = (1 << TI_FG_RGB),
-    BG_RGB    = (1 << TI_BG_RGB),
-    FG_GRAY   = (1 << TI_FG_GRAY),
-    BG_GRAY   = (1 << TI_BG_GRAY),
-} ti_attrib_t;
+    DEFAULT_FG = uC_COLOR_WHITE,
+    DEFAULT_BG = uC_COLOR_BLACK
+} __attribute__((__packed__))  uC_default_clr_t;
 
 // -----------------------------------------------------------------------
-// indicies into attributs array
 
-typedef enum __attribute__((__packed__))
+enum
 {
-    ATTR,                   // uint_16_t
-    FG = 2, FG_R = 2,       // uint8_t's
-    BG = 3, BG_R = 3,
-    FG_G,   BG_G,
-    FG_B,   BG_B,
-} uC_attr_index_t;
+    UL,     REV,     BOLD,    RGB_FG,
+    RGB_BG, GRAY_FG, GRAY_BG,
+
+    ATTR_FLAG_UL      = (1 << UL),
+    ATTR_FLAG_REV     = (1 << REV),
+    ATTR_FLAG_BOLD    = (1 << BOLD),
+    ATTR_FLAG_RGB_FG  = (1 << RGB_FG),
+    ATTR_FLAG_RGB_BG  = (1 << RGB_BG),
+    ATTR_FLAG_GRAY_FG = (1 << GRAY_FG),
+    ATTR_FLAG_GRAY_BG = (1 << GRAY_BG),
+} __attribute__((__packed__)) ;
+
+// -----------------------------------------------------------------------
+// atrtibute flags
+
+typedef struct
+{
+    union
+    {
+        struct
+        {
+            uint8_t ul      : 1;  // character is underlined
+            uint8_t rev     : 1;  // character is reverse video
+            uint8_t bold    : 1;  // character is bold
+            uint8_t rgb_fg  : 1;  // characters foreground is rgb
+            uint8_t rgb_bg  : 1;  // characters background is rgb
+            uint8_t gray_fg : 1;  // characters foreground is gray scale
+            uint8_t gray_bg : 1;  // characters background is gray scale
+            uint8_t r1      : 1;  // reserved bits
+            // uint8_t r2;
+        } __attribute__((__packed__));
+        uint16_t bits;
+    } __attribute__((__packed__));
+} __attribute__((__packed__)) uC_ti_attr_flags_t;
 
 // -----------------------------------------------------------------------
 
@@ -67,17 +87,31 @@ typedef struct
 {
     union
     {
-        uint8_t bytes[8];
-        uint64_t chunk;
+        struct
+        {
+            uC_ti_attr_flags_t flags;
+
+            union
+            {
+                uint8_t fg;
+                uint8_t fg_r;
+                uint8_t fg_gray;
+            } __attribute__((__packed__));
+            union
+            {
+                uint8_t bg;
+                uint8_t bg_r;
+                uint8_t bg_gray;
+            } __attribute__((__packed__));
+            uint8_t fg_g;           // foreground green
+            uint8_t bg_g;           // background green
+            uint8_t fg_b;           // foreground blue
+            uint8_t bg_b;
+            uint16_t reserved;      // im sure this will have a use!
+        } __attribute__((__packed__));
+        uint64_t blob;
     };
-} uC_attribs_t;
-
-// -----------------------------------------------------------------------
-// default attribs, not used by json parser, there are no defaults there
-
-#define uC_ATTRS_NORMAL   (0x0004030000000080)
-#define uC_ATTRS_SELECTED (0x0001060000000080)
-#define uC_ATTRS_DISABLED (0x00080400000000c2)
+} __attribute__((__packed__))uC_attribs_t;
 
 // -----------------------------------------------------------------------
 // visibility hidden
@@ -87,29 +121,27 @@ void free_attr_grp(void);
 void int_color_set(void);
 void apply_attribs(void);
 
-ti_attrib_t add_attr(uint8_t a, ti_attrib_t attr);
+void set_fg(uC_attribs_t *attr, uC_color_t color);
+void set_bg(uC_attribs_t *attr, uC_color_t color);
+void set_gray_fg(uC_attribs_t *attr, uC_colors_gray_t color);
+void set_gray_bg(uC_attribs_t *attr, uC_colors_gray_t color);
+void set_rgb_fg(uC_attribs_t *attr, uC_color_t r, uC_color_t g,
+    uC_color_t b);
+void set_rgb_bg(uC_attribs_t *attr, uC_color_t r, uC_color_t g,
+    uC_color_t b);
 
 // -----------------------------------------------------------------------
 
-API void uC_attr_set_attr(uC_attribs_t *attribs, ti_attrib_t attr);
-API void uC_attr_clr_attr(uC_attribs_t *attribs, ti_attrib_t attr);
-API void uC_attr_set_bytes(uC_attribs_t *attribs, uC_attr_index_t which,
-    uC_color_t color);
+API void uC_attr_set_flags(uC_attribs_t *attribs, uint16_t bits);
+API void uC_attr_clr_flags(uC_attribs_t *attribs, uint16_t bits);
+API void uC_console_clr_attr(int16_t flags);
 API void uC_console_reset_attrs(void);
 API void uC_console_set_fg(uC_color_t color);
 API void uC_console_set_bg(uC_color_t color);
-API void uC_console_set_gray_fg(uC_color_t color);
-API void console_set_gray_bg(uC_color_t color);
+API void uC_console_set_gray_fg(uC_colors_gray_t color);
+API void uC_console_set_gray_bg(uC_colors_gray_t color);
 API void uC_console_set_rgb_fg(uC_color_t r, uC_color_t g, uC_color_t b);
 API void uC_console_set_rgb_bg(uC_color_t r, uC_color_t g, uC_color_t b);
-API void uC_console_clr_attr(ti_attrib_t attr);
-API void uC_console_set_bytes(uC_attr_index_t which, uC_color_t color);
-API void uC_console_set_ul(void);
-API void uC_console_set_rev(void);
-API void uC_console_set_bold(void);
-API void uC_console_clr_ul(void);
-API void uC_console_clr_rev(void);
-API void uC_console_clr_bold(void);
 
 // -----------------------------------------------------------------------
 

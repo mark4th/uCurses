@@ -3,39 +3,48 @@
 #include <stdlib.h>
 #include <math.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "uCurses.h"
 #include "uC_menus.h"
 #include "uC_keys.h"
-#include "uC_json.h"
 #include "uC_braille.h"
 #include "uC_win_printf.h"
 #include "uC_braille.h"
 #include "uC_status.h"
+#include "uC_alloc.h"
 
 #include "demo.h"
 
 // -----------------------------------------------------------------------
 
-#define max 1000
+#define IMAX 1000
 
 extern uC_screen_t *active_screen;
 
-uC_window_t *status_win;
-uC_screen_t *scr;
-uC_window_t *win;
+int dots_sin(int16_t angle);
+
+uC_window_t *status_win = NULL;
+uC_screen_t *scr        = NULL;
+uC_window_t *win        = NULL;
 
 // -----------------------------------------------------------------------
 
-char status[33];
+char status[STAT_SIZE] = { 0 };
 
-double MinRe = -3.0;
-double MaxRe =  4.0;
-double MinIm = -2.2;
+long double MinRe = -3.0;
+long double MaxRe =  4.0;
+long double MinIm = -2.2;
 
-double MaxIm;
-double Re_factor;
-double Im_factor;
+long double MaxIm;
+long double Re_factor;
+long double Im_factor;
+
+long double x_off = 2.5;
+long double y_off = -2;
+long double z_off = 1.0;
+
+long double scale_factor = 0;
 
 // -----------------------------------------------------------------------
 
@@ -46,21 +55,21 @@ typedef struct
     uint8_t b;
 } rgb;
 
-rgb palette[max];
+rgb palette[IMAX];
+
+uint16_t r, g, b;
 
 // -----------------------------------------------------------------------
 
-int dots_sin(int16_t angle);
-
 static void make_palette(void)
 {
-    int8_t r, g, b;
     int i;
-    double q;
+    long double q;
+    long double PI = 3.1415;
 
-    for (i = 0; i < max; i++)
+    for (i = 0; i < IMAX; i++)
     {
-        q = 3.1415 * (i + 10);
+        q = PI * (i + 10);
 
         r = (dots_sin(q / 16));
         g = (dots_sin(q / 19));
@@ -78,7 +87,7 @@ static void make_palette(void)
 // {
 //     int a, b;
 //
-//     if(val < 2)
+//     if (val < 2)
 //     {
 //         return val;
 //     }
@@ -96,21 +105,25 @@ static void make_palette(void)
 
 // -----------------------------------------------------------------------
 
-uint8_t peek(rgb* buffer, rgb *fg, int x, int y, int width)
+uint8_t peek(rgb* buffer, /*rgb *fg, */int x, int y, int width)
 {
     rgb *p;
     int xx, yy;
     uint8_t mask = 1;
     uint8_t c = 0;
-    int r, g, b;
 
+    r = g = b = 0;
+
+    // super sample
     for (xx = 0; xx < 2; xx++)
     {
         for (yy = 0; yy < 4; yy++)
         {
             p = buffer + (xx + x) + ((yy + y) * width);
 
-            r += p->r;  g += p->g;   b += p->b;
+            r += p->r;
+            g += p->g;
+            b += p->b;
 
             if ((p->r != 0) || (p->g != 0) || (p->b != 0))
             {
@@ -119,16 +132,22 @@ uint8_t peek(rgb* buffer, rgb *fg, int x, int y, int width)
             mask <<= 1;
         }
     }
-    fg->r = (r / 8);
-    fg->g = (g / 8);
-    fg->b = (b / 8);
+
+    r = (r - 7) / 8;
+    g = (g - 7) / 8;
+    b = (b - 7) / 8;
+
+    // fg->r = ((r - 7 ) / 8);
+    // fg->g = ((g - 7 ) / 8);
+    // fg->b = ((b - 7 ) / 8);
 
     return c;
 }
 
 // -----------------------------------------------------------------------
 
-static void draw_braille(uC_window_t *win, rgb *buffer, int width, int height)
+static void draw_braille(uC_window_t *win, rgb *buffer,
+    int width, int height)
 {
     int x, y;
     uint8_t c = 0;
@@ -140,10 +159,17 @@ static void draw_braille(uC_window_t *win, rgb *buffer, int width, int height)
     {
         for (x = 0; x < width; x += 2)
         {
-            c = peek(buffer, &fg, x, y, width);
+            c = peek(buffer, /*&fg, */x, y, width);
             cc = uC_braille_xlat(c);
 
-            uC_win_printf(win, "%@%rf", x / 2, y / 4, fg.r, fg.g, fg.b);
+            // %@ set cursor location within window
+            // %rf set window foreground to a 24 bit rgb color
+
+            uC_win_printf(win, "%@%rf",
+                x / 2, y / 4,
+                r, g, b);
+                //fg.r, fg.g, fg.b);
+
             uC_win_emit(win, cc);
         }
     }
@@ -151,40 +177,52 @@ static void draw_braille(uC_window_t *win, rgb *buffer, int width, int height)
 
 // -----------------------------------------------------------------------
 
-static void mandel(uC_window_t *win, double x_off, double y_off, double z_off)
+static void mandel(uC_window_t *win, long double x_off,
+    long double y_off,
+    long double z_off)
 {
     int width  = win->width  * 2;
     int height = win->height * 4;
 
-    double h2 = height / 2;
-    double w2 = width / 2;
+    long double h2 = height / 2;
+    long double w2 = width  / 2;
+
+    int r, c, n;
+
+    long double c_re;
+    long double c_im;
+    long double Z_re;
+    long double Z_im;
+    long double Z_re2;
+    long double Z_im2;
+
+    bool isInside;
 
     Re_factor = (MaxRe - MinRe) / (width  - 1) * z_off;
     Im_factor = (MaxIm - MinIm) / (height - 1) * z_off;
 
     MaxIm = MinIm + (MaxRe - MinRe) * height / width;
 
-    rgb *buffer = calloc(width * height, sizeof(rgb));
-
-    int r, c, n;
+    rgb *buffer = uC_alloc(uC_MEM_ZONE_DEFAULT,
+        width * height * sizeof(rgb));
 
     for (r = 0; r < height; r++)
     {
-        double c_im = MaxIm - ((r + -h2) * Im_factor) + y_off;
+        c_im = MaxIm - ((r + -h2) * Im_factor) + y_off;
 
         for (c = 0; c < width; c++)
         {
-            double c_re = MinRe + ((c + -w2) * Re_factor) + x_off;
+            c_re = MinRe + ((c + -w2) * Re_factor) + x_off;
 
-            double Z_re = c_re;
-            double Z_im = c_im;
+            Z_re = c_re;
+            Z_im = c_im;
 
-            bool isInside = true;
+            isInside = true;
 
-            for (n = 0; n < max; n++)
+            for (n = 0; n < IMAX; n++)
             {
-                double Z_re2 = Z_re * Z_re;
-                double Z_im2 = Z_im * Z_im;
+                Z_re2 = Z_re * Z_re;
+                Z_im2 = Z_im * Z_im;
 
                 if (Z_re2 + Z_im2 > 4)
                 {
@@ -203,8 +241,50 @@ static void mandel(uC_window_t *win, double x_off, double y_off, double z_off)
     }
 
     draw_braille(win, buffer, width, height);
-    free(buffer);
+    uC_free(uC_MEM_ZONE_DEFAULT, buffer);
 }
+
+// -----------------------------------------------------------------------
+
+static void lt(void)
+{
+    x_off += 1 / pow(2, scale_factor) * 0.02;
+}
+
+static void rt(void)
+{
+    x_off -= 1 / pow(2, scale_factor) * 0.02;
+}
+
+static void up(void)
+{
+    y_off += 1 / pow(2, scale_factor) * 0.02;
+}
+
+static void dn(void)
+{
+    y_off -= 1 / pow(2, scale_factor) * 0.02;
+}
+
+static void zi(void)
+{
+    scale_factor += 0.02;
+    z_off = 1 / pow(2, scale_factor);
+}
+
+static void zo(void)
+{
+    scale_factor -= 0.02;
+    z_off = 1 / pow(2, scale_factor);
+}
+
+// -----------------------------------------------------------------------
+
+uC_switch_t mandel_keys[] =
+{
+     { 'd', lt },  { 'a', rt },  { 'w', up },
+     { 's', dn },  { '=', zi },  { '-', zo },
+};
 
 // -----------------------------------------------------------------------
 
@@ -213,19 +293,14 @@ void mandel_demo(void)
     int i;
     uint8_t k;
 
-    double x_off = 2.5;
-    double y_off = -2;
-    double z_off = 1.0;
-
-    double scale_factor = 0;
-    double sf           = .0002;
-
-    uC_clr_status(status_win);
+    mandel(win, x_off, y_off, z_off);
 
     do
     {
-        snprintf(status, 31,
-             "X:%1.5f  Y:%1.5f  Z:%2.2f",
+        memset(status, 0, 33);
+
+        snprintf(status, STAT_SIZE - 1,
+             "X:%1.8Lf  Y:%1.8Lf  Z:%3.2Lf",
               x_off, y_off, scale_factor);
 
         uC_set_status(status_win, status);
@@ -233,25 +308,13 @@ void mandel_demo(void)
         mandel(win, x_off, y_off, z_off);
 
         uC_scr_draw_screen(scr);
+
         while(uC_test_keys() == 0)
             ;
         k = uC_key();
 
-        if (k == 'd') { x_off += 1 / pow(2, scale_factor) * 0.03; }
-        if (k == 'a') { x_off -= 1 / pow(2, scale_factor) * 0.03; }
-        if (k == 'w') { y_off += 1 / pow(2, scale_factor) * 0.03; }
-        if (k == 's') { y_off -= 1 / pow(2, scale_factor) * 0.03; }
+        uC_switch(mandel_keys, 6, k);
 
-        if (k == '=')
-        {
-            scale_factor += 0.03;
-            z_off = 1 / pow(2, scale_factor);
-        }
-        if (k == '-')
-        {
-            scale_factor -= 0.03;
-            z_off = 1 / pow(2, scale_factor);
-        }
     } while((k != 0x1b));
 }
 
@@ -296,9 +359,7 @@ int main(void)
 {
     uC_list_node_t *n;
 
-    uCurses_init();
-    uC_json_file_create_ui("json/dots.json", menu_address_cb);
-    uC_menu_init();
+    uCurses_init("json/dots.json", NULL, menu_address_cb);
 
     scr = active_screen;
     n   = scr->windows.head;
@@ -306,20 +367,18 @@ int main(void)
 
     make_palette();
 
-    status_win = uC_add_status(scr, 32, 55, 0);
-    uC_win_printf(status_win, "%fs%bs%0", 9, 3);
+    status_win = uC_add_status(scr, 40, 55, 0);
+    uC_win_printf(status_win, "%fs%bs%0", uC_GRAY_09, uC_GRAY_03);
 
     uC_set_status(status_win, status);
-    uC_clr_status(status_win);
 
     mandel_demo();
-
-    uC_scr_close(active_screen);
 
     uC_console_reset_attrs();
     uC_clear();
     uC_cup(10, 0);
 
+    uC_scr_close(active_screen);
     uCurses_deInit();
 
     printf("Au revoir!\n");

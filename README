@@ -28,8 +28,9 @@ which  you  should  be able to build with your applications with -l uCurses.
 Don't forget to run ldconfig first!
 
 To  build  the  example  code  cd into the example directory and run a make.
-This will produce a file called demo which demonstrates various capabilities
-of the library.  This is not exhaustive but creating it was exhausting :)
+This will produce a  file called demo  and numerous  other executables which 
+will demonstrat various capabilities of the library.  This is not exhaustive 
+but creating it was exhausting :)
 
 Documentation  for  how  to  use this library should be available soon.  The
 example code should help but again, this is not exhaustive.  I have tried to

@@ -3,11 +3,11 @@
 
 #include <inttypes.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "uCurses.h"
 #include "uC_switch.h"
 #include "uC_menus.h"
-#include "uC_json.h"
 #include "uC_utils.h"
 #include "uC_keys.h"
 #include "uC_status.h"
@@ -16,13 +16,12 @@
 #include "demo.h"
 
 extern uC_screen_t *active_screen;
-
-// -----------------------------------------------------------------------
-// just flipflops the border color of which ever window is on top
-
 extern uC_window_t *status_win;
 
+// -----------------------------------------------------------------------
+
 void hello(void);
+void my_winch(void);
 
 // -----------------------------------------------------------------------
 // user applications can stuff single char keys into the keyboard
@@ -34,46 +33,28 @@ static void exit_prog(void)
 
 // -----------------------------------------------------------------------
 
-void window_demo(void)
+static void run_demo(char *demo)
 {
-    uC_scr_close(active_screen);
-    int status = system("./window");
-    hello();
+//    uC_deregister_winch(my_winch);
+    uC_restore_terminal();
+
+    int s = system(demo);
+
+    uC_init_terminal();
+    uC_curoff();
+    uC_flush_keys();
+    uC_clear();
+//    uC_register_winch(my_winch);
 }
 
 // -----------------------------------------------------------------------
 
-void dots_demo(void)
-{
-    uC_scr_close(active_screen);
-    int status = system("./dots");
-    hello();
-}
-
-// -----------------------------------------------------------------------
-
-void mandel_demo(void)
-{
-    uC_scr_close(active_screen);
-    int status = system("./mandel");
-    hello();
-}
-
-// -----------------------------------------------------------------------
-
-void lion(void)
-{
-    uC_scr_close(active_screen);
-    int status = system("./lion");
-    hello();
-}
-
-void raycast(void)
-{
-    uC_scr_close(active_screen);
-    int status = system("./raycast");
-    hello();
-}
+void window_demo(void)  { run_demo("./window");  }
+void dots_demo(void)    { run_demo("./dots");    }
+void mandel_demo(void)  { run_demo("./mandel");  }
+void lion_demo(void)    { run_demo("./lion");    }
+void raycast_demo(void) { run_demo("./raycast"); }
+void widgets_demo(void) { run_demo("./widgets"); }
 
 // -----------------------------------------------------------------------
 
@@ -82,8 +63,9 @@ static uC_switch_t menu_vectors[] =
     { 0xfcb028fd, window_demo  },
     { 0x9999e2a1, dots_demo    },
     { 0xa3e38b20, mandel_demo  },
-    { 0x0920ad33, lion         },
-    { 0xaeef1976, raycast      },
+    { 0x0920ad33, lion_demo    },
+    { 0xaeef1976, raycast_demo },
+    { 0xf379ef44, widgets_demo },
     { 0x8d9c616c, exit_prog    }
 };
 

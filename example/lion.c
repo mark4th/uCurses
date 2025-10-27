@@ -5,11 +5,14 @@
 
 #include "demo.h"
 
+#define LION_WIDTH  (25)
+#define LION_HEIGHT (120)
+
 uC_screen_t *scr;
 uC_window_t *win;
 uC_window_t *status_win;
 
-char status[33];
+char status[STAT_SIZE];
 
 extern uC_screen_t *active_screen;
 
@@ -17,9 +20,6 @@ extern uC_screen_t *active_screen;
 // this image is 100 dots wide and 120 dots high.  the glyphs above are
 // all two pixles wide and four high.  as each character is four dots high
 // we only need 30 rows.
-
-#define LION_WIDTH  25
-#define LION_HEIGHT 120
 
 uint8_t lion_data[] =
 {
@@ -323,7 +323,8 @@ static void draw_lion(void)
     uint16_t code;
     uint16_t *braile_data;
 
-    braile_data = calloc(win->width * win->height, 2);
+    braile_data = uC_alloc(uC_MEM_ZONE_DEFAULT,
+        win->width * win->height * 2);
 
     uC_braille_8(win, braile_data, lion_data, LION_WIDTH);
 
@@ -331,7 +332,7 @@ static void draw_lion(void)
 
     uC_draw_braille(win, braile_data);
 
-    free(braile_data);
+    uC_free(uC_MEM_ZONE_DEFAULT, braile_data);
 }
 
 // -----------------------------------------------------------------------
@@ -393,15 +394,17 @@ int main(void)
 {
     uC_list_node_t *n;
 
-    uCurses_init();
-    uC_json_file_create_ui("json/dots.json", menu_address_cb);
-    uC_menu_init();
+    uCurses_init("json/dots.json", NULL, menu_address_cb);
 
     scr = active_screen;
     n   = scr->windows.head;
     win = n->payload;
 
-    status_win = uC_add_status(scr, 32, 55, 0);
+    status_win = uC_add_status(scr, STAT_SIZE, 55, 0);
+
+    // %fs set window forground to a gray scale color
+    // %bs set winndow background to a gray scale color
+    // %0 clear the window
 
     uC_win_printf(status_win, "%fs%bs%0", 9, 3);
 
@@ -410,12 +413,11 @@ int main(void)
 
     lion();
 
-    uC_scr_close(active_screen);
-
     uC_console_reset_attrs();
     uC_clear();
     uC_cup(10, 0);
 
+    uC_scr_close(active_screen);
     uCurses_deInit();
 
     printf("Au revoir!\n");

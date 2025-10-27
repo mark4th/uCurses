@@ -20,7 +20,7 @@
 
 // -----------------------------------------------------------------------
 
-//#define SHELL            // comment out to use quick sort from stdlib
+#define SHELL            // comment out to use quick sort from stdlib
 
 #define ITEMS  1000000   // one million
 #define ITTERS 10000     // ten thousahd
@@ -70,7 +70,7 @@
 // 0.70     24m18.513s
 
 // theoretically the fastest known gap seauence by Robert Sedgewick
-// my calculated gap sequence seems to be faster
+// my calculated gap sequence seems to be faster for me
 
 uint32_t gaps[] =
 {
@@ -105,7 +105,7 @@ int compare(const void *a, const void *b)
 
 // this code is not recursive so does not hammer on the stack the way the
 // quick sort implementation from stdlib does.  the qsort implementation
-// in ulibc is a shell soft for this very reason
+// in ulibc is a shell sort for this very reason
 
 void shell(uint32_t *p, uint32_t n)
 {
@@ -159,7 +159,7 @@ void make_data(uint32_t *p, uint32_t n)
 
     for (i = 0; i < n; i++)
     {
-        p[i] = random();
+        p[i] = rand();
     }
 }
 
@@ -212,24 +212,21 @@ int main(void)
     uint32_t i;
     uint32_t *data;
 
-    srandom(0xa9018502);
+    srand(0xa9018502);
 
     // not defining any windows, just used to position cursor
     // on the screen
-    uCurses_init();
+    uCurses_init(NULL, NULL, NULL);
     uC_clear();
     uC_cup(5,5);
     uC_terminfo_flush();
 
 #ifdef SHELL
-    printf("Shell Sorting %d items %d times\n",
-        ITEMS, ITTERS);
+    printf("Shell Sorting %d items %d times\n", ITEMS, ITTERS);
 #else
-    printf("Quick sorting %d items %d tiems\n",
-        ITEMS, ITTERS);
+    printf("Quick sorting %d items %d times\n", ITEMS, ITTERS);
 #endif
 
-    // assume success :)
     data =  calloc(ITEMS, sizeof(uint32_t));
 
     for (i = 0; i < ITTERS; i++)
@@ -246,7 +243,7 @@ int main(void)
 #endif
     }
 
-//    dump_buff(data, ITEMS);
+    // dump_buff(data, ITEMS);
     verify_sort(data, ITEMS);
 
     return 0;

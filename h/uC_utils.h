@@ -1,8 +1,10 @@
-// utils.h
+// uC_utils.h
 // -----------------------------------------------------------------------
 
 #ifndef UC_UTILS_H
 #define UC_UTILS_H
+
+// -----------------------------------------------------------------------
 
 #include <stdbool.h>
 
@@ -14,10 +16,11 @@
 // -----------------------------------------------------------------------
 // visibility hidden
 
+API void uC_ui_free(void *mem);
 API int32_t fnv_hash(char *s);
 void uC_assert(bool f, char *file, int line, char *msg);
 
-__attribute__((noreturn)) void xabort(char *msg);
+__attribute__((noreturn)) void uC_abort(char *msg);
 
 // -----------------------------------------------------------------------
 
@@ -29,7 +32,8 @@ API void uC_noop(void);
 API void uC_clock_sleep(int32_t when);
 API void uC_restore_terminal(void);
 API void uC_init_terminal(void);
-API void get_console_size(uint16_t *width, uint16_t *height);
+API void uC_get_console_size(uint16_t *width, uint16_t *height);
+API void uC_assert(bool f, char *file, int line, char *msg);
 
 // -----------------------------------------------------------------------
 

@@ -8,6 +8,8 @@
 
 #include "demo.h"
 
+int dots_sin(int16_t angle);
+int dots_cos(int16_t angle);
 
 // -----------------------------------------------------------------------
 
@@ -22,9 +24,6 @@ extern int16_t dots_sin_tab[512];
 extern int point_counts[];             // number of points in each object
 extern xyz *obj_list[];                // pointers to each object
 
-static int16_t dots_cos(int16_t angle);
-static int16_t dots_sin(int16_t angle);
-
 static int frame;
 
 static int32_t pel;
@@ -32,16 +31,17 @@ static int32_t pel;
 static int zmin;
 static int zmax;
 
-char status[33];
+char status[STAT_SIZE];
 
 static int32_t pels[] =
 {
-    0x1390, 0x1390, 0x1390, 0x1390,    // ᎐
-    0x1428, 0x1428, 0x1428, 0x1428,    // ᐩ
+    0x2732, 0x2732, 0x2732, 0x2732,    // ✲
+    0x2237, 0x2237, 0x2237, 0x2237,    // ∷
+    0x2234, 0x2234, 0x2234, 0x2234,    // ∴
     0x2022, 0x2022, 0x2022, 0x2022,    // •
-    0x2981, 0x2981, 0x2981, 0x2981,    // ⦁
-    0x25C6, 0x25C6, 0x25C6, 0x25C6,    // ◆
-    0x25CF, 0x25CF, 0x25CF, 0x25CF,    // ●
+    0x2734, 0x2734, 0x2734, 0x2734,    // ✴
+    0x2727, 0x2727, 0x2727, 0x2727,    // ✧
+    0x22c5, 0x22c5, 0x22c5, 0x22c5,    // ⋅
 };
 
 // -----------------------------------------------------------------------
@@ -94,7 +94,7 @@ static modifier w3 =                   // changes z rotation speed
 
 static modifier w4 =                   // zooms object in / out of window
 {
-    4, 4, &z_off, -1, 200, 50
+    4, 4, &z_off, -1, 250, 150
 };
 
 // -----------------------------------------------------------------------
@@ -236,8 +236,11 @@ static void do_frame(void)
         if (q == 0) { q = 1; }
 
         c = ((pz + w) / q) % 24;
+        (c < 4)
+           ? uC_win_set_bold(win)
+           : uC_win_clr_bold(win);
 
-        pel = pels[(24 - c)];
+        pel = pels[c];
 
         draw_point(x, y, c);
     }
@@ -326,7 +329,7 @@ void do_dots(void)
                 gettimeofday(&tv, NULL);
                 seconds = (tv.tv_sec - start);
 
-                snprintf(status, 32,
+                snprintf(status, STAT_SIZE - 1,
                     "F: %8dk S: %5d FPS: %2dK",
                     frame / 1000, seconds, fps/1000);
 
@@ -409,29 +412,31 @@ int main(void)
 {
     uC_list_node_t *n;
 
-    uCurses_init();
-    uC_json_file_create_ui("json/dots.json", menu_address_cb);
-    uC_menu_init();
+    uCurses_init("json/dots.json", NULL, menu_address_cb);
 
     scr = active_screen;
     n   = scr->windows.head;
     win = n->payload;
 
-    status_win = uC_add_status(scr, 32, 55, 0);
+    status_win = uC_add_status(scr, STAT_SIZE, 55, 0);
 
-    uC_win_printf(status_win, "%fs%bs%0", 9, 3);
+    // %fs set window forground to a gray scale color
+    // %bs set window background to a gray scale color
+    // %0 clear the window
+
+    uC_win_printf(status_win, "%fs%bs%0",
+        uC_GRAY_09, uC_GRAY_03);
 
     uC_set_status(status_win, status);
     uC_clr_status(status_win);
 
     do_dots();
 
-    uC_scr_close(active_screen);
-
     uC_console_reset_attrs();
     uC_clear();
     uC_cup(10, 0);
 
+    uC_scr_close(active_screen);
     uCurses_deInit();
 
     printf("Au revoir!\n");

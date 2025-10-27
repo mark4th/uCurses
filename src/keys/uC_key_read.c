@@ -1,4 +1,4 @@
-// key_read.c
+// uC_key_read.c
 // -----------------------------------------------------------------------
 
 #include <poll.h>
@@ -7,11 +7,11 @@
 
 #include "uCurses.h"
 #include "uC_keys.h"
+#include "uC_terminfo.h"
 
 // -----------------------------------------------------------------------
 
-int8_t keybuff[KEY_BUFF_SZ];
-int16_t num_k;
+extern ti_vars_t *ti_vars;
 
 // -----------------------------------------------------------------------
 
@@ -23,13 +23,24 @@ static struct pollfd pfd =
 };
 
 // -----------------------------------------------------------------------
-// returns 0 = no keys available, 1 = keys available
+// returns 0 = no keys available, greater than zero = keys available
 
 API int8_t uC_test_keys(void)
 {
-    // see if any keys have been pressed
-    int8_t k = poll(&pfd, 1, 0);
-    if (k < 0) { k = 0; }   // no keys pressed
+    int8_t k;
+
+    if (ti_vars->stuffed == true)
+    {
+        ti_vars->stuffed = false;
+        return ti_vars->num_k;
+    }
+
+    k = poll(&pfd, 1, 0);
+
+    if (k < 0)
+    {
+        k = 0;              // no keys pressed
+    }
 
     return k;
 }
@@ -56,12 +67,12 @@ static int8_t read_key(void)
 
 void uC_read_keys(void)
 {
-    num_k = 0;
+    ti_vars->num_k = 0;
 
     do
     {
-        if (num_k == KEY_BUFF_SZ) { break; }
-        keybuff[num_k++] = read_key();
+        if (ti_vars->num_k == KEY_BUFF_SZ) { break; }
+        ti_vars->keybuff[ti_vars->num_k++] = read_key();
     } while (uC_test_keys() != 0);
 }
 

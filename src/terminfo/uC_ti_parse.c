@@ -1,4 +1,4 @@
-// parse.c  - uCurses terminfo format string parsing
+// uC_ti_parse.c  - uCurses terminfo format string parsing
 // -----------------------------------------------------------------------
 
 #include <inttypes.h>
@@ -13,66 +13,32 @@
 #include "uC_utils.h"
 #include "uC_terminfo.h"
 #include "uC_utf8.h"
+#include "uC_alloc.h"
+#include "ti_file.h"
 
 // -----------------------------------------------------------------------
 
 #define ESC_SIZE (65535)
 
-extern ti_file_t *ti_file;
-
 // -----------------------------------------------------------------------
 
-typedef struct
-{
-    int8_t digits;          // number of digits for %d (2 or 3)
-    int8_t fsp;             // stack pointer for ...
-    int64_t fstack[5];      // format string stack
-    int64_t atoz[26];       // named format string variables
-    int64_t AtoZ[26];
-} private_t;
+extern bool winch;
 
 // -----------------------------------------------------------------------
-// pointerd to variables
+// pointer to variables
 
-ti_parse_t *uC_ti_parse;
-static private_t  *vars;
+ti_vars_t *ti_vars;
 
 // -----------------------------------------------------------------------
 // allocate buffers for terminfo parser
 
 void alloc_parse(void)
 {
-    bool result;
+    ti_vars = uC_alloc(uC_MEM_ZONE_DEFAULT, sizeof(*ti_vars));
+    uC_ASSERT(ti_vars != NULL, "Out of Memory");
 
-    uC_ti_parse = calloc(1, sizeof(*uC_ti_parse));
-    result      = (uC_ti_parse != NULL);
-
-    // allocate 64k for compiled escape sequences
-    if (result)
-    {
-        uC_ti_parse->esc_buff = calloc(1, ESC_SIZE);
-        result = (uC_ti_parse->esc_buff != NULL);
-    }
-
-    if (result)
-    {
-        vars = calloc(1, sizeof(*vars));
-        result = (vars != NULL);
-    }
-
-    if (!result)
-    {
-        printf("uCurses: Out of Memory allocating buffers\r\n");
-        exit(1);
-    }
-}
-
-// -----------------------------------------------------------------------
-
-void free_parse(void)
-{
-    free(uC_ti_parse->esc_buff);
-    free(uC_ti_parse);
+    ti_vars->esc_buff = uC_alloc(uC_MEM_ZONE_DEFAULT, ESC_SIZE);
+    uC_ASSERT(ti_vars->esc_buff != NULL, "Out of Memory");
 }
 
 // -----------------------------------------------------------------------
@@ -81,13 +47,23 @@ API void uC_terminfo_flush(void)
 {
     ssize_t n;
 
-    n = write(1, uC_ti_parse->esc_buff, uC_ti_parse->num_esc);
-    uC_ti_parse->num_esc = 0;
+    n = write(1, ti_vars->esc_buff, ti_vars->num_esc);
+
+    ti_vars->num_esc = 0;
 
     if (n < 0)
     {
         // log warning? try again?
     }
+}
+
+// -----------------------------------------------------------------------
+// make sure any currently compiled but not written terminal escape
+// sequences are deleted when a sigwinch is received.
+
+void terminfo_purge(void)
+{
+    ti_vars->num_esc = 0;
 }
 
 // -----------------------------------------------------------------------
@@ -99,12 +75,12 @@ void c_emit(char c1)
     // seauenes we cant write out the 2/3 of the current escape
     // sequence now and then the rest later...
 
-    if (uC_ti_parse->num_esc == ESC_SIZE)
+    if (ti_vars->num_esc == ESC_SIZE)
     {
         uC_terminfo_flush();
     }
 
-    uC_ti_parse->esc_buff[uC_ti_parse->num_esc++] = c1;
+    ti_vars->esc_buff[ti_vars->num_esc++] = c1;
 }
 
 // -----------------------------------------------------------------------
@@ -112,9 +88,9 @@ void c_emit(char c1)
 
 static void fs_push(int64_t n)
 {
-    uC_ASSERT(vars->fsp != 5, "Stack Overflow");
+    uC_ASSERT(ti_vars->fsp != 5, "Stack Overflow");
 
-    vars->fstack[vars->fsp++] = n;
+    ti_vars->fstack[ti_vars->fsp++] = n;
 }
 
 // -----------------------------------------------------------------------
@@ -122,10 +98,10 @@ static void fs_push(int64_t n)
 
 static int64_t fs_pop(void)
 {
-    uC_ASSERT(vars->fsp != 0, "Stack Underflow");
-    vars->fsp--;
+    uC_ASSERT(ti_vars->fsp != 0, "Stack Underflow");
+    ti_vars->fsp--;
 
-    return vars->fstack[vars->fsp];
+    return ti_vars->fstack[ti_vars->fsp];
 }
 
 // -----------------------------------------------------------------------
@@ -135,7 +111,13 @@ static int64_t fs_pop(void)
 // -----------------------------------------------------------------------
 // as a hardcore forth programmer i cannot help but notice how all of the
 // primitves in here have forth counterparts.  RPN ftw!
-// -----------------------------------------------------------------------
+//
+// p.s. it was either use RPN here or write some sort of recursive descent
+// parser to compile escape sequences.   the original implementers chose
+// to use the simplest solution and go with RPN.  IMHO so should every
+// other programming language.  RDP has never been anything other than an
+// ultra complexificated mountain of a solution to a freakishly miniscule
+// mole hill of a problem.
 
 // -----------------------------------------------------------------------
 // format = %%
@@ -218,7 +200,9 @@ static void _bang(void)
 
     n1 = fs_pop();
 
-    fs_push(!n1);
+    n1 = (n1) ? 0 : 1;
+
+    fs_push(n1);
 }
 
 // -----------------------------------------------------------------------
@@ -228,8 +212,8 @@ static void _caret(void)
 {
     int64_t n1, n2;
 
-    n1 = fs_pop();
     n2 = fs_pop();
+    n1 = fs_pop();
 
     fs_push(n1 ^ n2);
 }
@@ -241,8 +225,8 @@ static void _plus(void)
 {
     int64_t n1, n2;
 
-    n1 = fs_pop();
     n2 = fs_pop();
+    n1 = fs_pop();
 
     fs_push(n1 + n2);
 }
@@ -254,10 +238,10 @@ static void _minus(void)
 {
     int64_t n1, n2;
 
-    n1 = fs_pop();
     n2 = fs_pop();
+    n1 = fs_pop();
 
-    fs_push(n2 - n1);
+    fs_push(n1 - n2);
 }
 
 // -----------------------------------------------------------------------
@@ -267,10 +251,10 @@ static void _star(void)
 {
     int64_t n1, n2;
 
-    n1 = fs_pop();
     n2 = fs_pop();
+    n1 = fs_pop();
 
-    fs_push(n2 * n1);
+    fs_push(n1 * n2);
 }
 
 // -----------------------------------------------------------------------
@@ -280,11 +264,11 @@ static void _slash(void)
 {
     int64_t n1, n2;
 
-    n1 = fs_pop();
     n2 = fs_pop();
+    n1 = fs_pop();
 
     (n1 != 0)
-        ? fs_push(n2 / n1)
+        ? fs_push(n1 / n2)
         : fs_push(0);
 }
 
@@ -295,11 +279,11 @@ static void _mod(void)
 {
     int64_t n1, n2;
 
-    n1 = fs_pop();
     n2 = fs_pop();
+    n1 = fs_pop();
 
     (n1 != 0)
-        ? fs_push(n2 % n1)
+        ? fs_push(n1 % n2)
         : fs_push(0);
 }
 
@@ -310,8 +294,8 @@ static void _equals(void)
 {
     int64_t n1, n2;
 
-    n1 = fs_pop();
     n2 = fs_pop();
+    n1 = fs_pop();
 
     n1 = (n2 == n1) ? 1 : 0;
 
@@ -325,10 +309,10 @@ static void _greater(void)
 {
     int64_t n1, n2;
 
-    n1 = fs_pop();
     n2 = fs_pop();
+    n1 = fs_pop();
 
-    n1 = (n2 > n1) ? 1 : 0;
+    n1 = (n1 > n2) ? 1 : 0;
 
     fs_push(n1);
 }
@@ -340,10 +324,10 @@ static void _less(void)
 {
     int64_t n1, n2;
 
-    n1 = fs_pop();
     n2 = fs_pop();
+    n1 = fs_pop();
 
-    n1 = (n2 < n1) ? 1 : 0;
+    n1 = (n1 < n2) ? 1 : 0;
 
     fs_push(n1);
 }
@@ -355,22 +339,22 @@ static void _tick(void)
 {
     char c1;
 
-    c1 = *uC_ti_parse->f_str;
+    c1 = *ti_vars->f_str;
     fs_push(c1);
 
-    uC_ti_parse->f_str += 2;
+    ti_vars->f_str += 2;
 }
 
 // -----------------------------------------------------------------------
 // format = %i
 
 // for ansi terminals the first two parameters are ONE based not zero
-// based so x/y oordinates start at 1 not 0
+// based so for example, x/y coordinates start at 1 not 0
 
 static void _i(void)
 {
-    uC_ti_parse->params[0]++;  // increment first two parameters
-    uC_ti_parse->params[1]++;  // for ansi terminals
+    ti_vars->params[0]++;  // increment first two parameters
+    ti_vars->params[1]++;  // for ansi terminals
 }
 
 // -----------------------------------------------------------------------
@@ -417,14 +401,14 @@ static int64_t *get_var_addr(void)
     int64_t *p;
     char c1;
 
-    c1 = *uC_ti_parse->f_str++;
+    c1 = *ti_vars->f_str++;
 
     // this assumes that if it is not within the range 'a' to 'z'
     // then it is within the range 'A' to 'Z'
 
     p = ((c1 >= 'a') && (c1 <= 'z'))
-        ? &vars->atoz[c1 - 'a']
-        : &vars->AtoZ[c1 - 'A'];
+        ? &ti_vars->atoz[c1 - 'a']
+        : &ti_vars->AtoZ[c1 - 'A'];
 
     return p;
 }
@@ -463,7 +447,7 @@ static void _brace(void) // parse number between { and } in decimal
 
     n1 = 0;
 
-    while ((c1 = *uC_ti_parse->f_str++) != '}')
+    while ((c1 = *ti_vars->f_str++) != '}')
     {
         n1 *= 10;
         n1 += (c1 - '0');
@@ -473,47 +457,13 @@ static void _brace(void) // parse number between { and } in decimal
 }
 
 // -----------------------------------------------------------------------
-// skip forward in format string to next % command
+// scan format string to next format specifier
 
-static void to_cmd(void)
+static char scan(void)
 {
-    while (*uC_ti_parse->f_str++ != '%')
+    while (*ti_vars->f_str++ != '%')
         ;
-}
-
-// -----------------------------------------------------------------------
-
-void scan_to_endif(void)
-{
-    char c1;
-    int8_t nest;            // not sure if any terminfo has nested %?
-
-    nest = 0;
-
-    for (;;)
-    {
-        // scan format string for next % char
-        to_cmd();
-        c1 = *uC_ti_parse->f_str++;
-
-        // if we are nesting if's count depth
-        if (c1 == '?') { nest++; }
-
-        // if we are at the else or endif....
-        if ((c1 == 'e') || (c1 == ';'))
-        {
-            if (nest == 0) // break out of loop if at else or endif
-            {              // and we have scanned past all nested %?
-                break;
-            }
-            // we are within a nested %? -
-            // must scan t0 %; before we break
-            else if (c1 == ';')
-            {
-                nest--;
-            }
-        }
-    }
+    return *ti_vars->f_str++;
 }
 
 // -----------------------------------------------------------------------
@@ -521,11 +471,26 @@ void scan_to_endif(void)
 
 static void _t(void)
 {
+    char c1;
+
     int64_t f1 = fs_pop();  // if this is non 0 we dont do anything
 
-    if (f1 == 0)            // if it is 0 we skip past then part
+    if (f1 != 0)            // if it is 0 we skip past then part
     {
-        scan_to_endif();
+        return;
+    }
+
+    // false condition exists, scan to the %e or the %;
+
+    for (;;)
+    {
+        c1 = scan();
+
+        // break if we are at the else or endif....
+        if ((c1 == 'e') || (c1 == ';'))
+        {
+            break;
+        }
     }
 }
 
@@ -535,22 +500,14 @@ static void _t(void)
 static void _e(void)
 {
     char c1;
-    int8_t nest = 0;
 
     for (;;)
     {
-        to_cmd();
+        c1 = scan();
 
-        c1 = *uC_ti_parse->f_str++;
-
-        if (c1 == '?')
+        if (c1 == ';')
         {
-            nest++;
-        }
-        else if (c1 == ';')
-        {
-            if (nest == 0) { break; }
-            nest--;
+            break;
         }
     }
 }
@@ -562,7 +519,7 @@ static void _d(void)
 {
     int64_t n1;
     n1 = fs_pop();
-    vars->digits--;
+    ti_vars->digits--;
 
     const char widths[3][6] =
     {
@@ -574,13 +531,13 @@ static void _d(void)
     // this is a bug, if we are mid escape sequence we cant flush
     // a partial now then the rest later
 
-    if ((ESC_SIZE - uC_ti_parse->num_esc) < 6)
+    if ((ESC_SIZE - ti_vars->num_esc) < 6)
     {
         uC_terminfo_flush();
     }
 
-    uC_ti_parse->num_esc += snprintf(&uC_ti_parse->esc_buff[uC_ti_parse->num_esc],
-        4, widths[vars->digits], n1);
+    ti_vars->num_esc += snprintf(&ti_vars->esc_buff[ti_vars->num_esc],
+        4, widths[ti_vars->digits], n1);
 }
 
 // -----------------------------------------------------------------------
@@ -603,11 +560,11 @@ static void _p(void)
 
     // get parameter number from format string
 
-    c1 = *uC_ti_parse->f_str++;
+    c1 = *ti_vars->f_str++;
     c1 &= 0x0f;
     c1--;
 
-    fs_push(uC_ti_parse->params[c1]);
+    fs_push(ti_vars->params[c1]);
 }
 
 // -----------------------------------------------------------------------
@@ -616,15 +573,16 @@ static char next_c(void)
 {
     char c1;
 
-    vars->digits = 1;
-    c1 = *uC_ti_parse->f_str++;
+    ti_vars->digits = 1;
+    c1 = *ti_vars->f_str++;
 
     if ((c1 == '2') || (c1 == '3'))
     {
-        vars->digits = (c1 & 0x0f);
+        ti_vars->digits = (c1 & 0x0f);
         // this should be a d ... should i test that?
-        c1 = *uC_ti_parse->f_str++;
+        c1 = *ti_vars->f_str++;
     }
+
     return c1;
 }
 
@@ -650,7 +608,7 @@ static const uC_switch_t p_codes[] =
 // -----------------------------------------------------------------------
 // process a % command char from format string c1 = char following %
 
-static void cmd(char c1)
+static inline void specifier(char c1)
 {
     uC_switch(p_codes, PCOUNT, c1);
 }
@@ -662,14 +620,17 @@ API void uC_parse_format(const char *f)
 {
     char c1;
 
-    uC_ti_parse->f_str = f;
+    ti_vars->f_str = f;
 
-    while (*uC_ti_parse->f_str)
+    while (*ti_vars->f_str != '\0')
     {
-        c1 = *uC_ti_parse->f_str++;
+        c1 = *ti_vars->f_str++;
+
+        // if the following code is confusing or unreadable to you then
+        // you need to rethink your career choice kthxbai
 
         (c1 == '%')
-            ? cmd(next_c())
+            ? specifier(next_c())
             : c_emit(c1);
     }
 }
@@ -677,14 +638,16 @@ API void uC_parse_format(const char *f)
 // -----------------------------------------------------------------------
 // parse a terminfo format string from the terminfo files strings section
 
+#define TI_NULL (-1)
+
 void uC_format(int16_t i)
 {
-     i = ti_file->ti_strings[i];
+    i = ti_vars->ti_file.ti_strings[i];
 
     // it is not an error for a format string to be blank
-    if (i != -1)
+    if (i != TI_NULL)
     {
-        uC_parse_format(&ti_file->ti_table[i]);
+        uC_parse_format(&ti_vars->ti_file.ti_table[i]);
     }
 }
 

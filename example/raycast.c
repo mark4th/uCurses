@@ -32,11 +32,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "demo.h"
 
 #include "uC_braille.h"
-
+#include "uC_alloc.h"
 
 extern uC_screen_t *active_screen;
 
-char status[33];
+char status[STAT_SIZE];
 
 // -----------------------------------------------------------------------
 
@@ -54,9 +54,9 @@ static double rotSpeed;
 static double planeX = 0;      // the 2d raycaster version of camera plane
 static double planeY = 0.66;
 
-static uC_screen_t *scr;
-static uC_window_t *win;
-static uC_window_t *status_win;
+static uC_screen_t *scr = NULL;
+static uC_window_t *win = NULL;
+static uC_window_t *status_win = NULL;
 
 static uint8_t *dark_map;     // adjacent walls are different shades
 static uint8_t *color_map;    // what color to draw each column of screen
@@ -202,7 +202,6 @@ static void render_walls(void)
     double texPos;
     int y;
 
-
     for(x = 1; x < fb_width; x++)
     {
         //  calculate ray position and direction
@@ -345,7 +344,7 @@ void process_key(uint8_t keypress)
        x = posX - dirX * moveSpeed;
        y = posY - dirY * moveSpeed;
 
-        if(worldMap[(int)x][(int)y] == 0)
+        if (worldMap[(int)x][(int)y] == 0)
         {
             posX = x;
             posY = y;
@@ -421,8 +420,9 @@ void raycast(void)
 {
     uint8_t keypress;
     struct timeval tv;
+    int32_t size;
 
-    int fps;
+    int fps = 0;
 
     int old_count  = 0;
     int framecount = 0;
@@ -436,12 +436,14 @@ void raycast(void)
     fb_width     = win->width  * 2;
     fb_height    = win->height * 4;
 
-    braile_data  = calloc((win->height    * win->width), 2);
-    fb           = calloc(fb_height       * fb_width,    1);
+    size         = (win->height * win->width) * 2;
+    braile_data  = uC_alloc(uC_MEM_ZONE_UI, size);
+    size         = fb_height    * fb_width;
+    fb           = uC_alloc(uC_MEM_ZONE_UI, size);
 
     // wall colors and shading
-    dark_map     = calloc(fb_width, 1);
-    color_map    = calloc(fb_width, 1);
+    dark_map     = uC_alloc(uC_MEM_ZONE_UI, fb_width);
+    color_map    = uC_alloc(uC_MEM_ZONE_UI, fb_width);
 
     for (;;)
     {
@@ -449,13 +451,14 @@ void raycast(void)
         memset(fb, 0, fb_width * fb_height);
 
         memset(color_map, 0, fb_width);
+        memset(status, 0, STAT_SIZE -1);
 
         uC_win_clear(win);
         render_walls();
 
         draw_walls();
 
-        snprintf(status, 32, "FPS: %d", fps);
+        snprintf(status, STAT_SIZE - 1, "FPS: %d", fps);
         uC_set_status(status_win, status);
 
         uC_scr_draw_screen(scr);
@@ -534,9 +537,7 @@ int main(void)
 {
     uC_list_node_t *n;
 
-    uCurses_init();
-    uC_json_file_create_ui("json/dots.json", menu_address_cb);
-    uC_menu_init();
+    uCurses_init("json/dots.json", NULL, menu_address_cb);
 
     scr = active_screen;
     n   = scr->windows.head;
@@ -550,12 +551,11 @@ int main(void)
 
     raycast();
 
-    uC_scr_close(active_screen);
-
     uC_console_reset_attrs();
     uC_clear();
     uC_cup(10, 0);
 
+    uC_scr_close(active_screen);
     uCurses_deInit();
 
     printf("Au revoir!\n");

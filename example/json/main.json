@@ -10,8 +10,7 @@
 
                 "xco"    : 1,
                 "yco"    : 1,
-
-                "border-type" : "BDR_SINGLE",
+                "blank" : 44,
 
                 "attribs" :
                 {
@@ -25,6 +24,8 @@
                     "gray-bg"   : 3
                 },
 
+                "border-type" : "BDR_SINGLE",
+                //9618,
                 "flags" :
                 {
                    "flag" : "WIN_BOXED"
@@ -82,11 +83,6 @@
                         },
                         "menu-item" :
                         {
-                            "name"   : "Mandelbrot",
-                            "vector" : "mandel_demo"
-                        },
-                        "menu-item" :
-                        {
                             "name"   : "Lion",
                             "vector" : "lion"
                         },
@@ -94,6 +90,16 @@
                         {
                             "name"   : "Raycast",
                             "vector" : "raycast"
+                        },
+                        "menu-item" :
+                        {
+                            "name"   : "Mandelbrot",
+                            "vector" : "mandel_demo"
+                        },
+                        "menu-item" :
+                        {
+                            "name"   : "Widgets",
+                            "vector" : "widgets"
                         },
                         "menu-item" :
                         {

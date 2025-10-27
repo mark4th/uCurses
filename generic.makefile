@@ -66,7 +66,7 @@ rebuild: clean .build
 install: .build
 	$_
 	cd $(BUILD) && sudo ninja $(NINJA_OPT) install
-
+	sudo cp ../h/uC*.h /usr/local/include
 
 clean-install: clean install
 	$_

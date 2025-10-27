@@ -1,19 +1,16 @@
-// terminfo.c
+// uC_terminfo.c
 // -----------------------------------------------------------------------
+
+#include <string.h>
 
 #include "uCurses.h"
 #include "uC_terminfo.h"
+#include "uC_screen.h"
 
 // -----------------------------------------------------------------------
 
-extern ti_parse_t *uC_ti_parse;
-
-// -----------------------------------------------------------------------
-
-int16_t cx;                 // current cursor position in screen
-int16_t cy;
-int16_t width;              // width and height of screen
-int16_t height;
+extern ti_vars_t *ti_vars;
+extern uC_screen_t *active_screen;
 
 // -----------------------------------------------------------------------
 
@@ -25,17 +22,32 @@ API void uC_curon(void)  { ti_cnorm(); }   // turn cursor on
 
 API void uC_clear(void)
 {
-    cx = cy = 0;            // remember position of cursor
-    ti_clear();             // wipe display
+    int size;
+
+    if (active_screen != NULL)
+    {
+        // this forces a complete redraw of the screen on the next
+        // call to uC_scr_draw_screen() (i.e. all cells have changed)
+
+        active_screen->cx = 0;   // reset position of cursor
+        active_screen->cy = 0;
+
+        size = (active_screen->width * active_screen->height *
+            sizeof(cell_t));
+
+        memset(active_screen->buffer2, 0, size);
+    }
+
+    ti_clear();                  // wipe display
 }
 
 // -----------------------------------------------------------------------
 // set cursor position on current line
 
-API void uC_hpa(int16_t x)
+API void uC_hpa(int16_t x)  // horizontal position absolute
 {
-    // horizontal position absolute
-    uC_ti_parse->params[0] = cx = x;
+    active_screen->cx  = x;
+    ti_vars->params[0] = x;
     ti_hpa();
 }
 
@@ -44,8 +56,11 @@ API void uC_hpa(int16_t x)
 
 API void uC_cup(int16_t x, int16_t y)
 {
-    uC_ti_parse->params[0] = cx = x;
-    uC_ti_parse->params[1] = cy = y;
+    active_screen->cx = x;
+    active_screen->cy = y;
+
+    ti_vars->params[0] = x;
+    ti_vars->params[1] = y;
     ti_cup();
 }
 
@@ -54,7 +69,7 @@ API void uC_cup(int16_t x, int16_t y)
 
 API void uC_cud1(void)
 {
-    cy++;
+    active_screen->cy++;
     ti_cud1();
 }
 
@@ -63,7 +78,8 @@ API void uC_cud1(void)
 
 API void uC_home(void)
 {
-    cx = cy = 0;
+    active_screen->cx = 0;
+    active_screen->cy = 0;
     ti_home();
 }
 
@@ -72,9 +88,9 @@ API void uC_home(void)
 
 API void uC_cub1(void)
 {
-    if (cx != 0)
+    if (active_screen->cx != 0)
     {
-        cx--;
+        active_screen->cx--;
         ti_cub1();
     }
 }
@@ -84,19 +100,20 @@ API void uC_cub1(void)
 
 API void uC_cuf1(void)
 {
-    if (cx == width)
+    if (active_screen->cx == active_screen->width)
     {
-        cx = 0;
-        if (cy != height)
+        active_screen->cx = 0;
+
+        if (active_screen->cy != active_screen->height)
         {
-            cy++;
+            active_screen->cy++;
         }
     }
     else
     {
-        cx++;
+        active_screen->cx++;
     }
-    uC_cup(cx, cy);
+    uC_cup(active_screen->cx, active_screen->cy);
 }
 
 // -----------------------------------------------------------------------
@@ -104,11 +121,11 @@ API void uC_cuf1(void)
 
 API void uC_cuu1(void)
 {
-    if (cy != 0)
+    if (active_screen->cy != 0)
     {
-        cy--;
+        active_screen->cy--;
     }
-    uC_cup(cx, cy);
+    uC_cup(active_screen->cx, active_screen->cy);
 }
 
 // -----------------------------------------------------------------------
@@ -116,9 +133,9 @@ API void uC_cuu1(void)
 
 API void uC_dch1(void)
 {
-    if (cx != 0)
+    if (active_screen->cx != 0)
     {
-        cx--;
+        active_screen->cx--;
         ti_dch();
     }
 }
@@ -140,7 +157,7 @@ API void uC_cud(int16_t n1)
 
 API void uC_ich(void)
 {
-    cx++;
+    active_screen->cx++;
     ti_ich();
 }
 
@@ -182,29 +199,36 @@ API void uC_cuu(int16_t n1)
 // -----------------------------------------------------------------------
 // vertical position absolute
 
-API void uC_vpa(int16_t y1)
+API void uC_vpa(int16_t y)
 {
-    uC_ti_parse->params[0] = cy = y1;
+    active_screen->cy  = y;
+    ti_vars->params[0] = y;
     ti_vpa();
 }
 
 // -----------------------------------------------------------------------
-// look ma, not using the ti_cr() define!
 
 API void uC_cr(void)
 {
-    cx = 0;
-    if (cy != height)
+    active_screen->cx = 0;
+    if (active_screen->cy != active_screen->height)
     {
-        cy++;
+        active_screen->cy++;
     }
-    uC_cup(cx, cy);
+    uC_cup(active_screen->cx, active_screen->cy);
 }
 
 // -----------------------------------------------------------------------
-// enable cursor keys
+// enable / disable cursor keys
 
-API void uC_smkx(void) { ti_smkx(); }
-API void uC_rmkx(void) { ti_rmkx(); }
+API void uC_smkx(void)
+{
+    ti_smkx();
+}
+
+API void uC_rmkx(void)
+{
+    ti_rmkx();
+}
 
 // =======================================================================

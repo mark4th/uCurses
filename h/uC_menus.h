@@ -39,7 +39,7 @@ enum
 
 typedef struct
 {
-    char *name;
+    uint8_t *name;
     int16_t flags;          // disable flags etc
     menu_fp_t fp;           // function to execute
     int16_t shortcut;       // keyboard shortcut
@@ -49,7 +49,7 @@ typedef struct
 
 typedef struct
 {
-    char *name;             // menu bar name for this pulldown menu
+    uint8_t *name;             // menu bar name for this pulldown menu
     int16_t width;          // width of widest item in pulldown menu
     int16_t flags;          // masks for enabled/disabled etc
     int16_t which;          // current selected item
@@ -90,11 +90,11 @@ int32_t bar_create_pd_win(uC_screen_t *scr, pulldown_t *pd);
 
 API int32_t uC_menu_bar_open(uC_screen_t *scr);
 API void uC_menu_bar_close(uC_screen_t *scr);
-API int32_t uC_menu_new_pd(uC_screen_t *scr, char *name);
-API int32_t uC_menu_new_item(uC_screen_t *scr, char *name, menu_fp_t fp,
+API int32_t uC_menu_new_pd(uC_screen_t *scr, uint8_t *name);
+API int32_t uC_menu_new_item(uC_screen_t *scr, uint8_t *name, menu_fp_t fp,
     int16_t shortcut);
-API void uC_menu_pd_disable(uC_screen_t *scr, char *name);
-API void uC_menu_pd_enable(uC_screen_t *scr, char *name);
+API void uC_menu_pd_disable(uC_screen_t *scr, uint8_t *name);
+API void uC_menu_pd_enable(uC_screen_t *scr, uint8_t *name);
 API void uC_menu_init_keys(void);
 
 // -----------------------------------------------------------------------

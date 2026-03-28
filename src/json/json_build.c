@@ -45,6 +45,7 @@ static void bounds_check(uC_window_t *win)
 static void fix_win(uC_screen_t *scr, uC_window_t *win)
 {
     int16_t fudge = 1;
+
     uC_window_t *bd = scr->backdrop;
 
     if ((bd != NULL) && ((bd->flags & WIN_BOXED) != 0))
@@ -133,13 +134,13 @@ static void fix_menus(uC_screen_t *scr)
         // drawn when activated
 
         pd->xco = bar->xco;
-        bar->xco += strlen(pd->name) + 2;
+        bar->xco += strlen((char *)pd->name) + 2;
 
         // widest item in pulldown defines the width of the window
 
         for (j = 0; j < pd->count; j++)
         {
-            width = strlen(pd->items[j]->name);
+            width = strlen((char *)pd->items[j]->name);
 
             if (pd->width < width)
             {

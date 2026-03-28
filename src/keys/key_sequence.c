@@ -124,7 +124,7 @@ int16_t match_key(void)
 
             // memcmp not safe
 
-            hash1 = fnv_hash((char *)&ti_vars->keybuff[0]);
+            hash1 = fnv_hash(&ti_vars->keybuff[0]);
             hash2 = fnv_hash(&ti_vars->esc_buff[0]);
 
             if (hash1 == hash2) { return i; }

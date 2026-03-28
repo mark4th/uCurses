@@ -97,9 +97,9 @@ uC_widget_vg_t *vg2;
 // that view can either have the same sequence number or a sequence of
 // zero.
 
-static uC_widget_vg_t *init_vg(uint16_t xco, uint16_t yco)
+static uC_widget_vg_t *init_vg(char *name, uint16_t xco, uint16_t yco)
 {
-    uC_widget_vg_t *vg = uC_widget_vg_create("View Group 1",
+    uC_widget_vg_t *vg = uC_widget_vg_create(name,
         WIN_WIDTH, WIN_HEIGHT, xco, yco, vg_attrs);
 
     uC_ASSERT(vg != NULL, "Cannot create view group");
@@ -282,31 +282,31 @@ static void view_add_check_buttons(uC_widget_view_t *view,
 
 static void view_add_text_boxes(uC_widget_view_t *view, uint16_t sequence)
 {
-    uC_widget_t *t1 = uC_widget_text_create(
+    uC_widget_t *t1 = uC_widget_textbox_create(
         sequence++, (char *)&hex_data, "Hex    :",
         NUMERICAL_WIDGET_SIZE, INPUT_HEX,
         NUMERICAL_WIDGET_WIDTH, HEX_X, HEX_Y,
         text_attrs, text_focus_attrs);
 
-    uC_widget_t *t2 = uC_widget_text_create(
+    uC_widget_t *t2 = uC_widget_textbox_create(
         sequence++, (char *)&oct_data, "Octal  :",
         NUMERICAL_WIDGET_SIZE, INPUT_OCTAL,
         NUMERICAL_WIDGET_WIDTH, OCT_X, OCT_Y,
         text_attrs, text_focus_attrs);
 
-    uC_widget_t *t3 = uC_widget_text_create(
+    uC_widget_t *t3 = uC_widget_textbox_create(
         sequence++, (char *)&dec_data, "Decimal:",
         NUMERICAL_WIDGET_SIZE, INPUT_DECIMAL,
         NUMERICAL_WIDGET_WIDTH, DEC_X, DEC_Y,
         text_attrs, text_focus_attrs);
 
-    uC_widget_t *t4 = uC_widget_text_create(
+    uC_widget_t *t4 = uC_widget_textbox_create(
         sequence++, (char *)&bin_data, "Binary :",
         NUMERICAL_WIDGET_SIZE, INPUT_BINARY,
         NUMERICAL_WIDGET_WIDTH, BIN_X, BIN_Y,
         text_attrs, text_focus_attrs);
 
-    uC_widget_t *t5 = uC_widget_text_create(
+    uC_widget_t *t5 = uC_widget_textbox_create(
         sequence++, (char *)&alpha_data, "Alpha  :",
         ALPHA_WIDGET_SIZE, INPUT_ALPHA,
         NUMERICAL_WIDGET_WIDTH, 0, 3,
@@ -326,7 +326,8 @@ static void init_widgets(void)
     uC_window_t *win;
     uC_widget_view_t *view;
 
-    vg1 = init_vg(5, 3);
+    vg1 = init_vg("View Group 1", 5, 3);
+    vg2 = init_vg("View Group 2", 50, 3);
 
     // -------------------------------------------------------------------
     // create a named scrollable view for radio buttons
@@ -422,9 +423,16 @@ static inline void handle_key(char k)
     {
         case 'w':
             // toggle widget activation
-            (active_screen->view_groups.count == 0)
-                ? uC_widget_vg_attach(active_screen, vg1)
-                : uC_widget_vg_detach(active_screen, vg1);
+            if (active_screen->view_groups.count == 0)
+            {
+                uC_widget_vg_attach(active_screen, vg1);
+                uC_widget_vg_attach(active_screen, vg2);
+            }
+            else
+            {
+                uC_widget_vg_detach(active_screen, vg1);
+                uC_widget_vg_detach(active_screen, vg2);
+            }
             break;
         case 'o':  case 'O':
             // only valid if widgets are active
@@ -433,6 +441,7 @@ static inline void handle_key(char k)
                 check_final = check;
                 radio_final = radio;
                 uC_widget_vg_detach(active_screen, vg1);
+                uC_widget_vg_detach(active_screen, vg2);
             }
             break;
         case 'c':  case 'C':
@@ -442,6 +451,7 @@ static inline void handle_key(char k)
                 radio = radio_final;
                 check = check_final;
                 uC_widget_vg_detach(active_screen, vg1);
+                uC_widget_vg_detach(active_screen, vg2);
             }
             break;
     }
@@ -467,9 +477,9 @@ void widget_loop(void)
 
         handle_key(k);
 
-        sprintf(status, "R:%04x C:%04x K:%02x",
-            radio_final, check_final, k);
-        uC_set_status(status_win, status);
+        // sprintf(status, "R:%04x C:%04x K:%02x",
+        //     radio_final, check_final, k);
+        // uC_set_status(status_win, status);
 
         uC_scr_draw_screen(active_screen);
     } while (k != 0x1b);
@@ -557,6 +567,10 @@ int main(void)
     init_widgets();         // initialize all widgets
     uC_smkx();              // make cursor up and down actually work
 
+    // you can actually display things in the backdrop widnow but it
+    // is *always* the first window drawn so everything else will
+    // overlap it
+
     win = active_screen->backdrop;
 
     uC_win_printf(win, "%@%fc%bs Press W to activate   ",
@@ -581,7 +595,7 @@ int main(void)
     uC_cup(y, 0);
 
     // close the screen, all windows within it, all menus
-    // and all active
+    // and all acti
     uC_scr_close(active_screen);
 
     // this will deallocate everything that is still allocated

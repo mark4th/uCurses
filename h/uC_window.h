@@ -18,7 +18,7 @@
 typedef struct
 {
     uC_attribs_t attrs;     // bold, underline, gray scale, rgb
-    int32_t code;           // utf-8 codepoint
+    uint32_t code;           // utf-8 codepoint
 } cell_t;
 
 // -----------------------------------------------------------------------
@@ -34,12 +34,13 @@ enum
 typedef enum
 {
     // bit positions
-    BOXED     = 0,   LOCKED    = 1,
-    FILLED    = 2,   FOCUS     = 3,
+    BOXED     = 0,   LOCKED    = 1,   NAMED = 2,
+    FILLED    = 3,   FOCUS     = 4,
 
     // bit masks
     WIN_BOXED    = 1 << BOXED,   // has a border
     WIN_LOCKED   = 1 << LOCKED,  // scroll locked
+    WIN_NAMED    = 1 << NAMED,   // window has a name
     WIN_FILLED   = 1 << FILLED,  // backfilled with SOLID character
     WIN_FOCUS    = 1 << FOCUS,   // window has focus
 } __attribute__((packed)) win_flags_t;
@@ -58,7 +59,7 @@ typedef struct
     int16_t height;
     int16_t xco;            // window x/y coordinat within screen
     int16_t yco;
-
+    int16_t tab_order;
     int16_t cx;             // cursor position within window
     int16_t cy;
 
@@ -68,7 +69,7 @@ typedef struct
     // be drawn 2 characters to the right of the upper left corner of
     // that border
 
-    char *display_name;
+    uint8_t *display_name;
 
     uC_attribs_t bdr_attrs;      // normal attribs for window border
     uC_attribs_t focus_attrs;    // focussed attribs for window border
@@ -84,10 +85,10 @@ int16_t win_alloc(uC_window_t *win);
 
 API uC_window_t *uC_win_open(int16_t width, int16_t height);
 API void uC_win_close(uC_window_t *win);
-API void uC_win_pop(uC_window_t *win);
 API int16_t uC_win_set_pos(uC_window_t *win, int16_t x, int16_t y);
 API void uC_win_clear_line(uC_window_t *win, int16_t line);
 API void uC_win_clear(uC_window_t *win);
+API void uC_win_copy_win(uC_window_t *dst, uC_window_t *src);
 API void uC_win_scroll_up(uC_window_t *win);
 API void uC_win_scroll_dn(uC_window_t *win);
 API void uC_win_scroll_lt(uC_window_t *win);
@@ -100,7 +101,7 @@ API void uC_win_crsr_dn(uC_window_t *win);
 API void uC_win_crsr_lt(uC_window_t *win);
 API void uC_win_crsr_rt(uC_window_t *win);
 API void uC_win_cr(uC_window_t *win);
-API void uC_win_emit(uC_window_t *win, int32_t c);
+API void uC_win_emit(uC_window_t *win, uint32_t c);
 API cell_t *uC_win_peek_xy(uC_window_t *win, int16_t x, int16_t y);
 API cell_t *uC_win_peek(uC_window_t *win);
 API void uC_win_el(uC_window_t *win);
@@ -132,6 +133,8 @@ API void uC_win_set_bdr_rgb_fg(uC_window_t *win, uC_color_t r, uC_color_t g, uC_
 API void uC_win_set_bdr_rgb_bg(uC_window_t *win, uC_color_t r, uC_color_t g, uC_color_t b);
 API void uC_win_set_border(uC_window_t *win, uint16_t border_type,
     uC_attribs_t bdr_attrs, uC_attribs_t focus_attrs);
+API void uC_win_set_name(uC_window_t *win, uint8_t *name);
+API void uC_win_set_focus(uC_window_t *win);
 
 // -----------------------------------------------------------------------
 

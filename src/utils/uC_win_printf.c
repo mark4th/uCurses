@@ -23,16 +23,16 @@
 // -----------------------------------------------------------------------
 
 static va_list arg;
-static char *p;
+static uint8_t *p;
 static uC_window_t *w;
 
 // -----------------------------------------------------------------------
 // write string into specified window at its currnt cursor location
 
-API void uC_win_puts(uC_window_t *win, char *p)
+API void uC_win_puts(uC_window_t *win, uint8_t *p)
 {
     uint8_t skip;
-    int32_t codepoint;
+    uint32_t codepoint;
 
     while (*p != '\0')
     {
@@ -229,7 +229,7 @@ static void y(void)
 
 static void utf8(void)
 {
-    int cc = va_arg(arg, int);
+    uint32_t cc = va_arg(arg, int);
     uC_win_emit(w, cc);
 }
 
@@ -263,7 +263,7 @@ static void wclear(void)
 
 static void u_puts(void)
 {
-    char *s = va_arg(arg, char *);
+    uint8_t *s = va_arg(arg, uint8_t *);
     uC_win_puts(w, s);
 }
 
@@ -365,12 +365,12 @@ static void command(void)
 // your string into a buffer and escape the format tags within it that
 // you want passed to this function...
 
-API void uC_win_printf(uC_window_t *win, char *format, ...)
+API void uC_win_printf(uC_window_t *win, uint8_t *format, ...)
 {
-    int32_t codepoint;
-    int8_t skip;
+    uint32_t codepoint;
+    uint8_t skip;
 
-    va_start(arg, format);
+    va_start(arg, (char *)format);
 
     p = format;
     w = win;
@@ -379,7 +379,7 @@ API void uC_win_printf(uC_window_t *win, char *format, ...)
     {
         while ((*p != '%') && (*p != '\0'))
         {
-            skip = utf8_decode(&codepoint, p);
+            skip = utf8_decode(&codepoint, (uint8_t *)p);
             uC_win_emit(win, codepoint);
             p += skip;
         }

@@ -10,7 +10,7 @@
 uC_attribs_t box_attrs =
 {
     .flags.bits = (ATTR_FLAG_GRAY_FG | ATTR_FLAG_GRAY_BG),
-    .fg         = uC_GRAY_07,
+    .fg_gray    = uC_GRAY_07,
     .bg_gray    = uC_GRAY_03,
 };
 

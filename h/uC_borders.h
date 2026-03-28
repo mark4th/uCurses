@@ -40,14 +40,18 @@ typedef enum
 void win_draw_borders(uC_window_t *win);
 
 // -----------------------------------------------------------------------
-// visibility normal
+// visibility normal   (do these belong in window_draw.c ?)
 
 // a box is like a border but is drawn directly into a window but must fit
 // entirely within that window.   the x and y coordinates here are within
 // the window not the screen.
 
-API void win_draw_box(uC_window_t *win,
-    uint16_t x, uint16_t y,
+API void uC_window_clear_box(uC_window_t *win,
+    uint16_t xco, uint16_t yco,
+    uint16_t width, uint16_t height);
+
+API void uC_win_draw_box(uC_window_t *win,
+    uint16_t xco, uint16_t yco,
     uint16_t width, uint16_t height,
     uC_border_type_t bdr_type,
     uC_attribs_t box_attrs);

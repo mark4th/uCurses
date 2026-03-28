@@ -471,6 +471,28 @@ static void key_flag(void)
 }
 
 // -----------------------------------------------------------------------
+// window tab selection order
+
+static void key_order(void)
+{
+    // backdrop window is excluded from tab focus order
+
+    if (json_state->struct_type == STRUCT_BACKDROP)
+    {
+        // silently ignore tab order for backdrop windows
+        return;
+    }
+
+    if (json_state->struct_type == STRUCT_WINDOW)
+    {
+        json_new_state_struct(0, KEY_ORDER);
+        return;
+    }
+
+    json_error("Key-order requires parent window");
+}
+
+// -----------------------------------------------------------------------
 // put a breakpoint on here, place a breakpoint key in your json
 
 // breakpoint : xxx   // any value
@@ -496,7 +518,8 @@ static const uC_switch_t key_types[] =
     { 0x68cdf632, key_flags  }, { 0x362bb2fc, key_border_type },
     { 0x0ee694b4, key_vector }, { 0x1c13e01f, key_shortcut    },
     { 0xaeb95d5b, key_flag   }, { 0x1441d80c, breakpoint      },
-    { 0xe960add1, key_blank  }
+    { 0xe960add1, key_blank  }, { 0x4fc0385f, key_order       },
+
 };
 
 #define NUM_KEYS (sizeof(key_types) / sizeof(key_types[0]))
@@ -578,7 +601,7 @@ void json_state_key(void)
         return;
     }
 
-    len = strlen(json_vars->json_token);
+    len = strlen((char *)json_vars->json_token);
     must_quote(len);
     strip_quotes(len);
 

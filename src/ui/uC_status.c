@@ -1,8 +1,6 @@
 // status.c    - status bar window of one line only but you can have many
 // -----------------------------------------------------------------------
 
-// -----------------------------------------------------------------------
-
 #include <stdio.h>
 #include <string.h>
 

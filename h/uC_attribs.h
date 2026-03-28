@@ -121,19 +121,21 @@ void free_attr_grp(void);
 void int_color_set(void);
 void apply_attribs(void);
 
-void set_fg(uC_attribs_t *attr, uC_color_t color);
-void set_bg(uC_attribs_t *attr, uC_color_t color);
-void set_gray_fg(uC_attribs_t *attr, uC_colors_gray_t color);
-void set_gray_bg(uC_attribs_t *attr, uC_colors_gray_t color);
-void set_rgb_fg(uC_attribs_t *attr, uC_color_t r, uC_color_t g,
-    uC_color_t b);
-void set_rgb_bg(uC_attribs_t *attr, uC_color_t r, uC_color_t g,
-    uC_color_t b);
-
 // -----------------------------------------------------------------------
+
+API void uC_set_fg(uC_attribs_t *attr, uC_color_t color);
+API void uC_set_bg(uC_attribs_t *attr, uC_color_t color);
+
+API void uC_set_gray_fg(uC_attribs_t *attr, uC_colors_gray_t color);
+API void uC_set_gray_bg(uC_attribs_t *attr, uC_colors_gray_t color);
+API void uC_set_rgb_fg(uC_attribs_t *attr, uC_color_t r, uC_color_t g,
+           uC_color_t b);
+API void uC_set_rgb_bg(uC_attribs_t *attr, uC_color_t r, uC_color_t g,
+           uC_color_t b);
 
 API void uC_attr_set_flags(uC_attribs_t *attribs, uint16_t bits);
 API void uC_attr_clr_flags(uC_attribs_t *attribs, uint16_t bits);
+
 API void uC_console_clr_attr(int16_t flags);
 API void uC_console_reset_attrs(void);
 API void uC_console_set_fg(uC_color_t color);

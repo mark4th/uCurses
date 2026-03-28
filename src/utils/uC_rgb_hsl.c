@@ -4,6 +4,8 @@
 // used to caculate contrasting RGB colors for a given set of RGB colors
 // not perfect, sometimes does not produce good contrasting colors
 
+// todo: replace with the method i found that works better
+
 // -----------------------------------------------------------------------
 
 #include "uCurses.h"
@@ -105,21 +107,21 @@ static void hsl2rgb(double h, double s, double l,
 
 API void make_contrast(uint8_t *r, uint8_t *g, uint8_t *b)
 {
-   double h, s, l;
+    double h, s, l;
 
-   double R = (double) *r;
-   double G = (double) *g;
-   double B = (double) *b;
+    double R = (double) *r;
+    double G = (double) *g;
+    double B = (double) *b;
 
-   rgb2hsl(R, G, B, &h, &s, &l);
+    rgb2hsl(R, G, B, &h, &s, &l);
 
-   h += 0.5;
-   if (h > 1) h -= 1;
+    h += 0.5;
+    if (h > 1) h -= 1;
 
-   hsl2rgb(h, s, l, &R, &G, &B);
-   *r = (uint8_t)R;
-   *g = (uint8_t)G;
-   *b = (uint8_t)B;
+    hsl2rgb(h, s, l, &R, &G, &B);
+    *r = (uint8_t)R;
+    *g = (uint8_t)G;
+    *b = (uint8_t)B;
 }
 
 // =======================================================================

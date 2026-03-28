@@ -21,7 +21,7 @@ extern widget_state_t widget_state;
 // -----------------------------------------------------------------------
 // create a widget view as a container for one type of widget
 
-API uC_widget_view_t *uC_widget_view_create(char *name,
+API uC_widget_view_t *uC_widget_view_create(uint8_t *name,
     uint16_t width, uint16_t height, uint16_t xco, uint16_t yco,
     uC_attribs_t attrs, bool scroll)
 {
@@ -56,17 +56,26 @@ API uC_widget_view_t *uC_widget_view_create(char *name,
 API void uC_widget_view_add_border(uC_widget_view_t *view,
     uC_border_type_t bdr_type, uC_attribs_t bdr_attrs)
 {
-    view->flags    |= (1 << VIEW_BOXED);
-    view->box_attrs = bdr_attrs;
-    view->box_type  = bdr_type;
+    if (view != NULL)
+    {
+        view->flags    |= (1 << VIEW_BOXED);
+        view->box_attrs = bdr_attrs;
+        view->box_type  = bdr_type;
+    }
 }
 
 // -----------------------------------------------------------------------
 
-API bool uC_widget_view_add_widget(uC_widget_view_t *view, uC_widget_t *w)
+API bool uC_widget_view_add_widget(uC_widget_view_t *view,
+    uC_widget_t *widget)
 {
     uC_list_node_t *n1;
-    uC_widget_t *widget;
+    uC_widget_t *w2;
+
+    if ((view == NULL) || (widget == NULL))
+    {
+        return false;
+    }
 
     // all widgets added to the view must be of the same type
     // as the first widget added to the view
@@ -74,9 +83,9 @@ API bool uC_widget_view_add_widget(uC_widget_view_t *view, uC_widget_t *w)
     if (view->widgets.count != 0)
     {
         n1 = uC_list_scan(&view->widgets, NULL);
-        widget = (uC_widget_t *)n1->payload;
+        w2 = (uC_widget_t *)n1->payload;
 
-        if (widget->type != w->type)
+        if (widget->type != w2->type)
         {
             return false;
         }
@@ -86,11 +95,12 @@ API bool uC_widget_view_add_widget(uC_widget_view_t *view, uC_widget_t *w)
     {
         if (view->sequence == 0)
         {
-            view->sequence = w->sequence;
+            view->sequence = widget->sequence;
         }
     }
 
-    return uC_list_push_tail(&view->widgets, w);
+    widget->view = view;
+    return uC_list_push_tail(&view->widgets, widget);
 }
 
 // -----------------------------------------------------------------------
@@ -128,27 +138,40 @@ static void view_up(void)
 }
 
 // -----------------------------------------------------------------------
+
+static void next(void)
+{
+    if (widget_state.view->view_node != NULL)
+    {
+        widget_state.view->view_node =
+            widget_state.view->view_node->next;
+    }
+}
+
+// -----------------------------------------------------------------------
 // move the focus down one line in a scrollable view
 
 static void view_down(void)
 {
     uint16_t n;
+    uC_widget_view_t *view;
 
-    if (widget_state.view->cy != widget_state.view->height - 1)
+    view = widget_state.view;
+
+    if ((view->cy != view->height - 1) &&
+        (view->cy != view->widgets.count - 1))
     {
-        widget_state.view->cy++;
-        widget_state.view->view_node =
-            widget_state.view->view_node->next;
+        view->cy++;
+        next();
     }
     else
     {
-        n = widget_state.view->top + widget_state.view->cy;
+        n = view->top + view->cy;
 
-        if (n != widget_state.view->widgets.count - 1)
+        if (n != view->widgets.count - 1)
         {
-            widget_state.view->view_node =
-                widget_state.view->view_node->next;
-            widget_state.view->top++;
+            view->top++;
+            next();
         }
     }
 }
@@ -161,6 +184,11 @@ void widget_scroll_view(uint8_t k)
     {
         case WIDGET_KEY_UP:      view_up();    break;
         case WIDGET_KEY_DOWN:    view_down();  break;
+    }
+
+    if (widget_state.view->view_node != NULL)
+    {
+        widget_state.widget = widget_state.view->view_node->payload;
     }
 }
 

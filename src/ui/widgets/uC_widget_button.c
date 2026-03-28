@@ -17,17 +17,28 @@
 
 extern widget_state_t widget_state;
 
+bool justify;
+
 // -----------------------------------------------------------------------
 // draws the text on a button and underlines the keyboard shortcut key
 // if there is one (the shortcut key does not actually need to be part
 // of the button name but it would be more helpful if it was :)
 
 static void draw_btn_txt(uC_window_t *win, uint16_t x, uint16_t y,
-    uint16_t width, char *name, char key)
+    uint16_t width, char *name, char letter)
 {
     char c;
     bool ul = false;
-    uint16_t pad = (width / 2) - (strlen(name) / 2);
+    uint16_t pad;
+
+    if (win == NULL)
+    {
+        return;
+    }
+
+    pad = (justify)
+       ? 0
+       : (width / 2) - (strlen(name) / 2);
 
     // %@ set cursor location in window
     // %* emit single char multiple times
@@ -41,7 +52,7 @@ static void draw_btn_txt(uC_window_t *win, uint16_t x, uint16_t y,
     {
         c = *name++;
 
-        if ((ul != true) && (*name == key))
+        if ((ul != true) && (c == letter))
         {
             // make sure only first instance of letter is
             // actually underlined
@@ -53,10 +64,11 @@ static void draw_btn_txt(uC_window_t *win, uint16_t x, uint16_t y,
             // %U- turn underling of text off
 
             uC_win_printf(win, "%U+%8%U-", c);
-
-            continue;
         }
-        uC_win_emit(win, c);
+        else
+        {
+            uC_win_emit(win, c);
+        }
     }
 }
 
@@ -65,6 +77,7 @@ static void draw_btn_txt(uC_window_t *win, uint16_t x, uint16_t y,
 void draw_button(uC_window_t *win, uC_widget_t *widget,
     uint16_t x, uint16_t y)
 {
+    // todo: add disabled attributes to widget
     win->attrs = (widget->focused == true)
         ? widget->focus_attrs
         : widget->attrs;
@@ -97,7 +110,10 @@ uint8_t handle_button(uint8_t k)
         // the first button in that view has a valid tab sequence
         // value.
 
-        k = b->letter;
+        if (b->letter != '\0')
+        {
+            k = b->letter;
+        }
 
         if (b->select != NULL)
         {
@@ -115,18 +131,18 @@ API uC_widget_t *uC_widget_button_create(uint16_t sequence,
     uint16_t width, uint8_t xco, uint8_t yco,
     uC_attribs_t attrs, uC_attribs_t focus)
 {
-    uC_widget_t *w = create_widget(uC_WIDGET_BUTTON, name,
+    uC_widget_t *widget = create_widget(uC_WIDGET_BUTTON, name,
         sequence, xco, yco, width, attrs, focus);
 
-    if (w != NULL)
+    if (widget != NULL)
     {
         // text displayed on button and optional keybord shortcut
 
-        w->button.letter = letter;
-        w->button.select = select;
+        widget->button.letter = letter;
+        widget->button.select = select;
     }
 
-    return w;
+    return widget;
 }
 
 // -----------------------------------------------------------------------

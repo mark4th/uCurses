@@ -27,9 +27,9 @@ source_dir = run_command(python, '-c', 'import os; print(os.getcwd(), end="");',
 compiler = meson.get_compiler('c')
 
 if compiler.get_id() == 'gcc'
-    build_args += ['-Oz', '-Wno-error=attributes']
+    build_args += ['-O0', '-Wno-error=attributes']
 elif compiler.get_id() == 'clang'
-    build_args += ['-Os']
+    build_args += ['-O0']
 endif
 
 build_args += [
@@ -49,23 +49,23 @@ message('@0@: @1@'.format(compiler.get_id(), build_args))
 
 linker_args = ['-Wl,--entry=entry']
 
-find_src  = '''from glob import glob;print('\n'.join(glob('src/*.c')))'''
-find_jsn  = '''from glob import glob;print('\n'.join(glob('src/json/*.c')))'''
-find_ti   = '''from glob import glob;print('\n'.join(glob('src/terminfo/*.c')))'''
-find_key  = '''from glob import glob;print('\n'.join(glob('src/keys/*.c')))'''
-find_ui   = '''from glob import glob;print('\n'.join(glob('src/ui/*.c')))'''
-find_menu = '''from glob import glob;print('\n'.join(glob('src/ui/menus/*.c')))'''
-find_wdgt = '''from glob import glob;print('\n'.join(glob('src/ui/widgets/*.c')))'''
-find_util = '''from glob import glob;print('\n'.join(glob('src/utils/*.c')))'''
+find_src    = '''from glob import glob;print('\n'.join(glob('src/*.c')))'''
+find_jsn    = '''from glob import glob;print('\n'.join(glob('src/json/*.c')))'''
+find_ti     = '''from glob import glob;print('\n'.join(glob('src/terminfo/*.c')))'''
+find_key    = '''from glob import glob;print('\n'.join(glob('src/keys/*.c')))'''
+find_ui     = '''from glob import glob;print('\n'.join(glob('src/ui/*.c')))'''
+find_menu   = '''from glob import glob;print('\n'.join(glob('src/ui/menus/*.c')))'''
+find_wdgt   = '''from glob import glob;print('\n'.join(glob('src/ui/widgets/*.c')))'''
+find_util   = '''from glob import glob;print('\n'.join(glob('src/utils/*.c')))'''
 
-sources     = run_command(python, '-c', find_src,  check: true)
-source_jsn  = run_command(python, '-c', find_jsn,  check: true)
-source_ti   = run_command(python, '-c', find_ti,   check: true)
-source_key  = run_command(python, '-c', find_key,  check: true)
-source_ui   = run_command(python, '-c', find_ui,   check: true)
-source_menu = run_command(python, '-c', find_menu, check: true)
-source_wdgt = run_command(python, '-c', find_wdgt, check: true)
-source_util = run_command(python, '-c', find_util, check: true)
+sources       = run_command(python, '-c', find_src,  check: true)
+source_jsn    = run_command(python, '-c', find_jsn,  check: true)
+source_ti     = run_command(python, '-c', find_ti,   check: true)
+source_key    = run_command(python, '-c', find_key,  check: true)
+source_ui     = run_command(python, '-c', find_ui,   check: true)
+source_menu   = run_command(python, '-c', find_menu, check: true)
+source_wdgt   = run_command(python, '-c', find_wdgt, check: true)
+source_util   = run_command(python, '-c', find_util, check: true)
 
 project_source_files = sources.stdout().strip().split('\n')
 json_source_files    = source_jsn.stdout().strip().split('\n')

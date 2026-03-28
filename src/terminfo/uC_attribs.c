@@ -68,7 +68,7 @@ static void rgb_fg(void)
     ti_vars->params[1] = attrs.fg_g;
     ti_vars->params[2] = attrs.fg_b;
 
-    uC_parse_format(rgb_seq);
+    uC_parse_format((uint8_t *)rgb_seq);
 }
 
 // -----------------------------------------------------------------------
@@ -81,7 +81,7 @@ static void rgb_bg(void)
     ti_vars->params[1] = attrs.bg_g;
     ti_vars->params[2] = attrs.bg_b;
 
-    uC_parse_format(rgb_seq);
+    uC_parse_format((uint8_t *)rgb_seq);
 }
 
 // -----------------------------------------------------------------------
@@ -104,7 +104,7 @@ static void gray_fg(void)
     // the escape seaueces use values from 232 to 255
 
     ti_vars->params[0] += 232;
-    uC_parse_format(fg_seq);
+    uC_parse_format((uint8_t *)fg_seq);
 }
 
 // -----------------------------------------------------------------------
@@ -124,7 +124,7 @@ static void gray_bg(void)
     // the escape seaueces use values from 232 to 255
 
     ti_vars->params[0] += 232;
-    uC_parse_format(bg_seq);
+    uC_parse_format((uint8_t *)bg_seq);
 }
 
 // -----------------------------------------------------------------------
@@ -302,7 +302,7 @@ API void uC_attr_clr_flags(uC_attribs_t *attribs, uint16_t bits)
 
 // -----------------------------------------------------------------------
 
-void set_fg(uC_attribs_t *attribs, uC_color_t color)
+API void uC_set_fg(uC_attribs_t *attribs, uC_color_t color)
 {
     attribs->fg = color;
     uC_attr_clr_flags(attribs, (ATTR_FLAG_RGB_FG | ATTR_FLAG_GRAY_FG));
@@ -310,7 +310,7 @@ void set_fg(uC_attribs_t *attribs, uC_color_t color)
 
 // -----------------------------------------------------------------------
 
-void set_bg(uC_attribs_t *attribs, uC_color_t color)
+API void uC_set_bg(uC_attribs_t *attribs, uC_color_t color)
 {
     attribs->bg = color;
     uC_attr_clr_flags(attribs, (ATTR_FLAG_RGB_BG | ATTR_FLAG_GRAY_BG));
@@ -318,7 +318,7 @@ void set_bg(uC_attribs_t *attribs, uC_color_t color)
 
 // -----------------------------------------------------------------------
 
-void set_gray_fg(uC_attribs_t *attr, uC_colors_gray_t color)
+API void uC_set_gray_fg(uC_attribs_t *attr, uC_colors_gray_t color)
 {
     attr->fg_gray = color;
     uC_attr_set_flags(attr, ATTR_FLAG_GRAY_FG);
@@ -326,7 +326,7 @@ void set_gray_fg(uC_attribs_t *attr, uC_colors_gray_t color)
 
 // -----------------------------------------------------------------------
 
-void set_gray_bg(uC_attribs_t *attr, uC_colors_gray_t color)
+API void uC_set_gray_bg(uC_attribs_t *attr, uC_colors_gray_t color)
 {
     attr->bg_gray = color;
     uC_attr_set_flags(attr, ATTR_FLAG_GRAY_BG);
@@ -334,7 +334,7 @@ void set_gray_bg(uC_attribs_t *attr, uC_colors_gray_t color)
 
 // -----------------------------------------------------------------------
 
-void set_rgb_fg(uC_attribs_t *attr, uC_color_t r, uC_color_t g,
+API void uC_set_rgb_fg(uC_attribs_t *attr, uC_color_t r, uC_color_t g,
     uC_color_t b)
 {
     attr->fg_r = r;
@@ -345,7 +345,7 @@ void set_rgb_fg(uC_attribs_t *attr, uC_color_t r, uC_color_t g,
 
 // -----------------------------------------------------------------------
 
-void set_rgb_bg(uC_attribs_t *attr, uC_color_t r, uC_color_t g,
+API void uC_set_rgb_bg(uC_attribs_t *attr, uC_color_t r, uC_color_t g,
     uC_color_t b)
 {
     attr->bg_r = r;

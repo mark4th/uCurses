@@ -19,7 +19,7 @@ utf8_encode_t *utf8_encode(int32_t cp)
     wchar_t c = '\0';
     static utf8_encode_t encoded;
 
-    *(int32_t *)encoded.str = 0;
+    encoded.zero = 0;
 
     if (cp < 0x80)
     {
@@ -28,20 +28,20 @@ utf8_encode_t *utf8_encode(int32_t cp)
     }
     else if (cp < 0x0800)
     {
-        encoded.str[0] = 0xc0 | (cp >> 6);
+        encoded.str[0] = 0xc0 | ((cp >> 6) & 0x1f);
         encoded.str[1] = 0x80 | (cp & 0x3f);
         encoded.len = 2;
     }
     else if (cp < 0x10000)
     {
-        encoded.str[0] = 0xe0 | (cp >> 12);
+        encoded.str[0] = 0xe0 | ((cp >> 12) & 0x0f);
         encoded.str[1] = 0x80 | ((cp >> 6) & 0x3f);
         encoded.str[2] = 0x80 | (cp & 0x3f);
         encoded.len = 3;
     }
-    else
+    else if (cp < 0x110000)
     {
-        encoded.str[0] = 0xf0 | (cp >> 18);
+        encoded.str[0] = 0xf0 | ((cp >> 18) & 0x07);
         encoded.str[1] = 0x80 | ((cp >> 12) & 0x3f);
         encoded.str[2] = 0x80 | ((cp >> 6) & 0x3f);
         encoded.str[3] = 0x80 | (cp & 0x3f);
@@ -63,7 +63,7 @@ utf8_encode_t *utf8_encode(int32_t cp)
 // --------------------------------------------------------------------------
 // utf8 chars can be 1, 2, 3, 4, 5, ??? columns wide on the console
 
-API int16_t uC_utf8_is_wide(int32_t code)
+API int16_t uC_utf8_is_wide(uint32_t code)
 {
     int32_t width = wcwidth(code);
     return ((width > 1) ? 1 : 0);
@@ -71,16 +71,16 @@ API int16_t uC_utf8_is_wide(int32_t code)
 
 // --------------------------------------------------------------------------
 
-API void uC_utf8_emit(int32_t cp)
+API void uC_utf8_emit(uint32_t cp)
 {
-    int8_t i;
+    uint8_t i;
     utf8_encode_t *encoded;
 
     // double wide characters such as chinese use up two cells in the
     // console display so must also take up two cells in the window
     // the second cell is marked as dead - this is not an error
 
-    if (cp != (int32_t)DEADC0DE)
+    if (cp != (uint32_t)DEADC0DE)
     {
         encoded = utf8_encode(cp);
 
@@ -94,8 +94,9 @@ API void uC_utf8_emit(int32_t cp)
 }
 
 // --------------------------------------------------------------------------
+// dont look!
 
-API int8_t utf8_decode(int32_t *cp, char *s)
+API uint8_t utf8_decode(uint32_t *cp, uint8_t *s)
 {
     // 0xxxxxxx
     if ((uint8_t)s[0] < 0x80)
@@ -105,29 +106,38 @@ API int8_t utf8_decode(int32_t *cp, char *s)
     }
 
     // 110xxxxx  10xxxxxx
-    if (((uint8_t)s[0] >= 0xc0) && ((uint8_t)s[0] < 0xe0))
+    if ((s[0] & 0xe0) == 0xc0)
     {
-        // TODO: if(0x80 == s[1] & 0xc0) { yay }
-        *cp = (((uint8_t)s[0] & 0x1f) << 6) | ((uint8_t)s[1] & 0x3f);
+        *cp = ((s[1]  & 0xc0) == 0x80)
+            ? (((s[0] & 0x1f) << 6) | (s[1] & 0x3f))
+            : 0xefbfbd;
         return 2;
     }
 
     // 1110xxxx 10xxxxxx 10xxxxxx
-    if (((uint8_t)s[0] >= 0xe0) && ((uint8_t)s[0] < 0xf0))
+    if ((s[0] & 0xf0) == 0xe0)
     {
-        *cp = (((uint8_t)s[0] & 0x1f) << 12) |
-              (((uint8_t)s[1] & 0x3f) << 6) |
-               ((uint8_t)s[2] & 0x3f);
+        *cp = (((s[1] & 0xc0) == 0x80) &&
+              ((s[2]  & 0xc0) == 0x80))
+
+            ? (((s[0] & 0x0f) << 12) |
+               ((s[1] & 0x3f) << 6)  |
+               (s[2]  & 0x3f))
+            : 0xefbfbd;
         return 3;
     }
 
     // 11110xxx 10xxxxx 10xxxxx 10xxxxx
-    if ((uint8_t)s[0] > 0xef)
+    if ((s[0] & 0xf8) == 0xf0)
     {
-        *cp = (((uint8_t)s[0] & 0x7) << 18) |
-              (((uint8_t)s[1] & 0x3f) << 12) |
-              (((uint8_t)s[2] & 0x3f) << 6) |
-               ((uint8_t)s[3] & 0x3f);
+        *cp = (((s[1] & 0xc0) == 0x80) &&
+               ((s[2] & 0xc0) == 0x80) &&
+               ((s[3] & 0xc0) == 0x80))
+            ? (((s[0] & 0x7)  << 18) |
+               ((s[1] & 0x3f) << 12) |
+               ((s[2] & 0x3f) << 6)  |
+                (s[3] & 0x3f))
+            : 0xefbfbd;
         return 4;
     }
 
@@ -137,14 +147,15 @@ API int8_t utf8_decode(int32_t *cp, char *s)
 // --------------------------------------------------------------------------
 // return number of bytes for a utf8 char pointed to by *s
 
-API uint8_t uC_utf8_char_length(char *s)
+API uint8_t uC_utf8_char_length(uint8_t *s)
 {
     uint8_t c = *(uint8_t *)s;
 
     if ((c < 0x80))                { return 1; }
-    if ((c >= 0xc0) && (c < 0xe0)) { return 2; }
-    if ((c >= 0xe0) && (c < 0xf0)) { return 3; }
-    if ((c > 0xef))                { return 4; }
+    if ((c & 0xe0) == 0xc0)        { return 2; }
+    if ((c & 0xf0) == 0xe0)        { return 3; }
+    if (((c & 0xf8) == 0xf0) &&
+        (c <= 0xf4))               { return 4; }
 
     return -1;
 }
@@ -154,7 +165,7 @@ API uint8_t uC_utf8_char_length(char *s)
 // accounts for characters such as chinese which take up two cells worth of
 // space in the console when displayed.
 
-API int16_t uC_utf8_width(char *s)
+API int16_t uC_utf8_width(uint8_t *s)
 {
     utf8_encode_t *encode;
     int16_t width = 0;
@@ -173,7 +184,7 @@ API int16_t uC_utf8_width(char *s)
 // calcuate the string length of a utf8 string.  characters in utf8 strings
 // can be 1, 2, 3 or 4 bytes long
 
-API int16_t uC_utf8_strlen(char *s)
+API int16_t uC_utf8_strlen(uint8_t *s)
 {
     utf8_encode_t *encode;
     int16_t len = 0;
@@ -190,7 +201,7 @@ API int16_t uC_utf8_strlen(char *s)
 
 // --------------------------------------------------------------------------
 
-API int16_t uC_utf8_strncmp(char *s1, char *s2, int16_t len)
+API int16_t uC_utf8_strncmp(uint8_t *s1, uint8_t *s2, int16_t len)
 {
     utf8_encode_t e1, e2;
 

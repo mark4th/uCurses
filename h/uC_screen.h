@@ -20,7 +20,9 @@ typedef struct
 
     void *menu_bar;         // menu_bar_t
     void *backdrop;         // uC_window_t always drawn first
+    uC_window_t *selected;
 
+    int16_t tab_order;      // current windows tab selection order
     int16_t width;          // screen dimensions
     int16_t height;
     int16_t cx;             // cursor corrdinates within screen
@@ -47,6 +49,7 @@ API void uC_scr_add_backdrop(uC_screen_t *scr);
 API void uC_scr_draw_screen(uC_screen_t *scr);
 API void uC_scr_win_attach(uC_screen_t *scr, uC_window_t *win);
 API void uC_scr_win_detach(uC_window_t *win);
+API void uC_scr_win_tab_next(uC_screen_t *scr);
 
 // -----------------------------------------------------------------------
 

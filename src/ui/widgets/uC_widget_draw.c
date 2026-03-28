@@ -18,6 +18,8 @@
 extern widget_state_t widget_state;
 extern border_t *const borders[];
 
+extern bool justify;
+
 // -----------------------------------------------------------------------
 // for radio button and check box widgets
 
@@ -69,27 +71,12 @@ static void draw_widget(uC_window_t *win, uC_widget_t *widget,
 }
 
 // -----------------------------------------------------------------------
-// clear a specified rectangular area within a window
-
-static void clear_box(uC_window_t *win, uint16_t xco, uint16_t yco,
-    uint16_t width, uint16_t height)
-{
-    while (height--)
-    {
-        // %@ set cursor x / y location within window
-        // %* print multiple repetitions of char
-
-        uC_win_printf(win, "%@%*", xco, yco++, width, 0x20);
-    }
-}
-
-// -----------------------------------------------------------------------
 
 static void draw_view_box(uC_window_t *win, uC_widget_view_t *view)
 {
     border_t *b;
 
-    win_draw_box(win, view->xco - 1, view->yco - 1,
+    uC_win_draw_box(win, view->xco - 1, view->yco - 1,
         view->width, view->height,
         view->box_type, view->box_attrs);
 
@@ -117,6 +104,8 @@ static void draw_scrollable(uC_window_t *win, uC_widget_view_t *view)
     uC_list_node_t *n1;
     uC_widget_t *widget;
 
+    justify = true;         // left justify button textaw
+
     n1 = uC_list_scan(&view->widgets, NULL);
 
     for (i = 0; i < view->top; i++)
@@ -141,6 +130,8 @@ static void draw_scrollable(uC_window_t *win, uC_widget_view_t *view)
 
         n1 = uC_list_scan(NULL, n1);
     }
+
+    justify = false;
 }
 
 // -----------------------------------------------------------------------
@@ -166,8 +157,8 @@ static void draw_view(uC_window_t *win, uC_widget_view_t *view)
 {
     win->attrs = view->attrs;
 
-    clear_box(win, view->xco, view->yco,
-        view->width, view->height);
+    // uC_window_clear_box(win, view->xco, view->yco,
+    //     view->width, view->height);
 
     if (view->flags & (1 << VIEW_BOXED))
     {

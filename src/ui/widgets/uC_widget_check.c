@@ -53,6 +53,10 @@ uint8_t handle_check(uint8_t k)
 
     uint16_t bit;
 
+    if (widget_state.view->view_node == NULL)
+    {
+        return k;
+    }
     if (k == 0x20)
     {
         widget = widget_state.view->view_node->payload;

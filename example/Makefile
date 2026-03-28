@@ -20,21 +20,33 @@ clean:
 
 shell: shell.o
 	$(CC) $(CFLAGS) -L /usr/local/lib64 -lm -luCurses -o shell shell.c
+#	strip -R .comment shell
 
 widgets: widgets.o
 	$(CC) $(CFLAGS) -L /usr/local/lib64 -lm -luCurses -o widgets widgets.c
+#	strip -R .comment widgets
 
 window: window.o
 	$(CC) $(CFLAGS) -L /usr/local/lib64 -lm -luCurses -o window window.c
+#	strip -R .comment window
 
 raycast: raycast.o
 	$(CC) $(CFLAGS) -L /usr/local/lib64 -lm -luCurses -o raycast raycast.c
+	strip -R .comment raycast
 
 dots: dots.o sintab.o shapes.o
 	$(CC) $(CFLAGS) -L /usr/local/lib64 -lm -luCurses -o dots dots.c sintab.c shapes.c
+	strip -R .comment dots
 
 mandel: mandel.o sintab.o
 	$(CC) $(CFLAGS) -L /usr/local/lib64 -lm -luCurses -o mandel mandel.c sintab.c
+	strip -R .comment mandel
 
 lion:
 	$(CC) $(CFLAGS) -L /usr/local/lib64 -lm -luCurses -o lion lion.c
+	strip -R .comment lion
+
+valgrind: demo
+	valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all --trace-children=yes \
+	--log-file=v.log ./demo
+	

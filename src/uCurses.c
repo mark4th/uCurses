@@ -34,20 +34,24 @@ API void uCurses_init(char *file, json_mem_t *json, void *fp)
 
 #ifdef UC_JSON
     // gcc will no longer compile these sources because of some ultra
-    // fucking bullshit ISO standard that mandates that you cannot be
-    // allowed to smash a square peg into a square hole of the wrong
-    // type.
+    // stupid "protect you from you" ISO standard that mandates that you
+    // cannot be allowed to smash a square peg into a square hole of the
+    // wrong type.
     //
     // the "fp" variable absolutely has to be passed as void because the
-    // entire fucking menu system is OPTIONAL so even if I could make
-    // it of type fp_finder_t that fucking typedef is not going always
-    // exist
-
+    // entire menu system is OPTIONAL so even if I could make it of type
+    // fp_finder_t that typedef is not going always exist
+    //
     // ISO C forbids conversion of object pointer to function pointer
-    // type
-
-    // who the FUCK says a void pointer is always a ponter to
-    // fucking data?
+    // type.  who says a void pointer is always a ponter to data?
+    // ABSOLUTE insanity.  I have no interest in supporting assinine
+    // compilers like GCC until they give me a sane way to do this without
+    // violating their insanity.
+    //
+    // I have never *EVER* liked ANY of the development tools created by
+    // the GNU foundation, GDB is for example is a horrendously bad
+    // stinking pile of donky shit.  If only there were any other actual
+    // viable alternatives :/
 
     fp_finder_t finder = (fp_finder_t) fp;
 #endif

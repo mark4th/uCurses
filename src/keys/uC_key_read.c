@@ -71,7 +71,10 @@ void uC_read_keys(void)
 
     do
     {
-        if (ti_vars->num_k == KEY_BUFF_SZ) { break; }
+        if (ti_vars->num_k == KEY_BUFF_SZ)
+        {
+            break;
+        }
         ti_vars->keybuff[ti_vars->num_k++] = read_key();
     } while (uC_test_keys() != 0);
 }

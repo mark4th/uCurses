@@ -21,7 +21,7 @@
                 "border-attribs" :
                 {
                     "gray-fg"   : 12,
-                    "gray-bg"   : 3
+                    "gray-bg"   : 0x03 // yes hex is fine here
                 },
 
                 "border-type" : "BDR_SINGLE",

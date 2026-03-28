@@ -6,6 +6,7 @@ example/lion
 example/mandel
 example/raycast
 example/window
+example/widgets
 build
 obj
 default.profraw

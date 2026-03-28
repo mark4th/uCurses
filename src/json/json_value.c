@@ -26,8 +26,8 @@ extern json_state_t *json_state;
 
 // windows now have names too not just menus
 
-char name_string_buff[2048];
-int16_t nsi;
+// char name_string_buff[2048];
+// int16_t nsi;
 
 // -----------------------------------------------------------------------
 
@@ -36,6 +36,8 @@ static void value_fgbg(void)
     json_type_t ktype     = json_state->struct_type;
     json_state_t *parent  = json_state->parent;
     uC_attribs_t *pstruct = parent->structure;
+
+    // ensure key valoe is within 8 bits
 
     if ((json_vars->key_value & ~255) == 0)
     {
@@ -55,6 +57,9 @@ static void value_fgbg(void)
 
 // -----------------------------------------------------------------------
 
+#define MIN_GRAY (0)    // probably belongs elsewhere
+#define MAX_GRAY (23)
+
 static void value_gray_fgbg(void)
 {
     json_type_t ktype     = json_state->struct_type;
@@ -63,11 +68,12 @@ static void value_gray_fgbg(void)
 
     // gray scale values must be between 0 and 23
 
-    if ((json_vars->key_value >= 0) && (json_vars->key_value <= 23))
+    if ((json_vars->key_value >= MIN_GRAY) &&
+        (json_vars->key_value <= MAX_GRAY))
     {
         (ktype == KEY_GRAY_FG)
-            ? set_gray_fg(pstruct, json_vars->key_value)
-            : set_gray_bg(pstruct, json_vars->key_value);
+            ? uC_set_gray_fg(pstruct, json_vars->key_value)
+            : uC_set_gray_bg(pstruct, json_vars->key_value);
 
         return;
     }
@@ -196,14 +202,14 @@ static void value_wh(void)
 
 static void value_name(void)
 {
-    uint16_t i;
-    char *name;
+    // uint16_t i;
+    uint8_t *name;
 
     json_state_t *parent = json_state->parent;
     void *structure      = parent->structure;
     json_type_t ptype    = parent->struct_type;
 
-    size_t len = strlen(json_vars->json_token);
+    size_t len = strlen((char *)json_vars->json_token);
 
     if (json_vars->quoted == false)  // was token quoted?
     {
@@ -211,17 +217,17 @@ static void value_name(void)
     }
 
     // copy name token to the name buff minus the quotes
-    name = &name_string_buff[nsi];
-
-    for (i = 0; i < len; i++)
+    name = uC_alloc(uC_MEM_ZONE_UI, len + 1);
+    if (name == NULL)
     {
-        name_string_buff[nsi++] = json_vars->json_token[i];
+        return;
     }
-    name_string_buff[nsi++] = '\0';
+    strncpy((char *)name, (char *)json_vars->json_token, len);
 
     if (ptype == STRUCT_WINDOW)
     {
         ((uC_window_t *)structure)->name = fnv_hash(name);
+        ((uC_window_t *)structure)->display_name = name;
         return;
     }
 
@@ -334,6 +340,17 @@ static void value_blank(void)
 }
 
 // -----------------------------------------------------------------------
+// set tab selection order for a window
+
+static void value_order(void)
+{
+    json_state_t *parent = json_state->parent;
+    uC_window_t  *win    = parent->structure;
+
+    win->tab_order = json_vars->key_value;
+}
+
+// -----------------------------------------------------------------------
 
 static void value_vector(void)
 {
@@ -380,7 +397,8 @@ static const uC_switch_t value_types[] =
     { KEY_VECTOR,      value_vector      },
     { KEY_SHORTCUT,    value_shortcut    },
     { KEY_FLAG,        value_flag        },
-    { KEY_BLANK,       value_blank       }
+    { KEY_BLANK,       value_blank       },
+    { KEY_ORDER,       value_order       }
 };
 
 #define NUM_KEYS (sizeof(value_types) / sizeof(value_types[0]))
@@ -393,8 +411,8 @@ static int32_t constant_hash[] =
     0x0ed8a8cf,       0xfa264646,  0x4e4f416d,  0x8cb49b59,
     // WIN_LOCKED     WIN_FILLED   WIN_BOXED    WIN_FAR,
     0x901cbb7a,       0xd6b11d20,  0x6f7f7df8,  0x264116fc,
-    // WIN_FOCUS
-    0x618e2ff0,
+    // WIN_FOCUS      WIN_NAMED
+    0x618e2ff0,       0xfd8f5c9f,
 
     // BLACK    RED         GREEN       BROWN
     0xdc51d022, 0x5a235332, 0xe3671392, 0x4ff50adb,
@@ -412,7 +430,7 @@ static int32_t constant_val[] =
 {
     MENU_DISABLED, BDR_SINGLE, BDR_DOUBLE, BDR_CURVED,
     WIN_LOCKED,    WIN_FILLED, WIN_BOXED,  WIN_FAR,
-    WIN_FOCUS,
+    WIN_FOCUS,     WIN_NAMED,
 
     // color values
 
@@ -501,7 +519,7 @@ void json_state_value(void)
 
     json_vars->key_value = UCURSES_NAN; // assume NAN
 
-    len = strlen(json_vars->json_token);
+    len = strlen((char *)json_vars->json_token);
 
     if (json_vars->json_token[len - 1] == ',')
     {

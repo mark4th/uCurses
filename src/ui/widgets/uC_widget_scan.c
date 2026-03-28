@@ -30,6 +30,10 @@ static bool scan_view(uC_widget_view_t *view, uint16_t sequence)
 
         if (widget->sequence == sequence)
         {
+            if (widget->disabled == true)
+            {
+                return false;
+            }
             widget->focused = true;
             widget_state.widget = widget;
 
@@ -84,7 +88,7 @@ static bool scan_vg(uC_widget_vg_t *vg, uint16_t sequence)
 // -----------------------------------------------------------------------
 // scan all view groups for widget with given sequence number
 
-static bool find_widget(uint16_t sequence)
+API bool uC_widget_select_widget(uint16_t sequence)
 {
     bool f;
 
@@ -120,16 +124,19 @@ static bool find_widget(uint16_t sequence)
     {
         vg = (uC_widget_vg_t *)n1->payload;
 
-        f = scan_vg(vg, sequence);
-
-        if (f == true)
+        if ((vg->flags & uC_vg_flag_ignore) == 0)
         {
-            break;
-        }
+            f = scan_vg(vg, sequence);
 
+            if (f == true)
+            {
+                break;
+            }
+        }
         n1 = uC_list_scan(NULL, n1);
     }
 
+// ????? why the heck is this here?
     uC_scr_draw_screen(active_screen);
 
     return f;
@@ -147,7 +154,24 @@ char tab_next_widget(void)
 
     widget_state.sequence = 0;
 
-    find_widget(sequence);
+    uC_widget_select_widget(sequence);
+
+
+    return 0x09;
+}
+
+// -----------------------------------------------------------------------
+
+char tab_prev_widget(void)
+{
+    uint16_t sequence = widget_state.sequence - 1;
+
+    // if we do not find one then all view groups, all views and all
+    // widgets lose focus and the sequence resets to zero (no focus)
+
+    widget_state.sequence = 0;
+
+    uC_widget_select_widget(sequence);
 
     return 0x09;
 }

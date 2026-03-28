@@ -33,16 +33,29 @@ static uint8_t handle_widget(uint8_t k)
 
     // if the currently focused widget view is scrollable
 
-    if ((widget_state.view != NULL) &&
-        (widget_state.view->flags & (1 << VIEW_SCROLL)))
+    if (widget_state.view != NULL)
     {
-        // if the key pressed is a cursor movement then scroll
-        // the view, otherwise fall through
-
-        if ((k == WIDGET_KEY_UP) || (k == WIDGET_KEY_DOWN))
+        if (widget_state.view->flags & (1 << VIEW_SCROLL))
         {
-            widget_scroll_view(k);
-            return k;
+            // if the key pressed is a cursor movement then scroll
+            // the view, otherwise fall through
+
+            if ((k == WIDGET_KEY_UP) || (k == WIDGET_KEY_DOWN))
+            {
+                if (widget_state.view != NULL)
+                {
+                    widget_scroll_view(k);
+                }
+                return k;
+            }
+        }
+        else
+        {
+            switch (k)
+            {
+                case WIDGET_KEY_UP:   tab_prev_widget(); return k;
+                case WIDGET_KEY_DOWN: tab_next_widget(); return k;
+            }
         }
     }
 
@@ -52,7 +65,7 @@ static uint8_t handle_widget(uint8_t k)
         case uC_WIDGET_BUTTON:  return handle_button(k);
         case uC_WIDGET_RADIO:   return handle_radio(k);
         case uC_WIDGET_CHECK:   return handle_check(k);
-        case uC_WIDGET_TEXTBOX: return handle_text(k);
+        case uC_WIDGET_TEXTBOX: return handle_textbox(k);
     }
 
     return k;
@@ -109,6 +122,7 @@ static uint8_t widget_key(void)
 // stuff one of the above uCurses black magic key values into the keyboard
 // input buffers to be returned to widget_key() above
 
+
 static void widget_key_up(void)     { uC_set_key(WIDGET_KEY_UP);     }
 static void widget_key_down(void)   { uC_set_key(WIDGET_KEY_DOWN);   }
 static void widget_key_left(void)   { uC_set_key(WIDGET_KEY_LEFT);   }
@@ -138,6 +152,9 @@ static void set_widget_key_actions(void)
     uC_set_key_action(K_HOME, widget_key_home);
     uC_set_key_action(K_END,  widget_key_end);
 
+    // as long as there are any widgets active the menu system is
+    // disabled.
+
     uC_set_key_action(K_F10, uC_noop);
 }
 
@@ -152,6 +169,14 @@ static void set_widget_key_actions(void)
 API char uC_widget_main(void)
 {
     char k;
+
+    if (widget_state.vg != NULL)
+    {
+        if ((widget_state.vg->flags & uC_vg_flag_ignore) != 0)
+        {
+            widget_state.sequence = 0;
+        }
+    }
 
     set_widget_key_actions();
 

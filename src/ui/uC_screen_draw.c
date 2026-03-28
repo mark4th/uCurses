@@ -1,12 +1,13 @@
 // screen.c   - uCurses text user interface screen handling
 // -----------------------------------------------------------------------
 
-#define _XOPEN_SOURCE // needed to make wcwidth work
+#define _XOPEN_SOURCE 700  // needed to make wcwidth work
 
 #include <inttypes.h>
 #include <stdbool.h>
 #include <string.h>
 #include <wchar.h>
+#include <locale.h>
 
 #include "uCurses.h"
 #include "uC_screen.h"
@@ -35,7 +36,7 @@ void draw_view_groups(uC_screen_t *scr);
 
 static void draw_win_name(uC_window_t *win)
 {
-    char *p1;
+    uint8_t *p1;
     cell_t *p2;
     border_t *b;
     uC_screen_t *scr;
@@ -44,12 +45,19 @@ static void draw_win_name(uC_window_t *win)
 
     scr = win->screen;
 
+    // point x/y at top left of window inside the border
+
     x = win->xco;
     y = win->yco - 1;
 
     index = (y * scr->width) + x;
 
     p1 = win->display_name;
+    if (p1 == NULL)
+    {
+        return;
+    }
+
     p2 = &scr->buffer1[index];
 
     cell.attrs = (win->flags & WIN_FOCUS)
@@ -62,8 +70,10 @@ static void draw_win_name(uC_window_t *win)
 
     cell.code = b[BDR_RIGHT_T];
     *p2++ = cell;
+    cell.code = 0x20;
+    *p2++ = cell;
 
-    while (*p1 != '\0')
+    while (*p1)
     {
         cell.code = (int32_t)*p1;
         *p2++ = cell;
@@ -72,6 +82,8 @@ static void draw_win_name(uC_window_t *win)
 
     // draw ├┣╠ border char to right of name
 
+    cell.code = 0x20;
+    *p2++ = cell;
     cell.code = b[BDR_LEFT_T];
     *p2 = cell;
 }
@@ -93,13 +105,13 @@ void scr_draw_win(uC_window_t *win)
         scr = win->screen;
 
         // draw windows border if it has one
-        if (win->flags & WIN_BOXED)
+        if ((win->flags & WIN_BOXED) && (win->border_type != BDR_NONE))
         {
             win_draw_borders(win);
 
             // window name only drawn if window has a border
 
-            if (win->display_name != NULL)
+            if ((win->display_name != NULL) && (win->flags & WIN_NAMED))
             {
                draw_win_name(win);
             }
@@ -172,8 +184,8 @@ static bool scr_is_modified(uC_screen_t *scr, uint16_t index)
     // in buffer2 or if the characters in those cells are different
     // then this cell needs updating
 
-    return (p1->attrs.blob != p2->attrs.blob) ||
-        (p1->code != p2->code);
+    return ((p1->attrs.blob != p2->attrs.blob) ||
+            (p1->code       != p2->code));
 }
 
 // -----------------------------------------------------------------------
@@ -185,24 +197,15 @@ static void new_attrs(uC_attribs_t a)
 }
 
 // -----------------------------------------------------------------------
-// emits charcter from screen buffer1 to the console
 
-void scr_emit(uC_screen_t *scr, int16_t index)
+static void _scr_emit(uC_screen_t *scr, int16_t index,
+    cell_t *p1, cell_t *p2)
 {
-    cell_t *p1, *p2;
-
     int16_t x, y;
     int16_t wide;
-    int16_t force = 0;
+    int16_t force;
 
-    p1 = &scr->buffer1[index];
-    p2 = &scr->buffer2[index];
-
-    // are we about to write a wide character here..
-
-    // mental note to self.  If you are about to read p1[1] make sure
-    // p1 is not pointing to the last element of the array because p2
-    // will be beyond the end of the array :/
+    force = 0;
 
     if (index != (scr->width * scr->height) - 1)
     {
@@ -214,7 +217,7 @@ void scr_emit(uC_screen_t *scr, int16_t index)
 
         if (wide != 1)
         {
-            if (p1[1].code != (int32_t)DEADC0DE)
+            if (p1[1].code != (uint32_t)DEADC0DE)
             {
                 force = 1;
             }
@@ -224,7 +227,7 @@ void scr_emit(uC_screen_t *scr, int16_t index)
         // character with a single width char then we need to output a
         // blank over the associated DEADC0DE slot (see below)
 
-        else if (p1[1].code == (int32_t)DEADC0DE)
+        else if (p1[1].code == (uint32_t)DEADC0DE)
         {
             force = 2;
         }
@@ -236,27 +239,50 @@ void scr_emit(uC_screen_t *scr, int16_t index)
     y = index / scr->width;
     x = index % scr->width;
     scr_cup(scr, x, y);
-
     uC_utf8_emit(p1->code);
 
     // are we overlaying either the left or right edge of a double
     // width char with a single width char?
 
-    if (force != 0)
+    if ((force != 0) && (scr->cx != scr->width - 1))
     {
-        new_attrs(p1[1].attrs);
+        // dont output attribute change escape sequences if
+        // the attributes of p1[1] are the same as we already
+        // have set
 
-        if (force == 1)         // right?
+        if (p1->attrs.blob != p1[1].attrs.blob)
         {
-            scr_cup(scr, x + 1, y);
-            uC_utf8_emit(p1[1].code);
+            new_attrs(p1[1].attrs);
         }
-        else if (force == 2)    // left?
-        {
-            uC_utf8_emit(0x20);
-        }
+
+        uC_utf8_emit((force == 1)
+            ? p1[1].code : 0x20);
+
         // restore working attributes after the above detour
-        new_attrs(p1->attrs);
+
+        if (p1->attrs.blob != p1[1].attrs.blob)
+        {
+            new_attrs(p1->attrs);
+        }
+        p2[1] = p1[1];
+    }
+}
+
+// -----------------------------------------------------------------------
+// emits charcter from screen buffer1 to the escape buffer
+
+void scr_emit(uC_screen_t *scr, int16_t index)
+{
+    cell_t *p1, *p2;
+
+    p1 = &scr->buffer1[index];
+    p2 = &scr->buffer2[index];
+
+    // are we about to write a wide character here..
+
+    if (p1->code != (uint32_t)DEADC0DE)
+    {
+        _scr_emit(scr, index, p1, p2);
     }
 
     scr->cx++;
@@ -271,15 +297,18 @@ void scr_emit(uC_screen_t *scr, int16_t index)
 }
 
 // -----------------------------------------------------------------------
-// inner loop of screen update.  write chars with same attrib to console
+// inner loop of screen update.  write chars with same attrib to escape
+// buffer
 
 static int16_t inner_update(uC_screen_t *scr, int16_t index, int16_t end)
 {
     cell_t *p1;
-    int indx = 0;
+    int indx;
     bool f;
 
     uC_attribs_t a;
+
+    indx = 0;
 
     // select current attributes and write out every character in
     // the screen buffer that has these atrributes, no matter where
@@ -287,7 +316,7 @@ static int16_t inner_update(uC_screen_t *scr, int16_t index, int16_t end)
     // bounce the cursor all over the map than to constantly have to
     // activate new attrbute values.
 
-    p1 = &scr->buffer1[index];
+    p1     = &scr->buffer1[index];
     a.blob = p1->attrs.blob;
 
     new_attrs(a);
@@ -298,7 +327,11 @@ static int16_t inner_update(uC_screen_t *scr, int16_t index, int16_t end)
 
         f = scr_is_modified(scr, index);
 
-        if (f == true)
+        // this removed condition seems to have been causing screen
+        // update problems when single width characters are drawn
+        // over the top of what were previously multi width characters
+
+        if (f == true) // && (p1->code != DEADC0DE))
         {
             if (a.blob == p1->attrs.blob)
             {
@@ -311,7 +344,7 @@ static int16_t inner_update(uC_screen_t *scr, int16_t index, int16_t end)
                 // attributes to those we are currently updating.  this
                 // means that the outer loop does not need to scan over
                 // all the unmofified characters we have alredy scanned
-                // past in within this loop.
+                // past within this loop.
 
                 indx = index;
             }
@@ -346,8 +379,8 @@ static void outer_update(uC_screen_t *scr)
         //     break;
         // }
 
-        // if char at index is modified then output everey char in the
-        // screen that shares its attributes.
+        // if char at index is modified then output every char in the
+        // screen that shares its attributes that has also been modified.
 
         f = scr_is_modified(scr, index);
 
@@ -357,10 +390,10 @@ static void outer_update(uC_screen_t *scr)
 
             // the return value is the index of the first character
             // that update found that had different atributes to the
-            // ones it was setting.  this is our new scan point
+            // ones it was setting.  this is our new scan point.
             // if index is zero then update scanned to the end of the
-            // screen and found no characters that that it did not
-            // already update so we can exit early.
+            // screen and found no characters that that needed to be
+            // updated so we can exit the loop.
 
             if (index == 0)
             {
@@ -374,6 +407,7 @@ static void outer_update(uC_screen_t *scr)
         // of subesquent modified characters are returned to us by the
         // inner loop.
 
+        // would splitting this into two separate loops make it faster?
         index++;
     } while (index != end);
 }
@@ -387,6 +421,9 @@ API void uC_scr_draw_screen(uC_screen_t *scr)
     // set (for reasons unknown)
 
     ti_sgr0();
+
+    // move this to uCurses initialization?
+    setlocale(LC_CTYPE, "");
 
     if (scr != NULL)
     {
@@ -408,6 +445,10 @@ API void uC_scr_draw_screen(uC_screen_t *scr)
 
         // special case windows ->
 
+#ifdef UC_STATUS
+        scr_draw_windows(&scr->status);
+#endif // UC_STATUS
+
 // i hate embedding cluster fuck conditional compilation all over!
 // if this gets out of hand im reverting to ZERO conditionals buried
 // in these soures
@@ -416,15 +457,22 @@ API void uC_scr_draw_screen(uC_screen_t *scr)
         scr_update_menus(scr);
 #endif // UC_MENUS
 
-#ifdef UC_STATUS
-        scr_draw_windows(&scr->status);
-#endif // UC_STATUS
+
+// widgets, if active are always drawn over the top of any other
+// entity in view including menus -- should I reverse the order?
 
 #ifdef UC_WIDGETS
         draw_view_groups(scr);
 #endif // UC_WIDGETS
 
+        // at this point everything that should be displayed has been
+        // drawn into the screen buffers.   we can now compile all the
+        // escape sequeces needed to physically draw the screen state
+        // out to the terminal.
+
         outer_update(scr);
+
+        // winch not working yet
 
         // if we got a window change notification while updating the
         // screen then purge all output without writing it out to the
@@ -437,7 +485,8 @@ API void uC_scr_draw_screen(uC_screen_t *scr)
             // ? terminfo_purge()
             // : uC_terminfo_flush();
 
-        // winch not working yet
+        // write all compiled escape sequences out to the terminal.
+
         uC_terminfo_flush();
     }
 }

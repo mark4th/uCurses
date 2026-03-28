@@ -1,4 +1,4 @@
-// uC_widget_text.c
+// uC_widget_textbox.c
 // -----------------------------------------------------------------------
 
 #include <string.h>
@@ -41,12 +41,12 @@ void draw_textbox(uC_window_t *win, uC_widget_t *widget,
     uint16_t x, uint16_t y)
 {
     int i;
-    int q ;
+    int x2;
     char c;
 
-    uC_widget_textbox_t *t = &widget->textbox;
+    uC_widget_textbox_t *t;
 
-    // display widget name using windows normal attributes
+    // display widget name using windows current attributes
 
     // %@ set cursor x / y location in window
     // %s write string
@@ -57,23 +57,40 @@ void draw_textbox(uC_window_t *win, uC_widget_t *widget,
         ? widget->focus_attrs
         : widget->attrs;
 
-    q = x + strlen(widget->name) + 1;
+    t = &widget->textbox;
+
+    // this places the widgets edit box to the right of its name
+    // should I add code here to allow exit box below name?
+
+    // x2 = x coordinate one space beyond the end of the name string
+
+    x2 = x + strlen(widget->name);
+
+    // erase widgets edit box area
 
     // %x set cursor x location on current line of window
     // %* write multiple repetitions of same character
     // %x move cursor back to initial %x position above
 
-    uC_win_printf(win, "%x%*%x", q, widget->width, 0x20, q);
+    uC_win_printf(win, "%x%*%x", x2, widget->width, 0x20, x2);
+
+    // we want to write only the part of the string that will fit
+    // within the widgets assigned horizontal width, starting from
+    // the current edit offset within that string.
+
+    x2 = (t->offset);
 
     for (i = 0; i != widget->width; i++)
     {
-        q = (t->offset + i);
+        c = t->data[x2++];
 
-        c = t->data[q];
+        // if this widget is the one with focus and we are drawing
+        // the character that is currently under the cursor then
+        // draw it in either reverse video or underlined (based
+        // on insert or overwrite status)
 
-        if (((i == t->cx) && (widget->focused)) || (q >= t->size))
+        if ((widget->focused) && (i == t->cx))
         {
-
             // %R+ turn on reverse video
             // %8  print single UTF-8 character
             // %R- turn off reverse video
@@ -84,26 +101,34 @@ void draw_textbox(uC_window_t *win, uC_widget_t *widget,
             // %8  print single UTF-8 character
             // %U- turn off underline
 
-            uC_win_printf(win,
-                (t->insert) ? "%R+%8%R-" : "%U+%8%U-",
+            uC_win_printf(win, (t->insert)
+                ? "%R+%8%R-"
+                : "%U+%8%U-",
+
                 // if character is null print a space
                 // else print character underlined or rev
-                (c == '\0') ? 0x20 : c);
-        }
-        else
-        {
-            uC_win_printf(win, "%8", c);
-        }
 
-        if (c == '\0')
+                (c == '\0') ? 0x20 : c);
+            // char already prinited. skip print below
+            continue;
+        }
+        // not at cursor location, just draw character or exit loop
+        else if (c == '\0')
         {
             break;
         }
+        uC_win_printf(win, "%8", c);
     }
 }
 
 // -----------------------------------------------------------------------
 // veriry that input character is valid in current radix
+
+// there is one string used to test for each valid raidx.  How var into
+// this string we scan is based on whtat the current radix is.  we scan
+// this string and compare each character of it with the passed in
+// variable k.   If k is found within that string then k is a valid
+// character within the current base.
 
 static bool test_char(uC_widget_textbox_t *t, uint8_t k)
 {
@@ -121,13 +146,14 @@ static bool test_char(uC_widget_textbox_t *t, uint8_t k)
 }
 
 // -----------------------------------------------------------------------
+// move the edit cursor left within the widget
 
 static void lt(uC_widget_textbox_t *t)
 {
     uint16_t half = widget_state.widget->width / 2;
-    uint16_t min = (t->offset != 0) ? half : 0;
+    uint16_t min  = (t->offset != 0) ? half : 0;
 
-    if (t->cx != min)
+    if (t->cx > min)
     {
         t->cx--;
     }
@@ -141,11 +167,12 @@ static void lt(uC_widget_textbox_t *t)
 
 static void rt(uC_widget_textbox_t *t)
 {
-    int q = (t->cx + t->offset);
+    int16_t half = widget_state.widget->width / 2;
+    int q        = (t->cx + t->offset);
 
-    if (q != t->count)
+    if (q < t->count)
     {
-        if (t->cx != widget_state.widget->width - 1)
+        if (t->cx <= half)
         {
             t->cx++;
         }
@@ -161,18 +188,32 @@ static void rt(uC_widget_textbox_t *t)
 static void insert_char(uC_widget_textbox_t *t, uint8_t k)
 {
     int i;
+    int cursor;
+    uint8_t c2;
 
-    char c2;
 
-    for (i = t->cx; i != t->count; i++)
+    // if the cursor is at the end of the string and there is still space
+    // left for more characters
+
+    if (t->cx == t->count)
     {
-        if (t->offset + i == t->size)
+        if (t->cx != t->size)
+        {
+            t->data[t->cx++] = k;
+        }
+        return;
+    }
+
+    cursor = t->offset + t->cx;
+
+    for (i = cursor; i != t->size; i++)
+    {
+        c2 = t->data[cursor];
+        t->data[cursor++] = k;
+        if (k == '\0')
         {
             break;
         }
-
-        c2 = t->data[t->offset + i];
-        t->data[t->offset + i] = k;
         k = c2;
     }
 }
@@ -198,15 +239,20 @@ static uint8_t write_char(uC_widget_textbox_t *t, uint8_t k)
         if (t->insert)
         {
             insert_char(t, k);
+            t->count++;
         }
-        t->data[q] = k;
-        t->count++;
+        else
+        {
+            t->data[q] = k;
+            if (q == t->count)
+            {
+                t->count++;
+            }
+        }
         rt(t);
     }
 
-    k = 0;
-
-    return k;
+    return 0;
 }
 
 // -----------------------------------------------------------------------
@@ -273,19 +319,20 @@ static void end(uC_widget_textbox_t *t)
 
 // -----------------------------------------------------------------------
 
-uint8_t handle_text(uint8_t k)
+uint8_t handle_textbox(uint8_t k)
 {
     uC_widget_textbox_t *t = &widget_state.widget->textbox;
 
     switch (k)
     {
+        case 0x0a:                       break;
+        case 0x1b:              k = 0;   break;
         case WIDGET_KEY_LEFT:   lt(t);   break;
         case WIDGET_KEY_RIGHT:  rt(t);   break;
         case WIDGET_KEY_DELETE: del(t);  break;
         case WIDGET_KEY_BS:     bs(t);   break;
         case WIDGET_KEY_HOME:   home(t); break;
         case WIDGET_KEY_END:    end(t);  break;
-
         case WIDGET_KEY_INSERT:
             t->insert = !t->insert;
             break;
@@ -299,24 +346,24 @@ uint8_t handle_text(uint8_t k)
 
 // -----------------------------------------------------------------------
 
-API uC_widget_t *uC_widget_text_create(
+API uC_widget_t *uC_widget_textbox_create(
     uint16_t sequence, char *data, char *name,
     uint16_t size, uC_textbox_radix_t radix,
     uint16_t width, uint8_t xco, uint8_t yco,
     uC_attribs_t attrs, uC_attribs_t focus)
 {
-    uC_widget_t *w = create_widget(uC_WIDGET_TEXTBOX,
+    uC_widget_t *widget = create_widget(uC_WIDGET_TEXTBOX,
         name, sequence, xco, yco, width, attrs, focus);
 
-    if (w != NULL)
+    if (widget != NULL)
     {
-        w->textbox.data   = data;
-        w->textbox.size   = size;
-        w->textbox.radix  = radix;
-        w->textbox.insert = true;
+        widget->textbox.data   = data;
+        widget->textbox.size   = size;
+        widget->textbox.radix  = radix;
+        widget->textbox.insert = true;
     }
 
-    return w;
+    return widget;
 }
 
 // -----------------------------------------------------------------------

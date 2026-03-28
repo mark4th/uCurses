@@ -16,7 +16,7 @@
 
 // -----------------------------------------------------------------------
 
-API uC_widget_vg_t *uC_widget_vg_create(char *name,
+API uC_widget_vg_t *uC_widget_vg_create(uint8_t *name,
     uint16_t width, uint16_t height, uint16_t xco, uint16_t yco,
     uC_attribs_t attrs)
 {
@@ -85,12 +85,15 @@ API void uC_widget_vg_attach(uC_screen_t *scr, uC_widget_vg_t *vg)
 
 API void uC_widget_vg_detach(uC_screen_t *scr, uC_widget_vg_t *vg)
 {
-    uC_list_remove_node(&scr->view_groups, vg);
+    if (vg != NULL)
+    {
+        uC_list_remove_node(&scr->view_groups, vg);
+    }
 }
 
 // -----------------------------------------------------------------------
 
-API void uC_widget_vg_close(uC_screen_t *scr, uC_widget_vg_t *vg)
+API void uC_widget_vg_close(uC_widget_vg_t *vg)
 {
     uC_widget_view_t *view;
 
@@ -100,7 +103,6 @@ API void uC_widget_vg_close(uC_screen_t *scr, uC_widget_vg_t *vg)
         widget_close_view(view);
     }
 
-    uC_list_remove_node(&scr->view_groups, vg);
     uC_win_close(&vg->window);
     uC_free(uC_MEM_ZONE_UI, vg);
 }

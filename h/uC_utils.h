@@ -17,7 +17,7 @@
 // visibility hidden
 
 API void uC_ui_free(void *mem);
-API int32_t fnv_hash(char *s);
+API int32_t fnv_hash(uint8_t *s);
 void uC_assert(bool f, char *file, int line, char *msg);
 
 __attribute__((noreturn)) void uC_abort(char *msg);
@@ -34,6 +34,7 @@ API void uC_restore_terminal(void);
 API void uC_init_terminal(void);
 API void uC_get_console_size(uint16_t *width, uint16_t *height);
 API void uC_assert(bool f, char *file, int line, char *msg);
+API uint8_t eval(uint8_t *s, uint32_t *result, uint8_t radix);
 
 // -----------------------------------------------------------------------
 

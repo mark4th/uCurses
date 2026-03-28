@@ -24,7 +24,7 @@ API void uC_console_reset_attrs(void)
 
 API void uC_console_set_fg(uC_color_t color)
 {
-    set_fg(&attrs, color);
+    uC_set_fg(&attrs, color);
     apply_attribs();
 }
 
@@ -32,7 +32,7 @@ API void uC_console_set_fg(uC_color_t color)
 
 API void uC_console_set_bg(uC_color_t color)
 {
-    set_bg(&attrs, color);
+    uC_set_bg(&attrs, color);
     apply_attribs();
 }
 
@@ -40,7 +40,7 @@ API void uC_console_set_bg(uC_color_t color)
 
 API void uC_console_set_gray_fg(uC_colors_gray_t color)
 {
-    set_gray_fg(&attrs, color);
+    uC_set_gray_fg(&attrs, color);
     apply_attribs();
 }
 
@@ -48,7 +48,7 @@ API void uC_console_set_gray_fg(uC_colors_gray_t color)
 
 API void console_set_gray_bg(uC_colors_gray_t color)
 {
-    set_gray_bg(&attrs, color);
+    uC_set_gray_bg(&attrs, color);
     apply_attribs();
 }
 
@@ -56,7 +56,7 @@ API void console_set_gray_bg(uC_colors_gray_t color)
 
 API void uC_console_set_rgb_fg(uC_color_t r, uC_color_t g, uC_color_t b)
 {
-    set_rgb_fg(&attrs, r, g, b);
+    uC_set_rgb_fg(&attrs, r, g, b);
     apply_attribs();
 }
 
@@ -64,7 +64,7 @@ API void uC_console_set_rgb_fg(uC_color_t r, uC_color_t g, uC_color_t b)
 
 API void uC_console_set_rgb_bg(uC_color_t r, uC_color_t g, uC_color_t b)
 {
-    set_rgb_bg(&attrs, r, g, b);
+    uC_set_rgb_bg(&attrs, r, g, b);
     apply_attribs();
 }
 

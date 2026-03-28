@@ -27,6 +27,7 @@ static void redraw_pulldown(menu_bar_t *bar)
     if (pd->count != 0)
     {
         f = bar_create_pd_win(active_screen, pd);
+
         if (f != 0)
         {
             draw_pd(pd);

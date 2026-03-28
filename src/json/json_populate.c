@@ -148,7 +148,7 @@ static void populate_backdrop(uC_screen_t *pstruct)
 static void populate_bar(uC_screen_t *scr)
 {
     menu_bar_t *bar = json_state->structure;
-    scr->menu_bar = bar;
+    scr->menu_bar   = bar;
 }
 
 // -----------------------------------------------------------------------
@@ -191,7 +191,7 @@ void populate_parent(void)
 
     // my main reason for not using them in this project is because
     // a switch statement usually produces a significantly larger
-    // blob of code compared to my uC__switch() model and size is
+    // blob of code compared to my uC_switch() model and size is
     // what I am optimizing for here.
 
     // also... C switch statements just look FUGTLY

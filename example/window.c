@@ -218,9 +218,13 @@ static void print_chinese(uC_window_t *win)
 
 static void flip_flop(void)
 {
-    (0 == first)
-        ? uC_win_pop(win2)
-        : uC_win_pop(win1);
+    uC_window_t *w;
+
+    w = (first == 0)
+        ? win2
+        : win1;
+
+    uC_scr_win_attach(w->screen, w);
 
     first ^= 1;
 }

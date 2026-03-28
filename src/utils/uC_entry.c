@@ -28,14 +28,14 @@ static FILE *entry_fp;
 
 // -----------------------------------------------------------------------
 
-static char *next_arg(void)
+static uint8_t *next_arg(void)
 {
     int i;
     char c;
     int n;
     i = 0;
 
-    static char arg_buff[128];
+    static uint8_t arg_buff[128];
 
     do
     {
@@ -67,7 +67,7 @@ static void separator(void)
 
 // -----------------------------------------------------------------------
 
-static void print_cb(char *path)
+static void print_cb(uint8_t *path)
 {
     printf(
         "static opt_t menu_address_cb(uint32_t hash)\n"
@@ -92,10 +92,10 @@ static void print_cb(char *path)
 
 // -----------------------------------------------------------------------
 
-static void print_switch(char *path)
+static void print_switch(uint8_t *path)
 {
     uint32_t hash;
-    char *s;
+    uint8_t *s;
     separator();
 
     printf("static switch_t %s\n{\n", path);
@@ -114,12 +114,12 @@ static void print_switch(char *path)
 
 // -----------------------------------------------------------------------
 
-static void hash_file(const char *p)
+static void hash_file(const uint8_t *p)
 {
-    char path[64];
-    strcpy(path, p);
+    uint8_t path[64];
+    strcpy((char *)path, (char *)p);
     fclose(entry_fp);
-    entry_fp = fopen(path, "r");
+    entry_fp = fopen((char *)path, "r");
 
     if(entry_fp == NULL)
     {
@@ -297,7 +297,7 @@ static void help(void)
 
 static void process_args(void)
 {
-    char *s;
+    uint8_t *s;
     int32_t hash;
 
     next_arg();             // skip argv[0]

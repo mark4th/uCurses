@@ -8,4 +8,3 @@ help:
 	set -x
 	cd $(BUILD)
 	./$(shared_object) --help
-

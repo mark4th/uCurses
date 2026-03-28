@@ -42,14 +42,14 @@ typedef struct
     // format string parsing and escape sequence compile buffer
 
     int64_t params[MAX_PARAM];  // format string parametesr
-    char *esc_buff;             // format string compilation output buffer
+    uint8_t *esc_buff;          // format string compilation output buffer
     uint16_t num_esc;           // max of 64k of compiled escape seq bytes
-    const char *f_str;          // pointer to next char of format string
+    const uint8_t *f_str;      // pointer to next char of format string
     ti_file_t ti_file;
 
     bool stuffed;           // true if a key has been manually injected
 
-    int8_t keybuff[KEY_BUFF_SZ];
+    uint8_t keybuff[KEY_BUFF_SZ];
     int16_t num_k;
 } ti_vars_t;
 

@@ -67,6 +67,14 @@ typedef enum
 } __attribute__((__packed__)) uC_radio_type_t;
 
 // -----------------------------------------------------------------------
+// bit values
+
+typedef enum
+{
+   uC_vg_flag_ignore = 1,
+} __attribute__((__packed__)) uC_vg_flags_t;
+
+// -----------------------------------------------------------------------
 
 // view groups are containers for views.  A view can only have one type
 // of widget associated with it but a view group can have many different
@@ -75,8 +83,9 @@ typedef enum
 
 typedef struct
 {
-    uC_window_t window;     // allocated when attached to screen
+    uC_window_t window;     // buffers allocated when attached to screen
     uC_list_t views;        // views to be drawn into above window
+    uC_vg_flags_t flags;    // control
 } uC_widget_vg_t;
 
 // -----------------------------------------------------------------------
@@ -88,7 +97,7 @@ typedef struct
 
     uC_list_node_t *view_node;
 
-    char *name;             // view name drawn in top border
+    uint8_t *name;             // view name drawn in top border
 
     int16_t width;
     int16_t height;
@@ -157,17 +166,22 @@ typedef struct
     uint16_t xco;           // position of widget in view
     uint16_t yco;
     uint16_t width;         // width of widget (all have a height of 1)
+    uint16_t height;        // always 1 except for no editable text
     uint16_t sequence;      // position in tab focus sequence
 
     bool focused;           // true if widget has focus
-    bool disabled;          // allows for mutual exclusion
+    bool disabled;          // allows for mutual exclusion etc
 
     uC_attribs_t attrs;
     uC_attribs_t focus_attrs;
 
+    uint8_t user_flags;
+
     char *name;             // display name for widget
 
     uC_widget_type_t type;  // one of the following
+
+    uC_widget_view_t *view;
 
     // i hate unions, they make the code look like a cluster fuck
     // and this blob is as large as the largest of is elements which
@@ -175,10 +189,10 @@ typedef struct
 
     union
     {
-         uC_widget_button_t   button;
-         uC_widget_radio_t    radio;
-         uC_widget_check_t    check;
-         uC_widget_textbox_t  textbox;
+         uC_widget_button_t  button;
+         uC_widget_radio_t   radio;
+         uC_widget_check_t   check;
+         uC_widget_textbox_t textbox;
     } __attribute__((__packed__));
 } __attribute__((__packed__)) uC_widget_t;
 
@@ -221,14 +235,18 @@ uC_widget_t *create_widget(uC_widget_type_t type,
     uint16_t xco, uint16_t yco, uint16_t width,
     uC_attribs_t attrs, uC_attribs_t focus);
 
+API void uC_widget_close_widget(uC_widget_t *widget);
+
 uint8_t handle_button(uint8_t k);
 uint8_t handle_check(uint8_t k);
 uint8_t handle_radio(uint8_t k);
+uint8_t handle_textbox(uint8_t k);
 uint8_t handle_text(uint8_t k);
 
 void widget_close_view(uC_widget_view_t *view);
 void widget_scroll_view(uint8_t k);
 char tab_next_widget(void);
+char tab_prev_widget(void);
 
 void draw_button(uC_window_t *win, uC_widget_t *widget,
     uint16_t x, uint16_t y);
@@ -238,11 +256,13 @@ void draw_radio(uC_window_t *win, uC_widget_t *widget,
     uint16_t x, uint16_t y);
 void draw_textbox(uC_window_t *win, uC_widget_t *widget,
     uint16_t x, uint16_t y);
+void draw_text(uC_window_t *win, uC_widget_t *widget,
+    uint16_t x, uint16_t y);
 
 // -----------------------------------------------------------------------
 
 API uC_widget_vg_t *uC_widget_vg_create(
-    char *name,
+    uint8_t *name,
     uint16_t width, uint16_t height,
     uint16_t xco, uint16_t yco,
     uC_attribs_t attrs);
@@ -258,13 +278,13 @@ API void uC_widget_vg_add_border(uC_widget_vg_t *vg,
 
 API void uC_widget_vg_attach(uC_screen_t *scr, uC_widget_vg_t *vg);
 API void uC_widget_vg_detach(uC_screen_t *scr, uC_widget_vg_t *vg);
-API void uC_widget_vg_close(uC_screen_t *scr, uC_widget_vg_t *vg);
+API void uC_widget_vg_close(uC_widget_vg_t *vg);
 API void uC_widget_vg_add_view(uC_widget_vg_t *vg, uC_widget_view_t *v);
 
 // -----------------------------------------------------------------------
 // uC_widget_view.c
 
-API uC_widget_view_t *uC_widget_view_create(char *name,
+API uC_widget_view_t *uC_widget_view_create(uint8_t *name,
     uint16_t width, uint16_t height, uint16_t xco, uint16_t yco,
     uC_attribs_t attrs, bool scroll);
 
@@ -293,10 +313,17 @@ API uC_widget_t *uC_widget_check_create(
     uint16_t width, uint16_t xco, uint16_t yco,
     uC_attribs_t attrs, uC_attribs_t focus);
 
-API uC_widget_t *uC_widget_text_create(
+API uC_widget_t *uC_widget_textbox_create(
     uint16_t sequence, char *data, char *name,
+/* todo: this should be size width radix */
     uint16_t size, uC_textbox_radix_t radix,
     uint16_t width, uint8_t xco, uint8_t yco,
+    uC_attribs_t attrs, uC_attribs_t focus);
+
+API uC_widget_t *uC_widget_text_create(
+    uint16_t sequence, char *data, char *name,
+    uint16_t width, uint16_t height,
+    uint8_t xco, uint8_t yco,
     uC_attribs_t attrs, uC_attribs_t focus);
 
 // -----------------------------------------------------------------------

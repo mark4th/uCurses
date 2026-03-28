@@ -48,7 +48,7 @@ clean:
 	rm -rf $(BUILD)
 
 
-$(BUILD_TOUCHED): $(MESON_BUILD) generic.makefile makefile
+$(BUILD_TOUCHED): $(MESON_BUILD) generic.makefile Makefile
 	make clean
 	$_
 	meson setup $(BUILD) $(MESON_OPT)

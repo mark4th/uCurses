@@ -49,6 +49,7 @@ API uC_window_t *uC_win_open(int16_t width, int16_t height)
         {
             // todo: make default attributes variables
             // available to the application
+            // make the current attributes the default?
             win->attrs.fg = DEFAULT_FG;
             win->attrs.bg = DEFAULT_BG;
             win->blank = 0x20;
@@ -78,22 +79,14 @@ API void uC_win_close(uC_window_t *win)
         {
             uC_ui_free(win->buffer);
         }
+        if (win->display_name != NULL)
+        {
+            uC_free(uC_MEM_ZONE_UI, win->display_name);
+        }
 
         uC_ui_free(win);
-    }
-}
 
-// -----------------------------------------------------------------------
-// pop window to front in view
-
-API void uC_win_pop(uC_window_t *win)
-{
-    if (win != NULL)
-    {
-        uC_screen_t *scr = win->screen;
-
-        uC_scr_win_detach(win);
-        uC_scr_win_attach(scr, win);
+        win = NULL;
     }
 }
 
@@ -119,8 +112,6 @@ API void uC_win_push(uC_window_t *win)
 
 // -----------------------------------------------------------------------
 // set new x/y position of window within parent screen
-
-// window must fit entirely within the screen
 
 API int16_t uC_win_set_pos(uC_window_t *win, int16_t x, int16_t y)
 {
@@ -176,10 +167,40 @@ API void uC_win_clr_flag(uC_window_t *win, win_flags_t flag)
 API void uC_win_set_border(uC_window_t *win, uint16_t border_type,
     uC_attribs_t bdr_attrs, uC_attribs_t focus_attrs)
 {
-    win->border_type = border_type;
-    win->bdr_attrs   = bdr_attrs;
-    win->focus_attrs = focus_attrs;
-    win->flags      |= WIN_BOXED;
+    if (win != NULL)
+    {
+        win->border_type = border_type;
+        win->bdr_attrs   = bdr_attrs;
+        win->focus_attrs = focus_attrs;
+        win->flags      |= WIN_BOXED;
+    }
+}
+
+// -----------------------------------------------------------------------
+// set windows display name. (not shown unless win has border)
+
+API void uC_win_set_name(uC_window_t *win, uint8_t *name)
+{
+    if (win != NULL)
+    {
+        win->display_name = name;
+        win->flags |= WIN_NAMED;
+    }
+}
+
+// -----------------------------------------------------------------------
+
+API void uC_win_set_focus(uC_window_t *win)
+{
+    uC_screen_t *scr;
+
+    if ((win != NULL) && (win->screen != NULL))
+    {
+        scr = win->screen;
+
+        scr->tab_order = win->tab_order;
+        scr->selected  = win;
+    }
 }
 
 // =======================================================================

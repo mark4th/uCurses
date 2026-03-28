@@ -220,7 +220,7 @@ static bool check_comma(void)
 {
     bool rv = false;
 
-    int16_t end = strlen(json_vars->json_token) - 1;
+    int16_t end = strlen((char *)json_vars->json_token) - 1;
 
     if (json_vars->json_token[end] == ',')
     {
@@ -249,6 +249,10 @@ void json_state_r_brace(void)
     {
         populate_parent();
         json_pop();
+
+        // i am not sure how json_state can ever be null here
+        // but I think this was a "bug fix" from way back where
+        // i intended to investigate further and forgot
 
         if (json_state != NULL)
         {
@@ -285,7 +289,6 @@ static void run_state_machine(void)
         // compute fnv-1a hash for this token
 
         json_vars->json_hash = fnv_hash(json_vars->json_token);
-        json_state->token_id = json_vars->json_hash;
 
         // the token does not define what the state is
         // the state defines what the token must be

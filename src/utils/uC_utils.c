@@ -38,11 +38,16 @@ API void uC_ui_free(void *mem)
 
 // actually i think this is just fnv-1  not 1a : fix later
 
-API int32_t fnv_hash(char *s)
+API int32_t fnv_hash(uint8_t *s)
 {
     uint32_t hash = FNV_BASIS;
 
     int16_t len;
+
+    if (s == NULL)
+    {
+        return 0;
+    }
 
     while (*s != '\0')
     {
@@ -62,19 +67,18 @@ API int32_t fnv_hash(char *s)
 
 // -----------------------------------------------------------------------
 
-API void uC_clock_sleep(int32_t when)
+API void uC_clock_sleep(int32_t whence)
 {
-    struct timespec tv;
-    struct timespec remain;
     int rv;
+    struct timespec tv;
+
+    tv.tv_sec  = 0;
+    tv.tv_nsec = whence;
 
     do
     {
-        tv.tv_sec  = 0;
-        tv.tv_nsec = when;
-        rv = clock_nanosleep(CLOCK_MONOTONIC, 0, &tv, &remain);
-        tv = remain;
-    } while (EINTR == rv);
+        rv = clock_nanosleep(CLOCK_MONOTONIC, 0, &tv, &tv);
+    } while (rv == EINTR);
 }
 
 // -----------------------------------------------------------------------

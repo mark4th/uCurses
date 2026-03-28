@@ -24,7 +24,7 @@ void uC_format(int16_t i);
 // -----------------------------------------------------------------------
 
 API void uC_terminfo_flush(void);
-API void uC_parse_format(const char *f);
+API void uC_parse_format(const uint8_t *f);
 
 // -----------------------------------------------------------------------
 

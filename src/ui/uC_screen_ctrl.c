@@ -82,8 +82,8 @@ static void close_view_groups(uC_screen_t *scr)
 
     while (scr->view_groups.count != 0)
     {
-        vg = (uC_widget_vg_t *)scr->view_groups.head;
-        uC_widget_vg_close(scr, vg);
+        vg = uC_list_pop_head(&scr->view_groups);
+        uC_widget_vg_close(vg);
     }
 }
 
@@ -159,7 +159,7 @@ void init_backdrop(uC_screen_t *scr, uC_window_t *win)
         win->height      = scr->height - 2;
         win->flags       = (WIN_BOXED | WIN_LOCKED);
         win->border_type = BDR_SINGLE;
-        win->blank       = 0x20; // SOLID;
+        win->blank       = 0x20;
         win->screen      = scr;
         win->bdr_attrs   = bdr_attrs;
 
@@ -207,8 +207,6 @@ int16_t win_chk_pos(uC_window_t *win, uC_screen_t *scr,
     int16_t width;
     int16_t height;
 
-    int16_t rv = -1;
-
     width  = win->width;
     height = win->height;
 
@@ -220,7 +218,7 @@ int16_t win_chk_pos(uC_window_t *win, uC_screen_t *scr,
 
         if ((x <= 0) || (y < 0))
         {
-            return rv;
+            return -1;
         }
         else
         {
@@ -238,47 +236,8 @@ int16_t win_chk_pos(uC_window_t *win, uC_screen_t *scr,
     yy = (y + height);
 
     // ensure that window is entirely within the screen
-    if ((xx <= scr->width) && (yy <= scr->height))
-    {
-        rv = 0;
-    }
-
-    return rv;
-}
-
-// -----------------------------------------------------------------------
-// attach a window to a screen
-
-API void uC_scr_win_attach(uC_screen_t *scr, uC_window_t *win)
-{
-    int16_t rv;
-    bool f;
-
-    if ((scr != NULL) && (win != NULL))
-    {
-        rv = win_chk_pos(win, scr, win->xco, win->yco);
-        if (rv != 0)
-        {
-            return;
-        }
-
-        // we can move a window from one screen to another
-        // simply by attaching it to the new one.  I may in
-        // the future implement multi screen interfaces.
-        // no promises though.
-
-        if (win->screen != NULL)
-        {
-            uC_list_remove_node(&scr->windows, win);
-        }
-
-        f = uC_list_push_tail(&scr->windows, win);
-
-        if (f == true)
-        {
-            win->screen = scr;
-        }
-    }
+    return ((xx <= scr->width) && (yy <= scr->height))
+        ? 0 : -1;
 }
 
 // -----------------------------------------------------------------------
@@ -297,6 +256,82 @@ API void uC_scr_win_detach(uC_window_t *win)
             uC_list_remove_node(&scr->windows, win);
             win->screen = NULL;
         }
+    }
+}
+
+// -----------------------------------------------------------------------
+// attach a window to a screen
+
+API void uC_scr_win_attach(uC_screen_t *scr, uC_window_t *win)
+{
+    int16_t rv;
+    bool f;
+
+    // attaching a window to a screen detaches it from any screen that it
+    // is already attached to.  If multi screen is ever implemented then
+    // moving a window between screens will siply entail attaching that
+    // window to the new screen.
+
+    uC_scr_win_detach(win);
+
+    if ((scr != NULL) && (win != NULL))
+    {
+        rv = win_chk_pos(win, scr, win->xco, win->yco);
+        if (rv != 0)
+        {
+            return;
+        }
+
+        // if (win->screen != NULL)
+        // {
+        //     uC_list_remove_node(&scr->windows, win);
+        // }
+
+        f = uC_list_push_tail(&scr->windows, win);
+
+        if (f == true)
+        {
+            win->screen = scr;
+        }
+    }
+}
+
+// -----------------------------------------------------------------------
+
+API void uC_scr_win_tab_next(uC_screen_t *scr)
+{
+    uC_list_node_t *n1;
+    uC_window_t *win;
+    int16_t order;
+
+    if (scr == NULL)
+    {
+        return;
+    }
+
+    order = scr->tab_order + 1;
+
+    // remove focus from current window if there is one
+    if (scr->selected != NULL)
+    {
+        scr->selected->flags &= ~WIN_FOCUS;
+        scr->tab_order = 0;
+    }
+
+    n1 = uC_list_scan(&scr->windows, NULL);
+
+    while (n1 != NULL)
+    {
+        win = n1->payload;
+
+        if (win->tab_order == order)
+        {
+            scr->selected   = win;
+            scr->tab_order  = order;
+            win->flags     |= WIN_FOCUS;
+            break;
+        }
+        n1 = uC_list_scan(NULL, n1);
     }
 }
 

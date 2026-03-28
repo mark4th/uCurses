@@ -14,7 +14,7 @@
 // -----------------------------------------------------------------------
 
 static void init_item(pulldown_t *pd, menu_item_t *item,
-    char *name, menu_fp_t fp, uint16_t shortcut)
+    uint8_t *name, menu_fp_t fp, uint16_t shortcut)
 {
     int16_t width;
 
@@ -37,14 +37,15 @@ static void init_item(pulldown_t *pd, menu_item_t *item,
 
 // -----------------------------------------------------------------------
 
-static int32_t new_item(pulldown_t *pd, char *name, menu_fp_t fp,
+static int32_t new_item(pulldown_t *pd, uint8_t *name, menu_fp_t fp,
     uint16_t shortcut)
 {
     int32_t result = -1;
 
     if (pd->count != MAX_MENU_ITEMS)
     {
-        menu_item_t *item = uC_alloc(uC_MEM_ZONE_UI, sizeof(menu_item_t));
+        menu_item_t *item = uC_alloc(uC_MEM_ZONE_UI,
+            sizeof(menu_item_t));
 
         if (item != NULL)
         {
@@ -59,8 +60,8 @@ static int32_t new_item(pulldown_t *pd, char *name, menu_fp_t fp,
 // -----------------------------------------------------------------------
 // add an entry to a pulldown
 
-API int32_t uC_menu_new_item(uC_screen_t *scr, char *name, menu_fp_t fp,
-    int16_t shortcut)
+API int32_t uC_menu_new_item(uC_screen_t *scr, uint8_t *name,
+    menu_fp_t fp, int16_t shortcut)
 {
     int32_t result = -1;    // assume failure
 

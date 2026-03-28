@@ -13,6 +13,7 @@
 #include "uC_screen.h"
 #include "uC_attribs.h"
 #include "uC_borders.h"
+#include "uC_win_printf.h"
 
 // -----------------------------------------------------------------------
 // calculate address of line within window buffer
@@ -76,6 +77,32 @@ static void win_copy_line(uC_window_t *win, int16_t sl, int16_t dl)
     cell_t *dst = win_line_addr(win, dl);
 
     memcpy(dst, src, win->width * sizeof(cell_t));
+}
+
+// -----------------------------------------------------------------------
+
+API void uC_win_copy_win(uC_window_t *dst, uC_window_t *src)
+{
+    int size;
+
+    if ((dst == NULL) || (src == NULL))
+    {
+        return;
+    }
+
+    if (dst == src)
+    {
+        return;
+    }
+
+    if ((dst->width != src->width) &&
+        (dst->height!= src->height))
+    {
+        return;
+    }
+
+    size = src->width * src->height * sizeof(cell_t);
+    memcpy(dst->buffer, src->buffer, size);
 }
 
 // -----------------------------------------------------------------------
@@ -154,7 +181,7 @@ API void uC_win_scroll_rt(uC_window_t *win)
     if (win != NULL)
     {
         cell.attrs = win->attrs;
-        cell.code = win->blank;
+        cell.code  = win->blank;
 
         for (i = 0; i < win->height; i++)
         {
@@ -287,7 +314,7 @@ API void uC_win_cr(uC_window_t *win)
 
 // -----------------------------------------------------------------------
 
-static void _win_emit(uC_window_t *win, int32_t c)
+static void _win_emit(uC_window_t *win, uint32_t c)
 {
     cell_t cell;
     cell_t *p;
@@ -338,7 +365,7 @@ static void _win_emit(uC_window_t *win, int32_t c)
 
 // -----------------------------------------------------------------------
 
-API void uC_win_emit(uC_window_t *win, int32_t c)
+API void uC_win_emit(uC_window_t *win, uint32_t c)
 {
     if (win != NULL)
     {

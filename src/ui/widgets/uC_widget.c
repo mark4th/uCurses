@@ -3,6 +3,7 @@
 
 #include "uCurses.h"
 #include "uC_widgets.h"
+#include "uC_list.h"
 
 // -----------------------------------------------------------------------
 
@@ -29,9 +30,35 @@ uC_widget_t *create_widget(uC_widget_type_t type, char *name,
         widget->attrs        = attrs;
         widget->focus_attrs  = focus;
         widget->width        = width;
+
+        // this is one for all widgets except the uneditable
+        // text widget which can be multi line high
+        // this element is fixed by caller if it is a text
+        // widget
+
+        widget->height       = 1;
     }
 
     return widget;
+}
+
+// -----------------------------------------------------------------------
+
+API void uC_widget_close_widget(uC_widget_t *widget)
+{
+    uC_widget_view_t *view;
+
+    if (widget != NULL)
+    {
+        view = widget->view;
+
+        if (view != NULL)
+        {
+            uC_list_remove_node(&view->widgets, widget);
+        }
+
+        uC_free(uC_MEM_ZONE_UI, widget);
+    }
 }
 
 // -----------------------------------------------------------------------

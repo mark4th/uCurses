@@ -21,7 +21,7 @@ extern uC_attribs_t uC_attrs_disabled;
 // -----------------------------------------------------------------------
 // find address of pulldown structure with specified name
 
-static pulldown_t *pd_find(uC_screen_t *scr, char *name)
+static pulldown_t *pd_find(uC_screen_t *scr, uint8_t *name)
 {
     pulldown_t *pd = NULL;
     menu_bar_t *bar = scr->menu_bar;
@@ -51,7 +51,7 @@ static pulldown_t *pd_find(uC_screen_t *scr, char *name)
 
 // -----------------------------------------------------------------------
 
-API void uC_menu_pd_disable(uC_screen_t *scr, char *name)
+API void uC_menu_pd_disable(uC_screen_t *scr, uint8_t *name)
 {
     pulldown_t *pd;
 
@@ -68,7 +68,7 @@ API void uC_menu_pd_disable(uC_screen_t *scr, char *name)
 
 // -----------------------------------------------------------------------
 
-API void uC_menu_pd_enable(uC_screen_t *scr, char *name)
+API void uC_menu_pd_enable(uC_screen_t *scr, uint8_t *name)
 {
     pulldown_t *pd;
 
@@ -130,7 +130,7 @@ int32_t bar_create_pd_win(uC_screen_t *scr, pulldown_t *pd)
 // thinking when I wrote it.  it is not referenced anywhere and i did not
 // mark it as part of the public API... was I supposed to?
 
-API int32_t uC_menu_new_pd(uC_screen_t *scr, char *name)
+API int32_t uC_menu_new_pd(uC_screen_t *scr, uint8_t *name)
 {
     int32_t result = -1;
 

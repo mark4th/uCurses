@@ -18,9 +18,11 @@
 
 // -----------------------------------------------------------------------
 
-#define ESC_SIZE (65535)
+#define ESC_SIZE (65535)    // size of escape buffer, probably overkill
+#define TI_NULL  (-1)       // null terminfo file string section entry
 
 // -----------------------------------------------------------------------
+// winch support is currently disabled because i cant get it to work right
 
 extern bool winch;
 
@@ -105,6 +107,36 @@ static int64_t fs_pop(void)
 }
 
 // -----------------------------------------------------------------------
+// scan format string to next format specifier
+
+static char scan(void)
+{
+    while (*ti_vars->f_str++ != '%')
+        ;
+    return *ti_vars->f_str++;
+}
+
+// -----------------------------------------------------------------------
+// return address of named variable
+
+static int64_t *get_var_addr(void)
+{
+    int64_t *p;
+    char c1;
+
+    c1 = *ti_vars->f_str++;
+
+    // this assumes that if it is not within the range 'a' to 'z'
+    // then it is within the range 'A' to 'Z'
+
+    p = ((c1 >= 'a') && (c1 <= 'z'))
+        ? &ti_vars->atoz[c1 - 'a']
+        : &ti_vars->AtoZ[c1 - 'A'];
+
+    return p;
+}
+
+// -----------------------------------------------------------------------
 // terminfo format string operators
 // -----------------------------------------------------------------------
 
@@ -124,7 +156,7 @@ static int64_t fs_pop(void)
 
 static void _percent(void)
 {
-    c_emit('%');
+    c_emit((uint8_t)'%');
 }
 
 // -----------------------------------------------------------------------
@@ -182,7 +214,7 @@ static void _orl(void)
 // -----------------------------------------------------------------------
 // format = %~     not
 
-static void _tilde(void)
+static void _not  (void)
 {
     int64_t n1;
 
@@ -194,7 +226,7 @@ static void _tilde(void)
 // -----------------------------------------------------------------------
 // format = %!   logical not
 
-static void _bang(void)
+static void _notl(void)
 {
     int64_t n1;
 
@@ -208,7 +240,7 @@ static void _bang(void)
 // -----------------------------------------------------------------------
 // format = %^
 
-static void _caret(void)
+static void _xor  (void)
 {
     int64_t n1, n2;
 
@@ -260,14 +292,14 @@ static void _star(void)
 // -----------------------------------------------------------------------
 // format = %/
 
-static void _slash(void)
+static void _div (void)
 {
     int64_t n1, n2;
 
     n2 = fs_pop();
     n1 = fs_pop();
 
-    (n1 != 0)
+    (n2 != 0)
         ? fs_push(n1 / n2)
         : fs_push(0);
 }
@@ -282,7 +314,7 @@ static void _mod(void)
     n2 = fs_pop();
     n1 = fs_pop();
 
-    (n1 != 0)
+    (n2 != 0)
         ? fs_push(n1 % n2)
         : fs_push(0);
 }
@@ -381,10 +413,10 @@ static void _s(void)
 
 static void _l(void)
 {
-    char *s;
+    uint8_t *s;
     int16_t len;
 
-    s = (char *)fs_pop();
+    s = (uint8_t *)fs_pop();
 
     if (s != NULL)
     {
@@ -394,29 +426,9 @@ static void _l(void)
 }
 
 // -----------------------------------------------------------------------
-// return address of named variable
+// format = %P     store top item of stack into specified variable
 
-static int64_t *get_var_addr(void)
-{
-    int64_t *p;
-    char c1;
-
-    c1 = *ti_vars->f_str++;
-
-    // this assumes that if it is not within the range 'a' to 'z'
-    // then it is within the range 'A' to 'Z'
-
-    p = ((c1 >= 'a') && (c1 <= 'z'))
-        ? &ti_vars->atoz[c1 - 'a']
-        : &ti_vars->AtoZ[c1 - 'A'];
-
-    return p;
-}
-
-// -----------------------------------------------------------------------
-// format = %P
-
-static void _P(void) // store top item of stack into specified variable
+static void _P(void)
 {
     int64_t *s;
 
@@ -426,9 +438,9 @@ static void _P(void) // store top item of stack into specified variable
 }
 
 // -----------------------------------------------------------------------
-// format = &g
+// format = &g      push specified variables value onto stack
 
-static void _g(void) // push specified variables value onto stack
+static void _g(void)
 {
     int64_t *s;
 
@@ -438,10 +450,11 @@ static void _g(void) // push specified variables value onto stack
 }
 
 // -----------------------------------------------------------------------
-// format = %{
+// format = %{   parse number between { and } in decimal put its value on
+// the stack
 
-static void _brace(void) // parse number between { and } in decimal
-{                        // put its value on the stack
+static void _brace(void)
+{
     int64_t n1;
     char c1;
 
@@ -454,16 +467,6 @@ static void _brace(void) // parse number between { and } in decimal
     }
 
     fs_push(n1);
-}
-
-// -----------------------------------------------------------------------
-// scan format string to next format specifier
-
-static char scan(void)
-{
-    while (*ti_vars->f_str++ != '%')
-        ;
-    return *ti_vars->f_str++;
 }
 
 // -----------------------------------------------------------------------
@@ -501,15 +504,10 @@ static void _e(void)
 {
     char c1;
 
-    for (;;)
+    do
     {
         c1 = scan();
-
-        if (c1 == ';')
-        {
-            break;
-        }
-    }
+    } while (c1 != ';');
 }
 
 // -----------------------------------------------------------------------
@@ -536,7 +534,7 @@ static void _d(void)
         uC_terminfo_flush();
     }
 
-    ti_vars->num_esc += snprintf(&ti_vars->esc_buff[ti_vars->num_esc],
+    ti_vars->num_esc += snprintf((char *)&ti_vars->esc_buff[ti_vars->num_esc],
         4, widths[ti_vars->digits], n1);
 }
 
@@ -556,7 +554,7 @@ static void _c(void)
 
 static void _p(void)
 {
-    int8_t c1;
+    uint8_t c1;
 
     // get parameter number from format string
 
@@ -579,7 +577,6 @@ static char next_c(void)
     if ((c1 == '2') || (c1 == '3'))
     {
         ti_vars->digits = (c1 & 0x0f);
-        // this should be a d ... should i test that?
         c1 = *ti_vars->f_str++;
     }
 
@@ -594,9 +591,9 @@ static const uC_switch_t p_codes[] =
     { '%', &_percent }, { 'p', &_p      }, { 'd', &_d       },
     { 'c', &_c       }, { 'i', &_i      }, { 's', &_s       },
     { 'l', &_l       }, { 'A', &_andl   }, { '&', &_and     },
-    { 'O', &_orl     }, { '|', &_or     }, { '!', &_bang    },
-    { '~', &_tilde   }, { '^', &_caret  }, { '+', &_plus    },
-    { '-', &_minus   }, { '*', &_star   }, { '/', &_slash   },
+    { 'O', &_orl     }, { '|', &_or     }, { '!', &_notl    },
+    { '~', &_not     }, { '^', &_xor    }, { '+', &_plus    },
+    { '-', &_minus   }, { '*', &_star   }, { '/', &_div     },
     { 'm', &_mod     }, { '=', &_equals }, { '>', &_greater },
     { '<', &_less    }, { 0x27, &_tick  }, { '{', &_brace   },
     { 'P', &_P       }, { 'g', &_g      }, { '?', &uC_noop  },
@@ -616,7 +613,7 @@ static inline void specifier(char c1)
 // -----------------------------------------------------------------------
 // parse format string at specified address
 
-API void uC_parse_format(const char *f)
+API void uC_parse_format(const uint8_t *f)
 {
     char c1;
 
@@ -638,8 +635,6 @@ API void uC_parse_format(const char *f)
 // -----------------------------------------------------------------------
 // parse a terminfo format string from the terminfo files strings section
 
-#define TI_NULL (-1)
-
 void uC_format(int16_t i)
 {
     i = ti_vars->ti_file.ti_strings[i];
@@ -647,7 +642,7 @@ void uC_format(int16_t i)
     // it is not an error for a format string to be blank
     if (i != TI_NULL)
     {
-        uC_parse_format(&ti_vars->ti_file.ti_table[i]);
+        uC_parse_format((uint8_t *)&ti_vars->ti_file.ti_table[i]);
     }
 }
 

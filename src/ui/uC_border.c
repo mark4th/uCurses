@@ -197,13 +197,28 @@ void win_draw_borders(uC_window_t *win)
 }
 
 // -----------------------------------------------------------------------
+// clear a specified rectangular area within a window
+
+API void uC_window_clear_box(uC_window_t *win,
+    uint16_t xco, uint16_t yco, uint16_t width, uint16_t height)
+{
+    while (height--)
+    {
+        // %@ set cursor x / y location within window
+        // %* print multiple repetitions of char
+
+        uC_win_printf(win, "%@%*", xco, yco++, width, 0x20);
+    }
+}
+
+// -----------------------------------------------------------------------
 
 // a box has the same visual appearance of a border but is drawn directly
 // into the windows buffer not the screen.   there is no concept here of
 // forcing an update to any characters that are covered by a box border
 // so this code is simpler than the functions above
 
-API void win_draw_box(uC_window_t *win,
+API void uC_win_draw_box(uC_window_t *win,
     uint16_t x, uint16_t y,
     uint16_t width, uint16_t height,
     uC_border_type_t bdr_type,

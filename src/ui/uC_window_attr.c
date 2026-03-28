@@ -112,7 +112,7 @@ API void uC_win_set_fg(uC_window_t *win, uC_color_t color)
 {
     if (win != NULL)
     {
-        set_fg(&win->attrs, color);
+        uC_set_fg(&win->attrs, color);
     }
 }
 
@@ -122,7 +122,7 @@ API void uC_win_set_bg(uC_window_t *win, uC_color_t color)
 {
     if (win != NULL)
     {
-        set_bg(&win->attrs, color);
+        uC_set_bg(&win->attrs, color);
     }
 }
 
@@ -132,7 +132,7 @@ API void uC_win_set_gray_fg(uC_window_t *win, uC_colors_gray_t color)
 {
     if (win != NULL)
     {
-        set_gray_fg(&win->attrs, color);
+        uC_set_gray_fg(&win->attrs, color);
     }
 }
 
@@ -142,7 +142,7 @@ API void uC_win_set_gray_bg(uC_window_t *win, uC_colors_gray_t color)
 {
     if (win != NULL)
     {
-        set_gray_bg(&win->attrs, color);
+        uC_set_gray_bg(&win->attrs, color);
     }
 }
 
@@ -153,7 +153,7 @@ API void uC_win_set_rgb_fg(uC_window_t *win, uC_color_t r, uC_color_t g,
 {
     if (win != NULL)
     {
-        set_rgb_fg(&win->attrs, r, g, b);
+        uC_set_rgb_fg(&win->attrs, r, g, b);
     }
 }
 
@@ -164,7 +164,7 @@ API void uC_win_set_rgb_bg(uC_window_t *win, uC_color_t r, uC_color_t g,
 {
     if (win != NULL)
     {
-        set_rgb_bg(&win->attrs, r, g, b);
+        uC_set_rgb_bg(&win->attrs, r, g, b);
     }
 }
 
@@ -174,7 +174,7 @@ API void uC_win_set_bdr_fg(uC_window_t *win, uC_color_t color)
 {
     if (win != NULL)
     {
-        set_fg(&win->bdr_attrs, color);
+        uC_set_fg(&win->bdr_attrs, color);
     }
 }
 
@@ -184,7 +184,7 @@ API void uC_win_set_bdr_bg(uC_window_t *win, uC_color_t color)
 {
     if (win != NULL)
     {
-        set_bg(&win->bdr_attrs, color);
+        uC_set_bg(&win->bdr_attrs, color);
     }
 }
 
@@ -194,7 +194,7 @@ API void uC_win_set_bdr_gray_fg(uC_window_t *win, uC_colors_gray_t color)
 {
     if (win != NULL)
     {
-        set_gray_fg(&win->bdr_attrs, color);
+        uC_set_gray_fg(&win->bdr_attrs, color);
     }
 }
 
@@ -216,7 +216,7 @@ API void uC_win_set_bdr_rgb_fg(uC_window_t *win, uC_color_t r,
 {
     if (win != NULL)
     {
-        set_rgb_fg(&win->bdr_attrs, r, g, b);
+        uC_set_rgb_fg(&win->bdr_attrs, r, g, b);
     }
 }
 
@@ -227,7 +227,7 @@ API void uC_win_set_bdr_rgb_bg(uC_window_t *win, uC_color_t r,
 {
     if (win != NULL)
     {
-        set_rgb_bg(&win->bdr_attrs, r, g, b);
+        uC_set_rgb_bg(&win->bdr_attrs, r, g, b);
     }
 }
 
@@ -237,7 +237,7 @@ API void uC_win_set_focus_fg(uC_window_t *win, uC_color_t color)
 {
     if (win != NULL)
     {
-        set_fg(&win->focus_attrs, color);
+        uC_set_fg(&win->focus_attrs, color);
     }
 }
 
@@ -248,7 +248,7 @@ API void uC_win_set_focus_bg(uC_window_t *win, uC_color_t color)
 {
     if (win != NULL)
     {
-        set_bg(&win->focus_attrs, color);
+        uC_set_bg(&win->focus_attrs, color);
     }
 }
 
@@ -258,7 +258,7 @@ API void uC_win_set_focus_gray_fg(uC_window_t *win, uC_colors_gray_t color)
 {
     if (win != NULL)
     {
-        set_gray_fg(&win->focus_attrs, color);
+        uC_set_gray_fg(&win->focus_attrs, color);
     }
 }
 
@@ -268,7 +268,7 @@ API void uC_win_set_focus_gray_bg(uC_window_t *win, uC_colors_gray_t color)
 {
     if (win != NULL)
     {
-        set_gray_bg(&win->focus_attrs, color);
+        uC_set_gray_bg(&win->focus_attrs, color);
     }
 }
 
@@ -279,7 +279,7 @@ API void uC_win_set_focus_rgb_fg(uC_window_t *win, uC_color_t r,
 {
     if (win != NULL)
     {
-        set_rgb_fg(&win->focus_attrs, r, g, b);
+        uC_set_rgb_fg(&win->focus_attrs, r, g, b);
     }
 }
 
@@ -290,7 +290,7 @@ API void uC_win_set_focus_rgb_bg(uC_window_t *win, uC_color_t r,
 {
     if (win != NULL)
     {
-        set_rgb_bg(&win->focus_attrs, r, g, b);
+        uC_set_rgb_bg(&win->focus_attrs, r, g, b);
     }
 }
 

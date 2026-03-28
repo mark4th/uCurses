@@ -43,16 +43,16 @@ static void refill(void)
 {
     int16_t i = 0;
 
-    // line number only needed for error printf
-    if (json_vars->json_data[json_vars->json_index] == 0x0a)
+    while (json_vars->json_index != json_vars->json_len)
     {
-        json_vars->line_no++;
-        json_vars->json_index++;
-    }
+        // line number only needed for error printf
+        if (json_vars->json_data[json_vars->json_index] == 0x0a)
+        {
+            json_vars->line_no++;
+            json_vars->json_index++;
+            break;
+        }
 
-    while ((json_vars->json_index != json_vars->json_len) &&
-           (json_vars->json_data[json_vars->json_index] != 0x0a))
-    {
         json_vars->line_buff[i++] =
             json_vars->json_data[json_vars->json_index++];
 
@@ -62,8 +62,10 @@ static void refill(void)
         }
     }
 
-    json_vars->line_left    = i;       // how much of current line is left to parse
     json_vars->line_buff[i] = '\0';    // make line_buff asciiz
+
+    // in forth these would be called #tib and >in
+    json_vars->line_left    = i;       // how much data now needs parsing
     json_vars->line_index   = 0;       // reset current parse index
 }
 
@@ -136,7 +138,7 @@ void json_de_tab(char *s, int len)
 
 void token(void)
 {
-    char *s = json_vars->line_buff;
+    uint8_t *s = json_vars->line_buff;
     int16_t i, j = 0;
     int16_t in_quotes = 0;
     int16_t l;

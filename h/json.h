@@ -64,7 +64,7 @@ typedef enum
     KEY_RED,   KEY_GREEN,       KEY_BLUE,     KEY_XCO,
     KEY_YCO,   KEY_WIDTH,       KEY_HEIGHT,   KEY_NAME,
     KEY_FLAGS, KEY_BORDER_TYPE, KEY_VECTOR,   KEY_SHORTCUT,
-    KEY_FLAG,  KEY_BLANK
+    KEY_FLAG,  KEY_BLANK,       KEY_ORDER,
 } __attribute__((__packed__)) json_type_t;
 
 // -----------------------------------------------------------------------
@@ -87,12 +87,12 @@ typedef struct
     int json_len;           // total size of json data
     int json_index;         // parse index into data (current line)
 
-    int32_t key_value;     // value of key being added to structure
+    int32_t key_value;      // value of key being added to structure
     bool percent;           // key value is expressed as a percentage
     bool quoted;            // some key values must be quoted (strings)
 
     // copy of current line of json data being parsed
-    char line_buff[MAX_LINE_LEN];
+    uint8_t line_buff[MAX_LINE_LEN];
 
     int16_t line_no;        // current line of json data
     int16_t line_index;     // line parse location
@@ -100,7 +100,7 @@ typedef struct
 
     // space delimited token extracted from data
 
-    char json_token[MAX_TOKEN_LEN];
+    uint8_t json_token[MAX_TOKEN_LEN];
     int32_t json_hash;      // fnv-1a hash of above token
 
     uC_list_t json_stack;   // stack of json states, no recursive parsing
@@ -123,7 +123,6 @@ typedef struct
 typedef struct
 {
     int state;                // current state
-    uint32_t token_id;        // fnv-1a of current structures name
     void *parent;             // pointer to parent j_state_t
     void *structure;          // pointer to structure being populated
     json_type_t struct_type;  // type of structure being populated

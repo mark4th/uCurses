@@ -12,8 +12,12 @@
 
 typedef struct
 {
-    int8_t len;
-    int8_t str[4];
+    uint8_t len;
+    union
+    {
+        uint8_t str[4];
+        uint32_t zero;
+    };
     int width;
 } __attribute__((__packed__)) utf8_encode_t;
 
@@ -21,17 +25,16 @@ typedef struct
 // visibility hidden
 
 utf8_encode_t *utf8_encode(int32_t cp);
-int8_t utf8_decode(int32_t *cp, char *s);
 
 // --------------------------------------------------------------------------
 
-API int16_t uC_utf8_is_wide(int32_t code);
-API void uC_utf8_emit(int32_t cp);
-API int8_t utf8_decode(int32_t *cp, char *s);
-API uint8_t uC_utf8_char_length(char *s);
-API int16_t uC_utf8_width(char *s);
-API int16_t uC_utf8_strlen(char *s);
-API int16_t uC_utf8_strncmp(char *s1, char *s2, int16_t len);
+API int16_t uC_utf8_is_wide(uint32_t code);
+API void uC_utf8_emit(uint32_t cp);
+API uint8_t utf8_decode(uint32_t *cp, uint8_t *s);
+API uint8_t uC_utf8_char_length(uint8_t *s);
+API int16_t uC_utf8_width(uint8_t *s);
+API int16_t uC_utf8_strlen(uint8_t *s);
+API int16_t uC_utf8_strncmp(uint8_t *s1, uint8_t *s2, int16_t len);
 
 // -----------------------------------------------------------------------
 

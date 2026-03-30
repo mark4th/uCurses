@@ -61,7 +61,7 @@ API void uC_menu_pd_disable(uC_screen_t *scr, uint8_t *name)
 
         if (pd != NULL)
         {
-            pd->flags |= MENU_DISABLED;
+            pd->flags |= uC_MENU_DISABLED;
         }
     }
 }
@@ -78,7 +78,7 @@ API void uC_menu_pd_enable(uC_screen_t *scr, uint8_t *name)
 
         if (pd != NULL)
         {
-            pd->flags &= ~MENU_DISABLED;
+            pd->flags &= ~uC_MENU_DISABLED;
         }
     }
 }
@@ -100,7 +100,7 @@ int32_t bar_create_pd_win(uC_screen_t *scr, pulldown_t *pd)
         win->xco = pd->xco;
         win->yco = 2;
 
-        win->flags = (WIN_BOXED | WIN_LOCKED);
+        win->flags = (uC_WIN_BOXED | uC_WIN_LOCKED);
         win->blank = 0x20;
 
         win->bdr_attrs.flags.bits =
@@ -112,7 +112,7 @@ int32_t bar_create_pd_win(uC_screen_t *scr, pulldown_t *pd)
         // win->bdr_attrs.fg = pd->attrs.fg;
         // win->bdr_attrs.bg = pd->attrs.bg;
 
-        win->border_type = BDR_CURVED;
+        win->border_type = uC_BDR_CURVED;
 
         win->screen = scr;
         pd->window  = win;
@@ -137,7 +137,7 @@ API int32_t uC_menu_new_pd(uC_screen_t *scr, uint8_t *name)
     menu_bar_t *bar = scr->menu_bar;
     pulldown_t *pd;
 
-    if ((bar != NULL) && (bar->count != MAX_MENU_ITEMS))
+    if ((bar != NULL) && (bar->count != uC_MAX_MENU_ITEMS))
     {
         pd = uC_alloc(uC_MEM_ZONE_UI, sizeof(pulldown_t));
 

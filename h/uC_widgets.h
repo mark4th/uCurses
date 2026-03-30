@@ -24,11 +24,11 @@
 
 typedef enum
 {
-    INPUT_BINARY  = 0,        // 0-1
-    INPUT_OCTAL   = 1,        // 0-7
-    INPUT_DECIMAL = 2,        // 0-9
-    INPUT_HEX     = 3,        // 0-9 a-f A-F
-    INPUT_ALPHA   = 4,        // 0-9 a-z A-Z _
+    uC_INPUT_BINARY  = 0,     // 0-1
+    uC_INPUT_OCTAL   = 1,     // 0-7
+    uC_INPUT_DECIMAL = 2,     // 0-9
+    uC_INPUT_HEX     = 3,     // 0-9 a-f A-F
+    uC_INPUT_ALPHA   = 4,     // 0-9 a-z A-Z _
 } __attribute__((__packed__)) uC_textbox_radix_t;
 
 // -----------------------------------------------------------------------
@@ -46,9 +46,9 @@ typedef enum
 
 typedef enum
 {
-    VIEW_BOXED,        // view has a border
-    VIEW_NAMED,        // view has a name
-    VIEW_SCROLL,
+    uC_VIEW_BOXED,        // view has a border
+    uC_VIEW_NAMED,        // view has a name
+    uC_VIEW_SCROLL,
 } __attribute__((__packed__)) uC_view_flags_t;
 
 // -----------------------------------------------------------------------
@@ -64,6 +64,14 @@ typedef enum
     uC_RADIO_BIGBOX,      // □  ■
     uC_RADIO_SMALLBOX,    // ▫  ▪
     uC_RADIO_DIAMOND,     // ◇  ◈
+    uC_RADIO_UP_TRIANGLE, // △  ▲
+    uC_RADIO_DN_TRIANGLE, // ▽  ▼
+    uC_RADIO_LT_TRIANGLE, // ◁  ◀
+    uC_RADIO_RT_TRIANGLE, // ▷  ▶
+    uC_RADIO_UP_SMALL,    // ▵  ▴
+    uC_RADIO_DN_SMALL,    // ▿  ▾
+    uC_RADIO_LT_SMALL,    // ◃  ◂
+    uC_RADIO_RT_SMALL     // ▹  ▸
 } __attribute__((__packed__)) uC_radio_type_t;
 
 // -----------------------------------------------------------------------

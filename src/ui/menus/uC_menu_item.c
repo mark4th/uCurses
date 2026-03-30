@@ -42,7 +42,7 @@ static int32_t new_item(pulldown_t *pd, uint8_t *name, menu_fp_t fp,
 {
     int32_t result = -1;
 
-    if (pd->count != MAX_MENU_ITEMS)
+    if (pd->count != uC_MAX_MENU_ITEMS)
     {
         menu_item_t *item = uC_alloc(uC_MEM_ZONE_UI,
             sizeof(menu_item_t));

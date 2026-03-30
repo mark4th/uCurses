@@ -259,7 +259,7 @@ static void wclear(void)
 }
 
 // -----------------------------------------------------------------------
-// just a wrapper for puts which is at the top of this file
+// %s   just a wrapper for puts which is at the top of this file
 
 static void u_puts(void)
 {
@@ -342,28 +342,26 @@ static void star(void)
 
 static uC_switch_t commands[] =
 {
-    { 'r', &r      }, { 'f', &f      }, { 'b', &b      }, { '@', &xy     },
-    { 'x', &x      }, { 'y', &y      }, { 'u', &up     }, { 'd', &dn     },
-    { 'P', &P      }, { 'l', &lt     }, { '0', &wclear }, { 'c', &c      },
-    { 'B', &bold   }, { 'U', &uline  }, { 'R', rev     }, { 's', u_puts  },
-    { '8', &utf8   }, { 'e', &e      }, { '*', star    }
+    { 'r', &r      }, { 'f', &f      }, { 'b', &b      },
+    { '@', &xy     }, { 'x', &x      }, { 'y', &y      },
+    { 'u', &up     }, { 'd', &dn     }, { 'P', &P      },
+    { 'l', &lt     }, { '0', &wclear }, { 'c', &c      },
+    { 'B', &bold   }, { 'U', &uline  }, { 'R', rev     },
+    { 's', u_puts  }, { '8', &utf8   }, { 'e', &e      },
+    { '*', star    }
 };
 
 #define COMMANDS sizeof(commands) / sizeof(commands[0])
 
 // -----------------------------------------------------------------------
 
-static void command(void)
+static void specifier(void)
 {
     uC_switch(commands, COMMANDS, *p++);
 }
 
 // -----------------------------------------------------------------------
 // window string writing and window attribute control
-
-// if you need to use normal printf format tags you must first sprintf
-// your string into a buffer and escape the format tags within it that
-// you want passed to this function...
 
 API void uC_win_printf(uC_window_t *win, uint8_t *format, ...)
 {
@@ -387,7 +385,7 @@ API void uC_win_printf(uC_window_t *win, uint8_t *format, ...)
         if (*p != '\0')
         {
             p++;
-            command();
+            specifier();
         }
     }
 

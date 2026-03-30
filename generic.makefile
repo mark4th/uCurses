@@ -1,9 +1,9 @@
 # We are not using any builtins
 MAKEFLAGS:= --warn-undefined-variables \
-			--no-builtin-rules \
-			--no-builtin-variables \
-			--output-sync=target \
-			--silent 
+	--no-builtin-rules \
+	--no-builtin-variables \
+	--output-sync=target \
+	--silent 
 
 
 .ONESHELL:

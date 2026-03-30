@@ -35,7 +35,7 @@ static uint8_t handle_widget(uint8_t k)
 
     if (widget_state.view != NULL)
     {
-        if (widget_state.view->flags & (1 << VIEW_SCROLL))
+        if (widget_state.view->flags & (1 << uC_VIEW_SCROLL))
         {
             // if the key pressed is a cursor movement then scroll
             // the view, otherwise fall through

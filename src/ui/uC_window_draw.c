@@ -252,7 +252,7 @@ API void uC_win_crsr_dn(uC_window_t *win)
         {
             win->cy++;
         }
-        else if ((win->flags & WIN_LOCKED) == 0)
+        else if ((win->flags & uC_WIN_LOCKED) == 0)
         {
             uC_win_scroll_up(win);
         }
@@ -291,7 +291,7 @@ API void uC_win_crsr_rt(uC_window_t *win)
         }
         else
         {
-            if ((win->flags & WIN_LOCKED) == 0)
+            if ((win->flags & uC_WIN_LOCKED) == 0)
             {
                 uC_win_crsr_dn(win);
             }

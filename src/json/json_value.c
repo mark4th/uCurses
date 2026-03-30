@@ -37,17 +37,13 @@ static void value_fgbg(void)
     json_state_t *parent  = json_state->parent;
     uC_attribs_t *pstruct = parent->structure;
 
-    // ensure key valoe is within 8 bits
+    // ensure key value is within 8 bits
 
     if ((json_vars->key_value & ~255) == 0)
     {
-        pstruct->flags.bits &= (ktype == KEY_FG)
-            ? ~(ATTR_FLAG_RGB_FG | ATTR_FLAG_GRAY_FG)
-            : ~(ATTR_FLAG_RGB_BG | ATTR_FLAG_GRAY_BG);
-
         (ktype == KEY_FG)
-            ? (pstruct->fg = json_vars->key_value)
-            : (pstruct->bg = json_vars->key_value);
+           ? uC_set_fg(pstruct, json_vars->key_value)
+           : uC_set_bg(pstruct, json_vars->key_value);
 
         return;
     }
@@ -245,7 +241,7 @@ static void value_name(void)
 
 static void val_m_item_flag(menu_item_t *item)
 {
-    if (json_vars->key_value == MENU_DISABLED)
+    if (json_vars->key_value == uC_MENU_DISABLED)
     {
         item->flags = json_vars->key_value;
         return;
@@ -258,7 +254,7 @@ static void val_m_item_flag(menu_item_t *item)
 
 static void val_pd_flag(pulldown_t *pd)
 {
-    if (json_vars->key_value == MENU_DISABLED)
+    if (json_vars->key_value == uC_MENU_DISABLED)
     {
         pd->flags = json_vars->key_value;
     }
@@ -272,7 +268,7 @@ static void val_win_flag(uC_window_t *win)
 {
     win->flags |= json_vars->key_value;
 
-    if (json_vars->key_value == WIN_BOXED)
+    if (json_vars->key_value == uC_WIN_BOXED)
     {
         if ((win->width & 0x8000) != 0)
         {
@@ -318,9 +314,9 @@ static void value_border_type(void)
     json_state_t *parent = json_state->parent;
     uC_window_t  *win    = parent->structure;
 
-    if ((json_vars->key_value == BDR_SINGLE) ||
-        (json_vars->key_value == BDR_DOUBLE) ||
-        (json_vars->key_value == BDR_CURVED))
+    if ((json_vars->key_value == uC_BDR_SINGLE) ||
+        (json_vars->key_value == uC_BDR_DOUBLE) ||
+        (json_vars->key_value == uC_BDR_CURVED))
     {
         win->border_type = json_vars->key_value;
         return;
@@ -428,9 +424,9 @@ static int32_t constant_hash[] =
 
 static int32_t constant_val[] =
 {
-    MENU_DISABLED, BDR_SINGLE, BDR_DOUBLE, BDR_CURVED,
-    WIN_LOCKED,    WIN_FILLED, WIN_BOXED,  WIN_FAR,
-    WIN_FOCUS,     WIN_NAMED,
+    uC_MENU_DISABLED, uC_BDR_SINGLE, uC_BDR_DOUBLE, uC_BDR_CURVED,
+    uC_WIN_LOCKED,    uC_WIN_FILLED, uC_WIN_BOXED,  WIN_FAR,
+    uC_WIN_FOCUS,     uC_WIN_NAMED,
 
     // color values
 

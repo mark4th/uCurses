@@ -32,12 +32,12 @@ API uC_widget_view_t *uC_widget_view_create(uint8_t *name,
         if (name != NULL)
         {
             view->name   = name;
-            view->flags |= (1 << VIEW_NAMED);
+            view->flags |= (1 << uC_VIEW_NAMED);
         }
 
         if (scroll)
         {
-            view->flags |= (1 << VIEW_SCROLL);
+            view->flags |= (1 << uC_VIEW_SCROLL);
         }
 
         view->attrs   = attrs;
@@ -58,7 +58,7 @@ API void uC_widget_view_add_border(uC_widget_view_t *view,
 {
     if (view != NULL)
     {
-        view->flags    |= (1 << VIEW_BOXED);
+        view->flags    |= (1 << uC_VIEW_BOXED);
         view->box_attrs = bdr_attrs;
         view->box_type  = bdr_type;
     }
@@ -91,7 +91,7 @@ API bool uC_widget_view_add_widget(uC_widget_view_t *view,
         }
     }
 
-    if (view->flags & (1 << VIEW_SCROLL))
+    if (view->flags & (1 << uC_VIEW_SCROLL))
     {
         if (view->sequence == 0)
         {

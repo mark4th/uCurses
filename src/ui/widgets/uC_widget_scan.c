@@ -71,7 +71,7 @@ static bool scan_vg(uC_widget_vg_t *vg, uint16_t sequence)
 
         if (f == true)
         {
-            vg->window.flags     |= WIN_FOCUS;
+            vg->window.flags     |= uC_WIN_FOCUS;
 
             widget_state.view     = view;
             widget_state.vg       = vg;
@@ -99,7 +99,7 @@ API bool uC_widget_select_widget(uint16_t sequence)
 
     if (widget_state.vg != NULL)
     {
-        widget_state.vg->window.flags &= ~WIN_FOCUS;
+        widget_state.vg->window.flags &= ~uC_WIN_FOCUS;
         widget_state.widget->focused   = false;
 
         // this is a pointer to the list node of the widget

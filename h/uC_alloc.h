@@ -19,6 +19,9 @@ typedef enum
     uC_MEM_ZONE_JSON,
     uC_MEM_ZONE_USER1,
     uC_MEM_ZONE_USER2,
+    uC_MEM_ZONE_USER3,
+    uC_MEM_ZONE_USER4,
+    uC_MEM_ZONE_USER5,
 
     uC_MEM_ZONES
 } __attribute__((__packed__)) uC_mem_zone_t;

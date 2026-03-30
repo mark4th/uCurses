@@ -60,7 +60,7 @@ static void draw_win_name(uC_window_t *win)
 
     p2 = &scr->buffer1[index];
 
-    cell.attrs = (win->flags & WIN_FOCUS)
+    cell.attrs = (win->flags & uC_WIN_FOCUS)
         ? win->focus_attrs
         : win->bdr_attrs;
 
@@ -105,13 +105,15 @@ void scr_draw_win(uC_window_t *win)
         scr = win->screen;
 
         // draw windows border if it has one
-        if ((win->flags & WIN_BOXED) && (win->border_type != BDR_NONE))
+        if ((win->flags & uC_WIN_BOXED) &&
+            (win->border_type != uC_BDR_NONE))
         {
             win_draw_borders(win);
 
             // window name only drawn if window has a border
 
-            if ((win->display_name != NULL) && (win->flags & WIN_NAMED))
+            if ((win->display_name != NULL) &&
+                (win->flags & uC_WIN_NAMED))
             {
                draw_win_name(win);
             }

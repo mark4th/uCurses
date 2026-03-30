@@ -50,8 +50,8 @@ API uC_window_t *uC_win_open(int16_t width, int16_t height)
             // todo: make default attributes variables
             // available to the application
             // make the current attributes the default?
-            win->attrs.fg = DEFAULT_FG;
-            win->attrs.bg = DEFAULT_BG;
+            win->attrs.fg = uC_DEFAULT_FG;
+            win->attrs.bg = uC_DEFAULT_BG;
             win->blank = 0x20;
 
             uC_win_clear(win);
@@ -172,7 +172,7 @@ API void uC_win_set_border(uC_window_t *win, uint16_t border_type,
         win->border_type = border_type;
         win->bdr_attrs   = bdr_attrs;
         win->focus_attrs = focus_attrs;
-        win->flags      |= WIN_BOXED;
+        win->flags      |= uC_WIN_BOXED;
     }
 }
 
@@ -184,7 +184,7 @@ API void uC_win_set_name(uC_window_t *win, uint8_t *name)
     if (win != NULL)
     {
         win->display_name = name;
-        win->flags |= WIN_NAMED;
+        win->flags |= uC_WIN_NAMED;
     }
 }
 

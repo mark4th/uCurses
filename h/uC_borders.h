@@ -12,10 +12,10 @@
 
 typedef enum
 {
-    BDR_NONE,
-    BDR_SINGLE,
-    BDR_DOUBLE,
-    BDR_CURVED
+    uC_BDR_NONE,
+    uC_BDR_SINGLE,
+    uC_BDR_DOUBLE,
+    uC_BDR_CURVED
 } __attribute__((__packed__)) uC_border_type_t;
 
 // -----------------------------------------------------------------------

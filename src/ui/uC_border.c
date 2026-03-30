@@ -77,7 +77,7 @@ border_t bdr_curved[] =
 
 border_t *const borders[] =
 {
-    NULL,                   // BDR_NONE
+    NULL,                   // uC_BDR_NONE
     &bdr_single[0],
     &bdr_double[0],
     &bdr_curved[0]
@@ -96,7 +96,7 @@ static void draw_char(uC_window_t *win, int16_t cx, int16_t cy,
     cell_t *p1 = &scr->buffer1[index];
     cell_t *p2 = &scr->buffer2[index];
 
-    p1->attrs = (win->flags & WIN_FOCUS)
+    p1->attrs = (win->flags & uC_WIN_FOCUS)
         ? win->focus_attrs
         : win->bdr_attrs;
 
@@ -155,7 +155,7 @@ void win_draw_borders(uC_window_t *win)
 
     border_t *bdr;
 
-    if (win->border_type == BDR_NONE)
+    if (win->border_type == uC_BDR_NONE)
     {
         return;
     }
@@ -226,7 +226,7 @@ API void uC_win_draw_box(uC_window_t *win,
 {
     border_t *bdr;
 
-    if (bdr_type == BDR_NONE)           { return; }
+    if (bdr_type == uC_BDR_NONE)        { return; }
     if ((x + width  + 1) > win->width)  { return; }
     if ((y + height + 1) > win->height) { return; }
 

@@ -23,6 +23,9 @@ extern bool justify;
 // -----------------------------------------------------------------------
 // for radio button and check box widgets
 
+// The order of each of these arrays is as per the
+// uC_radio_type_t enumeration in uC_widgets.h
+
 uint16_t radio_off[] =
 {   //   ☐       ☐       □       □       ▫       ◇
     0x25fb, 0x25fb, 0x25a1, 0x25a1, 0x25ab, 0x25c7,
@@ -160,12 +163,12 @@ static void draw_view(uC_window_t *win, uC_widget_view_t *view)
     // uC_window_clear_box(win, view->xco, view->yco,
     //     view->width, view->height);
 
-    if (view->flags & (1 << VIEW_BOXED))
+    if (view->flags & (1 << uC_VIEW_BOXED))
     {
         draw_view_box(win, view);
     }
 
-    (view->flags & (1 << VIEW_SCROLL))
+    (view->flags & (1 << uC_VIEW_SCROLL))
         ? draw_scrollable(win, view)
         : draw_nonscrollable(win, view);
 }

@@ -34,7 +34,7 @@ API uC_widget_vg_t *uC_widget_vg_create(uint8_t *name,
 
         // no scrolling this window
 
-        vg->window.flags         = WIN_LOCKED;
+        vg->window.flags         = uC_WIN_LOCKED;
 
         vg->window.blank         = 0x20;
     }
@@ -51,7 +51,7 @@ API void uC_widget_vg_add_border(uC_widget_vg_t *vg,
 {
     if (vg != NULL)
     {
-        vg->window.flags |= WIN_BOXED;
+        vg->window.flags |= uC_WIN_BOXED;
 
         // a view group window always has focus when it contains the
         // widget that has focus

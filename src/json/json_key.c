@@ -28,7 +28,12 @@ static void struct_screen(void)
 {
     uC_screen_t *scr;
 
-    if (json_vars->json_stack.count == 0)
+    if (json_vars->json_stack.count != 0)
+    {
+        json_error("There screen must be the first object defined!");
+    }
+
+    if (active_screen == NULL)
     {
         json_new_state_struct(sizeof(uC_screen_t), STRUCT_SCREEN);
         scr = json_state->structure;
@@ -332,7 +337,6 @@ static void key_bg(void)      { key_attr(KEY_BG);      }
 static void key_gray_fg(void) { key_attr(KEY_GRAY_FG); }
 static void key_gray_bg(void) { key_attr(KEY_GRAY_BG); }
 
-
 // -----------------------------------------------------------------------
 
 static void key_rgb(uint16_t key)
@@ -358,7 +362,7 @@ static void key_blue(void)  { key_rgb(KEY_BLUE);  }
 static void key_blank(void)
 {
     if ((json_state->struct_type == STRUCT_BACKDROP) ||
-       (json_state->struct_type == STRUCT_WINDOW))
+       (json_state->struct_type  == STRUCT_WINDOW))
     {
         json_new_state_struct(0, KEY_BLANK);
         return;

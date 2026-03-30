@@ -1,5 +1,5 @@
 // uC_utf8.c
-// --------------------------------------------------------------------------
+// -----------------------------------------------------------------------
 
 #define _XOPEN_SOURCE
 
@@ -12,7 +12,7 @@
 #include "uC_utf8.h"
 #include "uC_terminfo.h"
 
-// --------------------------------------------------------------------------
+// -----------------------------------------------------------------------
 
 utf8_encode_t *utf8_encode(int32_t cp)
 {
@@ -60,7 +60,7 @@ utf8_encode_t *utf8_encode(int32_t cp)
     return &encoded;
 }
 
-// --------------------------------------------------------------------------
+// -----------------------------------------------------------------------
 // utf8 chars can be 1, 2, 3, 4, 5, ??? columns wide on the console
 
 API int16_t uC_utf8_is_wide(uint32_t code)
@@ -69,7 +69,7 @@ API int16_t uC_utf8_is_wide(uint32_t code)
     return ((width > 1) ? 1 : 0);
 }
 
-// --------------------------------------------------------------------------
+// -----------------------------------------------------------------------
 
 API void uC_utf8_emit(uint32_t cp)
 {
@@ -88,13 +88,14 @@ API void uC_utf8_emit(uint32_t cp)
         {
             // append utf8 character onto end of terminfo escape seauence
             // buffer to be blasted out to the console later
+
             c_emit(encoded->str[i]);
         }
     }
 }
 
-// --------------------------------------------------------------------------
-// dont look!
+// -----------------------------------------------------------------------
+// extract utf8 codepoint from string of chars and return cp length
 
 API uint8_t utf8_decode(uint32_t *cp, uint8_t *s)
 {
@@ -144,7 +145,7 @@ API uint8_t utf8_decode(uint32_t *cp, uint8_t *s)
     return -1;
 }
 
-// --------------------------------------------------------------------------
+// -----------------------------------------------------------------------
 // return number of bytes for a utf8 char pointed to by *s
 
 API uint8_t uC_utf8_char_length(uint8_t *s)
@@ -160,10 +161,10 @@ API uint8_t uC_utf8_char_length(uint8_t *s)
     return -1;
 }
 
-// --------------------------------------------------------------------------
+// -----------------------------------------------------------------------
 // gets number of console character cells the string will use. this
-// accounts for characters such as chinese which take up two cells worth of
-// space in the console when displayed.
+// accounts for characters such as chinese which take up two cells worth
+// of space in the console when displayed.
 
 API int16_t uC_utf8_width(uint8_t *s)
 {
@@ -180,9 +181,10 @@ API int16_t uC_utf8_width(uint8_t *s)
     return width;
 }
 
-// --------------------------------------------------------------------------
-// calcuate the string length of a utf8 string.  characters in utf8 strings
-// can be 1, 2, 3 or 4 bytes long
+// -----------------------------------------------------------------------
+// calcuate the string length of a utf8 string.  characters in utf8
+// strings can be 1, 2, 3 or 4 bytes long (this is character count not
+// display coverage)
 
 API int16_t uC_utf8_strlen(uint8_t *s)
 {
@@ -199,7 +201,7 @@ API int16_t uC_utf8_strlen(uint8_t *s)
     return len;
 }
 
-// --------------------------------------------------------------------------
+// -----------------------------------------------------------------------
 
 API int16_t uC_utf8_strncmp(uint8_t *s1, uint8_t *s2, int16_t len)
 {
@@ -226,4 +228,4 @@ API int16_t uC_utf8_strncmp(uint8_t *s1, uint8_t *s2, int16_t len)
     return 0;
 }
 
-// ==========================================================================
+// =======================================================================

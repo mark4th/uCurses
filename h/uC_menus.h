@@ -21,8 +21,8 @@ typedef menu_fp_t (*fp_finder_t)(int32_t hash);
 
 enum
 {
-    MENU_DISABLED  = 1,
-    MAX_MENU_ITEMS = 10
+    uC_MENU_DISABLED  = 1,
+    uC_MAX_MENU_ITEMS = 10
 } __attribute__((__packed__)) ;
 
 // -----------------------------------------------------------------------
@@ -49,14 +49,14 @@ typedef struct
 
 typedef struct
 {
-    uint8_t *name;             // menu bar name for this pulldown menu
+    uint8_t *name;          // menu bar name for this pulldown menu
     int16_t width;          // width of widest item in pulldown menu
     int16_t flags;          // masks for enabled/disabled etc
     int16_t which;          // current selected item
     int16_t xco;            // x coordinate of menu window
     int16_t count;
     // not a linked list of sub items. max 10
-    menu_item_t *items[MAX_MENU_ITEMS];
+    menu_item_t *items[uC_MAX_MENU_ITEMS];
     void *window;           // this is a uC_window_t honest!
     uC_attribs_t attrs;
     uC_attribs_t selected_attrs;
@@ -73,7 +73,7 @@ typedef struct
     int16_t which;          // which pulldown item is active
     int16_t count;          // number of pulldowns defined
 
-    pulldown_t *items[MAX_MENU_ITEMS];
+    pulldown_t *items[uC_MAX_MENU_ITEMS];
 
     uC_attribs_t attrs;
     uC_attribs_t selected_attrs;

@@ -88,7 +88,7 @@ API size_t uC_zone_query(uC_mem_zone_t zone)
 // if someone attempts to make an allocation on an uninitialized zone then
 // this code will be called first, allowing said allocation.
 
-void alloc_init(uC_mem_zone_t zone)
+static void alloc_init(uC_mem_zone_t zone)
 {
     uC_mem_array_t *z = calloc(1, sizeof(*z));
     uC_ASSERT(z != NULL, "Out of Memory!");
@@ -164,6 +164,7 @@ API void *uC_alloc(uC_mem_zone_t zone, size_t size)
             z->alloc_count++;
         }
     }
+
     return (void *)*p;
 }
 

@@ -9,8 +9,9 @@
 // walk through every node in the list, return next node on each call
 
 // caller must extract payload from node
-// first call must pass list to be scanned
-// subsequent calls must pass null for the list
+// first call must pass list to be scanned.
+// subsequent calls must pass null for the list and the address of the
+//   previous node.
 
 API uC_list_node_t *uC_list_scan(uC_list_t *list, uC_list_node_t *n1)
 {
@@ -232,6 +233,7 @@ static void *list_pop(uC_list_t *list, bool whence)
         node_remove(node1);
         uC_free(list->zone, node1);
     }
+
     return payload;
 }
 

@@ -29,8 +29,10 @@ extern uC_screen_t *active_screen;
 
 API void uCurses_init(char *file, json_mem_t *json, void *fp)
 {
+#ifdef UC_MENUS
     uint16_t width;
     uint16_t height;
+#endif
 
 #ifdef UC_JSON
     // gcc will no longer compile these sources because of some ultra

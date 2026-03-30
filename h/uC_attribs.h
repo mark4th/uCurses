@@ -38,8 +38,8 @@ typedef enum
 
 typedef enum
 {
-    DEFAULT_FG = uC_COLOR_WHITE,
-    DEFAULT_BG = uC_COLOR_BLACK
+    uC_DEFAULT_FG = uC_COLOR_WHITE,
+    uC_DEFAULT_BG = uC_COLOR_BLACK
 } __attribute__((__packed__))  uC_default_clr_t;
 
 // -----------------------------------------------------------------------

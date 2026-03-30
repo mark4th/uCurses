@@ -191,7 +191,6 @@ static void insert_char(uC_widget_textbox_t *t, uint8_t k)
     int cursor;
     uint8_t c2;
 
-
     // if the cursor is at the end of the string and there is still space
     // left for more characters
 

@@ -12,8 +12,8 @@ extern uC_attribs_t attrs;
 
 API void uC_console_reset_attrs(void)
 {
-    attrs.fg = DEFAULT_FG;
-    attrs.bg = DEFAULT_BG;
+    attrs.fg = uC_DEFAULT_FG;
+    attrs.bg = uC_DEFAULT_BG;
 
     attrs.flags.bits = 0;
 

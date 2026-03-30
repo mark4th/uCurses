@@ -108,7 +108,7 @@ static uC_widget_vg_t *init_vg(char *name, uint16_t xco, uint16_t yco)
     // even with a name, if there is no border it will not be displayed
     // this may be changed in the future
 
-    uC_widget_vg_add_border(vg, BDR_SINGLE, box_attrs,
+    uC_widget_vg_add_border(vg, uC_BDR_SINGLE, box_attrs,
         box_focus_attrs);
 
     return vg;
@@ -284,31 +284,31 @@ static void view_add_text_boxes(uC_widget_view_t *view, uint16_t sequence)
 {
     uC_widget_t *t1 = uC_widget_textbox_create(
         sequence++, (char *)&hex_data, "Hex    :",
-        NUMERICAL_WIDGET_SIZE, INPUT_HEX,
+        NUMERICAL_WIDGET_SIZE, uC_INPUT_HEX,
         NUMERICAL_WIDGET_WIDTH, HEX_X, HEX_Y,
         text_attrs, text_focus_attrs);
 
     uC_widget_t *t2 = uC_widget_textbox_create(
         sequence++, (char *)&oct_data, "Octal  :",
-        NUMERICAL_WIDGET_SIZE, INPUT_OCTAL,
+        NUMERICAL_WIDGET_SIZE, uC_INPUT_OCTAL,
         NUMERICAL_WIDGET_WIDTH, OCT_X, OCT_Y,
         text_attrs, text_focus_attrs);
 
     uC_widget_t *t3 = uC_widget_textbox_create(
         sequence++, (char *)&dec_data, "Decimal:",
-        NUMERICAL_WIDGET_SIZE, INPUT_DECIMAL,
+        NUMERICAL_WIDGET_SIZE, uC_INPUT_DECIMAL,
         NUMERICAL_WIDGET_WIDTH, DEC_X, DEC_Y,
         text_attrs, text_focus_attrs);
 
     uC_widget_t *t4 = uC_widget_textbox_create(
         sequence++, (char *)&bin_data, "Binary :",
-        NUMERICAL_WIDGET_SIZE, INPUT_BINARY,
+        NUMERICAL_WIDGET_SIZE, uC_INPUT_BINARY,
         NUMERICAL_WIDGET_WIDTH, BIN_X, BIN_Y,
         text_attrs, text_focus_attrs);
 
     uC_widget_t *t5 = uC_widget_textbox_create(
         sequence++, (char *)&alpha_data, "Alpha  :",
-        ALPHA_WIDGET_SIZE, INPUT_ALPHA,
+        ALPHA_WIDGET_SIZE, uC_INPUT_ALPHA,
         NUMERICAL_WIDGET_WIDTH, 0, 3,
         text_attrs, text_focus_attrs);
 
@@ -346,7 +346,7 @@ static void init_widgets(void)
 
     uC_ASSERT(view != NULL, "Cannot create view");
 
-    uC_widget_view_add_border(view, BDR_CURVED, box_attrs);
+    uC_widget_view_add_border(view, uC_BDR_CURVED, box_attrs);
     uC_widget_vg_add_view(vg1, view);
     view_add_radio_buttons(view, RADIO_SEQUENCE);
 
@@ -366,7 +366,7 @@ static void init_widgets(void)
 
     uC_ASSERT(view != NULL, "Cannot create view");
 
-    uC_widget_view_add_border(view, BDR_CURVED, box_attrs);
+    uC_widget_view_add_border(view, uC_BDR_CURVED, box_attrs);
     uC_widget_vg_add_view(vg1, view);
     view_add_check_buttons(view, CHECK_SEQUENCE);
 
@@ -386,7 +386,7 @@ static void init_widgets(void)
 
     uC_ASSERT(view != NULL, "Cannot create view");
 
-    uC_widget_view_add_border(view, BDR_CURVED, box_attrs);
+    uC_widget_view_add_border(view, uC_BDR_CURVED, box_attrs);
     uC_widget_vg_add_view(vg1, view);
 
     view_add_text_boxes(view, TEXT_SEQUENCE);

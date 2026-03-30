@@ -318,6 +318,7 @@ static void process_args(void)
 API void entry(void)
 {
     printf("%s\n\n", banner);
+
     entry_fp = fopen("/proc/self/cmdline", "r");
 
     if (entry_fp != NULL)

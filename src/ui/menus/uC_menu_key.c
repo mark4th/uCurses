@@ -119,7 +119,7 @@ static void menu_up_down(int dir)
 
             item = pd->items[pd->which];
 
-            if ((item->flags & MENU_DISABLED) == 0)
+            if ((item->flags & uC_MENU_DISABLED) == 0)
             {
                 break;
             }
@@ -153,7 +153,7 @@ static void menu_left_rt(int dir)
 
             pd = bar->items[bar->which];
 
-            if ((pd->flags & MENU_DISABLED) == 0)
+            if ((pd->flags & uC_MENU_DISABLED) == 0)
             {
                 redraw_pulldown(bar);
                 break;

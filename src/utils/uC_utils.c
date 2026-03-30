@@ -36,8 +36,6 @@ API void uC_ui_free(void *mem)
 // -----------------------------------------------------------------------
 // FNV-1a on utf8 strings
 
-// actually i think this is just fnv-1  not 1a : fix later
-
 API int32_t fnv_hash(uint8_t *s)
 {
     uint32_t hash = FNV_BASIS;
@@ -83,21 +81,21 @@ API void uC_clock_sleep(int32_t whence)
 
 // -----------------------------------------------------------------------
 
-API void uC_restore_terminal(void)
-{
-    tcsetattr(STDIN_FILENO, TCSANOW, &term_save);
-    uC_curon();
-    uC_terminfo_flush();
-}
-
-// -----------------------------------------------------------------------
-
 API void uC_init_terminal(void)
 {
     tcgetattr(STDIN_FILENO, &term_save);
     term = term_save;
     term.c_lflag &= ~(ECHO | ICANON);
     tcsetattr(STDIN_FILENO, TCSANOW, &term);
+}
+
+// -----------------------------------------------------------------------
+
+API void uC_restore_terminal(void)
+{
+    tcsetattr(STDIN_FILENO, TCSANOW, &term_save);
+    uC_curon();
+    uC_terminfo_flush();
 }
 
 // -----------------------------------------------------------------------

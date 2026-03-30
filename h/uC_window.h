@@ -23,10 +23,10 @@ typedef struct
 
 // -----------------------------------------------------------------------
 
-enum
-{
-    SOLID = 0x2592,         // utf-8 'blank' char for backdrop
-} __attribute__((__packed__));
+// enum
+// {
+//     uC_SOLID = 0x2592,      // utf-8 'blank' char for backdrop
+// } __attribute__((__packed__));
 
 // -----------------------------------------------------------------------
 // window flags
@@ -38,11 +38,11 @@ typedef enum
     FILLED    = 3,   FOCUS     = 4,
 
     // bit masks
-    WIN_BOXED    = 1 << BOXED,   // has a border
-    WIN_LOCKED   = 1 << LOCKED,  // scroll locked
-    WIN_NAMED    = 1 << NAMED,   // window has a name
-    WIN_FILLED   = 1 << FILLED,  // backfilled with SOLID character
-    WIN_FOCUS    = 1 << FOCUS,   // window has focus
+    uC_WIN_BOXED    = 1 << BOXED,   // has a border
+    uC_WIN_LOCKED   = 1 << LOCKED,  // scroll locked
+    uC_WIN_NAMED    = 1 << NAMED,   // window has a name
+    uC_WIN_FILLED   = 1 << FILLED,  // backfilled with SOLID character
+    uC_WIN_FOCUS    = 1 << FOCUS,   // window has focus
 } __attribute__((packed)) win_flags_t;
 
 // -----------------------------------------------------------------------

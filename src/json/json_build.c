@@ -27,7 +27,7 @@ static void bounds_check(uC_window_t *win)
     int16_t xco = win->xco;
     int16_t yco = win->yco;
 
-    int16_t z = (win->flags & WIN_BOXED) ? 1 : 0;
+    int16_t z = (win->flags & uC_WIN_BOXED) ? 1 : 0;
 
     if (((xco + win->width + z) <= json_vars->console_width) &&
        ((yco + win->height + z) <= json_vars->console_height) &&
@@ -48,7 +48,7 @@ static void fix_win(uC_screen_t *scr, uC_window_t *win)
 
     uC_window_t *bd = scr->backdrop;
 
-    if ((bd != NULL) && ((bd->flags & WIN_BOXED) != 0))
+    if ((bd != NULL) && ((bd->flags & uC_WIN_BOXED) != 0))
     {
         fudge++;
     }
@@ -121,7 +121,7 @@ static void fix_menus(uC_screen_t *scr)
 
     bar->window   = win;
     win->screen   = scr;
-    win->flags    = WIN_LOCKED;
+    win->flags    = uC_WIN_LOCKED;
     scr->menu_bar = bar;
     bar->xco      = 2;
     win->blank    = 0x20;

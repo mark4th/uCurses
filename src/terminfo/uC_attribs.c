@@ -16,8 +16,8 @@ extern ti_vars_t *ti_vars;
 uC_attribs_t attrs =
 {
     .flags.bits = 0,
-    .fg         = DEFAULT_FG,
-    .bg         = DEFAULT_BG,
+    .fg         = uC_DEFAULT_FG,
+    .bg         = uC_DEFAULT_BG,
 };
 
 uC_attribs_t old_attrs;

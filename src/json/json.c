@@ -27,81 +27,6 @@ extern uC_screen_t *active_screen;
 extern bool winch;
 
 // -----------------------------------------------------------------------
-// Custom Json parser state machine
-
-// There are 5 states in this state machine as follows
-//
-//      JSON_STATE_L_BRACE
-//      JSON_STATE_KEY
-//      JSON_STATE_VALUE
-//      JSON_STATE_R_BRACE
-//      JSON_STATE_DONE
-//
-// As the json text is parsed the text does not define the state, rather,
-// the state defines what the next character must be.  All parsing is done
-// on a space delimited token by token basis.
-//
-// The initial state is JSON_STATE_L_BRACE which expects the next token
-// parsed to be the left brace '{' char.  If it is then the state is set
-// to JSON_STATE_KEY.   If not... oopts!
-//
-// The handler for JSON_STATE_KEY expect to see one of several known
-// tokens which will either be a 'key' token or an 'object' token.  Only
-// recogized tokens are valid, unrecognized tokens will cause the state
-// machine to puke.
-//
-// All tokens are recognized by their 32 bit fnv-1a hash value, no string
-// compare functions are called.
-//
-// If the parsed token is recognized as a key...
-//
-//      That specifc key is handled (see below) and the next state is set
-//      to JSON_STATE_VALUE where we extract the value to be stored in the
-//      specified key.  note: while the ':' character between a key and
-//      its associated value are required there is no state ':'
-//
-// If the parsed token is one of the recognized objects...
-//
-//      The state is set once again to JSON_STATE_L_BRACE.
-//
-// Almost every JSON_STATE_L_BRACE indicates that a new object and thereby
-// an associated C structure is being created.
-//
-// For every object and every key the machine will transition into a new
-// state.  If the previous state was an object then that object state is
-// pushed onto a state stack.  Key states simply replace the previous key
-// state with the new one, they are never pushed onto the state stack.
-//
-// Any time a new object or key token is parsed we check to see if there
-// is a comma on it.  If there is no comma the next state will
-// instead be JSON_STATE_R_BRACE which pops the previous state off the
-// stack.
-//
-// As key values are parsed we immediately set the specified item in
-// their parents C structure.  When an object is completed we store
-// the associated C structure within its parents C structure.  The
-// structure types of both specify how and where.
-//
-// When all states have been popped off the stack we transition into
-// JSON_STATE_DONE and the state machine terminates.
-//
-// The following is WHY I wrote a custom json parser (which literally
-// doubled the size of my "micro" sized library)
-//
-// This code also knows which keys may go inside which objects and which
-// objects may go inside which objects.  You cannot for example define
-// a screen structure within a window structure.
-//
-// As stated above, some object states do not have an associated C
-// structure.  Any keys specified within these pseudo object will be
-// assigned instead to the pseudo objects parent C structure. I.E. the
-// keys grandparent.
-//
-// I have not given a way to define arrays in this parser and I have also
-// allowed for values to be expressed as a percentage.  For example you
-// can set a window width to a percentage of its parent screens width.
-
-// -----------------------------------------------------------------------
 // should i make the state struct a child of the vars struct?
 
 json_vars_t *json_vars;
@@ -383,6 +308,8 @@ static void parse_json_data(void)
 
 void json_file_create_ui(char *path, fp_finder_t fp)
 {
+    active_screen = NULL;
+
     json_vars = uC_alloc(uC_MEM_ZONE_JSON, sizeof(*json_vars));
 
     json_vars->json_stack.zone = uC_MEM_ZONE_UI;
@@ -410,6 +337,8 @@ void json_file_create_ui(char *path, fp_finder_t fp)
 
 void json_mem_create_ui(char *json_data, int len, fp_finder_t fp)
 {
+    active_screen = NULL;
+
     json_vars = uC_alloc(uC_MEM_ZONE_JSON, sizeof(*json_vars));
 
     uC_get_console_size(&json_vars->console_width,

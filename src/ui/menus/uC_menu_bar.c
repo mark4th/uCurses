@@ -35,7 +35,7 @@ static void pd_set_attr(int16_t i, pulldown_t *pd, uC_attribs_t *p,
 
     *p = (i == pd->which)
         ? pd->selected_attrs
-        : ((item->flags & MENU_DISABLED) != 0)
+        : ((item->flags & uC_MENU_DISABLED) != 0)
             ? pd->disabled_attrs
             : pd->attrs;
 }
@@ -85,7 +85,7 @@ static void bar_set_attrs(int16_t i, menu_bar_t *bar, uC_attribs_t *p,
 {
     *p = ((i == bar->which) && (bar->active != 0))
         ? bar->selected_attrs
-        : ((pd->flags & MENU_DISABLED) != 0)
+        : ((pd->flags & uC_MENU_DISABLED) != 0)
             ? bar->disabled_attrs
             : bar->attrs;
 }
@@ -192,7 +192,7 @@ static void init_bar(uC_screen_t *scr, uC_window_t *win, menu_bar_t *bar)
     bar->window = win;
 
     // make window non scrolling
-    win->flags = WIN_LOCKED;
+    win->flags = uC_WIN_LOCKED;
     win->blank = 0x20;
 
     win->screen   = scr;

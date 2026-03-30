@@ -39,7 +39,7 @@ API uC_window_t *uC_add_status(uC_screen_t *scr, uint16_t width,
         win->xco = xco;
         win->yco = yco;
         win->screen = scr;
-        win->flags |= WIN_LOCKED;
+        win->flags |= uC_WIN_LOCKED;
 
         uC_list_push_tail(&scr->status, win);
     }

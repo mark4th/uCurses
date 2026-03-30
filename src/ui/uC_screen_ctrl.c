@@ -157,8 +157,8 @@ void init_backdrop(uC_screen_t *scr, uC_window_t *win)
         win->yco         = 1;
         win->width       = scr->width - 2;
         win->height      = scr->height - 2;
-        win->flags       = (WIN_BOXED | WIN_LOCKED);
-        win->border_type = BDR_SINGLE;
+        win->flags       = (uC_WIN_BOXED | uC_WIN_LOCKED);
+        win->border_type = uC_BDR_SINGLE;
         win->blank       = 0x20;
         win->screen      = scr;
         win->bdr_attrs   = bdr_attrs;
@@ -211,7 +211,7 @@ int16_t win_chk_pos(uC_window_t *win, uC_screen_t *scr,
     height = win->height;
 
     // if window is boxed account for border
-    if (win->flags & WIN_BOXED)
+    if (win->flags & uC_WIN_BOXED)
     {
         // of the border exists then the lowest X / Y coordinate
         // the window can be placed at is 1 / 1.
@@ -314,7 +314,7 @@ API void uC_scr_win_tab_next(uC_screen_t *scr)
     // remove focus from current window if there is one
     if (scr->selected != NULL)
     {
-        scr->selected->flags &= ~WIN_FOCUS;
+        scr->selected->flags &= ~uC_WIN_FOCUS;
         scr->tab_order = 0;
     }
 
@@ -328,7 +328,7 @@ API void uC_scr_win_tab_next(uC_screen_t *scr)
         {
             scr->selected   = win;
             scr->tab_order  = order;
-            win->flags     |= WIN_FOCUS;
+            win->flags     |= uC_WIN_FOCUS;
             break;
         }
         n1 = uC_list_scan(NULL, n1);

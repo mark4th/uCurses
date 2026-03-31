@@ -195,10 +195,10 @@ This library also has a few things that ncurses does not.
 
 NOTE: This library is built with a -fvisibility=hidden arg passed to the C
 compiler.  This will cause all symbols that are not marked as public to be
-stripped out of the executable at compile time.  All public API entities
-are prefixed with that API macro which is defined in a header file.  If
-any entity lacks this prefix it is not visible to any application using
-this library.
+stripped out of the executable at link time.  All public API entities are
+prefixed with that API macro which is defined in a header file.  If any
+entity lacks this prefix it is not visible to any application using this
+library.
 
 All items that are marked as static are only visible within the module
 wherein they are defined and any item that is neither prefixed with the

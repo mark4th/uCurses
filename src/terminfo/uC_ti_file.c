@@ -165,7 +165,7 @@ void alloc_info(void)
     offset += p->ti_bool;
     offset += (offset & 1);
 
-    // set pointer to numbers section which can have 16 or 32 it items
+    // set pointer to numbers section which can have 16 or 32 bit items
     ti_vars->ti_file.ti_numbers = (int16_t *)&ti_vars->ti_file.ti_map[offset];
     offset += (p->ti_numbers << ti_vars->ti_file.wide);
 

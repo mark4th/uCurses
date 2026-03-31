@@ -39,10 +39,14 @@
     2.2.2:            Format String Specifiers
     2.2.3:            The Beef
     2.2.4:            uC_terminfo.h
+    2.2.5             uC_terminfo.c
+
 
     3:         Terminal Attributes
-    3.1:           RGB and Gray Scale Attributes
-    3.2:           Modifying attributes variables
+    3.1:           uC_attribs.c
+    3.1.1:             Modifying attributes variables
+    3.2            Terminfo database files.
+    3.3:           uC_console_attribs.c
 
     4:         Keyboard input
     4.1:           uC_key_read.c
@@ -202,7 +206,7 @@ library.
 
 All items that are marked as static are only visible within the module
 wherein they are defined and any item that is neither prefixed with the
-API macro nor marked as static will have global visibility within the
+API macro nor marked as static will have global visibility only within the
 library itself.
 
 
@@ -218,7 +222,7 @@ overall system, that will be covered in a separate (hopefully smaller)
 document.
 
 One of the biggest criticisms I have for the documentation of other API's
-is that they provide extensive descriptions for every PUUBLIC function,
+is that they provide extensive descriptions for every PUBLIC function,
 what parameters they expect and what values they return etc but they
 almost never explain to you how you are supposed to use all of those
 234755864237 public API calls in an application.   They also never that I
@@ -238,7 +242,7 @@ I still rant because...
 
 Things like this force me to add special needs 'duct tape' code to fix
 things that in my mind should not need fixing.  This and other "quirks"
-probably accounts for part of why ncurses is as large as it is.
+probably accounts for at least part of why ncurses is as large as it is.
 
 Note to TED:  If there is *anything* stated in the uCurses documentation
 that is even slightly incorrect I will gladly take instruction and change
@@ -431,8 +435,8 @@ make use of C's evil variadic functions.  I do that elsewhere tho } : )
 
     NOTE: Being able to mentally interpret a terminfo format string might
     not be vital to the application developers understanding of or the use
-    of this library but I still consider it important enough to document
-    it.  This 'skill' does have its uses.
+    of this library but I still consider it important enough to document.
+    This 'skill' does have its uses.
 
 
 2.2.1: If / And / But
@@ -849,6 +853,177 @@ Each of these macros has a name identical to the terminfo name for their
 escape sequence with a 'ti_' prefix added.  Most are considered not part
 of the public API and are only used internally (if at all).
 
+2.2.5 uC_terminfo.c
+-------------------
+
+This file contains wrappers to the above terminfo macros giving the
+application developer access to them.   Most of these have names
+identical the terminfo format string name but with a uC_ prefix on that
+name.  Others have names that describe their function better.
+
+    API void uC_curoff(void)
+
+        This function makes the terminals cursor invisible so it does not
+        detract from the applications user interface.   This function is
+        referenced by the uCurses initialization functions.
+
+    API void uC_curon(void)
+
+        This function makes the terminals cursor visible which would be
+        necessary on exit from any uCurses application.  This function is
+        referenced by the uCurses de-initialization functions.
+
+    API void uC_clear(void)
+
+        This function clears the console display and sets the cursor to
+        the upper left of the display.  If there is currently an active
+        screen then the state buffers of this structure is also erased
+        and its cursor is also reset to top left.
+
+    API void uC_hpa(int16_t x)
+
+        HPA stands for "Horizontal Position Absolute".  This function
+        moves the cursor to a specific X coordinate within on which ever
+        line the consoles cursor is situated.  This also moves the cursor
+        within the current active screen to the same location.
+
+    API void uC_cup(int16_t x, int16_t y)
+
+        This function sets the terminals cursor position.   It moves the
+        cursor to a specified X / Y coordinate within the terminal.  This
+        also moves the cursor within the current active screen to the same
+        location.
+
+    API void uC_cud1(void)
+
+        This function moves the terminals cursor down one line.  If the
+        cursor is on the bottom line of the terminal this will affect a
+        scroll on the display.   It also moves the cursor of the currently
+        active screen down one line UNLESS it is on the bottom line.
+        There is also no concept of scrolling the active screens contents.
+
+    API void uC_home(void)
+
+        This function moves the cursor to its home position of 0 / 0
+        within the console.  It will also move the currently active
+        screens tracked cursor to the same location.
+
+    API void uC_cub1(void)
+
+        This function moves the consoles cursor left one position.  If the
+        cursor started at the left edge of the console then the cursor
+        will be moved to the end of the line above.
+
+        This also moves the currently active screens cursor left one
+        position and will also wrap to the line above if need be.
+
+    API void uC_cuf1(void)
+
+        This function moves the consoles cursor right one position.  If
+        the cursor was at the far right edge of the console then the
+        cursor will be moved to the start of the line below.
+        If the cursor was on the bottom line then the display will also be
+        scrolled up.
+
+        The active screens cursor location is also moved in a similar way
+        but it will not be scrolled.
+
+    API void uC_cuu1(void)
+
+        This function will move the cursor up one line within the console
+        unless it is already on the top line.  It will also move the
+        currently active screens cursor up one line unless it was also on
+        the top line of the screen.
+
+    API void uC_dch1(void)
+
+        This function will delete the character to the left of the
+        consoles cursor location.  Doing this will move other characters
+        to the right of that one left one position.
+
+        It also moves the cursor of the currently active screen left one
+        position.  It does not actually delete or move any characters on
+        the line.
+
+    API void uC_cud(int16_t n1)
+
+        This function moves the consoles cursor down a specified number of
+        lines.  If, during this operation the cursor is on the bottom line
+        of the display then each cursor down operation here will instead
+        scroll the console up one line.
+
+        It will also move the currently active screens cursor down the
+        same number of lines up to the bottom line of the screen but it
+        will not scroll the screen.
+
+    API void uC_ich(void)
+
+        This function will insert a space into the consoles current screen
+        line at its current cursor location.  All characters to the right
+        of the cursor will be moved right.  The cursor itself does not
+        move.
+
+        This call does not affect the screen in any way.
+
+    API void uC_cub(int16_t n1)
+
+        This function moves the consoles cursor back the specified number
+        of positions.  It will wrap the cursor to the end of the line
+        above if it is at the far left edge of the console.
+
+        It will also perform the same operation on the currently active
+        screen.
+
+    API void uC_cuf(int16_t n1)
+
+        This function moves the consoles cursor forward the specified
+        number of positions.  It will wrap the cursor to the start of the
+        line below if it is moved beyond the far right edge of the console
+        and potentially scroll the display.
+
+        This will also perform the same operation on the currently active
+        screen but will not scroll the screen.
+
+    API void uC_cuu(int16_t n1)
+
+        This function will move the consoles cursor up the specified
+        number of lines or until the cursor reaches the top line.
+
+        It will also perform the same operation on the currently active
+        screen.
+
+    API void uC_vpa(uint16_t y)
+
+        VPA stands for "Vertical Position Absolute".  This function moves
+        the consoles cursor to the specified Y coordinate.  It will also
+        perform the same operation on the currently active screen.
+
+    API void uC_cr(void)
+
+        This function writes both the CR and the LF characters out to the
+        console.  It also moves the currently active screens cursor to the
+        start of the line below it unless it is already on the bottom
+        line.
+
+    API void uC_smkx(void)
+
+        This function is documented in man 5 terminfo as placing the
+        keypad in transmit mode.  I have no idea what that means but I
+        have seen that the cursor UP and DOWN keyes can return different
+        sequences depending on whether or not the keypad is in this
+        mysterious mode or not.
+
+        Placing the keypad in transmit mode allows the uCurses keboard
+        handlers to recognize the cursor up and down keys using the
+        format strings that are contained within the terminals terminfo
+        database.   Not being in transmit mode prevents it from being able
+        to do so.
+
+    API void uC_rmkx(void)
+
+        This function turns off the keypad transmit mode what ever that
+        is.  See smkx above.
+
 
 3: Terminal Attributes
 ----------------------
@@ -937,8 +1112,8 @@ stated color representations.
     Was that removal a mistake? Should I add it back in?
 
 
-3.1: RGB and Gray Scale Attributes
-----------------------------------
+3.1: uC_attribs.c
+-----------------
 
 Emitting the escape sequences for enabling both foreground and background
 RGB attributes requires a hard coded format string which may not be
@@ -1123,8 +1298,8 @@ applicable across all terminals.  Ditto gray scales.  These sequences are
             P.S. As we know, Some things make me uppity!
 
 
-3.2: Modifying attributes variables
------------------------------------
+3.1.1: Modifying attributes variables
+-------------------------------------
 
 The following functions aid in the setting and updating of color
 attributes.  They modify a specified attributes variable which may be the
@@ -1195,6 +1370,192 @@ screen or window cell etc.
         This helper function is used to set both console and window
         background RGB color attributes.  In the case of windows it is
         also used to set the windows border and focused border attributes.
+
+
+3.2 Terminfo database files.
+----------------------------
+
+The terminfo database files can contain information about each terminal
+types capabilities and supported escape sequences.  uCurses queries the
+current environment for a $TERM variable to determine which terminal it
+is currently running in and it will then attempt to load the terminfo
+file for that specific terminal.
+
+If it is not able find any terminfo file for the current terminal then
+this is considered a critical error and the application will abort.
+
+uCurses will look in the following directories for this file.
+
+    * /usr/share/terminfo
+    * /lib/terminfo
+    * /etc/terminfo
+
+I personally consider /lib/terminfo to be an utterly incorrect place to
+put these files but that's where Debian places them (why?).  The terminfo
+man pages also suggest that ~/terminfo might be a possiblity too but this
+library does not check there.
+
+The following files are used to search for and load the correct terminfo
+database file for the current console.
+
+    static bool try_path(int i, const char *env_term)
+
+        Attempt to open the current consoles terminfo file from one of the
+        above stated directory paths.  If, during this operation uCurses
+        encounters an out of memory error while attempting to memory map
+        the specified file the application will abort.
+
+        If the specified file is found this function will memory map it
+        and return a true result.  If it is not found it will return a
+        false result.
+
+    static void map_tifile(void)
+
+        This function first attempts to read the $TERM environment
+        variable to determine which terminal type the application is
+        running in.  If this variable is not set uCurses will abort.
+
+        If the environment variable is set then this function will search
+        each of the above specified directories for a file with this name.
+        Not finding this file in any of the above directories is a
+        critical error and the application will abort.
+
+        If no abort happens then the caller can assume the file was found
+        and is now memory mapped.
+
+    static void is_valid(void)
+
+        This function verifies that the recently memory mapped terminfo
+        file is valid.  It compares the terminfo files "magic" signature
+        to known values.  If this entry is invalid we abort.
+
+        This header can be one of two values as follows...
+
+            * 0x011a
+            * 0x021e
+
+        If it is the latter then this signifies that the numbers section
+        within this terminfo file uses 32 bit entries instead of 16 bit
+        entries.
+
+    void alloc_info(void)
+
+        This function calls the above functions to memory map the current
+        consoles terminfo database file and to verify its validity.  If
+        the file is valid then pointer addresses are calculated to the
+        various sections contained within that mapping.  Not all of these
+        tables are utilized by this library but we still set pointers to
+        them for possible future use.
+
+        Pointers to The following sections are initialized.
+
+            * Names section.
+            * Bool section.
+            * Numbers section.
+            * Strings section.
+            * String table section.
+
+        uCurses is mainliy interested in the strings and string table
+        sections.   The strings section is an array of offsets to format
+        strings contained within the string table section.  The order of
+        items in the strings section is well defined so the offset to a
+        specific escapes sequence format string can easily be found.
+
+3.3: uC_console_attribs.c
+-------------------------
+
+This file contains public API calls which set or clear the various
+attributes on the terminal.
+
+    API void uC_console_reset_attrs(void)
+
+        This function writes an escape sequence out to the terminal that
+        will reset its foreground and background colors to the uCurses
+        defined defaults.   These can be changed.
+
+    API void uC_console_set_fg(uC_color_t color)
+
+        This function writes an escape sequence out to the terminal that
+        sets its foreground color to the specified value.
+
+    API void uC_console_set_bg(uC_color_t color)
+
+        This function writes an escape sequence out to the terminal that
+        sets its background color to the specified value.
+
+    API void uC_console_set_gray_fg(uC_colors_gray_t color)
+
+        This function writes an escape sequence out to the terminal that
+        sets its foreground color to a specified gray scale value.
+
+    API void console_set_gray_bg(uC_colors_gray_t color)
+
+        This function writes an escape sequence out to the terminal that
+        sets is background color to a specified gray scale value.
+
+    API void uC_console_set_rgb_fg(uC_color_t r, uC_color_t g,
+        uC_color_t b)
+
+        This function writes an escape sequence out to the terminal that
+        sets its foreground to a specified 24 bit RGB color.
+
+    API void uC_console_set_rgb_bg(uC_color_t r, uC_color_t g, uC_color_t b)
+
+        This function writes an escape sequence out to the terminal that
+        sets is background to a specified 24 bit RGB color.
+
+    API void console_clr_flags(uint16_t flags)
+
+        This function writes all the escape sequences required to clear a
+        specified set of flags which control things like bold, underline,
+        reverse video being active.   Clearing certain flags and thereby
+        modifying the state of the console can require multiple escape
+        sequences be emitted to ensure that other attribute are not lost.
+
+    void console_set_flags(uint16_t flags)
+
+        This function writes all the escape sequences required to set a
+        specified set of flags which control things like bold. underline,
+        reverse video being active.   A flag being set will have the
+        library write the specific escape sequences required to affect
+        that change.
+
+The following public API calls use the above functions to enable or
+disable various attributes in the console.  Turning either underline mode
+or bold mode off has some associated caveat's documented elsewhere here.
+
+       API void uC_console_set_ul(void)
+
+            This function writes the escape sequence which will turn on
+            underline mode for all characters subsequently written to the
+            terminal.
+
+       API void uC_console_set_rev(void)
+
+           This function writes the escape sequence which will turn on
+           revers video mode for all characters subsequently written to
+           the terminal.
+
+       API void uC_console_set_bold(void)
+
+           This function writes the escape sequence which will turn on
+           bold mode for all characters subsequently written to the
+           terminal.
+
+       API void uC_console_clr_ul(void)
+
+           This function writes the escape sequences which will turn off
+           underline mode for the terminal.
+
+       API void uC_console_clr_rev(void)
+
+           This function writes the escape sequences which will turn off
+           reverse video mode for the terminal.
+
+       API void uC_console_clr_bold(void)
+
+            This function writes the escape sequences which will turn off
+            bold mode for the terminal.
 
 
 4: Keyboard input

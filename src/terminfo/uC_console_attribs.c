@@ -70,7 +70,7 @@ API void uC_console_set_rgb_bg(uC_color_t r, uC_color_t g, uC_color_t b)
 
 // -----------------------------------------------------------------------
 
-API void console_clr_flags(uint16_t flags)
+void console_clr_flags(uint16_t flags)
 {
     uC_attr_clr_flags(&attrs, flags);
     apply_attribs();

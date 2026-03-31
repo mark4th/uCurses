@@ -80,7 +80,6 @@ static void fix_windows(uC_screen_t *scr)
         win->height      = scr->height - 2;
         // win->blank       = 0x20; // SOLID;
         win->screen      = scr;
-        scr->backdrop    = win;
 
         // init_backdrop(scr, scr->backdrop);
         win_alloc(scr->backdrop);

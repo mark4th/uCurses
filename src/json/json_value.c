@@ -198,7 +198,6 @@ static void value_wh(void)
 
 static void value_name(void)
 {
-    // uint16_t i;
     uint8_t *name;
 
     json_state_t *parent = json_state->parent;

@@ -126,7 +126,7 @@ that has two things going for it that uCurses does not and may never have!
     1) Consistent Reliability
     2) Reliable Consistency
 
-There is a very *very* good reason why ncurses is ubiquitous in *nix
+There is a very *very* good reason why ncurses is ubiquitous in the *nix
 universe - How could an ID10T like me compete with that? <3
 
 However, that being said, while I do not actually program ncurses and in
@@ -910,7 +910,7 @@ action.
     capabilities.
 
 As each character is written out to some user interface entity it gets its
-own instance of the an attributes structure along with that characters
+own instance of the attributes structure along with that characters
 encoded UTF-8 code point.  Every character in said entity therefore has
 its own independent set of attributes.
 
@@ -1673,7 +1673,7 @@ The console update is performed by two nested loops called inner_update()
 and outer_update().  When the outer loop is called it scans the new screen
 state buffer and compares it with the previous state buffer.  If any
 character is found to have been modified during the most recent update
-the that characters index is passed to the inner update loop described
+then that characters index is passed to the inner update loop described
 below.
 
 The outer update loop is repeated until every modified character found has
@@ -3509,7 +3509,7 @@ tab and shifted tab keys... need to figure out shifted tab!
     static uint8_t handle_widget(uint8_t k)
 
         This static function handles a single character key press and
-        passesVthe key to the handler for the current widget type.  If the
+        passes the key to the handler for the current widget type.  If the
         current view is scrollable and the key is a cursor movement theN
         the view is scrolled either up or down.
 
@@ -3588,12 +3588,10 @@ so are also available to the application developer.
 
     API void uC_ui_free(void *mem)
 
-        This public API call is used during the user interface tear down
-        procedure.   It frees every single allocation that is associated
-        with the user interface.  No other allocations are freed.
-
-        This was added to aid in handling sigwinch signals but I have so
-        far been unable to get the handling of these signals stable.
+        This public API call is a wrapper function which will free any
+        memory address associated with the user interface.  This happens
+        enough to warrant this special wrapper function which would
+        otherwise be somewhat wasteful to implement.
 
     API int32_t fnv_hash(uint8_t *s)
 

@@ -1,45 +1,5 @@
-WIP: Proper documentation incoming soon (ish)
 
-uCurses library documentation at its lowest!
+For some very extensive but not quite complete documentation on the library
+please see uCurses.txt.  More documentation incoming soon...
 
-This  library  gives  you  the  ability  to  create applications with a very
-powerful user interfaces.  It allows for moving, overlapping windows and for
-all  characters to be drawn using either a normal color (over 200 palletized
-colors usually), a gray scale from 0 to 23 or a full 24 bit RGB color.
 
-The  foreground and background color types are independent so you can have a
-gray scale background and a RGB foreground for example.  I.E.  Palette, gray
-or RGB, pick two!
-
-This code can be built with either LLVM or Gcc.  I prefer LLVM myself :)
-
-NOTE!!!  Optimizing  this  code for speed is not important and in fact wont
-do much to help speed things up anyway because the enter library is heavily
-bound  to  the terminal I/O which is notoriously slow.  Even at -O0 the code
-will  run perfectly fine even on older hardware so I have chosen to build it
-to  be  as  small as I can possibly make it.  That is either with -Os or -Oz
-which ever is supported by the compiler.
-
-To build this, from the root of the source tree do
-
-        make
-        sudo make install
-
-The  make  install  will  copy the library files into /usr/local/lib64 after
-which  you  should  be able to build with your applications with -l uCurses.
-Don't forget to run ldconfig first!
-
-To  build  the  example  code  cd into the example directory and run a make.
-This will produce a  file called demo  and numerous  other executables which 
-will demonstrat various capabilities of the library.  This is not exhaustive 
-but creating it was exhausting :)
-
-Documentation  for  how  to  use this library should be available soon.  The
-example code should help but again, this is not exhaustive.  I have tried to
-keep  the  library  as  simple  and  as  SMALL  as  possible  and  still  be
-powerful  enough  for every day use.  There is a lot left to do however as I
-am  not  yet playing well in certain terminal types. this will be fixed soon,
-hopefully!
-
-Regards
-   MM

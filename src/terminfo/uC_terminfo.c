@@ -2,6 +2,7 @@
 // -----------------------------------------------------------------------
 
 #include <string.h>
+#include <unistd.h>
 
 #include "uCurses.h"
 #include "uC_terminfo.h"
@@ -44,7 +45,7 @@ API void uC_clear(void)
 // -----------------------------------------------------------------------
 // set cursor position on current line
 
-API void uC_hpa(int16_t x)  // horizontal position absolute
+API void uC_hpa(uint16_t x)  // horizontal position absolute
 {
     if (active_screen != NULL)
     {
@@ -131,7 +132,7 @@ API void uC_cuf1(void)
     {
         if (active_screen->cx != active_screen->width - 1)
         {
-            active_screen->cx++
+            active_screen->cx++;
         }
         else if (active_screen->cy != active_screen->height - 1)
         {
@@ -302,7 +303,7 @@ API void uC_vpa(uint16_t y)
 
 API void uC_cr(void)
 {
-    uint8_t *cr = "\r\n";
+    char *cr = "\r\n";
 
     if (active_screen != NULL)
     {

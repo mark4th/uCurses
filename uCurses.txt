@@ -17,7 +17,7 @@
 
            ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
            ┃                                                  ┃
-           ┃    When something can be read without effort     ┃
+           ┃      If something can be read without effort     ┃
            ┃               then great effort                  ┃
            ┃           has gone into its writing.             ┃
            ┃                                                  ┃
@@ -29,88 +29,87 @@
 0: Table of contents:
 ---------------------
 
-    1:         Introduction
-    1.1           Whats documented (or will be)
+    1..........Introduction
+    1.1............Whats documented
 
-    2:         Terminfo
-    2.1:          uC_ti_parse.c
-    2.2:          Terminfo format string specifiers.
-    2.2.1:            If / And / But
-    2.2.2:            Format String Specifiers
-    2.2.3:            The Beef
-    2.2.4:            uC_terminfo.h
-    2.2.5             uC_terminfo.c
+    2..........Terminfo
+    2.1...........uC_ti_parse.c
+    2.2...........Terminfo format string specifiers.
+    2.2.1.............If / And / But
+    2.2.2.............Format String Specifiers
+    2.2.3.............The Beef
+    2.2.4.............uC_terminfo.h
+    2.2.5.............uC_terminfo.c
 
+    3..........Terminal Attributes
+    3.1............uC_attribs.c
+    3.1.1.............Modifying attributes variables
+    3.2............Terminfo database files.
+    3.3............uC_console_attribs.c
 
-    3:         Terminal Attributes
-    3.1:           uC_attribs.c
-    3.1.1:             Modifying attributes variables
-    3.2            Terminfo database files.
-    3.3:           uC_console_attribs.c
+    4..........Keyboard input
+    4.1............uC_key_read.c
+    4.2............uC_key_sequence.c
+    4.3............uC_key_table.c
 
-    4:         Keyboard input
-    4.1:           uC_key_read.c
-    4.2:           uC_key_sequence.c
-    4.3:           uC_key_table.c
+    5..........The Screen
+    5.1............uC_screen_ctrl.c
+    5.2............Drawing it all
+    5.3............Updating the console
+    5.4............uC_screen_draw.c
+    5.5............uC_screen_ctrl.c
 
-    5:         The Screen
-    5.1:           uC_screen_ctrl.c
-    5.2:           Drawing it all
-    5.3:           Updating the console
-    5.4:           uC_screen_draw.c
-    5.5:           uC_screen_ctrl.c
+    6..........The Window
+    6.1............uC_window_ctrl.c
+    6.2............uC_window_attr.c
+    6.3............uC_borders.c
 
-    6:        The Window
-    6.1:          uC_window_ctrl.c
-    6.2:          uC_window_attr.c
-    6.3:          uC_borders.c
+    7..........Status windows
+    7.1............uC_status.c
 
-    7:        Status windows
-    7.1:          uC_status.c
+    8..........Menus
+    8.1............uC_menu_bar.c
+    8.2............uC_menu_pulldown.c
+    8.3............uC_menu_item.c
+    8.4............uC_menu_key.c
 
-    8:        Menus
-    8.1           uC_menu_bar.c
-    8.2:          uC_menu_pulldown.c
-    8.3:          uC_menu_item.c
-    8.4:          uC_menu_key.c
+    9..........Widgets
+    9.1............uC_wigets.c
+    9.2............uC_widget_view.c
+    9.3............uC_widget_view_group.c
+    9.4............uC_widget_draw.c
+    9.5............uC_widget_button.c
+    9.6............uC_widget_check.c
+    9.7............uC_widget_radio.c
+    9.8............uC_widget_textbox.c
+    9.9............uC_widget_scan.c
+    9.10...........uC_widget_keys.c
 
-    9:        Widgets
-    9.1:          uC_wigets.c
-    9.2:          uC_widget_view.c
-    9.3:          uC_widget_view_group.c
-    9.4:          uC_widget_draw.c
-    9.5:          uC_widget_button.c
-    9.6:          uC_widget_check.c
-    9.7:          uC_widget_radio.c
-    9.8:          uC_widget_textbox.c
-    9.9:          uC_widget_scan.c
-    9.10:         uC_widget_keys.c
+    10.........Utilities
+    10.1...........uC_utils.c
+    10.2...........uC_alloc.c
+    10.3...........uC_braille.c
+    10.4...........uC_entry.c
+    10.5...........uC_eval.c
+    10.6...........uC_list.c
+    10.7...........uC_rgb_hsl.c
+    10.8...........uC_swtitch.c
+    10.9...........uC_utf8.c
+    10.10..........uC_win_printf.c
+    10.11..........uC_winch.c
 
-    10:       Utilities
-    10.1:         uC_utils.c
-    10.2:         uC_alloc.c
-    10.3:         uC_braille.c
-    10.4:         uC_entry.c
-    10.5:         uC_eval.c
-    10.6:         uC_list.c
-    10.7:         uC_rgb_hsl.c
-    10.8:         uC_swtitch.c
-    10.9:         uC_utf8.c
-    10.10:        uC_win_printf.c
-    10.11:        uC_winch.c
+    11.........JSON
+    11.1...........json.c
+    11.2...........json_token.c
+    11.3...........json_key.c
+    11.3.1.............Object Structures
+    11.3.2.............Key tokens
+    11.3.3.............Key and Object handling
+    11.4...........json_value.c
+    11.5...........json_populate.c
+    11.6...........json_build.c
 
-    11:        JSON
-    11.1:          json.c
-    11.2:          json_token.c
-    11.3:          json_key.c
-    11.3.1:            Object Structures
-    11.3.2:            Key tokens
-    11.3.3             Key and Object handling
-    11.4:          json_value.c
-    11.5:          json_populate.c
-    11.6:          json_build.c
-
-    12:         Final words
+    12.........Final words
 
 
 1: Introduction
@@ -139,7 +138,7 @@ not be possible at all without ncurses or its developer.
 
 This library also has a few things that ncurses does not.
 
-    1) It is extremely small (but growing :/ ).
+    It is extremely small (but growing :/ ).
 
         At the time of writing, ncurses is a little over 4.3 megabytes in
         size and I may have missed counting a few files.  It also takes a
@@ -160,20 +159,22 @@ This library also has a few things that ncurses does not.
         thing TED maintains!).  It is known to work "almost" perfectly in
         gnome-terminal, ptyxis and Konsole!   YMMV (tm).
 
-    2) Moveable, overlapping windows.
+    Moveable, overlapping windows.
 
         This I believe would be almost impossible using ncurses yet is
         ultra trivial here.  I do however have confidence that anyone
         experienced with ncurses development could probably achieve the
         same thing though probably not with ease.
 
-    3) A custom JSON Parser for user interface descriptions.
+    A custom JSON Parser for user interface descriptions.
 
         This custom parser literally doubled the size of my library when
-        it was implemented but it allows the user to describe almost their
-        entire user interface in JSON.  The exception here is widgets
-        which are considered ephemeral so can only be created and
-        destroyed programmatically on an as needed basis.
+        it was implemented but it allows the application developer to
+        describe almost their entire user interface in JSON.
+
+        The exception here is widgets which are considered ephemeral so
+        can only be created and destroyed programmatically on an as needed
+        basis.
 
         Menus, which might normally be considered a class of "widget" and
         which might normally be handled by the widget handler elsewhere
@@ -222,8 +223,8 @@ overall system, that will be covered in a separate (hopefully smaller)
 document.
 
 One of the biggest criticisms I have for the documentation of other API's
-is that they provide extensive descriptions for every PUBLIC function,
-what parameters they expect and what values they return etc but they
+is that while they provide extensive descriptions for every PUBLIC
+function, what parameters they expect and what values they return etc they
 almost never explain to you how you are supposed to use all of those
 234755864237 public API calls in an application.   They also never that I
 have seen document any non public entity within their sources.
@@ -429,7 +430,9 @@ occur and as we all know, the absence of proof is the proof of absence!
 
 The specifiers within the terminfo format strings are very similar to the
 ones used in C's printf functions.  I.E.  They all start with a percent
-symbol.  Each specifier is described below.  They all perform very simple
+symbol.
+
+Each specifier is described below.  They all perform very simple
 operations but there are quite a few of them to go over.  None of these
 make use of C's evil variadic functions.  I do that elsewhere tho } : )
 
@@ -1279,7 +1282,7 @@ applicable across all terminals.  Ditto gray scales.  These sequences are
 
             The single slowest thing you can do within terminal is to
             change character attributes.  For this reason, when updating
-            the screen uCurses will literally set ONE attribute then
+            the screen, uCurses will literally set ONE attribute then
             bounce the cursor all over the screen so it can update every
             single character that shares that ONE attribute.  It then
             moves to the next character which needs updating and sets that
@@ -1302,9 +1305,14 @@ applicable across all terminals.  Ditto gray scales.  These sequences are
 -------------------------------------
 
 The following functions aid in the setting and updating of color
-attributes.  They modify a specified attributes variable which may be the
-global default attributes or the attributes associated with a specific
-screen or window cell etc.
+attributes.  They modify a specified attributes variable which can be
+any instance of a uC_attribs_t structure such as is found in...
+
+        * The global default attributes variable
+        * The various attributes associated with a window
+        * The various attributes associated with menus
+        * A window or screen character cell
+        * ... etc ...
 
     static uC_ti_attr_flags_t attr_add_flags(uC_ti_attr_flags_t flags,
         uint16_t bits)
@@ -1335,51 +1343,45 @@ screen or window cell etc.
 
     void set_fg(uC_attribs_t *attr, uC_color_t color)
 
-        This helper function is used to set both console and window
-        foreground color attributes.  In the case of windows it is also
-        used to set the windows border and focused border attributes.
+        This helper function is used to set a normal paletized foreground
+        color within the specified attributes structure.
 
     void set_bg(uC_attribs_t *attr, uC_color_t color)
 
-        This helper function is used to set both console and window
-        background color attributes.  In the case of windows it is also
-        used to set the windows border and focused border attributes.
+        This helper function is used to set a normal paletized background
+        color within the specified attributes structure.
 
     void set_gray_fg(uC_attribs_t *attr, uC_colors_gray_t color)
 
-        This helper function is used to set both console and window
-        foreground gray scale attributes.  In the case of windows it is
-        also used to set the windows border and focused border attributes.
+        This helper function is used to set a foreground color within an
+        attributes strcuture to a gray scale value.
 
     void set_gray_bg(uC_attribs_t *attr, uC_colors_gray_t color)
 
-        This helper function is used to set both console and window
-        background gray scale attributes.  In the case of windows it is
-        also used to set the windows border and focused border attributes.
+        This helper function is used to set a background color within an
+        attributes strcuture to a gray scale value.
 
     void set_rgb_fg(uC_attribs_t *attr, uC_color_t r, uC_color_t g,
         uC_color_t b)
 
-        This helper function is used to set both console and window
-        foreground RGB color attributes.  In the case of windows it is
-        also used to set the windows border and focused border attributes.
+        This helper function is used to set a foreground color within an
+        attributes strcuture to a 32 bit RGB value.
 
     void set_rgb_bg(uC_attribs_t *attr, uC_color_t r, uC_color_t g,
         uC_color_t b)
 
-        This helper function is used to set both console and window
-        background RGB color attributes.  In the case of windows it is
-        also used to set the windows border and focused border attributes.
+        This helper function is used to set a background color within an
+        attributes strcuture to a 32 bit RGB value.
 
 
 3.2 Terminfo database files.
 ----------------------------
 
-The terminfo database files can contain information about each terminal
-types capabilities and supported escape sequences.  uCurses queries the
-current environment for a $TERM variable to determine which terminal it
-is currently running in and it will then attempt to load the terminfo
-file for that specific terminal.
+The terminfo database files contain information about each terminal types
+capabilities and supported escape sequences.  uCurses queries the current
+environment for a $TERM variable to determine which terminal it is
+running in and it will then attempt to load the terminfo file for that
+specific terminal.
 
 If it is not able find any terminfo file for the current terminal then
 this is considered a critical error and the application will abort.
@@ -1393,7 +1395,7 @@ uCurses will look in the following directories for this file.
 I personally consider /lib/terminfo to be an utterly incorrect place to
 put these files but that's where Debian places them (why?).  The terminfo
 man pages also suggest that ~/terminfo might be a possiblity too but this
-library does not check there.
+library does not check there as I consider it unsafe.
 
 The following files are used to search for and load the correct terminfo
 database file for the current console.
@@ -1401,13 +1403,13 @@ database file for the current console.
     static bool try_path(int i, const char *env_term)
 
         Attempt to open the current consoles terminfo file from one of the
-        above stated directory paths.  If, during this operation uCurses
-        encounters an out of memory error while attempting to memory map
-        the specified file the application will abort.
+        above stated directory paths.
 
         If the specified file is found this function will memory map it
-        and return a true result.  If it is not found it will return a
-        false result.
+        and return a true result.  If, during this operation uCurses
+        encounters an out of memory error the application will abort.
+
+        If the file is not found this function will return a false result.
 
     static void map_tifile(void)
 
@@ -1429,23 +1431,25 @@ database file for the current console.
         file is valid.  It compares the terminfo files "magic" signature
         to known values.  If this entry is invalid we abort.
 
-        This header can be one of two values as follows...
+        This magic signature is in the files header and can be one of two
+        values as follows...
 
             * 0x011a
             * 0x021e
 
         If it is the latter then this signifies that the numbers section
-        within this terminfo file uses 32 bit entries instead of 16 bit
-        entries.
+        within this terminfo file uses 32 bit entries instead of the old
+        16 bit entries.
 
     void alloc_info(void)
 
         This function calls the above functions to memory map the current
         consoles terminfo database file and to verify its validity.  If
         the file is valid then pointer addresses are calculated to the
-        various sections contained within that mapping.  Not all of these
-        tables are utilized by this library but we still set pointers to
-        them for possible future use.
+        various sections contained within that mapping.
+
+        Note: Not all of these tables are utilized by this library but we
+        still set pointers to them for possible future use.
 
         Pointers to The following sections are initialized.
 
@@ -1460,6 +1464,7 @@ database file for the current console.
         strings contained within the string table section.  The order of
         items in the strings section is well defined so the offset to a
         specific escapes sequence format string can easily be found.
+
 
 3.3: uC_console_attribs.c
 -------------------------
@@ -1604,8 +1609,8 @@ or even the specific terminal the application is running within.
 
 This source file contains all the code related to the reading of and
 recognition of key presses.  All characters associated with a given key
-press are written into a keyboard buffer for later interpretation.  A
-pollfd structure is used to test if the file descriptor associated with
+press are written into a keyboard input buffer for later interpretation.
+A pollfd structure is used to test if the file descriptor associated with
 terminal input has any characters ready to read.
 
     API int8_t uC_test_keys(void)
@@ -1760,7 +1765,7 @@ deny!
         key into the keyboard input buffer as though an actual key press
         had occurred.  It can also be used to translate a key sequence
         into some single character value to be returned to the user
-        application.
+        application. (The widgets key loop does this!)
 
     API void uC_flush_keys(void)
 
@@ -1852,7 +1857,7 @@ own.
 The screen structure contains the following entities, all of which are
 described in detail later in this document ...
 
-    * A list of application define windows to be drawn into the screen
+    * A list of application defined windows to be drawn into the screen
       character buffers.
     * A list of status windows attached to the screen.
     * A list of widget view groups attached to the screen.
@@ -1860,7 +1865,7 @@ described in detail later in this document ...
     * A pointer to which ever window currently has focus.
     * Variables specifying the screens dimensions.
     * Variables specifying the current cursor location within the screen.
-    * Pointers to the screens two character buffers.
+    * Pointers to the screens current and previous character buffers.
 
 
 5.1: uC_screen_ctrl.c
@@ -1877,9 +1882,10 @@ simplified the Gordian knot of circular include dependencies.
         partially initialized structure which will describe the entire
         current and previous states of the user interface.
 
-        This function allocates two state buffers equal to the dimensions
-        of the console.  These dimensions are contained within the passed
-        in structure so we do not have to query the console here.
+        This function allocates two state buffers equal in size to the
+        dimensions of the console.  These dimensions are contained within
+        the passed in structure so we do not have to query the console
+        here.
 
         The allocation of these two state buffers is this functions only
         purpose in life.  It was originally factored out to allow the JSON
@@ -1915,8 +1921,8 @@ simplified the Gordian knot of circular include dependencies.
         I.E.  The entire widget interface goes bye bye.
 
         Technically this belongs within the widget sources but putting it
-        here means that the widget functions do not need any knowledge of
-        the screen structure.
+        here means that the widget functions outside this source file do
+        not need any knowledge of the screen structures.
 
     API void uC_scr_close(uC_screen_t *scr)
 
@@ -1969,7 +1975,8 @@ simplified the Gordian knot of circular include dependencies.
 
         This function is used to verify that a window placement would be
         lawful.  No part of any window can be placed outside the bounds of
-        the screen it is to be attached to.
+        the screen it is to be attached to, including any border that it
+        may have.
 
     API void uC_scr_win_attach(uC_screen_t *scr, uC_window_t *win)
 
@@ -1994,13 +2001,14 @@ simplified the Gordian knot of circular include dependencies.
         dedicated keyboard handler.
 
         This public API call is used to "tab select" the next window in
-        the specified screens window list.
+        the specified screens window list.   The tab selection order is
+        entirely independent of the window draw order.
 
 
 5.2: Drawing it all
 -------------------
 
-Drawing the screen is a multi step process.  The first step is to emit an
+Drawing the screen is a multi step process.  The first step is to emit a
 sgr0 escape sequence to obliterate any and all attributes associated with
 the previous screen draw.  This was added to account for the case where
 any characters in the previous frame were underlined and said underlined
@@ -2115,10 +2123,10 @@ state buffer and then write that new state out to the console for display.
     static void scr_cup(uC_screen_t *scr, int16_t x, int16_t y)
 
         This function moves the console cursor location to a new position
-        within that console by emitting the 'cup' escape sequence.  If
-        however the console cursor position (which is tracked) is already
-        in the selected new position then this function silently preforms
-        no operation (I hope!).
+        within by emitting ta 'cup' escape sequence.  If however the
+        console cursor position (which is tracked) is already in the
+        desired new location then this function silently preforms no
+        operation (I hope!).
 
     static bool scr_is_modified(uC_screen_t *scr, uint16_t index)
 
@@ -2336,7 +2344,7 @@ with it) and to add and remove windows to / from it.
         specified screen.  If the specified window is already attached to
         any other (or the same screen) it is first detached from there.
 
-        This allows windows to be moved from one screen to another if
+        This would allow windows to be moved from one screen to another if
         multiple screens are ever implemented.  It also allows for a
         window that is currently being overlapped by other windows to be
         popped to the front of the view (makes it the last window drawn on
@@ -2344,8 +2352,8 @@ with it) and to add and remove windows to / from it.
 
     API void uC_scr_win_detach(uC_window_t *win)
 
-        This public API call is used to detach a specified window from a
-        specified screen and remove it from the view.  This call does not
+        This public API call is used to detach a specified window from its
+        parent screen and remove it from the view.  This call does not
         destroy the detached window or alter it in any way.
 
 
@@ -2363,7 +2371,7 @@ behave.   The following flags are defined...
     * uC_WIN_BOXED      The window has a border
     * uC_WIN_LOCKED     The window is scroll locked
     * uC_WIN_NAMED      The window has a display name
-    * uC_WIN_FILLED     The window is filled with a specified character
+    * uC_WIN_FILLED     The window is filled with its fill character
     * uC_WIN_FOCUS      The window currently has input focus
 
 Windows can have any dimensions and be located anywhere on the screen but
@@ -2376,11 +2384,11 @@ The window structure contains the following elements.
     * An allocated array for its character contents
     * A pointer to which ever screen it is attached to
     * A 32 bit hash of its name
-    * An assigned blank character which might not be a space
+    * An assigned blank / fill character which might not be a space
     * Variables giving its dimensions
     * Variables giving its location within its parent screen
     * The windows tab selection order
-    * Variables giving the current cursor location in the window
+    * Variables giving the current cursor location within the window
     * A variable giving the windows border type
     * A pointer to the windows display name
     * Variables giving various attributes for various window entities.
@@ -2415,8 +2423,8 @@ dependencies that I am not a huge fan of.
 
         This public API call is where application developers create a new
         window.  Every aspect of a window has a system wide default except
-        for its width and height which the application developer can
-        select.
+        for its width, height and position which the application developer
+        can select.
 
         Once a window has been created all of those aforementioned
         defaults such as color attributes, border style, border attributes
@@ -2435,7 +2443,7 @@ dependencies that I am not a huge fan of.
     API void uC_win_close(uC_window_t *win)
 
         This public API function is used to destroy a window.  It will
-        de- allocate the windows backing store and the window structure
+        de-allocate the windows backing store and the window structure
         itself.
 
         If the window being closed is currently attached to a screen then
@@ -2447,7 +2455,7 @@ dependencies that I am not a huge fan of.
         This public API call is used to move a window to the start of its
         parent screens draw order.  This will, on the next screen update,
         cause that window to be drawn immediately after the backdrop).  It
-        could therefore be overlapped by other windows drawn over into the
+        could therefore be overlapped by other windows drawn into the
         screen.
 
         The related pop function was removed from the library because this
@@ -2764,9 +2772,9 @@ Borders are drawn one row at a time.  First the top row is drawn, then
 each row between the top and bottom row, then, finally the bottom row of
 the border is drawn.
 
-These following arrays contain the UTF-8 code points for each border
+The following arrays contain the UTF-8 code points for each border
 character.  They also contain the characters which can be used to draw
-vertical or horizontal separators within windows.
+joined vertical or horizontal separators within windows.
 
     border_t bdr_single[]    ┏┓┗┛━┃┣┫┳┻╋
     border_t bdr_double[]    ╔╗╚╝═║╠╣╦╩╬
@@ -2819,7 +2827,7 @@ vertical or horizontal separators within windows.
         top and bottom rows.  The vertical characters at the left and
         right edges are drawn directly into the screen but none of the
         central characters of the row are touched.  This is where the
-        windows actual contents is drawn.
+        windows actual contents is (or will be) drawn.
 
     void win_draw_borders(uC_window_t *win)
 
@@ -2830,11 +2838,11 @@ vertical or horizontal separators within windows.
         uint16_t width, uint16_t height, uC_border_type_t bdr_type,
         uC_attribs_t box_attrs)
 
-        This public API function draws a box of a specified dimension with
-        a window.  The width, height and location of this box within the
-        window are passed in as parameters.  It is undefined behavior for
-        a box to not fit entirely within the specified window.  The border
-        type and attributes are also passed in.
+        This public API function draws a box of a specified dimension
+        within a window.  The width, height and location of this box
+        within the window are passed in as parameters.  It is undefined
+        behavior for a box to not fit entirely within the specified
+        window.  The border type and attributes are also passed in.
 
         There is no concept of one item overlapping another inside a
         window so there is no need for these functions to account for
@@ -2893,7 +2901,7 @@ build will save a small amount of space on your target.
 
 Pull down menus in uCurses are very simple.  The root of the menu system
 is the menu bar.  While you could have more than one defined, only one of
-them can be active on a screen.
+them can be active and on a screen.
 
 The menu bar structure contains the following elements.
 
@@ -2902,7 +2910,7 @@ The menu bar structure contains the following elements.
     * A variable stating whether the menu bar is active or not.
     * A variable giving the index of which ever item within it is active.
     * A count of the total number of pulldown items associated with it.
-    * A list of currently associated pulldown items.
+    * An arry of currently associated pulldown items.
     * Various attributes which menu elements will be drawn with.
 
 A menu bar is a container for a number of pull down menu items.  The only
@@ -2952,6 +2960,9 @@ system and assigned as each entity (pull down or menu item) is created.
 If these wonderful colors are not to your liking you can always modify
 them.
 
+The above "only one flag defined so far" is used to disable and re-enable
+a pulldown menu or a pulldown menu item.
+
 
 8.1 uC_menu_bar.c
 -----------------
@@ -2989,7 +3000,7 @@ them.
         This function is part of the pull down menu tear down procedure.
         It de-allocates each menu item structure within a single pull down
         menu, closes the pull down menus window and then de-allocates that
-        pull down menu too.
+        pull down menu structure.
 
     static void bar_close_pds(menu_bar_t *bar)
 
@@ -3007,6 +3018,11 @@ them.
 
         It then closes the menu bars window and de-allocates the menu bar
         structure itself.
+
+        This can be used to activate and deactivate various menu bars
+        based on application context.  For example, it might be possiblle
+        for an application to activate different menus based on which
+        window within it has focus.
 
     static void init_bar(uC_screen_t *scr, uC_window_t *win,
         menu_bar_t *bar)
@@ -3048,7 +3064,7 @@ them.
         This public API function will search the specified screens pull
         down menus for a pull down with the specified name.  If this item
         is found it will be marked disabled.  Once disabled the pull down
-        menu cannot be activated until re-enabled.
+        menu cannot be activated or even selected until it is re-enabled.
 
     API void uC_pd_enable(uC_screen_t *scr, char *name)
 
@@ -3166,6 +3182,8 @@ them.
         selected is disabled it is skipped.  A check is made to ensure
         that this procedure does not perform an infinite loop.
 
+        Only Chuck Norris could do those:  RIP!
+
     static void menu_left_rt(int dir)
 
         This function will move the pull down menu selection either left
@@ -3244,8 +3262,8 @@ widget.  The view structure contains the following entities...
     * Variables giving the dimensions of the view.
     * Variables giving this views location in its parent window.
     * A tab sequence number for this entire view if it is scrollable.
-    * A index to the top item in this view if it is scrollable
-    * The current cursor index within this view if it is scrollable.
+    * An index to the top item in this view if it is scrollable
+    * The current cursor index within this view.
     * Various attributes for entities drawn within this view.
 
 The following flags are defined for widget views...
@@ -3293,8 +3311,8 @@ engine based on the developer defined order.
         uint16_t sequence, uint16_t xco, uint16_t yco, uint16_t width,
         uC_attribs_t attrs, uC_attribs_t focus)
 
-        This public API function is used to create a new widget.  The
-        widget can be one of four types as follows...
+        This function is used to create a new widget.  The widget can be
+        one of four types as follows...
 
             * uC_WIDGET_BUTTON
             * uC_WIDGET_RADIO
@@ -3428,7 +3446,8 @@ engine based on the developer defined order.
 
         This public API call is used to close a given view group.  Closing
         the view group destroys all views and all widgets associated with
-        it and will remove the group from the specified screen structure.
+        them and will remove the group from the specified screen
+        structure.
 
         Once all views have been destroyed and the group detached from the
         screen the view group is then also destroyed.
@@ -3457,7 +3476,7 @@ one and within that border will draw its name if there is one.
 
 If the view is not defined as being scrollable then all widgets within it
 are then drawn into body of the bounding box drawn above.  If it is
-scorllable then the widgets which are drawn into this area will depend on
+scrollable then the widgets which are drawn into this area will depend on
 the scroll position within the view.
 
 If the widgets being drawn are either checkbox or radio buttons then the
@@ -3576,9 +3595,9 @@ The following functions perform the entire drawing operation...
         for both on and off states.  The checkbox will be drawn with
         either it's focused or unfocused attributes.
 
-        The widgets state bit is taken from 32 bit variable pointed to by
-        the *select element within the widget structure.  The widget also
-        contains a variable giving which bit within the select is
+        The widgets state bit is taken from a 32 bit variable pointed to
+        by the *select element within the widget structure.  The widget
+        also contains a variable giving which bit within the select is
         associated with this checkbox.
 
     uint8_t handle_check(uint8_t k)
@@ -3612,6 +3631,12 @@ The following functions perform the entire drawing operation...
 Radio buttons are visually very similar to the checkbox widget except
 where there can be any number of set buttons within the checkbox view only
 one widget may be set within a radio button view.
+
+    Note: A checkbox view can have more than 32 buttons assigned to it but
+    this will split buttons across multiple *select variables and the code
+    here will not ensure that only one bit across all *select variables is
+    set.  It will only ensure that only one bit within the *select of the
+    currently selected button will be set.
 
     void draw_radio(uC_window_t *win, uC_widget_t *widget,
         uint16_t x, uint16_t y)
@@ -3657,7 +3682,7 @@ one widget may be set within a radio button view.
 
 A textbox allows the application to accept the input of strings into
 pre-allocated buffers.  The characters of these strings can be filtered on
-one of the following bases or can be alpha-numeric.
+one of the following number bases or can be alpha-numeric.
 
     * uC_INPUT_BINARY
     * uC_INPUT_OCTAL
@@ -3688,7 +3713,11 @@ characters and moving the cursor within the edit field.
         location then the character will either be drawn with an underline
         or in reverse video depending on whether the widgets editor is in
         insert mode or overwrite mode.  The underline is used for
-        overwrite mode and reverse video is used for insert mode.
+        overwrite mode and reverse video is used for insert mode.  Should
+        those be inverted?
+
+        Note: A string being edited into an edit box can be longer than
+        the box is wide.
 
     static bool test_char(uC_widget_textbox_t *t, uint8_t k)
 
@@ -3751,7 +3780,7 @@ characters and moving the cursor within the edit field.
         textbox widget has focus.  It handles all key presses associated
         with the editing functions of the widget.
 
-    API uC_widget_t *uC_widget_textbox_create( uint16_t sequence,
+    API uC_widget_t *uC_widget_textbox_create(uint16_t sequence,
         char *data, char *name, uint16_t size, uC_textbox_radix_t radix,
         uint16_t width, uint8_t xco, uint8_t yco, uC_attribs_t attrs,
         uC_attribs_t focus)
@@ -3812,7 +3841,7 @@ view group.
         tab sequence number equal to the specified value.
 
         If a widget with the specified tab sequence number is found then
-        that wiget, its parent view and its parent view group are all
+        that widget, its parent view and its parent view group are all
         marked as having focus and a true result is returned.  Otherwise a
         false result is returned.
 
@@ -3830,18 +3859,18 @@ view group.
 
     char tab_next_widget(void)
 
-        This function is part of the widget keybpard handling routines. It
+        This function is part of the widget keyboard handling routines. It
         will attempt to select the widget with a sequence number equal to
-        the currently focussed wiget sequence number plus one.  If no
+        the currently focused widget sequence number plus one.  If no
         widget is found with this sequence number then all widgets, views
         and view groups lose focus and the current sequence number is set
         to zero.
 
     char tab_prev_widget(void)
 
-        This function is part of the widget keybpard handling routines. It
+        This function is part of the widget keyboard handling routines. It
         will attempt to select the widget with a sequence number equal to
-        the currently focussed wiget sequence number minus one.  If no
+        the currently focused widget sequence number minus one.  If no
         widget is found with this sequence number then all widgets, views
         and view groups lose focus and the current sequence number is set
         to zero.
@@ -3871,7 +3900,7 @@ tab and shifted tab keys... need to figure out shifted tab!
 
         This static function handles a single character key press and
         passes the key to the handler for the current widget type.  If the
-        current view is scrollable and the key is a cursor movement theN
+        current view is scrollable and the key is a cursor movement then
         the view is scrolled either up or down.
 
         After handling the key press it is also returned to the caller.
@@ -3950,7 +3979,7 @@ so are also available to the application developer.
     API void uC_ui_free(void *mem)
 
         This public API call is a wrapper function which will free any
-        memory address associated with the user interface.  This happens
+        memory address associated within the user interface.  This happens
         enough to warrant this special wrapper function which would
         otherwise be somewhat wasteful to implement.
 
@@ -4037,10 +4066,12 @@ require more you can always rebuild the library (tm).
 
 The JSON memory zone is only actively being used when the JSON parser is
 initializing the user interface.   At all other times this memory zone is
-not utilized.  This means that this zone can be repurposed in certain
-cases.  If your application is running on a system that could support the
-sigwinch signal and I ever get the handling of this signal working then
-you would not be able to use this zone.  Otherwise knock yourself out!
+not utilized.
+
+This means that this zone can be repurposed in certain cases.  If your
+application is running on a system that could support the sigwinch signal
+and I ever get the handling of this signal working then you would not be
+able to use this zone.  Otherwise knock yourself out!
 
 Each memory zone may have a certain number of allocations made against it.
 Each allocation is tracked within an array within the zone structures.  If
@@ -4095,6 +4126,12 @@ mechanism to shrink expanded zones.
         against a specified zone.   All allocations are made using the
         standard C calloc() function.
 
+        Note: On a highly resource constrained embedded system calloc()
+        and related function calls are somewhat problematical.  In the
+        future I might modify this by adding a more resource friendly
+        allocator to the library but this is not something I would look
+        forward to and would also increase the size of the library.
+
     API void uC_free(uC_mem_zone_t zone, void *addr)
 
         This public API call is used to de-allocate a buffer previously
@@ -4135,7 +4172,7 @@ They also demonstrate a very cheezy super-sampled Mandelbrot viewer.
 
         This public API call will translate an 8 bit vale from 0x00 to
         0xff into the UTF-8 code point for one of the above braille
-        characters.
+        characters with the same bit pattern.
 
     API void uC_braille_8(uC_window_t *win, uint16_t *braille_data,
         uint8_t *map, uint16_t width)
@@ -4242,7 +4279,8 @@ to the it.
     static const char message[]
 
         This array contains the same data as contained within the smushed
-        compressed data array but is not compressed.
+        compressed data array but is not compressed.  Which help data is
+        included is based on a conditional compilation selection.
 
     static void help(void)
 
@@ -4289,9 +4327,8 @@ ported to x86_64 assembler (ftw!).
     static uint8_t digit(uint8_t c, uint8_t radix, uint8_t *result)
 
         This static function will parse a single character out of a string
-        and will convert it to some numerical.  The character is converted
-        into some numerical value based on what ever radix has been
-        selected.
+        and will convert it to some numerical value based on the current
+        radix.
 
         If the character is valid in the currently selected radix then the
         numerical value of that character is returned to the caller.  If
@@ -4324,7 +4361,7 @@ absolutely 100% positive that they are now absolutely 100% bug free! (tm)!
          This public API function allows application code (and the library
          itself) to iterate through a list one node at a time.   On each
          call it will return the address of the next node in the list or
-         a NULL if there are no further entries in the list.
+         a NULL if there are no further items in the list.
 
          The application must pass in one if two parameters.  On the first
          call it should pass in the address of the list to be scanned and
@@ -4336,7 +4373,7 @@ absolutely 100% positive that they are now absolutely 100% bug free! (tm)!
          the previous call.
 
          The application code will need to extract the (void *) payload
-         from each node and cast it to the appropriate data tile to be
+         from each node and cast it to the appropriate data type to be
          handled as needed.
 
     API bool uC_list_insert_node(uC_list_node_t *node1, void *payload)
@@ -4391,7 +4428,7 @@ absolutely 100% positive that they are now absolutely 100% bug free! (tm)!
         specified node within the specified list.  The new node will have
         the specified payload associated with it.
 
-        There is currently no associated "insert after" function.  Add it?
+        There is currently no associated "insert after" function.
 
 
 10.7: uC_rgb_hsl.c
@@ -4456,7 +4493,7 @@ of the most useful extensions added to this library.  It greatly
 simplifies the use of a significant part of the uCurses API.
 
 While these functions associates themselves with C's printf they do not
-support the standard printf format specifiers but implements a custom set
+support the standard printf format specifiers but implement a custom set
 thereof.  Some of these use more than one character (after the %) or may
 expect more than one parameter.  Not something that is commonly seen.
 
@@ -4600,7 +4637,7 @@ which handles it.
     static void wclear(void)           %0
 
         This static function handles the %0 specifier which will clear a
-        window and put its cursor to the top left thereof.
+        window and position its cursor to the top left thereof.
 
     static void u_puts(void)           %s
 
@@ -4827,11 +4864,11 @@ set a window width equal to a percentage of its parent screens width.
 
     static bool check_comma(void)
 
-        This static function verifies that the most space delimited token
-        which was most recently parsed out of the JSON sources has a comma
-        ',' as its last character.  As parsed tokens are never compared
-        directly but are hashed, the has value calculated for this token
-        will be incorrect.
+        This static function verifies that the most recently parsed space
+        delimited token has a comma ',' as its last character.  As parsed
+        tokens are never compared directly but are hashed, the has value
+        calculated for this token will be incorrect (because of the
+        comma).
 
         If the token does have a comma then that comma is stripped off and
         the tokens FNV hash value is recalculated.
@@ -4845,7 +4882,7 @@ set a window width equal to a percentage of its parent screens width.
         This function verifies that the most recently parsed space
         delimited token was the right brace '}' character.  Prior to this
         test it must first strip any comma from the token if there was one
-        and must recalculate the tokens has value with the comma removed.
+        and must recalculate the tokens hash value with the comma removed.
 
         It is assumed that the next state will be JSON_STATE_DONE but if
         the current structure being populated is not the "one and only"
@@ -4904,10 +4941,10 @@ set a window width equal to a percentage of its parent screens width.
         every pull-down menu item parsed by the state machine.
 
         This function is generated by executing the libraries .so file
-        directly while specifying a fine containing a list of function
+        directly while specifying a file containing a list of function
         names to be associated with menu items.   The library will at
         this time generate sources which, when included in the
-        applications build will allow the JSON parser to define the
+        applications build will allow the JSON parser to create the
         desired associations.
 
         It is not possible for the JSON parser to know the address of a
@@ -4959,7 +4996,7 @@ The following functions are contained within this file...
 
         This parser parses tokens out of the source JSON file one line at
         a time.  When the current line of the source file has been parsed
-        this function will 'refill' which copies the current line of the
+        this function will 'refill' which copies the next line of the
         JSON file into a separate line buffer.
 
         Blank lines are skipped here and overly long lines will cause this
@@ -4972,10 +5009,10 @@ The following functions are contained within this file...
         If there is no more data within the line buffer to be parsed then
         the refill function is called here.
 
-        This is also where comments are skipped.  JSON does not have a line
-        comment mechanism defined as part of its specification but most
-        custom parsers add extensions to allow them.  I will not comment on
-        how not being able to comment in JSON is DUMB!
+        This is also where comments are skipped.  JSON does not have a
+        line comment mechanism defined as part of its specification but
+        most custom parsers add extensions to allow them.  I will not
+        comment on how not being able to comment in JSON is DUMB!
 
     void json_de_tab(char *s, int len)
 
@@ -5173,7 +5210,7 @@ pseudo objects are assigned to the pseudo objects parent structure.
         This function allocates a new STRUCT_RGB_BG pseudo object and
         transitions the JSON state machine to the new object state.
 
-        A STRUCT_RGB_FG object may only be defined within one of the
+        A STRUCT_RGB_BG object may only be defined within one of the
         following object structures.
 
             * STRUCT_ATTRIBS
@@ -5194,6 +5231,7 @@ pseudo objects are assigned to the pseudo objects parent structure.
             * STRUCT_WINDOW
             * STRUCT_PULLDOWN
             * STRUCT_MENU_BAR
+
 
 11.3.2: Key tokens
 ------------------
@@ -5295,11 +5333,11 @@ JSON parsers state machine to the new state.
         KEY_BORDER_TYPE and transitions the JSON state machine to the new
         state.
 
-        A KEY_BORDER_TYPE can only be defined as part of one of the following
-        object types.
+        A KEY_BORDER_TYPE can only be defined as part of one of the
+        following object types.
 
-            * TRUCT_BACKDROP
-            * TRUCT_WINDOW
+            * STRUCT_BACKDROP
+            * STRUCT_WINDOW
 
     static void key_vector(void)
 
@@ -5338,6 +5376,7 @@ JSON parsers state machine to the new state.
         This key is one of the mechanisms I used to debug the JSON state
         machine.   You should probably ignore it, I may eventually remove
         it.
+
 
 11.3.3 Key and Object handling
 ------------------------------
@@ -5387,7 +5426,7 @@ tokens and to execute their respective handlers above.
         enclosed within double quote characters and then strips those
         quotes prior to calculating the tokens hash value.
 
-        An attempt is then made to select from the object_typesp[]
+        An attempt is then made to select from the object_types[]
         uC_switch_t array and if this is successful then the JSON state is
         transitioned to the JSON_STATE_L_BRACE state.
 
@@ -5396,6 +5435,7 @@ tokens and to execute their respective handlers above.
 
         The code then verifies that there is a ':' immediately following
         the key / object token.
+
 
 11.4: json_value.c
 ------------------
@@ -5596,7 +5636,7 @@ machines state structure.
         This function is called by the JSON state machine when the current
         JSON state is STATE_VALUE.   It initializes the current key value
         to a special magic "not a number" value and then evaluates the
-        JSON data and override that NAN with an actual value.
+        JSON data and overrides that NAN with an actual value.
 
         It first tests to see if the value token is a known named constant
         and if, after doing this the key value is still NAN it will then
@@ -5653,7 +5693,7 @@ objects parent with that object.
     static void populate_b_attribs(uC_window_t *pstruct)
 
         This function populates a parent window structure with its child
-        border attributes structure.  Once this is completed the childs
+        border attributes structure.  Once this is completed the child's
         JSON state structure is freed.
 
     static void populate_s_attribs(void *pstruct, int32_t ptype)
@@ -5714,6 +5754,7 @@ objects parent with that object.
         function is called to add that object structure to its parent
         object structure using one of the above documented functions.
 
+
 11.6: json_build.c
 ------------------
 
@@ -5729,7 +5770,7 @@ initialization of the applications user interface.
 
         When a window object is created by the JSON state machine it will
         have its position and dimensions specified in the JSON data.  This
-        function verifies that those values are correct and will puke if
+        function verifies that those values are valid and will puke if
         they are not.
 
         When checking a windows coordinates against the known width and
@@ -5793,7 +5834,7 @@ initialization of the applications user interface.
         machine, once the JSON_STATE_DONE state is reached.
 
         It allocates the backing store for the now existent active_screen
-        structure and fixes all the windows and any menu bar attacked to
+        structure and fixes all the windows and any menu bar attached to
         that screen using the above functions.
 
         At this time the entire user interface has been defined.

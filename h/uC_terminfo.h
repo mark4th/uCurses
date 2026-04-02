@@ -64,9 +64,9 @@ typedef struct
 // strings section offset for the format string used to compile the
 // specific escape sequences for each operation
 
-#define ti_bt()    uC_format(0)
+#define ti_bt()    uC_format(0)   // back tab
 #define ti_bell()  uC_format(1)   // NOOOOO!
-#define ti_cr()    uC_format(2)
+#define ti_cr()    uC_format(2)   // carriage return
 #define ti_csr()   uC_format(3)   // change scroll region
 #define ti_tbc()   uC_format(4)   // clear all tab stops
 #define ti_clear() uC_format(5)   // clear screen
@@ -171,117 +171,117 @@ typedef struct
 #define ti_pad     uC_format(104) // padding char (instead of null)
 #define ti_dch()   uC_format(105) // delete n characters
 #define ti_dl()    uC_format(106) // delete n lines
-#define ti_cud()   uC_format(107)  // move cursor down n lines
-#define ti_ich()   uC_format(108)  // insert n characters
-#define ti_indn()  uC_format(109)  // scroll forward n lines
-#define ti_il()    uC_format(110)  // insert n lines
-#define ti_cub()   uC_format(111)  // move cursor back n chars
-#define ti_cuf()   uC_format(112)  // move cursor forward
-#define ti_rin()   uC_format(113)  // scroll back lines
-#define ti_cuu()   uC_format(114)  // cursor up lines
-#define ti_pfkey() uC_format(115)  // program f key to type string
-#define ti_pfloc() uC_format(116)  // program f key to execute string
-#define ti_pfx()   uC_format(117)  // program f key to tx string
-#define ti_mc0()   uC_format(118)  // print screen
-#define ti_mc4()   uC_format(119)  // turn off printer
-#define ti_mc5()   uC_format(120)  // turn on printer
-#define ti_rep()   uC_format(121)  // repeat char
-#define ti_rs1()   uC_format(122)  // reset string
-#define ti_rs2()   uC_format(123)  // reset string
-#define ti_rs3()   uC_format(124)  // reset string
-#define ti_rf()    uC_format(125)  // name of reset file
-#define ti_rc()    uC_format(126)  // restore cursor location
-#define ti_vpa()   uC_format(127)  // vertical position absolute
-#define ti_sc()    uC_format(128)  // save cursor location
-#define ti_ind()   uC_format(129)  // scroll up
-#define ti_ri()    uC_format(130)  // scroll down
-#define ti_sgr()   uC_format(131)  // set graphics rendering
-#define ti_hts()   uC_format(132)  // tab to next 8 space stop
-#define ti_wind()  uC_format(133)  // set current window dims
-#define ti_ht()    uC_format(134)  // tab to next stop
-#define ti_tsl()   uC_format(135)  // move to status line
-#define ti_uc()    uC_format(136)  // underline char
-#define ti_hu()    uC_format(137)  // half line up
-#define ti_iprog() uC_format(138)  // path of init prog
-#define ti_ka1()   uC_format(139)  // keypad upper left
-#define ti_ka3()   uC_format(140)  // keypad upper right
-#define ti_kb2()   uC_format(141)  // kepad center
-#define ti_kc1()   uC_format(142)  // keypad lower left
-#define ti_kc3()   uC_format(143)  // keypad lower right
-#define ti_mc5p()  uC_format(144)  // turn on printer for n bytes
-#define ti_rmp()   uC_format(145)  // like ti_ip when in insert mode
-#define ti_acsc()  uC_format(146)  // alt charset pairs
-#define ti_pln()   uC_format(147)  // program label to show string
-#define ti_kcbt()  uC_format(148)  // backtab key
-#define ti_smxon() uC_format(149)  // turn on xon/xoff
-#define ti_rmxon() uC_format(150)  // turn off xon/xoff
-#define ti_smam()  uC_format(151)  // turn on auto margins
-#define ti_rmam()  uC_format(152)  // turn off auto margins
-#define ti_xonc()  uC_format(153)  // xon char
-#define ti_xoffc() uC_format(154)  // xoff char
-#define ti_enacs() uC_format(155)  // enable alt charset
-#define ti_smln()  uC_format(156)  // turn on soft labels
-#define ti_rmln()  uC_format(157)  // turn off soft labels
-#define ti_kbeg()  uC_format(158)  // begin key
-#define ti_kcan()  uC_format(159)  // cancel key
-#define ti_kclo()  uC_format(160)  // close key
-#define ti_cmd()   uC_format(161)  // command key
-#define ti_cpy()   uC_format(162)  // copy key
-#define ti_kcrt()  uC_format(163)  // create key (the God key!)
-#define ti_kend()  uC_format(164)  // key end
-#define ti_kent()  uC_format(165)  // key enter
-#define ti_kext()  uC_format(166)  // exit key
-#define ti_kfnd()  uC_format(167)  // find key
-#define ti_khlp()  uC_format(168)  // help key
-#define ti_kmrk()  uC_format(169)  // mark key (my key!)
-#define ti_kmsg()  uC_format(170)  // message key
-#define ti_kmov()  uC_format(171)  // move key
-#define ti_knxt()  uC_format(172)  // next key
-#define ti_kopn()  uC_format(173)  // open key
-#define ti_kopt()  uC_format(174)  // options key
-#define ti_kprv()  uC_format(175)  // previous key
-#define ti_kprt()  uC_format(176)  // print key
-#define ti_krdo()  uC_format(177)  // redo key
-#define ti_kref()  uC_format(178)  // reference key
-#define ti_krfr()  uC_format(179)  // refresh key
-#define ti_krpl()  uC_format(180)  // replace key
-#define ti_krst()  uC_format(181)  // restart key
-#define ti_kres()  uC_format(182)  // resume key
-#define ti_ksav()  uC_format(183)  // save key
-#define ti_kspd()  uC_format(184)  // suspend key
-#define ti_kund()  uC_format(185)  // undo key
-#define ti_kBEG()  uC_format(186)  // shift begin key
-#define ti_kCAN()  uC_format(187)  // shift cancel key
-#define ti_kCMD()  uC_format(188)  // shift command key
-#define ti_kCPY()  uC_format(189)  // shift copy key
-#define ti_kCRT()  uC_format(190)  // shift create key
-#define ti_kDC()   uC_format(191)  // shift delete character key
-#define ti_kDL()   uC_format(192)  // shift delete line key
-#define ti_kslt()  uC_format(193)  // select key
-#define ti_kEND()  uC_format(194)  // shifted end key
-#define ti_kEOL()  uC_format(195)  // shift clear to end of line key
-#define ti_kEXT()  uC_format(196)  // shift exit key
-#define ti_kFND()  uC_format(197)  // shift find key
-#define ti_kHLP()  uC_format(198)  // shift help key
-#define ti_kHOM()  uC_format(199)  // shift home key
-#define ti_kIC()   uC_format(200)  // shift insert character key
-#define ti_kLFT()  uC_format(201)  // shift cursor left
-#define ti_kMSG()  uC_format(202)  // shift message key
-#define ti_kMOV()  uC_format(203)  // shift move key
-#define ti_kNXT()  uC_format(204)  // shift next key
-#define ti_kOPT()  uC_format(205)  // shift options key
-#define ti_kPRV()  uC_format(206)  // shift previous key
-#define ti_kPRT()  uC_format(207)  // shift print key
-#define ti_kRDO()  uC_format(208)  // shift redo key
-#define ti_kRPL()  uC_format(209)  // shift replace key
-#define ti_kRIT()  uC_format(210)  // shift cursor right
-#define ti_kRES()  uC_format(211)  // shift resume key
-#define ti_kSAV()  uC_format(212)  // shift save key
-#define ti_kSPD()  uC_format(213)  // shift suspend key
-#define ti_kUND()  uC_format(214)  // shift undo key
-#define ti_rfi()   uC_format(215)  // send next input char (for ptys)
-#define ti_kf11()  uC_format(216)  //
-#define ti_kf12()  uC_format(217)  //
+#define ti_cud()   uC_format(107) // move cursor down n lines
+#define ti_ich()   uC_format(108) // insert n characters
+#define ti_indn()  uC_format(109) // scroll forward n lines
+#define ti_il()    uC_format(110) // insert n lines
+#define ti_cub()   uC_format(111) // move cursor back n chars
+#define ti_cuf()   uC_format(112) // move cursor forward
+#define ti_rin()   uC_format(113) // scroll back lines
+#define ti_cuu()   uC_format(114) // cursor up lines
+#define ti_pfkey() uC_format(115) // program f key to type string
+#define ti_pfloc() uC_format(116) // program f key to execute string
+#define ti_pfx()   uC_format(117) // program f key to tx string
+#define ti_mc0()   uC_format(118) // print screen
+#define ti_mc4()   uC_format(119) // turn off printer
+#define ti_mc5()   uC_format(120) // turn on printer
+#define ti_rep()   uC_format(121) // repeat char
+#define ti_rs1()   uC_format(122) // reset string
+#define ti_rs2()   uC_format(123) // reset string
+#define ti_rs3()   uC_format(124) // reset string
+#define ti_rf()    uC_format(125) // name of reset file
+#define ti_rc()    uC_format(126) // restore cursor location
+#define ti_vpa()   uC_format(127) // vertical position absolute
+#define ti_sc()    uC_format(128) // save cursor location
+#define ti_ind()   uC_format(129) // scroll up
+#define ti_ri()    uC_format(130) // scroll down
+#define ti_sgr()   uC_format(131) // set graphics rendering
+#define ti_hts()   uC_format(132) // tab to next 8 space stop
+#define ti_wind()  uC_format(133) // set current window dims
+#define ti_ht()    uC_format(134) // tab to next stop
+#define ti_tsl()   uC_format(135) // move to status line
+#define ti_uc()    uC_format(136) // underline char
+#define ti_hu()    uC_format(137) // half line up
+#define ti_iprog() uC_format(138) // path of init prog
+#define ti_ka1()   uC_format(139) // keypad upper left
+#define ti_ka3()   uC_format(140) // keypad upper right
+#define ti_kb2()   uC_format(141) // kepad center
+#define ti_kc1()   uC_format(142) // keypad lower left
+#define ti_kc3()   uC_format(143) // keypad lower right
+#define ti_mc5p()  uC_format(144) // turn on printer for n bytes
+#define ti_rmp()   uC_format(145) // like ti_ip when in insert mode
+#define ti_acsc()  uC_format(146) // alt charset pairs
+#define ti_pln()   uC_format(147) // program label to show string
+#define ti_kcbt()  uC_format(148) // backtab key
+#define ti_smxon() uC_format(149) // turn on xon/xoff
+#define ti_rmxon() uC_format(150) // turn off xon/xoff
+#define ti_smam()  uC_format(151) // turn on auto margins
+#define ti_rmam()  uC_format(152) // turn off auto margins
+#define ti_xonc()  uC_format(153) // xon char
+#define ti_xoffc() uC_format(154) // xoff char
+#define ti_enacs() uC_format(155) // enable alt charset
+#define ti_smln()  uC_format(156) // turn on soft labels
+#define ti_rmln()  uC_format(157) // turn off soft labels
+#define ti_kbeg()  uC_format(158) // begin key
+#define ti_kcan()  uC_format(159) // cancel key
+#define ti_kclo()  uC_format(160) // close key
+#define ti_cmd()   uC_format(161) // command key
+#define ti_cpy()   uC_format(162) // copy key
+#define ti_kcrt()  uC_format(163) // create key (the God key!)
+#define ti_kend()  uC_format(164) // key end
+#define ti_kent()  uC_format(165) // key enter
+#define ti_kext()  uC_format(166) // exit key
+#define ti_kfnd()  uC_format(167) // find key
+#define ti_khlp()  uC_format(168) // help key
+#define ti_kmrk()  uC_format(169) // mark key (my key!)
+#define ti_kmsg()  uC_format(170) // message key
+#define ti_kmov()  uC_format(171) // move key
+#define ti_knxt()  uC_format(172) // next key
+#define ti_kopn()  uC_format(173) // open key
+#define ti_kopt()  uC_format(174) // options key
+#define ti_kprv()  uC_format(175) // previous key
+#define ti_kprt()  uC_format(176) // print key
+#define ti_krdo()  uC_format(177) // redo key
+#define ti_kref()  uC_format(178) // reference key
+#define ti_krfr()  uC_format(179) // refresh key
+#define ti_krpl()  uC_format(180) // replace key
+#define ti_krst()  uC_format(181) // restart key
+#define ti_kres()  uC_format(182) // resume key
+#define ti_ksav()  uC_format(183) // save key
+#define ti_kspd()  uC_format(184) // suspend key
+#define ti_kund()  uC_format(185) // undo key
+#define ti_kBEG()  uC_format(186) // shift begin key
+#define ti_kCAN()  uC_format(187) // shift cancel key
+#define ti_kCMD()  uC_format(188) // shift command key
+#define ti_kCPY()  uC_format(189) // shift copy key
+#define ti_kCRT()  uC_format(190) // shift create key
+#define ti_kDC()   uC_format(191) // shift delete character key
+#define ti_kDL()   uC_format(192) // shift delete line key
+#define ti_kslt()  uC_format(193) // select key
+#define ti_kEND()  uC_format(194) // shifted end key
+#define ti_kEOL()  uC_format(195) // shift clear to end of line key
+#define ti_kEXT()  uC_format(196) // shift exit key
+#define ti_kFND()  uC_format(197) // shift find key
+#define ti_kHLP()  uC_format(198) // shift help key
+#define ti_kHOM()  uC_format(199) // shift home key
+#define ti_kIC()   uC_format(200) // shift insert character key
+#define ti_kLFT()  uC_format(201) // shift cursor left
+#define ti_kMSG()  uC_format(202) // shift message key
+#define ti_kMOV()  uC_format(203) // shift move key
+#define ti_kNXT()  uC_format(204) // shift next key
+#define ti_kOPT()  uC_format(205) // shift options key
+#define ti_kPRV()  uC_format(206) // shift previous key
+#define ti_kPRT()  uC_format(207) // shift print key
+#define ti_kRDO()  uC_format(208) // shift redo key
+#define ti_kRPL()  uC_format(209) // shift replace key
+#define ti_kRIT()  uC_format(210) // shift cursor right
+#define ti_kRES()  uC_format(211) // shift resume key
+#define ti_kSAV()  uC_format(212) // shift save key
+#define ti_kSPD()  uC_format(213) // shift suspend key
+#define ti_kUND()  uC_format(214) // shift undo key
+#define ti_rfi()   uC_format(215) // send next input char (for ptys)
+#define ti_kf11()  uC_format(216) //
+#define ti_kf12()  uC_format(217) //
 
 #define ti_kf13()  uC_format(218)  // Shift + function keys
 #define ti_kf14()  uC_format(219)  //

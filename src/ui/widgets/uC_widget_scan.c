@@ -156,7 +156,6 @@ char tab_next_widget(void)
 
     uC_widget_select_widget(sequence);
 
-
     return 0x09;
 }
 
@@ -164,17 +163,33 @@ char tab_next_widget(void)
 
 char tab_prev_widget(void)
 {
-    uint16_t sequence = widget_state.sequence - 1;
+    uint16_t sequence;
 
-    // if we do not find one then all view groups, all views and all
-    // widgets lose focus and the sequence resets to zero (no focus)
+    if (widget_state.sequence != 0)
+    {
+        sequence = widget_state.sequence - 1;
+        widget_state.sequence = 0;
+        uC_widget_select_widget(sequence);
+    }
 
-    widget_state.sequence = 0;
-
-    uC_widget_select_widget(sequence);
-
-    return 0x09;
+    return 0x88;
 }
+
+// -----------------------------------------------------------------------
+
+// char tab_prev_widget(void)
+// {
+//     uint16_t sequence = widget_state.sequence - 1;
+
+//     // if we do not find one then all view groups, all views and all
+//     // widgets lose focus and the sequence resets to zero (no focus)
+
+//     widget_state.sequence = 0;
+
+//     uC_widget_select_widget(sequence);
+
+//     return 0x09;
+// }
 
 // -----------------------------------------------------------------------
 

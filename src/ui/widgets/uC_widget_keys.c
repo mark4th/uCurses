@@ -49,14 +49,14 @@ static uint8_t handle_widget(uint8_t k)
                 return k;
             }
         }
-        else
-        {
-            switch (k)
-            {
-                case WIDGET_KEY_UP:   tab_prev_widget(); return k;
-                case WIDGET_KEY_DOWN: tab_next_widget(); return k;
-            }
-        }
+        // else
+        // {
+        //     switch (k)
+        //     {
+        //         case WIDGET_KEY_UP:   tab_prev_widget(); return k;
+        //         case WIDGET_KEY_DOWN: tab_next_widget(); return k;
+        //     }
+        // }
     }
 
     switch (widget_state.widget->type)
@@ -97,9 +97,16 @@ static uint8_t widget_key(void)
 
         if (k != 0x1b)
         {
-            k = (k == 0x09)
-                ? tab_next_widget()
-                : handle_widget(k);
+            if (k == 0x88)
+            {
+                k = tab_prev_widget();
+            }
+            else
+            {
+                k = (k == 0x09)
+                    ? tab_next_widget()
+                    : handle_widget(k);
+            }
         }
     }
 

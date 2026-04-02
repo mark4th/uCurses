@@ -3891,6 +3891,15 @@ The cursor up and cursor down keys are used to move up or down within a
 scrollable widget view if it has focus and to potentially scroll that
 widget it in one or other direction.
 
+< edit >
+    The following paragraph is no longer correct. the code to do this was
+    removed because the entire reason back tab was failing was because
+    my FUCKING DE was stealing that key. Back tab works fine.
+
+    In an embedded system where there is no desktop env this problem will
+    not exist.
+< /edit>
+
 If the currently focused view is not scrollable then the cursor up and
 down keys select either the next or previous widget in the tab order.
 This is kind of iffy and this should really be handled exclusively by the

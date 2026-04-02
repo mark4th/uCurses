@@ -48,6 +48,23 @@ static void kent(void) { set_esc0(0x0a); }
 static void kbs(void)  { set_esc0(0x08); }
 
 // -----------------------------------------------------------------------
+// if the back tab is stolen comment out kcbt below and use this (alt tab)
+
+// I hate the way the operating system steals key presses from applications
+// I hate the way the desktop env steals  key presses from applications
+// I hate the way the terminal emulator  key presses from applications
+
+// I actually want to TERMINATE WITH EXTREME PREJUDICE every single
+// keyboard shortcut throuhout MY ENTIER FUCKING SYSTEM.  Cant be done.
+
+// static void kcbt(void)
+// {
+//     ti_vars->esc_buff[0] = 0x1b;
+//     ti_vars->esc_buff[1] = 0x09;
+//     ti_vars->num_esc = 2;
+// }
+
+// -----------------------------------------------------------------------
 
 // each of these puts a key escape sequence in the esc_buff terminfo
 // escape sequence buffer which is usually used to compile output data.

@@ -2,7 +2,7 @@
 project(
     'uCurses',
     'c',
-    version : '0.0.1',
+    version : '1.0',
     default_options : ['warning_level=3'],
     license: 'MIT',
 )

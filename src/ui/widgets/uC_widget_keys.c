@@ -49,14 +49,6 @@ static uint8_t handle_widget(uint8_t k)
                 return k;
             }
         }
-        // else
-        // {
-        //     switch (k)
-        //     {
-        //         case WIDGET_KEY_UP:   tab_prev_widget(); return k;
-        //         case WIDGET_KEY_DOWN: tab_next_widget(); return k;
-        //     }
-        // }
     }
 
     switch (widget_state.widget->type)

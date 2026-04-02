@@ -886,9 +886,9 @@ name.  Others have names that describe their function better.
     API void uC_hpa(int16_t x)
 
         HPA stands for "Horizontal Position Absolute".  This function
-        moves the cursor to a specific X coordinate within on which ever
-        line the consoles cursor is situated.  This also moves the cursor
-        within the current active screen to the same location.
+        moves the cursor to a specific X coordinate on which ever line the
+        consoles cursor is situated.  This also moves the cursor within
+        the current active screen to the same location.
 
     API void uC_cup(int16_t x, int16_t y)
 

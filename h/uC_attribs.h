@@ -75,7 +75,6 @@ typedef struct
             uint8_t gray_fg : 1;  // characters foreground is gray scale
             uint8_t gray_bg : 1;  // characters background is gray scale
             uint8_t r1      : 1;  // reserved bits
-            // uint8_t r2;
         } __attribute__((__packed__));
         uint16_t bits;
     } __attribute__((__packed__));

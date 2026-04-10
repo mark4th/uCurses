@@ -144,7 +144,7 @@ This library also has a few things that ncurses does not.
         size and I may have missed counting a few files.  It also takes a
         little over seven minutes to compile on my laptop.
 
-        uCurses on the other hand currently takes up about 115k and
+        uCurses on the other hand currently takes up about 87k and 
         compiles in about two or three seconds ish depending on planetary
         alignment.  This means that recompiling this on any embedded
         system it is installed on would probably not bog that system down

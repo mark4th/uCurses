@@ -97,14 +97,17 @@ API void uC_widget_vg_close(uC_widget_vg_t *vg)
 {
     uC_widget_view_t *view;
 
-    while (vg->views.count != 0)
+    if (vg != NULL)
     {
-        view = uC_list_pop_head(&vg->views);
-        widget_close_view(view);
-    }
+        while (vg->views.count != 0)
+        {
+            view = uC_list_pop_head(&vg->views);
+            widget_close_view(view);
+        }
 
-    uC_win_close(&vg->window);
-    uC_free(uC_MEM_ZONE_UI, vg);
+        uC_win_close(&vg->window);
+        uC_free(uC_MEM_ZONE_UI, vg);
+    }
 }
 
 // -----------------------------------------------------------------------

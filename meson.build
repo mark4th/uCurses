@@ -27,9 +27,9 @@ source_dir = run_command(python, '-c', 'import os; print(os.getcwd(), end="");',
 compiler = meson.get_compiler('c')
 
 if compiler.get_id() == 'gcc'
-    build_args += ['-O0', '-Wno-error=attributes']
+    build_args += ['-Os', '-Wno-error=attributes']
 elif compiler.get_id() == 'clang'
-    build_args += ['-O0']
+    build_args += ['-Oz']
 endif
 
 build_args += [

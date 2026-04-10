@@ -76,14 +76,17 @@ API uC_screen_t *uC_scr_open(int16_t width, int16_t height)
 
 #ifdef UC_WIDGETS
 
-static void close_view_groups(uC_screen_t *scr)
+API void uC_scr_close_view_groups(uC_screen_t *scr)
 {
     uC_widget_vg_t *vg;
 
-    while (scr->view_groups.count != 0)
+    if (scr != NULL)
     {
-        vg = uC_list_pop_head(&scr->view_groups);
-        uC_widget_vg_close(vg);
+        while (scr->view_groups.count != 0)
+        {
+            vg = uC_list_pop_head(&scr->view_groups);
+            uC_widget_vg_close(vg);
+        }
     }
 }
 
@@ -114,7 +117,7 @@ API void uC_scr_close(uC_screen_t *scr)
         }
 
 #ifdef UC_WIDGETS
-        close_view_groups(scr);
+        uC_scr_close_view_groups(scr);
 #endif
 
 #ifdef UC_MENUS

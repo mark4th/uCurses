@@ -44,6 +44,7 @@ int16_t win_chk_pos(uC_window_t *win, uC_screen_t *scr,
 // -----------------------------------------------------------------------
 
 API uC_screen_t *uC_scr_open(int16_t width, int16_t height);
+API void uC_scr_close_view_groups(uC_screen_t *scr);
 API void uC_scr_close(uC_screen_t *scr);
 API void uC_scr_add_backdrop(uC_screen_t *scr);
 API void uC_scr_draw_screen(uC_screen_t *scr);

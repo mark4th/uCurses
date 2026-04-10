@@ -304,6 +304,7 @@ API void uC_vpa(uint16_t y)
 API void uC_cr(void)
 {
     char *cr = "\r\n";
+    size_t n;
 
     if (active_screen != NULL)
     {
@@ -314,7 +315,11 @@ API void uC_cr(void)
         }
     }
 
-    write(1, cr, 2);
+    n = write(1, cr, 2);
+    if (n != 2)
+    {
+        ;
+    }
 }
 
 // -----------------------------------------------------------------------

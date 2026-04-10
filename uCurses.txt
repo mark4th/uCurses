@@ -132,11 +132,12 @@ that has two things going for it that uCurses does not and may never have!
 There is a very *very* good reason why ncurses is ubiquitous in the *nix
 universe - How could an ID10T like me compete with that? <3
 
-However, that being said, while I do not actually program ncurses and in
-fact know absolutely nothing about developing with it, this library would
-not be possible at all without ncurses or its developer.
+Note: While I do not actually program ncurses and in fact know 
+absolutely nothing about developing with it, this library would not be 
+possible at all without ncurses or its developer.
 
-This library also has a few things that ncurses does not.
+However, that being said, this library also has a few things that ncurses 
+does not. 
 
     It is extremely small (but growing :/ ).
 

@@ -105,15 +105,23 @@ API bool uC_widget_view_add_widget(uC_widget_view_t *view,
 
 // -----------------------------------------------------------------------
 
+API void uC_widget_view_remove_widget(uC_widget_view_t *view,
+    uC_widget_t *widget)
+{
+    uC_list_remove_node(&view->widgets, widget);
+}
+
+// -----------------------------------------------------------------------
+
 void widget_close_view(uC_widget_view_t *view)
 {
     uC_widget_t *widget;
 
-    do
+    while (view->widgets.count != 0)
     {
         widget = uC_list_pop_head(&view->widgets);
-        uC_free(uC_MEM_ZONE_UI, widget);
-    } while (widget != NULL);
+        uC_widget_close_widget(widget);
+    }
 
     uC_free(uC_MEM_ZONE_UI, view);
 }

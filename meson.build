@@ -47,7 +47,7 @@ build_args += [
 message('@0@: @1@'.format(compiler.get_id(), build_args))
 
 
-linker_args = ['-Wl,--entry=entry']
+linker_args = ['-Wl,--entry=entry', '-Wl,-z,pack-relative-relocs']
 
 find_src    = '''from glob import glob;print('\n'.join(glob('src/*.c')))'''
 find_jsn    = '''from glob import glob;print('\n'.join(glob('src/json/*.c')))'''

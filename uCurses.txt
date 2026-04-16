@@ -1913,13 +1913,19 @@ simplified the Gordian knot of circular include dependencies.
         When a screen is opened it is automatically set as the current
         active screen.  There can (for now?) be only one.
 
-    static void close_view_groups(uC_screen_t *scr)
+   API void uC_scr_close_view_groups(uC_screen_t *scr)
 
-        This function is called as part of the user interface tear down
-        procedure.  Any active widget view groups with their associated
-        views and associated widgets will be de-allocated by this call.
+        This public API function is called as part of the user interface
+        tear down procedure.  Any active widget view groups with their
+        associated views and associated widgets will be de-allocated by
+        this call.
 
         I.E.  The entire widget interface goes bye bye.
+
+        Making this function public allows the developer to initiate a
+        complete tear down of the widgets interface without affecting any
+        other part of the UI.  This could be used to generate new widgets
+        on the fly based on application context.
 
         Technically this belongs within the widget sources but putting it
         here means that the widget functions outside this source file do
@@ -3374,6 +3380,13 @@ engine based on the developer defined order.
         the same type.
 
         If the view is scrollable the limit is 64k (insanity).
+
+    API void uC_widget_view_remove_widget(uC_widget_view_t *view,
+    uC_widget_t *widget)
+
+        This publivc API call is used to detach a wiget from a view.  The
+        view itself is not closed even if the removed widget is the only
+        one that was attached.
 
     void widget_close_view(uC_widget_view_t *view)
 

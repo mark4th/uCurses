@@ -299,7 +299,11 @@ API uC_widget_view_t *uC_widget_view_create(uint8_t *name,
 API void uC_widget_view_add_border(uC_widget_view_t *view,
     uC_border_type_t bdr_type, uC_attribs_t bdr_attrs);
 
-API bool uC_widget_view_add_widget(uC_widget_view_t *view, uC_widget_t *w);
+API bool uC_widget_view_add_widget(uC_widget_view_t *view,
+    uC_widget_t *w);
+
+API void uC_widget_view_remove_widget(uC_widget_view_t *view,
+    uC_widget_t *widget);
 
 // -----------------------------------------------------------------------
 

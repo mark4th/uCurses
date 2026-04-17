@@ -36,6 +36,11 @@ API uC_widget_vg_t *uC_widget_vg_create(uint8_t *name,
 
         vg->window.flags         = uC_WIN_LOCKED;
 
+        if (name != NULL)
+        {
+            vg->window.flags |= uC_WIN_NAMED;
+        }
+
         vg->window.blank         = 0x20;
     }
 

@@ -1,1 +1,24 @@
-see README !!!
+
+This library currently does not build under GCC because as the new documentation
+states, GCC does not allow you to smash a square peg into a square hole of the
+wrong type.  This will be fixed eventually.  The build still works with CLANG.
+
+To buile type
+
+    export CC=clang
+    make
+
+This will build thelibrary which can then be installed with
+
+   make install
+
+which (in Gentoo at least) will install the .so file as 
+
+    /usr/local/lib64/libuCurses.so.1.0 
+
+with an associated symlink 
+
+    /usr/local/lib64/libuCurses.so
+
+You may need to run ldconfig for your applications to be able to build
+against this library. 

@@ -36,6 +36,10 @@ API uC_widget_vg_t *uC_widget_vg_create(uint8_t *name,
 
         vg->window.flags         = uC_WIN_LOCKED;
 
+        // this name will not be displayed unless you also give the
+        // view group a border but it is assumed that if you supplied
+        // a name then you intend to do so.
+
         if (name != NULL)
         {
             vg->window.flags |= uC_WIN_NAMED;

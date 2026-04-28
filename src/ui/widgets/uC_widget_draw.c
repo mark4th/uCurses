@@ -46,6 +46,30 @@ uint16_t radio_on[]  =
 
 // -----------------------------------------------------------------------
 
+void widget_set_attrs(uC_window_t *win, uC_widget_t *widget)
+{
+    uC_attribs_t attr;
+    uC_widget_view_t *view;
+
+    attr = widget->attrs;
+    view = widget->view;
+
+    if (widget->focused == true)
+    {
+        attr = widget->focus_attrs;
+
+        if (view != widget_state.view)
+        {
+            uC_set_fg(&attr, uC_COLOR_WHITE);
+            uC_set_bg(&attr, uC_COLOR_GRAY);
+        }
+    }
+
+    win->attrs = attr;
+}
+
+// -----------------------------------------------------------------------
+
 static void draw_widget(uC_window_t *win, uC_widget_t *widget,
     uint16_t xco, uint16_t yco)
 {
@@ -111,6 +135,8 @@ static void draw_scrollable(uC_window_t *win, uC_widget_view_t *view)
 
     n1 = uC_list_scan(&view->widgets, NULL);
 
+    // scan to widget that is at the top of the view
+
     for (i = 0; i < view->top; i++)
     {
         n1 = uC_list_scan(NULL, n1);
@@ -120,8 +146,8 @@ static void draw_scrollable(uC_window_t *win, uC_widget_view_t *view)
     {
         widget = (uC_widget_t *)n1->payload;
 
-        widget->focused = ((i == view->cy) &&
-            (widget_state.sequence == view->sequence));
+        widget->focused = (i == view->cy); // &&
+//            (widget_state.sequence == view->sequence));
 
         // the view controls the placement of widgets when
         // the view is scrollable.
@@ -159,9 +185,6 @@ static void draw_nonscrollable(uC_window_t *win, uC_widget_view_t *view)
 static void draw_view(uC_window_t *win, uC_widget_view_t *view)
 {
     win->attrs = view->attrs;
-
-    // uC_window_clear_box(win, view->xco, view->yco,
-    //     view->width, view->height);
 
     if (view->flags & (1 << uC_VIEW_BOXED))
     {

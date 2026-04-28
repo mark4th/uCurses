@@ -202,6 +202,11 @@ void win_draw_borders(uC_window_t *win)
 API void uC_window_clear_box(uC_window_t *win,
     uint16_t xco, uint16_t yco, uint16_t width, uint16_t height)
 {
+    if (win == NULL)
+    {
+        return;
+    }
+
     while (height--)
     {
         // %@ set cursor x / y location within window
@@ -225,6 +230,11 @@ API void uC_win_draw_box(uC_window_t *win,
     uC_attribs_t box_attrs)
 {
     border_t *bdr;
+
+    if (win == NULL)
+    {
+        return;
+    }
 
     if (bdr_type == uC_BDR_NONE)        { return; }
     if ((x + width  + 1) > win->width)  { return; }

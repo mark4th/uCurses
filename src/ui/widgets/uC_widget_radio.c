@@ -32,9 +32,11 @@ void draw_radio(uC_window_t *win, uC_widget_t *widget,
             ? radio_on[widget->radio.type]
             : radio_off[widget->radio.type];
 
-        win->attrs = (widget->focused == true)
-            ? widget->focus_attrs
-            : widget->attrs;
+        widget_set_attrs(win, widget);
+
+        // win->attrs = (widget->focused == true)
+        //     ? widget->focus_attrs
+        //     : widget->attrs;
 
         // %@ set cursor x / y within window
         // %* write multiple repetitions of char

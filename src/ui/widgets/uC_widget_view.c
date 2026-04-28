@@ -108,7 +108,10 @@ API bool uC_widget_view_add_widget(uC_widget_view_t *view,
 API void uC_widget_view_remove_widget(uC_widget_view_t *view,
     uC_widget_t *widget)
 {
-    uC_list_remove_node(&view->widgets, widget);
+    if (view != NULL)
+    {
+        uC_list_remove_node(&view->widgets, widget);
+    }
 }
 
 // -----------------------------------------------------------------------
@@ -131,17 +134,24 @@ void widget_close_view(uC_widget_view_t *view)
 
 static void view_up(void)
 {
-    if (widget_state.view->cy != 0)
+    uC_widget_view_t *view = widget_state.view;
+
+    if (view->cy != 0)
     {
-        widget_state.view->cy--;
-        widget_state.view->view_node =
-            widget_state.view->view_node->prev;
+        view->cy--;
     }
-    else if (widget_state.view->top != 0)
+    else if (view->top != 0)
     {
-        widget_state.view->top--;
-        widget_state.view->view_node =
-            widget_state.view->view_node->prev;
+        view->top--;
+    }
+    else
+    {
+        return;
+    }
+
+    if (view->view_node->prev != NULL)
+    {
+        widget_state.view->view_node = view->view_node->prev;
     }
 }
 
@@ -149,7 +159,7 @@ static void view_up(void)
 
 static void next(void)
 {
-    if (widget_state.view->view_node != NULL)
+    if (widget_state.view->view_node->next != NULL)
     {
         widget_state.view->view_node =
             widget_state.view->view_node->next;
@@ -162,26 +172,31 @@ static void next(void)
 static void view_down(void)
 {
     uint16_t n;
+    uint16_t min;
+
     uC_widget_view_t *view;
 
     view = widget_state.view;
 
-    if ((view->cy != view->height - 1) &&
-        (view->cy != view->widgets.count - 1))
+    min = (view->height < view->widgets.count)
+        ? view->height
+        : view->widgets.count;
+
+    if (view->cy != min - 1)
     {
         view->cy++;
-        next();
     }
     else
     {
         n = view->top + view->cy;
 
-        if (n != view->widgets.count - 1)
+        if (n == view->widgets.count - 1)
         {
-            view->top++;
-            next();
+            return;
         }
+        view->top++;
     }
+    next();
 }
 
 // -----------------------------------------------------------------------
@@ -197,6 +212,39 @@ void widget_scroll_view(uint8_t k)
     if (widget_state.view->view_node != NULL)
     {
         widget_state.widget = widget_state.view->view_node->payload;
+    }
+}
+
+// -----------------------------------------------------------------------
+// give the widget at the specified index within a scrollable view focus
+
+API void uC_widget_to_view_index(uC_widget_view_t *view, uint16_t index)
+{
+    int i;
+
+    // call is only valid if view is scrollable
+
+    if ((view->flags & uC_VIEW_SCROLL) == 0)
+    {
+        return;
+    }
+
+    if (view->widgets.head == NULL)
+    {
+        return;
+    }
+
+    view->top             = 0;
+    view->cy              = 0;
+    view->view_node       = view->widgets.head;
+
+    widget_state.widget   = view->view_node->payload;
+    widget_state.view     = view;
+    widget_state.sequence = widget_state.widget->sequence;
+
+    for (i = 0; i != index ; i++)
+    {
+        view_down();
     }
 }
 

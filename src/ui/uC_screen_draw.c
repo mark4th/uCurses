@@ -369,8 +369,16 @@ static void outer_update(uC_screen_t *scr)
 {
     bool f;
 
-    int16_t index = 0;
-    int16_t end   = (scr->width * scr->height);
+    int16_t index;
+    int16_t end;
+
+    if (scr == NULL)
+    {
+        return;
+    }
+
+    end   = (scr->width * scr->height);
+    index = 0;
 
     scr->cx = scr->cy = -1; // force a screen cursor position update
 
@@ -418,17 +426,17 @@ static void outer_update(uC_screen_t *scr)
 
 API void uC_scr_draw_screen(uC_screen_t *scr)
 {
-    // this sgr0 fixes a bug where the most recent write to the console
-    // was of an underlined character and the underline attribute is still
-    // set (for reasons unknown)
-
-    ti_sgr0();
-
-    // move this to uCurses initialization?
-    setlocale(LC_CTYPE, "");
-
     if (scr != NULL)
     {
+        // this sgr0 fixes a bug where the most recent write to the
+        // console was of an underlined character and the underline
+        // attribute is still set (for reasons unknown)
+
+        ti_sgr0();
+
+        // move this to uCurses initialization?
+        setlocale(LC_CTYPE, "");
+
         active_screen = scr;
 
         // the backdrop if it exists is always the first window
@@ -447,10 +455,6 @@ API void uC_scr_draw_screen(uC_screen_t *scr)
 
         // special case windows ->
 
-#ifdef UC_STATUS
-        scr_draw_windows(&scr->status);
-#endif // UC_STATUS
-
 // i hate embedding cluster fuck conditional compilation all over!
 // if this gets out of hand im reverting to ZERO conditionals buried
 // in these soures
@@ -458,6 +462,10 @@ API void uC_scr_draw_screen(uC_screen_t *scr)
 #ifdef UC_MENUS
         scr_update_menus(scr);
 #endif // UC_MENUS
+
+#ifdef UC_STATUS
+        scr_draw_windows(&scr->status);
+#endif // UC_STATUS
 
 
 // widgets, if active are always drawn over the top of any other

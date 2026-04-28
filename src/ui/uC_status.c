@@ -20,6 +20,11 @@ API uC_window_t *uC_add_status(uC_screen_t *scr, uint16_t width,
 {
     int16_t f;
 
+    if (scr == NULL)
+    {
+        return NULL;
+    }
+
     uC_window_t *win = uC_win_open(width, 1);
 
     if (win != NULL)

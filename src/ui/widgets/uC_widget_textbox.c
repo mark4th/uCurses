@@ -53,9 +53,11 @@ void draw_textbox(uC_window_t *win, uC_widget_t *widget,
 
     uC_win_printf(win, "%@%s", x, y, widget->name);
 
-    win->attrs = (widget->focused == true)
-        ? widget->focus_attrs
-        : widget->attrs;
+    widget_set_attrs(win, widget);
+
+    // win->attrs = (widget->focused == true)
+    //     ? widget->focus_attrs
+    //     : widget->attrs;
 
     t = &widget->textbox;
 
@@ -109,15 +111,16 @@ void draw_textbox(uC_window_t *win, uC_widget_t *widget,
                 // else print character underlined or rev
 
                 (c == '\0') ? 0x20 : c);
-            // char already prinited. skip print below
-            continue;
         }
-        // not at cursor location, just draw character or exit loop
-        else if (c == '\0')
+        else if (c != '\0')
+        {
+            uC_win_printf(win, "%8", c);
+        }
+
+        if (c == '\0')
         {
             break;
         }
-        uC_win_printf(win, "%8", c);
     }
 }
 

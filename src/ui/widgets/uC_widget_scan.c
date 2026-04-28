@@ -90,7 +90,7 @@ static bool scan_vg(uC_widget_vg_t *vg, uint16_t sequence)
 
 API bool uC_widget_select_widget(uint16_t sequence)
 {
-    bool f;
+    bool f = false;
 
     uC_list_node_t *n1;
     uC_widget_vg_t *vg;
@@ -174,22 +174,6 @@ char tab_prev_widget(void)
 
     return 0x88;
 }
-
-// -----------------------------------------------------------------------
-
-// char tab_prev_widget(void)
-// {
-//     uint16_t sequence = widget_state.sequence - 1;
-
-//     // if we do not find one then all view groups, all views and all
-//     // widgets lose focus and the sequence resets to zero (no focus)
-
-//     widget_state.sequence = 0;
-
-//     uC_widget_select_widget(sequence);
-
-//     return 0x09;
-// }
 
 // -----------------------------------------------------------------------
 

@@ -121,7 +121,6 @@ static uint8_t widget_key(void)
 // stuff one of the above uCurses black magic key values into the keyboard
 // input buffers to be returned to widget_key() above
 
-
 static void widget_key_up(void)     { uC_set_key(WIDGET_KEY_UP);     }
 static void widget_key_down(void)   { uC_set_key(WIDGET_KEY_DOWN);   }
 static void widget_key_left(void)   { uC_set_key(WIDGET_KEY_LEFT);   }

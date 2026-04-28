@@ -77,10 +77,11 @@ static void draw_btn_txt(uC_window_t *win, uint16_t x, uint16_t y,
 void draw_button(uC_window_t *win, uC_widget_t *widget,
     uint16_t x, uint16_t y)
 {
-    // todo: add disabled attributes to widget
-    win->attrs = (widget->focused == true)
-        ? widget->focus_attrs
-        : widget->attrs;
+    widget_set_attrs(win, widget);
+
+    // win->attrs = (widget->focused == true)
+    //     ? widget->focus_attrs
+    //     : widget->attrs;
 
     draw_btn_txt(win, x, y, widget->width, widget->name,
         widget->button.letter);

@@ -18,7 +18,7 @@
 
 // -----------------------------------------------------------------------
 
-#define MAX_WIDGET_NAME_LEN (64)
+#define MAX_WIDGET_NAME_LEN (32)
 
 // -----------------------------------------------------------------------
 
@@ -28,7 +28,7 @@ typedef enum
     uC_INPUT_OCTAL   = 1,     // 0-7
     uC_INPUT_DECIMAL = 2,     // 0-9
     uC_INPUT_HEX     = 3,     // 0-9 a-f A-F
-    uC_INPUT_ALPHA   = 4,     // 0-9 a-z A-Z _
+    uC_INPUT_ALPHA   = 4,     // 0-9 a-z A-Z _ etc
 } __attribute__((__packed__)) uC_textbox_radix_t;
 
 // -----------------------------------------------------------------------
@@ -36,10 +36,10 @@ typedef enum
 typedef enum
 {
     uC_WIDGET_NONE,
-    uC_WIDGET_BUTTON,       //
+    uC_WIDGET_BUTTON,
     uC_WIDGET_RADIO,        // radio buttons, only one can be selected
     uC_WIDGET_CHECK,        // checkbox buttons, any number can be selected
-    uC_WIDGET_TEXTBOX,      // editzble text, decimal, octal, hex, binary
+    uC_WIDGET_TEXTBOX,      // editable text, decimal, octal, hex, binary
 } __attribute__((__packed__)) uC_widget_type_t;
 
 // -----------------------------------------------------------------------
@@ -53,8 +53,6 @@ typedef enum
 
 // -----------------------------------------------------------------------
 // visual chars for radio buttons and checkbox's
-
-// i could add triangles to this too
 
 typedef enum
 {
@@ -103,14 +101,13 @@ typedef struct
     uC_view_flags_t flags;
     uC_list_t widgets;      // list of widgets attached to this view
 
-    uC_list_node_t *view_node;
 
-    uint8_t *name;             // view name drawn in top border
+    uint8_t *name;          // view name drawn in top border
 
-    int16_t width;
-    int16_t height;
-    int16_t xco;            // view x/y coords within parent window
-    int16_t yco;
+    uint16_t width;
+    uint16_t height;
+    uint16_t xco;           // view x/y coords within parent window
+    uint16_t yco;
 
     // if there are more widgets associated with this view than can fit in
     // the vertical space defined above then that view can be scrollable,
@@ -119,6 +116,8 @@ typedef struct
     uint16_t sequence;      // whole view gets same sequence number
     uint16_t top;           // index to widget at top of view
     uint16_t cy;            // view cursor y position to widget with focus
+
+    uC_list_node_t *view_node;
 
     uC_attribs_t attrs;
     uC_attribs_t box_attrs; // attribs for border
@@ -256,6 +255,8 @@ void widget_scroll_view(uint8_t k);
 char tab_next_widget(void);
 char tab_prev_widget(void);
 
+void widget_set_attrs(uC_window_t *window, uC_widget_t *widget);
+
 void draw_button(uC_window_t *win, uC_widget_t *widget,
     uint16_t x, uint16_t y);
 void draw_check(uC_window_t *win, uC_widget_t *widget,
@@ -304,6 +305,9 @@ API bool uC_widget_view_add_widget(uC_widget_view_t *view,
 
 API void uC_widget_view_remove_widget(uC_widget_view_t *view,
     uC_widget_t *widget);
+
+API void uC_widget_to_view_index(uC_widget_view_t *view,
+    uint16_t index);
 
 // -----------------------------------------------------------------------
 

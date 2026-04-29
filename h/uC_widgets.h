@@ -243,6 +243,7 @@ uC_widget_t *create_widget(uC_widget_type_t type,
     uC_attribs_t attrs, uC_attribs_t focus);
 
 API void uC_widget_close_widget(uC_widget_t *widget);
+API bool uC_widget_select_widget(uint16_t sequence);
 
 uint8_t handle_button(uint8_t k);
 uint8_t handle_check(uint8_t k);

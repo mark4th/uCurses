@@ -136,9 +136,6 @@ API bool uC_widget_select_widget(uint16_t sequence)
         n1 = uC_list_scan(NULL, n1);
     }
 
-// ????? why the heck is this here?
-    uC_scr_draw_screen(active_screen);
-
     return f;
 }
 

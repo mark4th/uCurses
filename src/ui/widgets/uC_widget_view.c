@@ -224,7 +224,7 @@ API void uC_widget_to_view_index(uC_widget_view_t *view, uint16_t index)
 
     // call is only valid if view is scrollable
 
-    if ((view->flags & uC_VIEW_SCROLL) == 0)
+    if (view->flags & uC_VIEW_SCROLL)
     {
         return;
     }
@@ -244,7 +244,7 @@ API void uC_widget_to_view_index(uC_widget_view_t *view, uint16_t index)
 
     for (i = 0; i != index ; i++)
     {
-        view_down();
+        widget_scroll_view(WIDGET_KEY_DOWN);
     }
 }
 

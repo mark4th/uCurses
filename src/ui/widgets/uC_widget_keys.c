@@ -23,33 +23,49 @@ uC_kh_t saved_key_actions;
 API widget_state_t widget_state;
 
 // ----------------------------------------------------------------
+// if current view is scrollable and k is a cursor up or dowwn...
 
-static uint8_t handle_widget(uint8_t k)
+static bool check_scrollable(uint8_t k)
 {
+    // view is a known non null here
+
+    if (widget_state.view->flags & (1 << uC_VIEW_SCROLL))
+    {
+        if ((k == WIDGET_KEY_UP) || (k == WIDGET_KEY_DOWN))
+        {
+            widget_scroll_view(k);
+            return true;
+        }
+    }
+    return false;
+}
+
+// ----------------------------------------------------------------
+
+static uint8_t handle_widget_key(uint8_t k)
+{
+    bool f;
+
     if (widget_state.widget == NULL)
     {
         return k;
     }
 
-    // if the currently focused widget view is scrollable
+    // handle case where the current view is scrollable and
+    // either cursor up or cursor down have been pressed
 
     if (widget_state.view != NULL)
     {
-        if (widget_state.view->flags & (1 << uC_VIEW_SCROLL))
+        f = check_scrollable(k);
+        if (f == true)
         {
-            // if the key pressed is a cursor movement then scroll
-            // the view, otherwise fall through
-
-            if ((k == WIDGET_KEY_UP) || (k == WIDGET_KEY_DOWN))
-            {
-                if (widget_state.view != NULL)
-                {
-                    widget_scroll_view(k);
-                }
-                return k;
-            }
+            return k;
         }
     }
+
+    // other than cursor up / down within a scrollable view (wich can
+    // contain any widget type) each widget type module contains its
+    // own keyboard handler
 
     switch (widget_state.widget->type)
     {
@@ -65,41 +81,39 @@ static uint8_t handle_widget(uint8_t k)
 
 // -----------------------------------------------------------------------
 
+static uint8_t _widget_key(void)
+{
+    uint8_t k;
+
+    k = uC_key();    // blocks till a key is pressed
+
+    switch (k)
+    {
+        case 0x09: tab_next_widget(); break;
+        case 0x88: tab_prev_widget(); break;
+
+        default:
+            k = handle_widget_key(k);
+    }
+
+    return k;
+}
+
+// -----------------------------------------------------------------------
+
 static uint8_t widget_key(void)
 {
     uint8_t k = 0;
 
-    // make this call block till a key is pressed
-    // I may remove this from here and make it up to the user
-    // application to decide if it should block within its own
-    // key loop
-
-    while (uC_test_keys() == 0)
-    {
-        ;
-    }
-
     // this while loop ensures that when an escape sequence key
-    // is pressed and translated into a single character we
-    // read and interpret that single character
+    // is pressed and the uCurses keyboard handler translates that
+    // into a single character we will read and interpret that single
+    // character within this call to widget_key().  this negates type
+    // ahead
 
     while (uC_test_keys() != 0)
     {
-        k = uC_key();
-
-        if (k != 0x1b)
-        {
-            if (k == 0x88)
-            {
-                k = tab_prev_widget();
-            }
-            else
-            {
-                k = (k == 0x09)
-                    ? tab_next_widget()
-                    : handle_widget(k);
-            }
-        }
+        k = _widget_key();
     }
 
     return k;

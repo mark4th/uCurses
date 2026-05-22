@@ -13,6 +13,7 @@
 #include "uC_window.h"
 #include "uC_win_printf.h"
 #include "uC_menus.h"
+#include "uC_mouse.h"
 #include "ti_file.h"
 #include "json.h"
 
@@ -44,6 +45,10 @@ API uC_screen_t *uCurses_init(char *file, json_mem_t *json, fp_finder_t fp)
 
     init_winch();
     uC_curoff();
+
+#ifdef UC_WIDGETS
+    uC_mouse_enable();
+#endif
 
 #ifdef UC_JSON
     if (file != NULL)
@@ -83,6 +88,9 @@ API uC_screen_t *uCurses_init(char *file, json_mem_t *json, fp_finder_t fp)
 
 API void uCurses_deInit(void)
 {
+#ifdef UC_WIDGETS
+    uC_mouse_disable();
+#endif
     uC_restore_terminal();
     de_init_winch();
 

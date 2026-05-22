@@ -11,6 +11,7 @@
 #include "uC_keys.h"
 #include "uC_alloc.h"
 #include "uC_terminfo.h"
+#include "uC_mouse.h"
 
 // -----------------------------------------------------------------------
 
@@ -133,6 +134,10 @@ API uint8_t uC_key(void)
             }
             ti_vars->num_k = 0;
             return 0;
+        }
+        else if (uC_mouse_parse())
+        {
+            break;
         }
     }
 

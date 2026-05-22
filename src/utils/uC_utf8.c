@@ -13,6 +13,7 @@
 #include "uC_terminfo.h"
 
 // -----------------------------------------------------------------------
+// encode a utf code point into utf-8 characters for printing
 
 utf8_encode_t *utf8_encode(int32_t cp)
 {
@@ -70,6 +71,7 @@ API int16_t uC_utf8_is_wide(uint32_t code)
 }
 
 // -----------------------------------------------------------------------
+// convert code point to string of characters and write them
 
 API void uC_utf8_emit(uint32_t cp)
 {

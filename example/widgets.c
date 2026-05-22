@@ -58,11 +58,11 @@ uint32_t check_final;
 #define NUMERICAL_WIDTH (16)
 #define ALPHA_WIDTH (32)
 
-char hex_data[NUMERICAL_WIDTH];
-char oct_data[NUMERICAL_WIDTH];
-char dec_data[NUMERICAL_WIDTH];
-char bin_data[NUMERICAL_WIDTH];
-char alpha_data[ALPHA_WIDTH];
+char hex_data[NUMERICAL_WIDTH + 1];
+char oct_data[NUMERICAL_WIDTH + 1];
+char dec_data[NUMERICAL_WIDTH + 1];
+char bin_data[NUMERICAL_WIDTH + 1];
+char alpha_data[ALPHA_WIDTH + 1];
 
 // -----------------------------------------------------------------------
 
@@ -141,20 +141,21 @@ static void view_add_buttons(uC_widget_view_t *view, uint16_t sequence)
     uC_widget_t *button2;
 
     button1 = uC_widget_button_create(
-        sequence, &which_button, "Ok", BUTTON_OK_KEY,
-        BUTTON_WIDTH, BUTTON_XCO_1, BUTTON_YCO,
-        btn_attrs, btn_focus_attrs);
+        &which_button, "Ok", BUTTON_OK_KEY,
+        BUTTON_WIDTH, btn_attrs, btn_focus_attrs);
 
     button2 = uC_widget_button_create(
-        sequence + 1, &which_button, "Cancel", BUTTON_CANCEL_KEY,
-        BUTTON_WIDTH, BUTTON_XCO_2, BUTTON_YCO,
-        btn_attrs, btn_focus_attrs);
+        &which_button, "Cancel", BUTTON_CANCEL_KEY,
+        BUTTON_WIDTH, btn_attrs, btn_focus_attrs);
 
     uC_ASSERT(button1 != NULL, "Cannot create button");
     uC_ASSERT(button2 != NULL, "Cannot create button");
 
-    uC_widget_view_add_widget(view, button1);
-    uC_widget_view_add_widget(view, button2);
+    uC_widget_set_position(button1, BUTTON_XCO_1, BUTTON_YCO);
+    uC_widget_set_position(button2, BUTTON_XCO_2, BUTTON_YCO);
+
+    uC_widget_view_add_widget(view, button1, sequence);
+    uC_widget_view_add_widget(view, button2, sequence + 1);
 }
 
 // -----------------------------------------------------------------------
@@ -164,14 +165,11 @@ static void view_add_buttons(uC_widget_view_t *view, uint16_t sequence)
 #define NO_XCO      (0)    // the radio buttons are part of a scrollable
 #define NO_YCO      (0)    // view, their coordinates are view controlled
 
-static uC_widget_t *create_radio_button(char *name,
-    uint16_t sequence, uint16_t radio_bit)
+static uC_widget_t *create_radio_button(char *name, uint16_t radio_bit)
 {
     uC_widget_t *w = uC_widget_radio_create(
-        sequence, &radio, radio_bit,
-        name, uC_RADIO_DIAMOND,
-        RADIO_WIDTH, NO_XCO, NO_YCO,
-        radio_attrs, radio_focus_attrs);
+        &radio, radio_bit, name, uC_RADIO_DIAMOND,
+        RADIO_WIDTH, radio_attrs, radio_focus_attrs);
 
     uC_ASSERT(w != NULL, "Cannot allocate radio widget");
 
@@ -190,41 +188,26 @@ char *radio_names[] =
 
 #define NUM_RADIO (sizeof(radio_names) / sizeof(radio_names[0]))
 
-static void view_add_radio_buttons(uC_widget_view_t *view,
-    uint16_t sequence)
+static void view_add_radio_buttons(uC_widget_view_t *view)
 {
     uint16_t i;
     uC_widget_t *r;
 
     for (i = 0; i < NUM_RADIO; i++)
     {
-        // while this call will apply the same sequence number to every
-        // widget within this view it is only the first widget which
-        // matters.  the entire view gets the tab sequence value of the
-        // first widget added to it.
-
-        // the i parameter here is the bit number within the "radio"
-        // varible that each widget will toggle.
-
-        r = create_radio_button(radio_names[i], sequence, i);
-        uC_widget_view_add_widget(view, r);
+        r = create_radio_button(radio_names[i], i);
+        uC_widget_view_add_widget(view, r, 0);
     }
 }
 
 // -----------------------------------------------------------------------
 // helper function
 
-static uC_widget_t *create_check_button(char *name,
-    uint16_t sequence, uint16_t check_bit)
+static uC_widget_t *create_check_button(char *name, uint16_t check_bit)
 {
     uC_widget_t *w = uC_widget_check_create(
-        sequence, &check, check_bit,
-
-        // or we can have uC_RADIO_BOX uC_RADIO_CHECKBOX etc
-
-        name, uC_RADIO_BOX,
-        RADIO_WIDTH, NO_XCO, NO_YCO,
-        radio_attrs, radio_focus_attrs);
+        &check, check_bit, name, uC_RADIO_BOX,
+        RADIO_WIDTH, radio_attrs, radio_focus_attrs);
 
     uC_ASSERT(w != NULL, "Cannot allocate check widget");
 
@@ -247,16 +230,15 @@ char *check_names[] =
 
 #define NUM_CHECK (sizeof(check_names) / sizeof(check_names[0]))
 
-static void view_add_check_buttons(uC_widget_view_t *view,
-    uint16_t sequence)
+static void view_add_check_buttons(uC_widget_view_t *view)
 {
     uint16_t i;
     uC_widget_t *r;
 
     for (i = 0; i < NUM_CHECK; i++)
     {
-        r = create_check_button(check_names[i], sequence, i);
-        uC_widget_view_add_widget(view, r);
+        r = create_check_button(check_names[i], i);
+        uC_widget_view_add_widget(view, r, 0);
     }
 }
 
@@ -280,43 +262,44 @@ static void view_add_check_buttons(uC_widget_view_t *view,
 
 // -----------------------------------------------------------------------
 
-static void view_add_text_boxes(uC_widget_view_t *view, uint16_t sequence)
+static void view_add_text_boxes(uC_widget_view_t *view)
 {
     uC_widget_t *t1 = uC_widget_textbox_create(
-        sequence++, (char *)&hex_data, "Hex    :",
+        (char *)&hex_data, "Hex    :",
         NUMERICAL_WIDGET_SIZE, uC_INPUT_HEX,
-        NUMERICAL_WIDGET_WIDTH, HEX_X, HEX_Y,
-        text_attrs, text_focus_attrs);
+        NUMERICAL_WIDGET_WIDTH, text_attrs, text_focus_attrs);
 
     uC_widget_t *t2 = uC_widget_textbox_create(
-        sequence++, (char *)&oct_data, "Octal  :",
+        (char *)&oct_data, "Octal  :",
         NUMERICAL_WIDGET_SIZE, uC_INPUT_OCTAL,
-        NUMERICAL_WIDGET_WIDTH, OCT_X, OCT_Y,
-        text_attrs, text_focus_attrs);
+        NUMERICAL_WIDGET_WIDTH, text_attrs, text_focus_attrs);
 
     uC_widget_t *t3 = uC_widget_textbox_create(
-        sequence++, (char *)&dec_data, "Decimal:",
+        (char *)&dec_data, "Decimal:",
         NUMERICAL_WIDGET_SIZE, uC_INPUT_DECIMAL,
-        NUMERICAL_WIDGET_WIDTH, DEC_X, DEC_Y,
-        text_attrs, text_focus_attrs);
+        NUMERICAL_WIDGET_WIDTH, text_attrs, text_focus_attrs);
 
     uC_widget_t *t4 = uC_widget_textbox_create(
-        sequence++, (char *)&bin_data, "Binary :",
+        (char *)&bin_data, "Binary :",
         NUMERICAL_WIDGET_SIZE, uC_INPUT_BINARY,
-        NUMERICAL_WIDGET_WIDTH, BIN_X, BIN_Y,
-        text_attrs, text_focus_attrs);
+        NUMERICAL_WIDGET_WIDTH, text_attrs, text_focus_attrs);
 
     uC_widget_t *t5 = uC_widget_textbox_create(
-        sequence++, (char *)&alpha_data, "Alpha  :",
+        (char *)&alpha_data, "Alpha  :",
         ALPHA_WIDGET_SIZE, uC_INPUT_ALPHA,
-        NUMERICAL_WIDGET_WIDTH, 0, 3,
-        text_attrs, text_focus_attrs);
+        NUMERICAL_WIDGET_WIDTH, text_attrs, text_focus_attrs);
 
-    uC_widget_view_add_widget(view, t1);
-    uC_widget_view_add_widget(view, t2);
-    uC_widget_view_add_widget(view, t3);
-    uC_widget_view_add_widget(view, t4);
-    uC_widget_view_add_widget(view, t5);
+    uC_widget_set_position(t1, HEX_X, HEX_Y);
+    uC_widget_set_position(t2, OCT_X, OCT_Y);
+    uC_widget_set_position(t3, DEC_X, DEC_Y);
+    uC_widget_set_position(t4, BIN_X, BIN_Y);
+    uC_widget_set_position(t5, ALPHA_X, ALPHA_Y);
+
+    uC_widget_view_add_widget(view, t1, 0);
+    uC_widget_view_add_widget(view, t2, 0);
+    uC_widget_view_add_widget(view, t3, 0);
+    uC_widget_view_add_widget(view, t4, 0);
+    uC_widget_view_add_widget(view, t5, 0);
 }
 
 // -----------------------------------------------------------------------
@@ -347,8 +330,8 @@ static void init_widgets(void)
     uC_ASSERT(view != NULL, "Cannot create view");
 
     uC_widget_view_add_border(view, uC_BDR_CURVED, box_attrs);
-    uC_widget_vg_add_view(vg1, view);
-    view_add_radio_buttons(view, RADIO_SEQUENCE);
+    uC_widget_vg_add_view(vg1, view, RADIO_SEQUENCE);
+    view_add_radio_buttons(view);
 
     // -------------------------------------------------------------------
     // create a named scrollable view for check box buttons
@@ -367,11 +350,11 @@ static void init_widgets(void)
     uC_ASSERT(view != NULL, "Cannot create view");
 
     uC_widget_view_add_border(view, uC_BDR_CURVED, box_attrs);
-    uC_widget_vg_add_view(vg1, view);
-    view_add_check_buttons(view, CHECK_SEQUENCE);
+    uC_widget_vg_add_view(vg1, view, CHECK_SEQUENCE);
+    view_add_check_buttons(view);
 
     // -------------------------------------------------------------------
-    // create a view for text edit boxes with a tab sequence starting at 3
+    // create a view for text edit boxes
 
     #define TEXT_VIEW_WIDTH  (36)
     #define TEXT_VIEW_HEIGHT (6)
@@ -387,12 +370,11 @@ static void init_widgets(void)
     uC_ASSERT(view != NULL, "Cannot create view");
 
     uC_widget_view_add_border(view, uC_BDR_CURVED, box_attrs);
-    uC_widget_vg_add_view(vg1, view);
-
-    view_add_text_boxes(view, TEXT_SEQUENCE);
+    uC_widget_vg_add_view(vg1, view, TEXT_SEQUENCE);
+    view_add_text_boxes(view);
 
     // -------------------------------------------------------------------
-    // crate anonymous view within view group 1 for buttons
+    // anonymous view within view group 1 for buttons
 
     #define NO_NAME            (NULL)
     #define BUTTON_VIEW_WIDTH  (WIN_WIDTH - 1)
@@ -407,12 +389,8 @@ static void init_widgets(void)
 
     uC_ASSERT(view != NULL, "Cannot create view");
 
-    // add buttons to this view and associate it with the view group
-    // the magic number is the tab sequence for the buttons which here
-    // will be 8 and 9
-
     view_add_buttons(view, 8);
-    uC_widget_vg_add_view(vg1, view);
+    uC_widget_vg_add_view(vg1, view, 0);
 }
 
 // -----------------------------------------------------------------------

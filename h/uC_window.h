@@ -69,12 +69,12 @@ typedef struct
     // be drawn 2 characters to the right of the upper left corner of
     // that border
 
-    uint8_t *display_name;
+    const char *display_name;
 
     uC_attribs_t bdr_attrs;      // normal attribs for window border
     uC_attribs_t focus_attrs;    // focussed attribs for window border
     uC_attribs_t attrs;          // attribs for stuff drawn in window
-} __attribute__((__packed__)) uC_window_t;
+} uC_window_t;
 
 // -----------------------------------------------------------------------
 // visibility hidden
@@ -133,7 +133,7 @@ API void uC_win_set_bdr_rgb_fg(uC_window_t *win, uC_color_t r, uC_color_t g, uC_
 API void uC_win_set_bdr_rgb_bg(uC_window_t *win, uC_color_t r, uC_color_t g, uC_color_t b);
 API void uC_win_set_border(uC_window_t *win, uint16_t border_type,
     uC_attribs_t bdr_attrs, uC_attribs_t focus_attrs);
-API void uC_win_set_name(uC_window_t *win, uint8_t *name);
+API void uC_win_set_name(uC_window_t *win, const char *name);
 API void uC_win_set_focus(uC_window_t *win);
 
 // -----------------------------------------------------------------------

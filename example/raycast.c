@@ -68,6 +68,8 @@ static uint16_t *braile_data; // interim state from fb to display
 static uint16_t fb_width;     // dimensuons of frame buffer
 static uint16_t fb_height;
 
+#define TARGET_FRAME_NS (33333333)
+
 // -----------------------------------------------------------------------
 
 uint8_t worldMap[24][24]=
@@ -428,7 +430,8 @@ void raycast(void)
     int framecount = 0;
     int time       = 0;
     int old_time;
-    int frame_time = 1;
+
+    double frame_time_d;
 
     gettimeofday(&tv, NULL);
     old_time = tv.tv_sec;
@@ -447,9 +450,13 @@ void raycast(void)
 
     for (;;)
     {
+        struct timeval frame_start, frame_end;
+        int64_t elapsed_ns;
+
+        gettimeofday(&frame_start, NULL);
+
         memset(dark_map, 0, fb_width);
         memset(fb, 0, fb_width * fb_height);
-
         memset(color_map, 0, fb_width);
         memset(status, 0, STAT_SIZE -1);
 
@@ -470,18 +477,30 @@ void raycast(void)
         gettimeofday(&tv, NULL);
         time = tv.tv_sec;
 
-        if (old_time != time)
-        {
-            old_time = time;
-            fps = framecount - old_count;
-            old_count = framecount;
-            frame_time = (1 / fps);
-        }
+    if (old_time != time)
+    {
+        old_time = time;
+        fps = framecount - old_count;
+        old_count = framecount;
+    }
 
-        if (frame_time == 0) { frame_time = 1; }
 
-        moveSpeed = frame_time * 0.2;
-        rotSpeed  = frame_time * 0.08;
+    gettimeofday(&frame_end, NULL);
+
+    elapsed_ns = (frame_end.tv_sec  - frame_start.tv_sec)  * 1000000000LL +
+                 (frame_end.tv_usec - frame_start.tv_usec) * 1000LL;
+
+    if (elapsed_ns < TARGET_FRAME_NS)
+    {
+        uC_clock_sleep(TARGET_FRAME_NS - elapsed_ns);
+    }
+
+
+
+    // frame_time as a proper double in seconds for speed calculations
+    double frame_time_d = elapsed_ns / 1000000000.0;
+    moveSpeed = frame_time_d * 500.0;
+    rotSpeed  = frame_time_d * 200.0;
 
         if (uC_test_keys() != 0)
         {

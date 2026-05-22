@@ -234,7 +234,12 @@ void apply_attribs(void)
 
     changes.bits = (attrs.flags.bits ^ old_attrs.flags.bits);
 
-    if ((changes.bold) || (changes.rev))
+    // reset if bold/rev clearing OR if color mode is changing
+    bool color_mode_change =
+        (changes.rgb_fg  || changes.gray_fg ||
+         changes.rgb_bg  || changes.gray_bg);
+
+    if ((changes.bold) || (changes.rev) || color_mode_change)
     {
         // if we are clearing either of these we must clear
         // everything then reinstate the attributes we did not
@@ -243,6 +248,7 @@ void apply_attribs(void)
         if ((attrs.flags.bold == 0) || (attrs.flags.rev == 0))
         {
             ti_sgr0();
+            old_attrs.blob = 0;
         }
 
         // this may needlessly set one or other of these to

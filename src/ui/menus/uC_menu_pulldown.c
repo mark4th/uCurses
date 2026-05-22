@@ -21,11 +21,11 @@ extern uC_attribs_t uC_attrs_disabled;
 // -----------------------------------------------------------------------
 // find address of pulldown structure with specified name
 
-static pulldown_t *pd_find(uC_screen_t *scr, uint8_t *name)
+static pulldown_t *pd_find(uC_screen_t *scr, const char *name)
 {
     pulldown_t *pd = NULL;
     menu_bar_t *bar = scr->menu_bar;
-    int32_t name_hash = fnv_hash(name);
+    int32_t name_hash = fnv_hash((uint8_t *)name);
     int32_t hash;
 
     int16_t i;
@@ -34,9 +34,9 @@ static pulldown_t *pd_find(uC_screen_t *scr, uint8_t *name)
     {
         pd = bar->items[i];
 
-        if (pd != NULL)
+        if (pd)
         {
-            hash = fnv_hash(pd->name);
+            hash = fnv_hash((uint8_t *)pd->name);
             if (hash == name_hash)
             {
                 break;
@@ -51,15 +51,15 @@ static pulldown_t *pd_find(uC_screen_t *scr, uint8_t *name)
 
 // -----------------------------------------------------------------------
 
-API void uC_menu_pd_disable(uC_screen_t *scr, uint8_t *name)
+API void uC_menu_pd_disable(uC_screen_t *scr, const char *name)
 {
     pulldown_t *pd;
 
-    if (scr != NULL)
+    if (scr)
     {
         pd = pd_find(scr, name);
 
-        if (pd != NULL)
+        if (pd)
         {
             pd->flags |= uC_MENU_DISABLED;
         }
@@ -68,15 +68,15 @@ API void uC_menu_pd_disable(uC_screen_t *scr, uint8_t *name)
 
 // -----------------------------------------------------------------------
 
-API void uC_menu_pd_enable(uC_screen_t *scr, uint8_t *name)
+API void uC_menu_pd_enable(uC_screen_t *scr, const char *name)
 {
     pulldown_t *pd;
 
-    if (scr != NULL)
+    if (scr)
     {
         pd = pd_find(scr, name);
 
-        if (pd != NULL)
+        if (pd)
         {
             pd->flags &= ~uC_MENU_DISABLED;
         }
@@ -130,25 +130,25 @@ int32_t bar_create_pd_win(uC_screen_t *scr, pulldown_t *pd)
 // thinking when I wrote it.  it is not referenced anywhere and i did not
 // mark it as part of the public API... was I supposed to?
 
-API int32_t uC_menu_new_pd(uC_screen_t *scr, uint8_t *name)
+API int32_t uC_menu_new_pd(uC_screen_t *scr, const char *name)
 {
     int32_t result = -1;
 
     menu_bar_t *bar = scr->menu_bar;
     pulldown_t *pd;
 
-    if ((bar != NULL) && (bar->count != uC_MAX_MENU_ITEMS))
+    if (bar && (bar->count != uC_MAX_MENU_ITEMS))
     {
         pd = uC_alloc(uC_MEM_ZONE_UI, sizeof(pulldown_t));
 
-        if (pd != NULL)
+        if (pd)
         {
             bar->items[bar->count++] = pd;
 
             pd->name = name;
             pd->xco = bar->xco;
 
-            bar->xco += uC_utf8_strlen(name) + 2;
+            bar->xco += uC_utf8_strlen((uint8_t *)name) + 2;
 
             pd->attrs          = uC_attrs_normal;
             pd->selected_attrs = uC_attrs_selected;

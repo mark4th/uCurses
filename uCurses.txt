@@ -3904,21 +3904,17 @@ The cursor up and cursor down keys are used to move up or down within a
 scrollable widget view if it has focus and to potentially scroll that
 widget it in one or other direction.
 
-< edit >
-    The following paragraph is no longer correct. the code to do this was
-    removed because the entire reason back tab was failing was because
-    my FUCKING DE was stealing that key. Back tab works fine.
+    staticbool check_scrollable(uint8_t k)
 
-    In an embedded system where there is no desktop env this problem will
-    not exist.
-< /edit>
+        This static function first checks if the currently focused view is
+        scrollable and if so, is either the cursor up key or cursor down
+        key pressed.
 
-If the currently focused view is not scrollable then the cursor up and
-down keys select either the next or previous widget in the tab order.
-This is kind of iffy and this should really be handled exclusively by the
-tab and shifted tab keys... need to figure out shifted tab!
+        If all of the above tests are true it will then call a function
+        which will move the focus up or down one widget within that view
+        and wil potentially scroll that view.
 
-    static uint8_t handle_widget(uint8_t k)
+    static uint8_t handle_widget_key(uint8_t k)
 
         This static function handles a single character key press and
         passes the key to the handler for the current widget type.  If the
@@ -3927,17 +3923,33 @@ tab and shifted tab keys... need to figure out shifted tab!
 
         After handling the key press it is also returned to the caller.
 
-    static uint8_t widget_key(void)
+    static uint8_t _widget_key(void)
 
-        This static function blocks until a key is ready to read.  If the
-        key was not the escape key it is tested to see if it is the tab
-        key.  If it was tab then the widget focus is cycled through the
-        widget tab sequence.  Otherwise the key is passed to the above
-        function to be handled.
+        This static function blocks until a key is ready to read.  key it
+        is tested to see if it is the tab key or back tab key in which
+        case a fucntion is called to tab to either the next or the
+        previous widget in the view.
+
+        If it neither the tab key or back tab key then which ever key was
+        pressed is passed to the above handle_widget_key() function.
 
         If the key pressed was one that returns an escape sequence and is
         registered by the widget handler then that escape sequence will be
-        translated into a single key press and will be handled here.
+        translated into a single key press which will also be handled
+        here.
+
+    static uint8_t widget_key(void)
+
+        This function is a wrapper for the above _widget_key() function.
+        It repeatedly call said function until there are no more keys left
+        in the input buffers to be processed.
+
+        This allows the widget handler to inject single character key
+        values into the keyboard input buffer when ever a key is pressed
+        which returns an escape sequence.  The escape sequence is thereby
+        translated into a single character to be processed.
+
+        The keys which are translated in this way are detailed below.
 
     static void widget_key_up(void)     static void widget_key_down(void)
     static void widget_key_left(void)   static void widget_key_right(void)
@@ -4505,6 +4517,45 @@ I do still use C's switch mechanisms but I will avoid them where I can.
 10.9: uC_utf8.c
 ---------------
 
+The unicode standard was implemented to address the problem of
+representing multi national texts on multiple systems, allowing the same
+numerical values to represent the same text characters acrorss all
+systems.
+
+Each numerical value in the unicode standard is referred to as a code
+point and these values can be represented using one to four bytes of
+memory in your computer.
+
+When writing these code points out to a display or when transmitting them
+across a network they need to be encoded into UTF-8 characters which are
+also represented using one to four bytes.
+
+The UTF-8 standard was devised as a way of solving numerous problems such
+as when transmitting unicode across a network.  This is a huge subject and
+way beyond the scope of this document.  For a greater understanding of the
+problems UTF-8 solves the following link is the best I have seen to date.
+
+    https://www.youtube.com/watch?v=vpSkBV5vydg
+
+This text does not document either unicode or UTF-8 but explains how this
+library handles UTF-8 encoded text.  It will cover how UTF-8 characters
+are decode into UTF code points and how UTF code points are encoded into
+UTF-8 characters.
+
+Your terminal does not print unicode code points.  These are simply a
+convenent means of storing multi national characters in your computer. To
+display these code ponts they must be translated into UTF-8 characters
+
+
+
+
+
+
+
+
+
+utf8 encoding takes code points and converts them to characters
+utf8 decoding takes characters and converts them to code points
 
 
 10.10: uC_win_printf.c

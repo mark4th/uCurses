@@ -11,7 +11,7 @@
 
 // -----------------------------------------------------------------------
 
-API void uC_win_puts(uC_window_t *win, uint8_t *p);
+API void uC_win_puts(uC_window_t *win, const char *p);
 API void uC_win_printf(uC_window_t *win, char *format, ...);
 
 // -----------------------------------------------------------------------

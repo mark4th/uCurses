@@ -29,14 +29,14 @@ static uC_window_t *w;
 // -----------------------------------------------------------------------
 // write string into specified window at its currnt cursor location
 
-API void uC_win_puts(uC_window_t *win, uint8_t *p)
+API void uC_win_puts(uC_window_t *win, const char *p)
 {
     uint8_t skip;
     uint32_t codepoint;
 
     while (*p != '\0')
     {
-        skip = utf8_decode(&codepoint, p);
+        skip = utf8_decode(&codepoint, (uint8_t *)p);
         uC_win_emit(win, codepoint);
         p += skip;
     }
@@ -263,7 +263,7 @@ static void wclear(void)
 
 static void u_puts(void)
 {
-    uint8_t *s = va_arg(arg, uint8_t *);
+    const char *s = va_arg(arg, const char *);
     uC_win_puts(w, s);
 }
 

@@ -203,10 +203,8 @@ API void uC_scr_add_backdrop(uC_screen_t *scr)
 // verify that a windows position is within bounds
 
 int16_t win_chk_pos(uC_window_t *win, uC_screen_t *scr,
-    uint16_t x, uint16_t y)
+    int16_t x, int16_t y)
 {
-    int16_t xx;
-    int16_t yy;
     int16_t width;
     int16_t height;
 
@@ -216,30 +214,29 @@ int16_t win_chk_pos(uC_window_t *win, uC_screen_t *scr,
     // if window is boxed account for border
     if (win->flags & uC_WIN_BOXED)
     {
-        // of the border exists then the lowest X / Y coordinate
+        // if the border exists then the lowest X / Y coordinate
         // the window can be placed at is 1 / 1.
 
-        if ((x <= 0) || (y < 0))
+        if ((x < 1) || (y < 1))
         {
             return -1;
         }
-        else
-        {
-            // count the border as part of the windows width and
-            // position for the following calculation
 
-            width  += 2;
-            height += 2;
-            x--;
-            y--;
-        }
+        // count the border as part of the windows width and
+        // position for the following calculation
+
+        width  += 2;
+        height += 2;
+        x--;
+        y--;
     }
 
-    xx = (x + width);
-    yy = (y + height);
+    x += width;
+    y += height;
 
     // ensure that window is entirely within the screen
-    return ((xx <= scr->width) && (yy <= scr->height))
+
+    return ((x <= scr->width) && (y <= scr->height))
         ? 0 : -1;
 }
 
@@ -284,11 +281,6 @@ API void uC_scr_win_attach(uC_screen_t *scr, uC_window_t *win)
         {
             return;
         }
-
-        // if (win->screen != NULL)
-        // {
-        //     uC_list_remove_node(&scr->windows, win);
-        // }
 
         f = uC_list_push_tail(&scr->windows, win);
 

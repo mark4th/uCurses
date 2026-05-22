@@ -314,8 +314,6 @@ uint8_t lion_data[] =
 
 // -----------------------------------------------------------------------
 
-#include <stdlib.h>
-
 static void draw_lion(void)
 {
     int x, y, i;

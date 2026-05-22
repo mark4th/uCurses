@@ -78,9 +78,9 @@ uC_attribs_t radio_attrs =
 
 uC_attribs_t radio_focus_attrs =
 {
-    .flags.bits = (ATTR_FLAG_GRAY_BG),
+    .flags.bits = (ATTR_FLAG_BOLD),
     .fg         = uC_COLOR_LT_GREEN,
-    .bg_gray    = uC_GRAY_09,
+    .bg         = uC_COLOR_BROWN,
 };
 
 // -----------------------------------------------------------------------

@@ -79,9 +79,9 @@ API void uC_win_close(uC_window_t *win)
         {
             uC_ui_free(win->buffer);
         }
-        if (win->display_name != NULL)
+        if (win->display_name)
         {
-            uC_free(uC_MEM_ZONE_UI, win->display_name);
+            uC_free(uC_MEM_ZONE_UI, (void *)win->display_name);
         }
 
         uC_ui_free(win);
@@ -179,9 +179,9 @@ API void uC_win_set_border(uC_window_t *win, uint16_t border_type,
 // -----------------------------------------------------------------------
 // set windows display name. (not shown unless win has border)
 
-API void uC_win_set_name(uC_window_t *win, uint8_t *name)
+API void uC_win_set_name(uC_window_t *win, const char *name)
 {
-    if (win != NULL)
+    if (win)
     {
         win->display_name = name;
         win->flags |= uC_WIN_NAMED;

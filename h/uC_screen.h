@@ -30,7 +30,7 @@ typedef struct
 
     cell_t *buffer1;        // screen buffer 1 and 2
     cell_t *buffer2;
-} __attribute__((__packed__)) uC_screen_t;
+} uC_screen_t;
 
 // -----------------------------------------------------------------------
 // visibility hidden
@@ -39,7 +39,7 @@ int16_t scr_alloc(uC_screen_t *scr);
 void init_backdrop(uC_screen_t *scr, uC_window_t *win);
 void scr_draw_win(uC_window_t *win);
 int16_t win_chk_pos(uC_window_t *win, uC_screen_t *scr,
-    uint16_t xco, uint16_t yco);
+    int16_t xco, int16_t yco);
 
 // -----------------------------------------------------------------------
 

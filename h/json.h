@@ -127,7 +127,7 @@ typedef struct
     void *structure;          // pointer to structure being populated
     json_type_t struct_type;  // type of structure being populated
     int16_t line_no;          // line number where struct was initiated
-} __attribute__((__packed__)) json_state_t;
+} json_state_t;
 
 // -----------------------------------------------------------------------
 // visibility hidden

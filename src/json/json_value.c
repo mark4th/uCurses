@@ -198,7 +198,7 @@ static void value_wh(void)
 
 static void value_name(void)
 {
-    uint8_t *name;
+    char *name;
 
     json_state_t *parent = json_state->parent;
     void *structure      = parent->structure;
@@ -212,16 +212,16 @@ static void value_name(void)
     }
 
     // copy name token to the name buff minus the quotes
-    name = uC_alloc(uC_MEM_ZONE_UI, len + 1);
-    if (name == NULL)
+    name = (char *)uC_alloc(uC_MEM_ZONE_UI, len + 1);
+    if (!name)
     {
         return;
     }
-    strncpy((char *)name, (char *)json_vars->json_token, len);
+    strncpy(name, (char *)json_vars->json_token, len);
 
     if (ptype == STRUCT_WINDOW)
     {
-        ((uC_window_t *)structure)->name = fnv_hash(name);
+        ((uC_window_t *)structure)->name = fnv_hash((uint8_t *)name);
         ((uC_window_t *)structure)->display_name = name;
         return;
     }

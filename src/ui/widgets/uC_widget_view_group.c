@@ -16,13 +16,17 @@
 
 // -----------------------------------------------------------------------
 
-API uC_widget_vg_t *uC_widget_vg_create(uint8_t *name,
+extern widget_state_t widget_state;
+
+// -----------------------------------------------------------------------
+
+API uC_widget_vg_t *uC_widget_vg_create(const char *name,
     uint16_t width, uint16_t height, uint16_t xco, uint16_t yco,
     uC_attribs_t attrs)
 {
     uC_widget_vg_t *vg = uC_alloc(uC_MEM_ZONE_UI, sizeof(*vg));
 
-    if (vg != NULL)
+    if (vg)
     {
         vg->window.display_name = name;
 
@@ -40,7 +44,7 @@ API uC_widget_vg_t *uC_widget_vg_create(uint8_t *name,
         // view group a border but it is assumed that if you supplied
         // a name then you intend to do so.
 
-        if (name != NULL)
+        if (name)
         {
             vg->window.flags |= uC_WIN_NAMED;
         }
@@ -58,7 +62,7 @@ API void uC_widget_vg_add_border(uC_widget_vg_t *vg,
     uC_border_type_t bdr_type,
     uC_attribs_t bdr_attrs, uC_attribs_t focus_attrs)
 {
-    if (vg != NULL)
+    if (vg)
     {
         vg->window.flags |= uC_WIN_BOXED;
 
@@ -77,15 +81,20 @@ API void uC_widget_vg_attach(uC_screen_t *scr, uC_widget_vg_t *vg)
 {
     int16_t rv;
 
-    if ((scr != NULL) && (vg != NULL))
+    if (scr && vg)
     {
         rv = win_alloc(&vg->window);
 
-        if (rv == 0)
+        if (!rv)
         {
             vg->window.screen = scr;
             uC_win_clear(&vg->window);
             uC_list_push_tail(&scr->view_groups, vg);
+
+            if (!widget_state.sequence)
+            {
+                uC_widget_select_widget(1);
+            }
         }
     }
 }
@@ -94,7 +103,7 @@ API void uC_widget_vg_attach(uC_screen_t *scr, uC_widget_vg_t *vg)
 
 API void uC_widget_vg_detach(uC_screen_t *scr, uC_widget_vg_t *vg)
 {
-    if (vg != NULL)
+    if (vg)
     {
         uC_list_remove_node(&scr->view_groups, vg);
     }
@@ -106,9 +115,9 @@ API void uC_widget_vg_close(uC_widget_vg_t *vg)
 {
     uC_widget_view_t *view;
 
-    if (vg != NULL)
+    if (vg)
     {
-        while (vg->views.count != 0)
+        while (vg->views.count)
         {
             view = uC_list_pop_head(&vg->views);
             widget_close_view(view);
@@ -121,8 +130,13 @@ API void uC_widget_vg_close(uC_widget_vg_t *vg)
 
 // -----------------------------------------------------------------------
 
-API void uC_widget_vg_add_view(uC_widget_vg_t *vg, uC_widget_view_t *v)
+API void uC_widget_vg_add_view(uC_widget_vg_t *vg, uC_widget_view_t *v,
+    uint16_t sequence)
 {
+    if (v)
+    {
+        v->sequence = sequence ? sequence : auto_sequence();
+    }
     uC_list_push_tail(&vg->views, v);
 }
 

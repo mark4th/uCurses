@@ -24,16 +24,22 @@ typedef void (*fp_t)(void *x);
 typedef void (*user_winch_t)(void);
 
 // -----------------------------------------------------------------------
+// these are used by the optional JSON parser to build the optional menus
+
+typedef void (*menu_fp_t)(void);
+typedef menu_fp_t (*fp_finder_t)(int32_t hash);
+
+// -----------------------------------------------------------------------
 
 typedef struct
 {
     char *json;
     int len;
-} __attribute__((__packed__)) json_mem_t;
+} json_mem_t;
 
 // -----------------------------------------------------------------------
 
-API void uCurses_init(char *file, json_mem_t *json, void *fp);
+API void uCurses_init(char *file, json_mem_t *json, fp_finder_t fp);
 API void uCurses_deInit(void);
 API void entry(void);
 API void make_contrast(uint8_t *r, uint8_t *g, uint8_t *b);

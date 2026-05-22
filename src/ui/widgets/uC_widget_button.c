@@ -25,13 +25,13 @@ bool justify;
 // of the button name but it would be more helpful if it was :)
 
 static void draw_btn_txt(uC_window_t *win, uint16_t x, uint16_t y,
-    uint16_t width, char *name, char letter)
+    uint16_t width, const char *name, char letter)
 {
     char c;
     bool ul = false;
     uint16_t pad;
 
-    if (win == NULL)
+    if (!win)
     {
         return;
     }
@@ -48,11 +48,11 @@ static void draw_btn_txt(uC_window_t *win, uint16_t x, uint16_t y,
     uC_win_printf(win, "%@%*%x%*",
         x, y, width, 0x20, x, pad, 0x20);
 
-    while ((*name != '\0') && (width-- != 0))
+    while (*name && width--)
     {
         c = *name++;
 
-        if ((ul != true) && (c == letter))
+        if (!ul && (c == letter))
         {
             // make sure only first instance of letter is
             // actually underlined
@@ -116,7 +116,7 @@ uint8_t handle_button(uint8_t k)
             k = b->letter;
         }
 
-        if (b->select != NULL)
+        if (b->select)
         {
             *b->select = widget_state.widget->sequence;
         }
@@ -127,15 +127,14 @@ uint8_t handle_button(uint8_t k)
 
 // -----------------------------------------------------------------------
 
-API uC_widget_t *uC_widget_button_create(uint16_t sequence,
-    uint16_t *select, char *name, char letter,
-    uint16_t width, uint8_t xco, uint8_t yco,
-    uC_attribs_t attrs, uC_attribs_t focus)
+API uC_widget_t *uC_widget_button_create(
+    uint16_t *select, const char *name, char letter,
+    uint16_t width, uC_attribs_t attrs, uC_attribs_t focus)
 {
     uC_widget_t *widget = create_widget(uC_WIDGET_BUTTON, name,
-        sequence, xco, yco, width, attrs, focus);
+        width, attrs, focus);
 
-    if (widget != NULL)
+    if (widget)
     {
         // text displayed on button and optional keybord shortcut
 

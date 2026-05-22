@@ -26,7 +26,7 @@ void draw_radio(uC_window_t *win, uC_widget_t *widget,
 {
     uint16_t c;
 
-    if ((win != NULL) && (widget !=NULL))
+    if (win && widget)
     {
         c = ((*widget->radio.select & (1 << widget->radio.bit)))
             ? radio_on[widget->radio.type]
@@ -72,16 +72,15 @@ uint8_t handle_radio(uint8_t k)
 
 // -----------------------------------------------------------------------
 
-API uC_widget_t *uC_widget_radio_create(uint16_t sequence,
-    uint32_t *select, uint16_t bit, char *name,
-    uC_radio_type_t type,
-    uint16_t width, uint16_t xco, uint16_t yco,
+API uC_widget_t *uC_widget_radio_create(
+    uint32_t *select, uint16_t bit, const char *name,
+    uC_radio_type_t type, uint16_t width,
     uC_attribs_t attrs, uC_attribs_t focus)
 {
     uC_widget_t *widget = create_widget(uC_WIDGET_RADIO,
-        name, sequence, xco, yco, width, attrs, focus);
+        name, width, attrs, focus);
 
-    if (widget != NULL)
+    if (widget)
     {
         widget->radio.type   = type;
         widget->radio.select = select;

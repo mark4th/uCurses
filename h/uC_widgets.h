@@ -102,7 +102,7 @@ typedef struct
     uC_list_t widgets;      // list of widgets attached to this view
 
 
-    uint8_t *name;          // view name drawn in top border
+    const char *name;       // view name drawn in top border
 
     uint16_t width;
     uint16_t height;
@@ -130,7 +130,7 @@ typedef struct
 {
     char letter;            // keyboard shortcut
     uint16_t *select;       // widget sequence of butten written here
-} __attribute__((__packed__)) uC_widget_button_t;
+} uC_widget_button_t;
 
 // -----------------------------------------------------------------------
 
@@ -139,7 +139,7 @@ typedef struct
     uint16_t bit;           // which bit of *select to toggle
     uint32_t *select;       // only one bit can be active
     uC_radio_type_t type;
-} __attribute__((__packed__)) uC_widget_radio_t;
+} uC_widget_radio_t;
 
 // -----------------------------------------------------------------------
 
@@ -148,7 +148,7 @@ typedef struct
     uint16_t bit;           // which bit of *select to toggle
     uint32_t *select;       // any can be active
     uC_radio_type_t type;   // which graphc to display for on / off state
-} __attribute__((__packed__)) uC_widget_check_t;
+} uC_widget_check_t;
 
 // -----------------------------------------------------------------------
 
@@ -159,12 +159,12 @@ typedef struct
     // width is defined in the widget structure, size can be wider
 
     bool insert;
-    uint8_t size;           // size of text edit buffer
+    uint8_t size;           // character capacity; data buffer must be size+1 bytes
     uint8_t count;          // how many chars are in the edit buffer
     uint8_t cx;             // cursor position within edit buffer
     uint8_t offset;         // offset to char at start of widget display
     char *data;             // where to store the string
-} __attribute__((__packed__)) uC_widget_textbox_t;
+} uC_widget_textbox_t;
 
 // -----------------------------------------------------------------------
 
@@ -184,7 +184,7 @@ typedef struct
 
     uint8_t user_flags;
 
-    char *name;             // display name for widget
+    const char *name;       // display name for widget
 
     uC_widget_type_t type;  // one of the following
 
@@ -200,8 +200,8 @@ typedef struct
          uC_widget_radio_t   radio;
          uC_widget_check_t   check;
          uC_widget_textbox_t textbox;
-    } __attribute__((__packed__));
-} __attribute__((__packed__)) uC_widget_t;
+    };
+} uC_widget_t;
 
 // -----------------------------------------------------------------------
 
@@ -212,7 +212,7 @@ typedef struct
     uC_widget_vg_t *vg;
     uC_widget_view_t *view;
     uC_widget_t *widget;    // current widget with focus in view
-} __attribute__((__packed__)) widget_state_t;
+} widget_state_t;
 
 // -----------------------------------------------------------------------
 
@@ -238,12 +238,15 @@ enum
 // visibility hidden
 
 uC_widget_t *create_widget(uC_widget_type_t type,
-    char *name, uint16_t sequence,
-    uint16_t xco, uint16_t yco, uint16_t width,
+    const char *name, uint16_t width,
     uC_attribs_t attrs, uC_attribs_t focus);
+
+uint16_t auto_sequence(void);
 
 API void uC_widget_close_widget(uC_widget_t *widget);
 API bool uC_widget_select_widget(uint16_t sequence);
+API void uC_widget_set_position(uC_widget_t *widget, uint16_t xco, uint16_t yco);
+API void uC_widget_reset_sequence(void);
 
 uint8_t handle_button(uint8_t k);
 uint8_t handle_check(uint8_t k);
@@ -253,8 +256,8 @@ uint8_t handle_text(uint8_t k);
 
 void widget_close_view(uC_widget_view_t *view);
 void widget_scroll_view(uint8_t k);
-char tab_next_widget(void);
-char tab_prev_widget(void);
+uint8_t tab_next_widget(void);
+uint8_t tab_prev_widget(void);
 
 void widget_set_attrs(uC_window_t *window, uC_widget_t *widget);
 
@@ -272,7 +275,7 @@ void draw_text(uC_window_t *win, uC_widget_t *widget,
 // -----------------------------------------------------------------------
 
 API uC_widget_vg_t *uC_widget_vg_create(
-    uint8_t *name,
+    const char *name,
     uint16_t width, uint16_t height,
     uint16_t xco, uint16_t yco,
     uC_attribs_t attrs);
@@ -289,12 +292,13 @@ API void uC_widget_vg_add_border(uC_widget_vg_t *vg,
 API void uC_widget_vg_attach(uC_screen_t *scr, uC_widget_vg_t *vg);
 API void uC_widget_vg_detach(uC_screen_t *scr, uC_widget_vg_t *vg);
 API void uC_widget_vg_close(uC_widget_vg_t *vg);
-API void uC_widget_vg_add_view(uC_widget_vg_t *vg, uC_widget_view_t *v);
+API void uC_widget_vg_add_view(uC_widget_vg_t *vg, uC_widget_view_t *v,
+    uint16_t sequence);
 
 // -----------------------------------------------------------------------
 // uC_widget_view.c
 
-API uC_widget_view_t *uC_widget_view_create(uint8_t *name,
+API uC_widget_view_t *uC_widget_view_create(const char *name,
     uint16_t width, uint16_t height, uint16_t xco, uint16_t yco,
     uC_attribs_t attrs, bool scroll);
 
@@ -302,7 +306,7 @@ API void uC_widget_view_add_border(uC_widget_view_t *view,
     uC_border_type_t bdr_type, uC_attribs_t bdr_attrs);
 
 API bool uC_widget_view_add_widget(uC_widget_view_t *view,
-    uC_widget_t *w);
+    uC_widget_t *w, uint16_t sequence);
 
 API void uC_widget_view_remove_widget(uC_widget_view_t *view,
     uC_widget_t *widget);
@@ -313,34 +317,26 @@ API void uC_widget_to_view_index(uC_widget_view_t *view,
 // -----------------------------------------------------------------------
 
 API uC_widget_t *uC_widget_button_create(
-    uint16_t sequence, uint16_t *select,
-    char *name, char letter, uint16_t width,
-    uint8_t xco, uint8_t yco,
-    uC_attribs_t attrs, uC_attribs_t focus);
+    uint16_t *select, const char *name, char letter,
+    uint16_t width, uC_attribs_t attrs, uC_attribs_t focus);
 
 API uC_widget_t *uC_widget_radio_create(
-    uint16_t sequence, uint32_t *select,
-    uint16_t bit, char *name, uC_radio_type_t type,
-    uint16_t width, uint16_t xco, uint16_t yco,
+    uint32_t *select, uint16_t bit, const char *name,
+    uC_radio_type_t type, uint16_t width,
     uC_attribs_t attrs, uC_attribs_t focus);
 
 API uC_widget_t *uC_widget_check_create(
-    uint16_t sequence, uint32_t *select,
-    uint16_t bit, char *name, uC_radio_type_t type,
-    uint16_t width, uint16_t xco, uint16_t yco,
+    uint32_t *select, uint16_t bit, const char *name,
+    uC_radio_type_t type, uint16_t width,
     uC_attribs_t attrs, uC_attribs_t focus);
 
 API uC_widget_t *uC_widget_textbox_create(
-    uint16_t sequence, char *data, char *name,
-/* todo: this should be size width radix */
+    char *data, const char *name,
     uint16_t size, uC_textbox_radix_t radix,
-    uint16_t width, uint8_t xco, uint8_t yco,
-    uC_attribs_t attrs, uC_attribs_t focus);
+    uint16_t width, uC_attribs_t attrs, uC_attribs_t focus);
 
 API uC_widget_t *uC_widget_text_create(
-    uint16_t sequence, char *data, char *name,
-    uint16_t width, uint16_t height,
-    uint8_t xco, uint8_t yco,
+    char *data, const char *name, uint16_t width, uint16_t height,
     uC_attribs_t attrs, uC_attribs_t focus);
 
 // -----------------------------------------------------------------------

@@ -24,6 +24,23 @@ extern bool winch;
 void hello(void);
 
 // -----------------------------------------------------------------------
+// example fatal error handler: called by uC_abort() just before exit(1).
+// the terminal may be in raw mode at this point so writing to stderr is
+// unreliable; logging to a file is the safest option.  the handler may
+// also longjmp() back to a recovery point to prevent the library's exit.
+
+static void on_fatal(const char *msg)
+{
+    FILE *log = fopen("ucurses_error.log", "a");
+
+    if (log)
+    {
+        fprintf(log, "%s\n", msg);
+        fclose(log);
+    }
+}
+
+// -----------------------------------------------------------------------
 // user winch handler registered with the library (can be only one)
 
 // we cant process a winch here because it would take way too long so
@@ -126,6 +143,8 @@ int main(void)
 
     uC_screen_t *scr;
     uC_window_t *win;
+
+    uC_set_fatal_handler(on_fatal);
 
     init_main();
 

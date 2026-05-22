@@ -19,7 +19,7 @@ extern uint16_t radio_on[];
 extern uint16_t radio_off[];
 
 // -----------------------------------------------------------------------
-// draw checkbox widvget
+// draw checkbox widget
 
 void draw_check(uC_window_t *win, uC_widget_t *widget,
     uint16_t x, uint16_t y)
@@ -55,7 +55,7 @@ uint8_t handle_check(uint8_t k)
 
     uint16_t bit;
 
-    if (widget_state.view->view_node == NULL)
+    if (!widget_state.view->view_node)
     {
         return k;
     }
@@ -72,15 +72,15 @@ uint8_t handle_check(uint8_t k)
 
 // -----------------------------------------------------------------------
 
-API uC_widget_t *uC_widget_check_create(uint16_t sequence,
-    uint32_t *select, uint16_t bit, char *name,
-    uC_radio_type_t type, uint16_t width, uint16_t xco, uint16_t yco,
+API uC_widget_t *uC_widget_check_create(
+    uint32_t *select, uint16_t bit, const char *name,
+    uC_radio_type_t type, uint16_t width,
     uC_attribs_t attrs, uC_attribs_t focus)
 {
     uC_widget_t *w = create_widget(uC_WIDGET_CHECK,
-        name, sequence, xco, yco, width, attrs, focus);
+        name, width, attrs, focus);
 
-    if (w != NULL)
+    if (w)
     {
         w->check.type   = type;
         w->check.select = select;

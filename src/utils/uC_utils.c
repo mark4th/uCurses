@@ -8,7 +8,6 @@
 #include <time.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include <sys/ioctl.h>
 
 #include "uCurses.h"
 #include "uC_terminfo.h"
@@ -34,7 +33,7 @@ API void uC_ui_free(void *mem)
 }
 
 // -----------------------------------------------------------------------
-// FNV-1a on utf8 strings
+// FNV-1 on utf8 strings
 
 API int32_t fnv_hash(uint8_t *s)
 {
@@ -100,47 +99,75 @@ API void uC_restore_terminal(void)
 
 // -----------------------------------------------------------------------
 
-API __attribute__((noreturn)) void uC_abort(char *msg)
+static void (*fatal_handler)(const char *msg) = NULL;
+
+// -----------------------------------------------------------------------
+// install a handler called just before the library exits on a fatal error.
+// the handler may longjmp() out or call exit() itself to suppress the
+// library's own exit(1).  if it returns, exit(1) is still called.
+
+API void uC_set_fatal_handler(void (*fp)(const char *msg))
 {
-    fprintf(stderr, "%s\n", msg);
+    fatal_handler = fp;
+}
+
+// -----------------------------------------------------------------------
+
+API __attribute__((noreturn)) void uC_abort(const char *msg)
+{
     uCurses_deInit();
+    if (fatal_handler)
+    {
+        fatal_handler(msg);
+    }
+    fprintf(stderr, "%s\n", msg);
     exit(1);
 }
 
 // -----------------------------------------------------------------------
-// the story I hear now is that this is unreliable and that I should
-// be setting the cursor position to something like x = 999, y = 999 (move
-// in x first, then in y) then ask the terminal to report back to me
-// what the actual cursor location is.
-//
-// I need to know if this ever actually fails because I am not implementing
-// that garbage unless I legitimately need to.
+// HPA to rightmost column, VPA to bottom row, then DSR (query position).
+// Terminal clamps the cursor to its actual boundary so the CPR response
+// ESC[rows;colsR gives the true terminal dimensions.  More reliable than
+// ioctl(TIOCGWINSZ) which can lag after a resize.
 
 API void uC_get_console_size(uint16_t *width, uint16_t *height)
 {
-    struct winsize w;
+    char buf[32];
+    int  i = 0;
+    int  r = 24, c = 80;
 
-    ioctl(0, TIOCGWINSZ, &w);
+    ssize_t n;
 
-    *width  = w.ws_col;
-    *height = w.ws_row;
+    uC_terminfo_flush();
+
+    n = write(STDOUT_FILENO, "\033[9999G\033[9999d\033[6n", 18);
+    (void)n;
+
+    while (i < (int)(sizeof(buf) - 1))
+    {
+        if (read(STDIN_FILENO, &buf[i], 1) != 1) { break; }
+        if (buf[i++] == 'R') { break; }
+    }
+    buf[i] = '\0';
+
+    sscanf(buf, "\033[%d;%dR", &r, &c);
+
+    *width  = (uint16_t)c;
+    *height = (uint16_t)r;
 }
 
 // -----------------------------------------------------------------------
 // dont use this directly, use uC_ASSERT(f, msg); macro
 
-API void uC_assert(bool f, char *file, int line, char *msg)
+API void uC_assert(bool f, const char *file, int line, const char *msg)
 {
-    char *m = (msg != NULL) ? msg : "";
+    char buf[256];
 
-    if (f == false)
+    if (!f)
     {
-        if (file != NULL)
-        {
-            fprintf(stderr, "%s:%d %s\n", file, line, m);
-        }
-        uCurses_deInit();
-        exit(1);
+        snprintf(buf, sizeof(buf), "%s:%d %s",
+            file ? file : "?", line, msg ? msg : "");
+        uC_abort(buf);
     }
 }
 

@@ -10,11 +10,6 @@
 #include "uC_screen.h"
 
 // -----------------------------------------------------------------------
-
-typedef void (*menu_fp_t)(void);
-typedef menu_fp_t (*fp_finder_t)(int32_t hash);
-
-// -----------------------------------------------------------------------
 // an anonymous enum with various constants
 
 // these will probably be split up later
@@ -39,17 +34,17 @@ enum
 
 typedef struct
 {
-    uint8_t *name;
+    const char *name;
     int16_t flags;          // disable flags etc
     menu_fp_t fp;           // function to execute
     int16_t shortcut;       // keyboard shortcut
-} __attribute__((__packed__)) menu_item_t;
+} menu_item_t;
 
 // -----------------------------------------------------------------------
 
 typedef struct
 {
-    uint8_t *name;          // menu bar name for this pulldown menu
+    const char *name;       // menu bar name for this pulldown menu
     int16_t width;          // width of widest item in pulldown menu
     int16_t flags;          // masks for enabled/disabled etc
     int16_t which;          // current selected item
@@ -78,7 +73,7 @@ typedef struct
     uC_attribs_t attrs;
     uC_attribs_t selected_attrs;
     uC_attribs_t disabled_attrs;
-} __attribute__((__packed__)) menu_bar_t;
+} menu_bar_t;
 
 // -----------------------------------------------------------------------
 // visibility hidden
@@ -90,11 +85,11 @@ int32_t bar_create_pd_win(uC_screen_t *scr, pulldown_t *pd);
 
 API int32_t uC_menu_bar_open(uC_screen_t *scr);
 API void uC_menu_bar_close(uC_screen_t *scr);
-API int32_t uC_menu_new_pd(uC_screen_t *scr, uint8_t *name);
-API int32_t uC_menu_new_item(uC_screen_t *scr, uint8_t *name, menu_fp_t fp,
+API int32_t uC_menu_new_pd(uC_screen_t *scr, const char *name);
+API int32_t uC_menu_new_item(uC_screen_t *scr, const char *name, menu_fp_t fp,
     int16_t shortcut);
-API void uC_menu_pd_disable(uC_screen_t *scr, uint8_t *name);
-API void uC_menu_pd_enable(uC_screen_t *scr, uint8_t *name);
+API void uC_menu_pd_disable(uC_screen_t *scr, const char *name);
+API void uC_menu_pd_enable(uC_screen_t *scr, const char *name);
 API void uC_menu_init_keys(void);
 
 // -----------------------------------------------------------------------

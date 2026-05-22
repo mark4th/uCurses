@@ -27,7 +27,7 @@ typedef struct
     char    *ti_table;
 
     int8_t wide;                // numbers item size size shift factor
-} __attribute__((__packed__)) ti_file_t;
+} ti_file_t;
 
 // -----------------------------------------------------------------------
 

@@ -19,7 +19,7 @@ typedef struct
     void *tail;
     uint32_t count;         // number of items in the list
     uC_mem_zone_t zone;     // all nodes allocated within this zone
-} __attribute__((__packed__)) uC_list_t;
+} uC_list_t;
 
 // -----------------------------------------------------------------------
 
@@ -29,7 +29,7 @@ typedef struct
     void *next;
     uC_list_t *list;        // parent list of this node
     void *payload;          // data associated with this node
-} __attribute__((__packed__)) uC_list_node_t;
+} uC_list_node_t;
 
 // -----------------------------------------------------------------------
 

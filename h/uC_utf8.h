@@ -19,7 +19,7 @@ typedef struct
         uint32_t zero;
     };
     int width;
-} __attribute__((__packed__)) utf8_encode_t;
+} utf8_encode_t;
 
 // --------------------------------------------------------------------------
 // visibility hidden

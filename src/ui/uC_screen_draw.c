@@ -1,4 +1,4 @@
-// screen.c   - uCurses text user interface screen handling
+// uC_screen_draw.c   - uCurses text user interface screen handling
 // -----------------------------------------------------------------------
 
 #define _XOPEN_SOURCE 700  // needed to make wcwidth work
@@ -36,7 +36,7 @@ void draw_view_groups(uC_screen_t *scr);
 
 static void draw_win_name(uC_window_t *win)
 {
-    uint8_t *p1;
+    const char *p1;
     cell_t *p2;
     border_t *b;
     uC_screen_t *scr;
@@ -53,7 +53,7 @@ static void draw_win_name(uC_window_t *win)
     index = (y * scr->width) + x;
 
     p1 = win->display_name;
-    if (p1 == NULL)
+    if (!p1)
     {
         return;
     }
@@ -75,7 +75,7 @@ static void draw_win_name(uC_window_t *win)
 
     while (*p1)
     {
-        cell.code = (int32_t)*p1;
+        cell.code = (uint8_t)*p1;
         *p2++ = cell;
         p1++;
     }
@@ -112,7 +112,7 @@ void scr_draw_win(uC_window_t *win)
 
             // window name only drawn if window has a border
 
-            if ((win->display_name != NULL) &&
+            if (win->display_name &&
                 (win->flags & uC_WIN_NAMED))
             {
                draw_win_name(win);

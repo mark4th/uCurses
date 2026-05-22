@@ -46,7 +46,7 @@ static uint8_t handle_widget_key(uint8_t k)
 {
     bool f;
 
-    if (widget_state.widget == NULL)
+    if (!widget_state.widget)
     {
         return k;
     }
@@ -54,10 +54,10 @@ static uint8_t handle_widget_key(uint8_t k)
     // handle case where the current view is scrollable and
     // either cursor up or cursor down have been pressed
 
-    if (widget_state.view != NULL)
+    if (widget_state.view)
     {
         f = check_scrollable(k);
-        if (f == true)
+        if (f)
         {
             return k;
         }
@@ -111,7 +111,7 @@ static uint8_t widget_key(void)
     // character within this call to widget_key().  this negates type
     // ahead
 
-    while (uC_test_keys() != 0)
+    while (uC_test_keys())
     {
         k = _widget_key();
     }
@@ -172,19 +172,13 @@ static void set_widget_key_actions(void)
 
 // -----------------------------------------------------------------------
 
-// there might be a problem with the widget state variable maintaining a
-// memory of which widgets had focus on the previos call to this function
-// because all widgets are destroyed when the call is made by the app to
-// uC_widget_vg_close() and recreated prior to calling this function
-// again.
-
 API char uC_widget_main(void)
 {
     char k;
 
-    if (widget_state.vg != NULL)
+    if (widget_state.vg)
     {
-        if ((widget_state.vg->flags & uC_vg_flag_ignore) != 0)
+        if (widget_state.vg->flags & uC_vg_flag_ignore)
         {
             widget_state.sequence = 0;
         }

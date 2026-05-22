@@ -54,14 +54,14 @@ void widget_set_attrs(uC_window_t *win, uC_widget_t *widget)
     attr = widget->attrs;
     view = widget->view;
 
-    if (widget->focused == true)
+    if (widget->focused)
     {
         attr = widget->focus_attrs;
 
         if (view != widget_state.view)
         {
-            uC_set_fg(&attr, uC_COLOR_WHITE);
-            uC_set_bg(&attr, uC_COLOR_GRAY);
+            uC_set_gray_fg(&attr, uC_GRAY_07);
+            uC_set_gray_bg(&attr, uC_GRAY_05);
         }
     }
 
@@ -107,7 +107,7 @@ static void draw_view_box(uC_window_t *win, uC_widget_view_t *view)
         view->width, view->height,
         view->box_type, view->box_attrs);
 
-    if (view->name != NULL)
+    if (view->name)
     {
         b = borders[view->box_type];
 
@@ -142,7 +142,7 @@ static void draw_scrollable(uC_window_t *win, uC_widget_view_t *view)
         n1 = uC_list_scan(NULL, n1);
     }
 
-    for (i = 0; i < view->height && (n1 != NULL); i++)
+    for (i = 0; i < view->height && n1; i++)
     {
         widget = (uC_widget_t *)n1->payload;
 
@@ -171,7 +171,7 @@ static void draw_nonscrollable(uC_window_t *win, uC_widget_view_t *view)
 
     n1 = uC_list_scan(&view->widgets, NULL);
 
-    while (n1 != NULL)
+    while (n1)
     {
         draw_widget(win, (uC_widget_t *)n1->payload,
             view->xco, view->yco);
@@ -205,7 +205,7 @@ static void draw_views(uC_widget_vg_t *vg)
 
     n1 = uC_list_scan(&vg->views, NULL);
 
-    while (n1 != NULL)
+    while (n1)
     {
         view = (uC_widget_view_t *)n1->payload;
 
@@ -224,7 +224,7 @@ void draw_view_groups(uC_screen_t *scr)
 
     n1 = uC_list_scan(&scr->view_groups, NULL);
 
-    while (n1 != NULL)
+    while (n1)
     {
         vg = (uC_widget_vg_t *)n1->payload;
 

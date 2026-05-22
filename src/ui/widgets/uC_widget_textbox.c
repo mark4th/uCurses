@@ -19,7 +19,7 @@ extern widget_state_t widget_state;
 // -----------------------------------------------------------------------
 // which characters are valid in various bases
 
-char * const radix_chars =
+const char radix_chars[] =
     "0123456789abcdefABCDEF"
     "ghijklmnopqrstuvwxyz"
     "GHIJKLMNOPQRSTUVWXYZ"
@@ -29,7 +29,7 @@ char * const radix_chars =
 
 uint8_t radix_lengths[] =
 {
-    2, 8, 10, 22, strlen(radix_chars)
+    2, 8, 10, 22, sizeof radix_chars -1
 };
 
 // -----------------------------------------------------------------------
@@ -154,13 +154,13 @@ static bool test_char(uC_widget_textbox_t *t, uint8_t k)
 static void lt(uC_widget_textbox_t *t)
 {
     uint16_t half = widget_state.widget->width / 2;
-    uint16_t min  = (t->offset != 0) ? half : 0;
+    uint16_t min  = t->offset ? half : 0;
 
     if (t->cx > min)
     {
         t->cx--;
     }
-    else if (t->offset != 0)
+    else if (t->offset)
     {
         t->offset--;
     }
@@ -191,22 +191,21 @@ static void rt(uC_widget_textbox_t *t)
 static void insert_char(uC_widget_textbox_t *t, uint8_t k)
 {
     int i;
-    int cursor;
+    int cursor = t->offset + t->cx;
     uint8_t c2;
 
     // if the cursor is at the end of the string and there is still space
     // left for more characters
 
-    if (t->cx == t->count)
+    if (cursor == t->count)
     {
-        if (t->cx != t->size)
+        if (cursor != t->size)
         {
-            t->data[t->cx++] = k;
+            t->data[cursor] = k;
+            t->cx++;
         }
         return;
     }
-
-    cursor = t->offset + t->cx;
 
     for (i = cursor; i != t->size; i++)
     {
@@ -229,7 +228,7 @@ static uint8_t write_char(uC_widget_textbox_t *t, uint8_t k)
 
     f = test_char(t, k);
 
-    if (f == false)
+    if (!f)
     {
         return k;
     }
@@ -265,7 +264,7 @@ static void del(uC_widget_textbox_t *t)
 
     int q = (t->cx + t->offset);
 
-    if (t->count != 0)
+    if (q < t->count)
     {
         for (i = q; i != t->count; i++)
         {
@@ -282,7 +281,7 @@ static void bs(uC_widget_textbox_t *t)
 {
     int q = (t->cx + t->offset - 1);
 
-    if ((t->count != 0) && (q >= 0))
+    if (t->count && (q >= 0))
     {
         while (q != t->count)
         {
@@ -348,16 +347,18 @@ uint8_t handle_textbox(uint8_t k)
 
 // -----------------------------------------------------------------------
 
+// data must point to a buffer of size+1 bytes. size is the character
+// capacity; the extra byte holds the null terminator at data[size].
+
 API uC_widget_t *uC_widget_textbox_create(
-    uint16_t sequence, char *data, char *name,
+    char *data, const char *name,
     uint16_t size, uC_textbox_radix_t radix,
-    uint16_t width, uint8_t xco, uint8_t yco,
-    uC_attribs_t attrs, uC_attribs_t focus)
+    uint16_t width, uC_attribs_t attrs, uC_attribs_t focus)
 {
     uC_widget_t *widget = create_widget(uC_WIDGET_TEXTBOX,
-        name, sequence, xco, yco, width, attrs, focus);
+        name, width, attrs, focus);
 
-    if (widget != NULL)
+    if (widget)
     {
         widget->textbox.data   = data;
         widget->textbox.size   = size;

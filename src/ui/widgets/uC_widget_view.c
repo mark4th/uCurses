@@ -21,15 +21,15 @@ extern widget_state_t widget_state;
 // -----------------------------------------------------------------------
 // create a widget view as a container for one type of widget
 
-API uC_widget_view_t *uC_widget_view_create(uint8_t *name,
+API uC_widget_view_t *uC_widget_view_create(const char *name,
     uint16_t width, uint16_t height, uint16_t xco, uint16_t yco,
     uC_attribs_t attrs, bool scroll)
 {
     uC_widget_view_t *view = uC_alloc(uC_MEM_ZONE_UI, sizeof(*view));
 
-    if (view != NULL)
+    if (view)
     {
-        if (name != NULL)
+        if (name)
         {
             view->name   = name;
             view->flags |= (1 << uC_VIEW_NAMED);
@@ -56,7 +56,7 @@ API uC_widget_view_t *uC_widget_view_create(uint8_t *name,
 API void uC_widget_view_add_border(uC_widget_view_t *view,
     uC_border_type_t bdr_type, uC_attribs_t bdr_attrs)
 {
-    if (view != NULL)
+    if (view)
     {
         view->flags    |= (1 << uC_VIEW_BOXED);
         view->box_attrs = bdr_attrs;
@@ -67,12 +67,12 @@ API void uC_widget_view_add_border(uC_widget_view_t *view,
 // -----------------------------------------------------------------------
 
 API bool uC_widget_view_add_widget(uC_widget_view_t *view,
-    uC_widget_t *widget)
+    uC_widget_t *widget, uint16_t sequence)
 {
     uC_list_node_t *n1;
     uC_widget_t *w2;
 
-    if ((view == NULL) || (widget == NULL))
+    if (!view || !widget)
     {
         return false;
     }
@@ -80,7 +80,7 @@ API bool uC_widget_view_add_widget(uC_widget_view_t *view,
     // all widgets added to the view must be of the same type
     // as the first widget added to the view
 
-    if (view->widgets.count != 0)
+    if (view->widgets.count)
     {
         n1 = uC_list_scan(&view->widgets, NULL);
         w2 = (uC_widget_t *)n1->payload;
@@ -91,12 +91,16 @@ API bool uC_widget_view_add_widget(uC_widget_view_t *view,
         }
     }
 
+    // scrollable views get one tab stop for the whole view,
+    // set via uC_widget_vg_add_view — all widgets share that sequence
+
     if (view->flags & (1 << uC_VIEW_SCROLL))
     {
-        if (view->sequence == 0)
-        {
-            view->sequence = widget->sequence;
-        }
+        widget->sequence = view->sequence;
+    }
+    else
+    {
+        widget->sequence = sequence ? sequence : auto_sequence();
     }
 
     widget->view = view;
@@ -108,7 +112,7 @@ API bool uC_widget_view_add_widget(uC_widget_view_t *view,
 API void uC_widget_view_remove_widget(uC_widget_view_t *view,
     uC_widget_t *widget)
 {
-    if (view != NULL)
+    if (view)
     {
         uC_list_remove_node(&view->widgets, widget);
     }
@@ -120,7 +124,7 @@ void widget_close_view(uC_widget_view_t *view)
 {
     uC_widget_t *widget;
 
-    while (view->widgets.count != 0)
+    while (view->widgets.count)
     {
         widget = uC_list_pop_head(&view->widgets);
         uC_widget_close_widget(widget);
@@ -136,11 +140,11 @@ static void view_up(void)
 {
     uC_widget_view_t *view = widget_state.view;
 
-    if (view->cy != 0)
+    if (view->cy)
     {
         view->cy--;
     }
-    else if (view->top != 0)
+    else if (view->top)
     {
         view->top--;
     }
@@ -149,7 +153,7 @@ static void view_up(void)
         return;
     }
 
-    if (view->view_node->prev != NULL)
+    if (view->view_node->prev)
     {
         widget_state.view->view_node = view->view_node->prev;
     }
@@ -159,7 +163,7 @@ static void view_up(void)
 
 static void next(void)
 {
-    if (widget_state.view->view_node->next != NULL)
+    if (widget_state.view->view_node->next)
     {
         widget_state.view->view_node =
             widget_state.view->view_node->next;
@@ -205,11 +209,11 @@ void widget_scroll_view(uint8_t k)
 {
     switch (k)
     {
-        case WIDGET_KEY_UP:      view_up();    break;
-        case WIDGET_KEY_DOWN:    view_down();  break;
+        case WIDGET_KEY_UP:   view_up();    break;
+        case WIDGET_KEY_DOWN: view_down();  break;
     }
 
-    if (widget_state.view->view_node != NULL)
+    if (widget_state.view->view_node)
     {
         widget_state.widget = widget_state.view->view_node->payload;
     }
@@ -224,12 +228,12 @@ API void uC_widget_to_view_index(uC_widget_view_t *view, uint16_t index)
 
     // call is only valid if view is scrollable
 
-    if (view->flags & uC_VIEW_SCROLL)
+    if (!(view->flags & (1 << uC_VIEW_SCROLL)))
     {
         return;
     }
 
-    if (view->widgets.head == NULL)
+    if (!view->widgets.head)
     {
         return;
     }

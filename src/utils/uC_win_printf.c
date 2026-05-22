@@ -23,7 +23,7 @@
 // -----------------------------------------------------------------------
 
 static va_list arg;
-static uint8_t *p;
+static const char *p;
 static uC_window_t *w;
 
 // -----------------------------------------------------------------------
@@ -363,12 +363,12 @@ static void specifier(void)
 // -----------------------------------------------------------------------
 // window string writing and window attribute control
 
-API void uC_win_printf(uC_window_t *win, uint8_t *format, ...)
+API void uC_win_printf(uC_window_t *win, const char *format, ...)
 {
     uint32_t codepoint;
     uint8_t skip;
 
-    va_start(arg, (char *)format);
+    va_start(arg, format);
 
     p = format;
     w = win;

@@ -4549,6 +4549,38 @@ absolutely 100% positive that they are now absolutely 100% bug free! (tm)!
 
         There is currently no associated "insert after" function.
 
++++
+    Stack and queue macros
+
+        uC_list.h provides four macros that let a uC_list_t serve as a
+        stack (LIFO) or queue (FIFO) without adding any new API functions
+        or increasing the library size.
+
+            // stack (LIFO)
+            #define uC_stack_push(list, p)  uC_list_push_head(list, p)
+            #define uC_stack_pop(list)      uC_list_pop_head(list)
+
+            // queue (FIFO)
+            #define uC_queue_put(list, p)   uC_list_push_tail(list, p)
+            #define uC_queue_get(list)      uC_list_pop_head(list)
+
+        The same uC_list_t type is used for all three purposes.  The zone
+        field must be set before first use:
+
+            uC_list_t list = { .zone = uC_MEM_ZONE_USER1 };
+
+        Example output from example/list_demo.c:
+
+            stack (LIFO):
+              third
+              second
+              first
+            queue (FIFO):
+              first
+              second
+              third
++++
+
 
 10.7: uC_rgb_hsl.c
 ------------------

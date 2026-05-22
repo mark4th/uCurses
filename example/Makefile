@@ -16,7 +16,7 @@ $(OBJDIR)/%.o : %.c demo.h $(SOURCES)
 	$(CC) -c $(CFLAGS) -o $@ $<
 
 clean:
-	@rm -fr obj demo shell wtest window raycast dots mandel lion widgets *.o
+	@rm -fr obj demo shell wtest window raycast dots mandel lion widgets list_demo *.o
 
 shell: shell.o
 	$(CC) $(CFLAGS) -L /usr/local/lib64 -lm -luCurses -o shell shell.c
@@ -45,6 +45,9 @@ mandel: mandel.o sintab.o
 lion:
 	$(CC) $(CFLAGS) -L /usr/local/lib64 -lm -luCurses -o lion lion.c
 	strip -R .comment lion
+
+list_demo: list_demo.c
+	$(CC) $(CFLAGS) -L /usr/local/lib64 -lm -luCurses -o list_demo list_demo.c
 
 valgrind: demo
 	valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all --trace-children=yes \

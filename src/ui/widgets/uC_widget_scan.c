@@ -123,7 +123,7 @@ API bool uC_widget_select_widget(uint16_t sequence)
     {
         vg = (uC_widget_vg_t *)n1->payload;
 
-        if (!(vg->flags & uC_vg_flag_ignore))
+        if (!(vg->flags & uC_vg_flag_inactive))
         {
             f = scan_vg(vg, sequence);
 
@@ -162,7 +162,7 @@ static uint16_t max_sequence(void)
     {
         vg = (uC_widget_vg_t *)n1->payload;
 
-        if (!(vg->flags & uC_vg_flag_ignore))
+        if (!(vg->flags & uC_vg_flag_inactive))
         {
             n2 = uC_list_scan(&vg->views, NULL);
 

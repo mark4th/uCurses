@@ -177,7 +177,7 @@ API char uC_widget_main(void)
 
     if (widget_state.vg)
     {
-        if (widget_state.vg->flags & uC_vg_flag_ignore)
+        if (widget_state.vg->flags & uC_vg_flag_inactive)
         {
             widget_state.sequence = 0;
         }

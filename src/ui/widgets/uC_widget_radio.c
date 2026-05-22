@@ -63,8 +63,7 @@ uint8_t handle_radio(uint8_t k)
         widget = widget_state.view->view_node->payload;
         bit    = widget->radio.bit;
 
-        *widget->radio.select &= (1 << bit);
-        *widget->radio.select ^= (1 << bit);
+        *widget->radio.select = (1 << bit);
     }
 
     return k;

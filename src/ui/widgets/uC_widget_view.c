@@ -254,6 +254,18 @@ API void uC_widget_to_view_index(uC_widget_view_t *view, uint16_t index)
 
 // -----------------------------------------------------------------------
 
+API void uC_widget_view_set_position(uC_widget_view_t *view,
+    uint16_t xco, uint16_t yco)
+{
+    if (view)
+    {
+        view->xco = xco;
+        view->yco = yco;
+    }
+}
+
+// -----------------------------------------------------------------------
+
 #endif // UC_WIDGETS
 
 // =======================================================================

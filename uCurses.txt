@@ -4862,6 +4862,24 @@ which handles it.
         above or can contain characters to be written directly to the
         specified window.
 
++++
+    Parameter grouping macros
+
+        Two macros are provided in uC_win_printf.h to visually associate
+        the multiple arguments that certain specifiers require.  Using the
+        C comma operator to group them (e.g. (x, y)) would silently discard
+        all but the last value, so these macros expand to the correct number
+        of separate arguments instead.
+
+            #define UC_XY(x, y)      (x), (y)
+            #define UC_RGB(r, g, b)  (r), (g), (b)
+
+        Example usage:
+
+            uC_win_printf(win, "%@%rf",
+                UC_XY(cx, cy), UC_RGB(255, 0, 128));
++++
+
 
 10.11: uC_winch.c
 -----------------

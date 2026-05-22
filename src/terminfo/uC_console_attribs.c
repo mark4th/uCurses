@@ -46,7 +46,7 @@ API void uC_console_set_gray_fg(uC_colors_gray_t color)
 
 // -----------------------------------------------------------------------
 
-API void console_set_gray_bg(uC_colors_gray_t color)
+API void uC_console_set_gray_bg(uC_colors_gray_t color)
 {
     uC_set_gray_bg(&attrs, color);
     apply_attribs();

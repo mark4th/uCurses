@@ -5,11 +5,26 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <math.h>
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 
 #include "demo.h"
 
-int dots_sin(int16_t angle);
-int dots_cos(int16_t angle);
+// -----------------------------------------------------------------------
+// 512-step circle: angle 0-511 maps to 0-2π
+
+static int dots_sin(int16_t angle)
+{
+    return (int)(sin(angle * M_PI / 256.0) * 16384.0);
+}
+
+static int dots_cos(int16_t angle)
+{
+    return (int)(cos(angle * M_PI / 256.0) * 16384.0);
+}
 
 // -----------------------------------------------------------------------
 
@@ -19,7 +34,6 @@ static uC_screen_t *scr;
 static uC_window_t *win;
 static uC_window_t *status_win;
 
-extern int16_t dots_sin_tab[512];
 extern int point_counts[];             // number of points in each object
 extern xyz *obj_list[];                // pointers to each object
 

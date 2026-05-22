@@ -16,11 +16,10 @@ $(OBJDIR)/%.o : %.c demo.h $(SOURCES)
 	$(CC) -c $(CFLAGS) -o $@ $<
 
 clean:
-	@rm -fr obj demo shell wtest window raycast dots mandel lion widgets list_demo *.o
+	@rm -fr obj demo console wtest window raycast dots mandel lion widgets list_demo *.o
 
-shell: shell.o
-	$(CC) $(CFLAGS) -L /usr/local/lib64 -lm -luCurses -o shell shell.c
-#	strip -R .comment shell
+console: console.c
+	$(CC) $(CFLAGS) -L /usr/local/lib64 -lm -luCurses -o console console.c
 
 widgets: widgets.o
 	$(CC) $(CFLAGS) -L /usr/local/lib64 -lm -luCurses -o widgets widgets.c
@@ -34,12 +33,12 @@ raycast: raycast.o
 	$(CC) $(CFLAGS) -L /usr/local/lib64 -lm -luCurses -o raycast raycast.c
 	strip -R .comment raycast
 
-dots: dots.o sintab.o shapes.o
-	$(CC) $(CFLAGS) -L /usr/local/lib64 -lm -luCurses -o dots dots.c sintab.c shapes.c
+dots: dots.o shapes.o
+	$(CC) $(CFLAGS) -L /usr/local/lib64 -lm -luCurses -o dots dots.c shapes.c
 	strip -R .comment dots
 
-mandel: mandel.o sintab.o
-	$(CC) $(CFLAGS) -L /usr/local/lib64 -lm -luCurses -o mandel mandel.c sintab.c
+mandel: mandel.o
+	$(CC) $(CFLAGS) -L /usr/local/lib64 -lm -luCurses -o mandel mandel.c
 	strip -R .comment mandel
 
 lion:

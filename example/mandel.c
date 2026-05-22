@@ -21,8 +21,6 @@
 #define IMAX 1000
 
 
-int dots_sin(int16_t angle);
-
 uC_window_t *status_win = NULL;
 uC_screen_t *scr        = NULL;
 uC_window_t *win        = NULL;
@@ -70,9 +68,9 @@ static void make_palette(void)
     {
         q = PI * (i + 10);
 
-        r = (dots_sin(q / 16));
-        g = (dots_sin(q / 19));
-        b = (dots_sin(q / 21));
+        r = (uint16_t)(128.0L + 127.0L * sinl(q / 16.0L));
+        g = (uint16_t)(128.0L + 127.0L * sinl(q / 19.0L));
+        b = (uint16_t)(128.0L + 127.0L * sinl(q / 21.0L));
 
         palette[i].r = r;
         palette[i].g = g;

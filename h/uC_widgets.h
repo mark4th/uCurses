@@ -253,7 +253,6 @@ uint8_t handle_button(uint8_t k);
 uint8_t handle_check(uint8_t k);
 uint8_t handle_radio(uint8_t k);
 uint8_t handle_textbox(uint8_t k);
-uint8_t handle_text(uint8_t k);
 
 void widget_close_view(uC_widget_view_t *view);
 void widget_scroll_view(uint8_t k);
@@ -269,8 +268,6 @@ void draw_check(uC_window_t *win, uC_widget_t *widget,
 void draw_radio(uC_window_t *win, uC_widget_t *widget,
     uint16_t x, uint16_t y);
 void draw_textbox(uC_window_t *win, uC_widget_t *widget,
-    uint16_t x, uint16_t y);
-void draw_text(uC_window_t *win, uC_widget_t *widget,
     uint16_t x, uint16_t y);
 
 // -----------------------------------------------------------------------
@@ -335,10 +332,6 @@ API uC_widget_t *uC_widget_textbox_create(
     char *data, const char *name,
     uint16_t size, uC_textbox_radix_t radix,
     uint16_t width, uC_attribs_t attrs, uC_attribs_t focus);
-
-API uC_widget_t *uC_widget_text_create(
-    char *data, const char *name, uint16_t width, uint16_t height,
-    uC_attribs_t attrs, uC_attribs_t focus);
 
 // -----------------------------------------------------------------------
 

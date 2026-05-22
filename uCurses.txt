@@ -4865,19 +4865,29 @@ which handles it.
 +++
     Parameter grouping macros
 
-        Two macros are provided in uC_win_printf.h to visually associate
-        the multiple arguments that certain specifiers require.  Using the
-        C comma operator to group them (e.g. (x, y)) would silently discard
-        all but the last value, so these macros expand to the correct number
-        of separate arguments instead.
+        Three macros are defined in uCurses.h to visually associate
+        parameters that logically belong together.  Using the C comma
+        operator to group them (e.g. (x, y)) would silently discard all but
+        the last value, so these macros expand to the correct number of
+        separate arguments instead.  They work equally well with
+        uC_win_printf format specifiers and with direct API calls.
 
-            #define UC_XY(x, y)      (x), (y)
+            #define UC_XY(x, y)      (x), (y)    // position
+            #define UC_WH(w, h)      (w), (h)    // dimensions
             #define UC_RGB(r, g, b)  (r), (g), (b)
 
-        Example usage:
+        Examples with uC_win_printf:
 
             uC_win_printf(win, "%@%rf",
                 UC_XY(cx, cy), UC_RGB(255, 0, 128));
+
+        Examples with direct API calls:
+
+            uC_win_open(UC_WH(80, 24));
+            uC_scr_open(UC_WH(width, height));
+            uC_win_cup(win, UC_XY(x, y));
+            uC_win_set_rgb_fg(win, UC_RGB(255, 0, 128));
+            uC_widget_vg_create(name, UC_WH(w, h), UC_XY(x, y), attrs);
 +++
 
 

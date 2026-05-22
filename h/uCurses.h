@@ -24,6 +24,13 @@ typedef struct uC_screen_s uC_screen_t;
 #define DEADC0DE (0xdeadc0de)
 
 // -----------------------------------------------------------------------
+// parameter grouping macros — clarify multi-arg calls at the use site
+
+#define UC_XY(x, y)      (x), (y)
+#define UC_WH(w, h)      (w), (h)
+#define UC_RGB(r, g, b)  (r), (g), (b)
+
+// -----------------------------------------------------------------------
 
 typedef void (*fp_t)(void *x);
 typedef void (*user_winch_t)(void);

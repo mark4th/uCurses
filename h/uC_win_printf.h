@@ -9,11 +9,7 @@
 #include "uCurses.h"
 #include "uC_window.h"
 
-// -----------------------------------------------------------------------
-// parameter grouping helpers for multi-arg specifiers
-
-#define UC_XY(x, y)      (x), (y)
-#define UC_RGB(r, g, b)  (r), (g), (b)
+// UC_XY, UC_WH, UC_RGB grouping macros are defined in uCurses.h
 
 // -----------------------------------------------------------------------
 

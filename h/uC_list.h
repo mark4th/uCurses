@@ -44,6 +44,15 @@ API bool uC_list_insert_before(uC_list_node_t *n1, void *payload);
 API uC_list_node_t *uC_list_scan(uC_list_t *list, uC_list_node_t *n1);
 
 // -----------------------------------------------------------------------
+// stack (LIFO) and queue (FIFO) built on uC_list_t — zero library cost
+
+#define uC_stack_push(list, p)  uC_list_push_head(list, p)
+#define uC_stack_pop(list)      uC_list_pop_head(list)
+
+#define uC_queue_put(list, p)   uC_list_push_tail(list, p)
+#define uC_queue_get(list)      uC_list_pop_head(list)
+
+// -----------------------------------------------------------------------
 
 #endif // UC_LIST_H
 

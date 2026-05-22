@@ -91,6 +91,8 @@ API void uC_widget_vg_attach(uC_screen_t *scr, uC_widget_vg_t *vg)
             uC_win_clear(&vg->window);
             uC_list_push_tail(&scr->view_groups, vg);
 
+            widget_state.screen = scr;
+
             if (!widget_state.sequence)
             {
                 uC_widget_select_widget(1);

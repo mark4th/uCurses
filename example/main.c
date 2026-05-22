@@ -15,6 +15,7 @@
 #define STATUS_Y   (0)
 #define WINCH_KEY  (0xec)  // randomly chosen value
 
+uC_screen_t *active_screen;
 uC_window_t *status_win;
 
 extern bool winch;
@@ -56,7 +57,7 @@ void my_winch(void)
 
 static void init_main(void)
 {
-    uCurses_init("json/main.json", NULL, menu_address_cb);
+    active_screen = uCurses_init("json/main.json", NULL, menu_address_cb);
 
     status_win = uC_add_status(active_screen, STAT_SIZE,
         STATUS_X, STATUS_Y);

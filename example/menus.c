@@ -15,7 +15,6 @@
 
 #include "demo.h"
 
-extern uC_screen_t *active_screen;
 extern uC_window_t *status_win;
 
 // -----------------------------------------------------------------------

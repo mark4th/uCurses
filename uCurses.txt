@@ -1737,7 +1737,13 @@ shift, meta plus key.  see above "pretty plzkthxbai".
         This internal function is used to compare compiled escape
         sequences for each supported key with the sequence which was
         previously read into the keyboard input buffer.  This code does
-        not use the 'unsafe' memcmp function but instead computes a FNV-1a
+        not use the 'unsafe' memcmp function but instead computes a
+---
+        FNV-1a
+---
++++
+        FNV-1
++++
         hash for each if the items to be compared.  This may very well be
         just as unsafe.
 
@@ -2524,7 +2530,12 @@ dependencies that I am not a huge fan of.
         change its border type.  It is also used to set the borders
         attributes (focused and non focused).
 
+---
     API void uC_win_set_name(uC_window_t *win, uint8_t *name)
+---
++++
+    API void uC_win_set_name(uC_window_t *win, const char *name)
++++
 
         This public API call is used to change the display name of a
         specified window.   If that window has a border then this name
@@ -3448,6 +3459,12 @@ engine based on the developer defined order.
         screen structure.  Once the view group is attached, all widgets
         within all widget views associated with the attached group will be
         displayed on the next update.
++++
+        If no widget currently has focus when this call is made then the
+        widget with sequence number 1 is automatically given focus.  This
+        ensures that newly attached view groups are immediately keyboard
+        navigable without the caller needing to explicitly set focus.
++++
 
     API void uC_widget_vg_detach(uC_screen_t *scr, uC_widget_vg_t *vg)
 
@@ -3858,6 +3875,7 @@ view group.
         marked as having focus and a true result is returned.  Otherwise a
         false result is returned.
 
+---
     char tab_next_widget(void)
 
         This function is part of the widget keyboard handling routines.
@@ -3887,6 +3905,31 @@ view group.
         widget is found with this sequence number then all widgets, views
         and view groups lose focus and the current sequence number is set
         to zero.
+---
++++
+    uint8_t tab_next_widget(void)
+
+        This function is part of the widget keyboard handling routines.
+        It retrieves the sequence number of the currently focused widget
+        from the widget_state variable and attempts to select the widget
+        with the next sequence number.
+
+        If no widget is found with that sequence number then focus wraps
+        around to the widget with sequence number 1, ensuring that Tab
+        always moves focus to some widget.
+
+    uint8_t tab_prev_widget(void)
+
+        This function is part of the widget keyboard handling routines.
+        It retrieves the sequence number of the currently focused widget
+        from the widget_state variable and attempts to select the widget
+        with the previous sequence number.
+
+        If the current sequence number is 1 (or no widget is found)
+        focus wraps around to the widget with the highest assigned
+        sequence number, ensuring that Shift-Tab always moves focus to
+        some widget.
++++
 
 
 9.10: uC_widget_keys.c
@@ -4020,10 +4063,21 @@ so are also available to the application developer.
     API int32_t fnv_hash(uint8_t *s)
 
         This public API call computes a FNV hash on the string passed to
-        it.  It is documented as being the FNV-1a variant but this might
+        it.
+---
+        It is documented as being the FNV-1a variant but this might
         actually be incorrect, it might actually be the original FNV-1.
         This is utterly inconsequential as it still performs its duties
         perfectly.
+---
++++
+        The algorithm used is FNV-1: the hash is first multiplied by the
+        FNV prime and then XORed with the next byte.  FNV-1a reverses
+        those two operations (XOR then multiply).  The constants used
+        (prime 0x01000193, basis 0x811c9dc5) are correct for both
+        variants so the distinction has no practical effect on the
+        library.
++++
 
         It is used as a means of negating the need to do string compares
         within the library which are widely accepted as being unsafe.  I
@@ -4052,12 +4106,38 @@ so are also available to the application developer.
         their saved state.  It is used as part of the libraries exit
         procedure so the terminal is not left in a squirly state.
 
+---
     API __attribute__((noreturn)) void uC_abort(char *msg)
 
         This public API call is used as a somewhat graceful abort.  It
         restores the terminal to its original state and emits an error
         string to stderr.  It then exits the application and returns
         back to the console.
+---
++++
+    API __attribute__((noreturn)) void uC_abort(const char *msg)
+
+        This public API call is used as a somewhat graceful abort.  If a
+        fatal handler has been registered via uC_set_fatal_handler() then
+        that handler is called first with the error message, giving the
+        application one last chance to log the error or longjmp() to a
+        recovery point.  If the handler returns normally the terminal is
+        restored to its original state and the application exits.
+
+    API void uC_set_fatal_handler(void (*fp)(const char *msg))
+
+        This public API call registers a user-supplied callback that will
+        be invoked by uC_abort() before the application exits.  The
+        callback receives the same error message string that uC_abort()
+        was called with.
+
+        The handler may call longjmp() to bypass the exit entirely,
+        allowing the application to attempt recovery.  If the handler
+        returns normally then uC_abort() will proceed with terminal
+        restoration and exit(1).
+
+        Pass NULL to deregister a previously registered handler.
++++
 
     API void uC_get_console_size(uint16_t *width, uint16_t *height)
 
@@ -4067,7 +4147,12 @@ so are also available to the application developer.
         I should also be using.  This is on the "some day" todo list to
         fix maybe?
 
+---
     API void uC_assert(bool f, char *file, int line, char *msg)
+---
++++
+    API void uC_assert(bool f, const char *file, int line, const char *msg)
++++
 
         This public API call asserts that a passed in condition is true.
         If the condition is true this function simply returns to the
@@ -4577,7 +4662,12 @@ Where appropriate, for each of the following functions which is associated
 with a format specifier I document both the specifier and the function
 which handles it.
 
+---
     API void uC_win_puts(uC_window_t *win, uint8_t *p)
+---
++++
+    API void uC_win_puts(uC_window_t *win, const char *p)
++++
 
         This public API call writes the specified UTF-8 string into a
         window at that windows current cursor location.  It will advance
@@ -4759,7 +4849,12 @@ which handles it.
         This static function executes one of the above handlers based on
         a selection made from a uC_switch_t structure.
 
+---
     API void uC_win_printf(uC_window_t *win, uint8_t *format, ...)
+---
++++
+    API void uC_win_printf(uC_window_t *win, const char *format, ...)
++++
 
         This public API call works in a way that is similar to C's printf
         function but none of C's printf specifiers are valid here.  The
@@ -4843,9 +4938,15 @@ And the following key tokens are valid...
     * KEY_SHORTCUT        * KEY_FLAG           * KEY_BLANK
     * KEY_ORDER
 
+---
 All tokens are recognized by their 32 bit FNV-1a hash value (which, as
 stated elsewhere in these texts may very well actually be the FNV-1
 algorithm, not 1a).  No string compare functions are called.
+---
++++
+All tokens are recognized by their 32 bit FNV-1 hash value.  No string
+compare functions are called.
++++
 
 If the parsed token is recognized as a key then that specific key is
 handled (see below) and the next state is set to JSON_STATE_VALUE where we

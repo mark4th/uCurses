@@ -21,7 +21,7 @@ extern bool winch;
 
 // -----------------------------------------------------------------------
 
-API uC_screen_t *active_screen;
+uC_screen_t *active_screen;
 
 extern border_t *const borders[];
 extern uC_attribs_t attrs;
@@ -30,6 +30,7 @@ extern uC_attribs_t old_attrs;
 void terminfo_purge(void);
 void scr_update_menus(uC_screen_t *scr);
 void draw_view_groups(uC_screen_t *scr);
+void ti_set_screen(uC_screen_t *scr);
 
 // -----------------------------------------------------------------------
 // draw name of window in its border - must have border
@@ -438,6 +439,7 @@ API void uC_scr_draw_screen(uC_screen_t *scr)
         setlocale(LC_CTYPE, "");
 
         active_screen = scr;
+        ti_set_screen(scr);
 
         // the backdrop if it exists is always the first window
         // to be drawn into the screen. its main purpose is to

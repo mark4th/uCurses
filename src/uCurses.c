@@ -21,13 +21,14 @@
 void uC_alloc_init(uC_mem_zone_t zone);
 void init_winch(void);
 void de_init_winch(void);
+void menu_set_screen(uC_screen_t *scr);
 
 extern ti_vars_t *ti_vars;
 extern uC_screen_t *active_screen;
 
 // -----------------------------------------------------------------------
 
-API void uCurses_init(char *file, json_mem_t *json, fp_finder_t fp)
+API uC_screen_t *uCurses_init(char *file, json_mem_t *json, fp_finder_t fp)
 {
 #ifdef UC_MENUS
     uint16_t width;
@@ -64,6 +65,7 @@ API void uCurses_init(char *file, json_mem_t *json, fp_finder_t fp)
     {
         if (active_screen->menu_bar != NULL)
         {
+            menu_set_screen(active_screen);
             uC_menu_init_keys();
         }
     }
@@ -73,6 +75,8 @@ API void uCurses_init(char *file, json_mem_t *json, fp_finder_t fp)
         active_screen = uC_scr_open(width, height);
     }
 #endif
+
+    return active_screen;
 }
 
 // -----------------------------------------------------------------------

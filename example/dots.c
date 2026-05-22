@@ -19,7 +19,6 @@ static uC_screen_t *scr;
 static uC_window_t *win;
 static uC_window_t *status_win;
 
-extern uC_screen_t *active_screen;
 extern int16_t dots_sin_tab[512];
 extern int point_counts[];             // number of points in each object
 extern xyz *obj_list[];                // pointers to each object
@@ -412,9 +411,7 @@ int main(void)
 {
     uC_list_node_t *n;
 
-    uCurses_init("json/dots.json", NULL, menu_address_cb);
-
-    scr = active_screen;
+    scr = uCurses_init("json/dots.json", NULL, menu_address_cb);
     n   = scr->windows.head;
     win = n->payload;
 
@@ -436,7 +433,7 @@ int main(void)
     uC_clear();
     uC_cup(10, 0);
 
-    uC_scr_close(active_screen);
+    uC_scr_close(scr);
     uCurses_deInit();
 
     printf("Au revoir!\n");

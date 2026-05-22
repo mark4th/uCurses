@@ -11,7 +11,6 @@
 
 // -----------------------------------------------------------------------
 
-extern uC_screen_t *active_screen;
 extern widget_state_t widget_state;
 
 // -----------------------------------------------------------------------
@@ -118,7 +117,7 @@ API bool uC_widget_select_widget(uint16_t sequence)
     // scan through all view groups, all views within those
     // view groups and all widgets within those views...
 
-    n1 = uC_list_scan(&active_screen->view_groups, NULL);
+    n1 = uC_list_scan(&widget_state.screen->view_groups, NULL);
 
     while (n1)
     {
@@ -157,7 +156,7 @@ static uint16_t max_sequence(void)
     uC_widget_view_t *view;
     uC_widget_t *widget;
 
-    n1 = uC_list_scan(&active_screen->view_groups, NULL);
+    n1 = uC_list_scan(&widget_state.screen->view_groups, NULL);
 
     while (n1)
     {

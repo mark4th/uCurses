@@ -17,7 +17,6 @@
 // -----------------------------------------------------------------------
 
 extern uC_kh_t user_key_actions;
-extern uC_screen_t *active_screen;
 
 uC_kh_t saved_key_actions;
 API widget_state_t widget_state;

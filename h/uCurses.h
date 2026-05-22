@@ -9,6 +9,11 @@
 #include <stdint.h>
 
 // -----------------------------------------------------------------------
+// forward declaration — full type defined in uC_screen.h
+
+typedef struct uC_screen_s uC_screen_t;
+
+// -----------------------------------------------------------------------
 // macro to make public API functions etc visible
 
 #define API __attribute__ ((visibility ("default")))
@@ -39,7 +44,7 @@ typedef struct
 
 // -----------------------------------------------------------------------
 
-API void uCurses_init(char *file, json_mem_t *json, fp_finder_t fp);
+API uC_screen_t *uCurses_init(char *file, json_mem_t *json, fp_finder_t fp);
 API void uCurses_deInit(void);
 API void entry(void);
 API void make_contrast(uint8_t *r, uint8_t *g, uint8_t *b);

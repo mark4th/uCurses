@@ -16,6 +16,8 @@
 char *window1_name = "window 1";
 char *window2_name = "window 2";
 
+uC_screen_t *active_screen = NULL;
+
 uC_window_t *win1 = NULL;
 uC_window_t *win2 = NULL;
 uC_screen_t *scr  = NULL;
@@ -347,7 +349,7 @@ int main(void)
     uC_list_node_t *n;
     uC_window_t *win;
 
-    uCurses_init("json/window.json", NULL, menu_address_cb);
+    active_screen = uCurses_init("json/window.json", NULL, menu_address_cb);
 
     scr = active_screen;
 
@@ -367,7 +369,7 @@ int main(void)
     uC_clear();
     uC_cup(10, 0);
 
-    uC_scr_close(active_screen);
+    uC_scr_close(scr);
     uCurses_deInit();
 
     printf("Au revoir!\n");

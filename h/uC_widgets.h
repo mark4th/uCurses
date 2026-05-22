@@ -212,6 +212,7 @@ typedef struct
     uC_widget_vg_t *vg;
     uC_widget_view_t *view;
     uC_widget_t *widget;    // current widget with focus in view
+    uC_screen_t *screen;
 } widget_state_t;
 
 // -----------------------------------------------------------------------

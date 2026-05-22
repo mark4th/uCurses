@@ -42,7 +42,7 @@
 #define WIN_WIDTH  (40)
 #define WIN_HEIGHT (15)
 
-extern uC_screen_t *active_screen;
+uC_screen_t *active_screen;
 
 char status[STAT_SIZE];
 uC_window_t *status_win;
@@ -526,7 +526,7 @@ int main(void)
     uint8_t k;
     uC_window_t *win;
 
-    uCurses_init("json/wtest.json", NULL, NULL);
+    active_screen = uCurses_init("json/wtest.json", NULL, NULL);
 
     status_win = uC_add_status(active_screen, STAT_SIZE,
         STATUS_X, STATUS_Y);

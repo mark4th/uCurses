@@ -14,7 +14,12 @@
 
 // -----------------------------------------------------------------------
 
-extern uC_screen_t *active_screen;
+static uC_screen_t *menu_screen;
+
+void menu_set_screen(uC_screen_t *scr)
+{
+    menu_screen = scr;
+}
 
 // -----------------------------------------------------------------------
 
@@ -26,7 +31,7 @@ static void redraw_pulldown(menu_bar_t *bar)
 
     if (pd->count != 0)
     {
-        f = bar_create_pd_win(active_screen, pd);
+        f = bar_create_pd_win(menu_screen, pd);
 
         if (f != 0)
         {
@@ -39,7 +44,7 @@ static void redraw_pulldown(menu_bar_t *bar)
 
 static void menu_activate(void)
 {
-    menu_bar_t *bar = active_screen->menu_bar;
+    menu_bar_t *bar = menu_screen->menu_bar;
     pulldown_t *pd;
 
     bar->active ^= 1;
@@ -99,7 +104,7 @@ static void prev_pd(menu_bar_t *bar)
 
 static void menu_up_down(int dir)
 {
-    menu_bar_t *bar = active_screen->menu_bar;
+    menu_bar_t *bar = menu_screen->menu_bar;
     pulldown_t *pd;
     int16_t n;
     menu_item_t *item;
@@ -131,7 +136,7 @@ static void menu_up_down(int dir)
 
 static void menu_left_rt(int dir)
 {
-    menu_bar_t *bar = active_screen->menu_bar;
+    menu_bar_t *bar = menu_screen->menu_bar;
     pulldown_t *pd;
     int16_t n;
 
@@ -166,7 +171,7 @@ static void menu_left_rt(int dir)
 
 static void menu_cr(void)
 {
-    menu_bar_t *bar = active_screen->menu_bar;
+    menu_bar_t *bar = menu_screen->menu_bar;
     pulldown_t *pd;
     menu_item_t *item;
 

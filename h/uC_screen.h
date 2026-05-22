@@ -12,7 +12,7 @@
 
 // -----------------------------------------------------------------------
 
-typedef struct
+typedef struct uC_screen_s
 {
     uC_list_t windows;      // linked list of windows
     uC_list_t status;       // linked list of 1 line status windows

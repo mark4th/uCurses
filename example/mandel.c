@@ -20,7 +20,6 @@
 
 #define IMAX 1000
 
-extern uC_screen_t *active_screen;
 
 int dots_sin(int16_t angle);
 
@@ -359,9 +358,7 @@ int main(void)
 {
     uC_list_node_t *n;
 
-    uCurses_init("json/dots.json", NULL, menu_address_cb);
-
-    scr = active_screen;
+    scr = uCurses_init("json/dots.json", NULL, menu_address_cb);
     n   = scr->windows.head;
     win = n->payload;
 
@@ -378,7 +375,7 @@ int main(void)
     uC_clear();
     uC_cup(10, 0);
 
-    uC_scr_close(active_screen);
+    uC_scr_close(scr);
     uCurses_deInit();
 
     printf("Au revoir!\n");

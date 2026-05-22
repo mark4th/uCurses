@@ -34,7 +34,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "uC_braille.h"
 #include "uC_alloc.h"
 
-extern uC_screen_t *active_screen;
 
 char status[STAT_SIZE];
 
@@ -556,9 +555,7 @@ int main(void)
 {
     uC_list_node_t *n;
 
-    uCurses_init("json/dots.json", NULL, menu_address_cb);
-
-    scr = active_screen;
+    scr = uCurses_init("json/dots.json", NULL, menu_address_cb);
     n   = scr->windows.head;
     win = n->payload;
 
@@ -574,7 +571,7 @@ int main(void)
     uC_clear();
     uC_cup(10, 0);
 
-    uC_scr_close(active_screen);
+    uC_scr_close(scr);
     uCurses_deInit();
 
     printf("Au revoir!\n");

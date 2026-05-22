@@ -10,6 +10,12 @@
 #include "uC_window.h"
 
 // -----------------------------------------------------------------------
+// parameter grouping helpers for multi-arg specifiers
+
+#define UC_XY(x, y)      (x), (y)
+#define UC_RGB(r, g, b)  (r), (g), (b)
+
+// -----------------------------------------------------------------------
 
 API void uC_win_puts(uC_window_t *win, const char *p);
 

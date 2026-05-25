@@ -389,7 +389,7 @@ static void init_widgets(void)
 
     uC_ASSERT(view != NULL, "Cannot create view");
 
-    view_add_buttons(view, 8);
+    view_add_buttons(view, 6);
     uC_widget_vg_add_view(vg1, view, 0);
 }
 
@@ -543,7 +543,6 @@ int main(void)
     uC_win_printf(status_win, "%fs%bs%0", uC_GRAY_09, uC_GRAY_03);
 
     init_widgets();         // initialize all widgets
-    uC_smkx();              // make cursor up and down actually work
 
     // you can actually display things in the backdrop widnow but it
     // is *always* the first window drawn so everything else will
@@ -552,13 +551,13 @@ int main(void)
     win = active_screen->backdrop;
 
     uC_win_printf(win, "%@%fc%bs Press W to activate   ",
-        10, 3, uC_COLOR_CYAN, uC_GRAY_04);
+        UC_XY(10, 3), uC_COLOR_CYAN, uC_GRAY_04);
 
-    uC_win_printf(win, "%@ Press TAB to select   ", 10, 4);
-    uC_win_printf(win, "%@ Press Cursor to move  ", 10, 5);
-    uC_win_printf(win, "%@ Press SPACE to toggle ", 10, 6);
-    uC_win_printf(win, "%@ Press ENTER on button ", 10, 7);
-    uC_win_printf(win, "%@ -- or hit O or C key  ", 10, 8);
+    uC_win_printf(win, "%@ Press TAB to select   ", UC_XY(10, 4));
+    uC_win_printf(win, "%@ Press Cursor to move  ", UC_XY(10, 5));
+    uC_win_printf(win, "%@ Press SPACE to toggle ", UC_XY(10, 6));
+    uC_win_printf(win, "%@ Press ENTER on button ", UC_XY(10, 7));
+    uC_win_printf(win, "%@ -- or hit O or C key  ", UC_XY(10, 8));
 
     widget_loop();
 

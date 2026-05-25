@@ -1,12 +1,11 @@
 // status.c    - status bar window of one line only but you can have many
 // -----------------------------------------------------------------------
 
-#include <stdio.h>
-#include <string.h>
+#include <stdarg.h>
 
 #include "uCurses.h"
-#include "uC_menus.h"
 #include "uC_win_printf.h"
+#include "uC_window.h"
 #include "uC_status.h"
 
 // -----------------------------------------------------------------------
@@ -63,16 +62,17 @@ API void uC_clr_status(uC_window_t *win)
 }
 
 // -----------------------------------------------------------------------
-// print string into status window
 
-API void uC_set_status(uC_window_t *win, char *s)
+API void uC_set_status(uC_window_t *win, const char *fmt, ...)
 {
-    if (win != NULL)
-    {
-        // %0 clear window
-        // %s display string in window
-        uC_win_printf(win, "%0%s", s);
-    }
+    va_list args;
+
+    if (!win) return;
+
+    uC_win_clear(win);
+    va_start(args, fmt);
+    uC_win_vprintf(win, fmt, args);
+    va_end(args);
 }
 
 // -----------------------------------------------------------------------

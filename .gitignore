@@ -1,15 +1,20 @@
 *.sublime*
 *~
 *demo
+example/borders
 example/dots
 example/lion
 example/mandel
 example/raycast
+example/scroll
 example/window
 example/widgets
 build
 obj
+.cache
 default.profraw
 test-uCurses-test.results
+test/test_smoke
 shell
+hash
 *.o

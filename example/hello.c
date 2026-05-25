@@ -26,44 +26,44 @@ void banner(uC_screen_t *scr, uC_window_t *win)
 
     uC_win_printf(win, "%@%fc██%fs▖   %fc██%fs▖ %fc██████%fs▖%fc██%fs▖   %fc██"
         "%fs▖%fc██████%fs▖ %fc███████%fs▖%fc███████%fs▖%fc███████%fs▖",
-        xco, yco++, LIGHT, DARK, LIGHT, DARK, LIGHT, DARK, LIGHT, DARK, LIGHT,
+        UC_XY(xco, yco++), LIGHT, DARK, LIGHT, DARK, LIGHT, DARK, LIGHT, DARK, LIGHT,
         DARK, LIGHT, DARK, LIGHT, DARK, LIGHT, DARK, LIGHT, DARK);
 
     uC_win_printf(win, "%@%fc██%fs▌   %fc██%fs▌%fc██%fs▛▀▀▀▀▘%fc██%fs▌   %fc██"
         "%fs▌%fc██%fs▛▀▀%fc██%fs▖%fc██%fs▛▀▀▀▀▘%fc██%fs▛▀▀▀▀▘%fc██%fs▛▀▀▀▀▘",
-        xco, yco++, LIGHT, DARK, LIGHT, DARK, LIGHT, DARK, LIGHT, DARK, LIGHT,
+        UC_XY(xco, yco++), LIGHT, DARK, LIGHT, DARK, LIGHT, DARK, LIGHT, DARK, LIGHT,
         DARK, LIGHT, DARK, LIGHT, DARK, LIGHT, DARK, LIGHT, DARK, LIGHT, DARK);
 
     uC_win_printf(win, "%@%fc██%fs▌   %fc██%fs▌%fc██%fs▌     %fc██%fs▌   %fc██"
         "%fs▌%fc██████%fs▛▘%fc███████%fs▖%fc█████%fs▖  %fc███████%fs▖",
-        xco, yco++, LIGHT, DARK, LIGHT, DARK, LIGHT, DARK, LIGHT, DARK, LIGHT,
+        UC_XY(xco, yco++), LIGHT, DARK, LIGHT, DARK, LIGHT, DARK, LIGHT, DARK, LIGHT,
         DARK, LIGHT, DARK, LIGHT, DARK, LIGHT, DARK, LIGHT, DARK);
 
     uC_win_printf(win, "%@%fc██%fs▌   %fc██%fs▌%fc██%fs▌     %fc██%fs▌   %fc██"
         "%fs▌%fc██%fs▛▀▀%fc██%fs▌▝▀▀▀▀%fc██%fs▌%fc██%fs▛▀▀▘  ▝▀▀▀▀%fc██%fs▌",
-        xco, yco++, LIGHT, DARK, LIGHT, DARK, LIGHT, DARK, LIGHT, DARK, LIGHT,
+        UC_XY(xco, yco++), LIGHT, DARK, LIGHT, DARK, LIGHT, DARK, LIGHT, DARK, LIGHT,
         DARK, LIGHT, DARK, LIGHT, DARK, LIGHT, DARK, LIGHT, DARK, LIGHT, DARK);
 
     uC_win_printf(win, "%@%fs▝%fc██████%fs▛▘▝%fc██████%fs▖▝%fc██████%fs▛▘%fc██"
         "%fs▌  %fc██%fs▌%fc███████%fs▌%fc███████%fs▖%fc███████%fs▌",
-        xco, yco++, DARK, LIGHT, DARK, LIGHT, DARK, LIGHT, DARK, LIGHT, DARK,
+        UC_XY(xco, yco++), DARK, LIGHT, DARK, LIGHT, DARK, LIGHT, DARK, LIGHT, DARK,
         LIGHT, DARK, LIGHT, DARK, LIGHT, DARK, LIGHT, DARK);
 
     uC_win_printf(win, "%@ %fs▝▀▀▀▀▀▘  ▝▀▀▀▀▀▘ ▝▀▀▀▀▀▘ ▝▀▘  ▝▀▘▝▀▀▀▀▀▀▘▝▀▀▀▀▀▀▘"
         "▝▀▀▀▀▀▀▘",
-        xco, yco++, DARK);
+        UC_XY(xco, yco++), DARK);
 
     yco++;
 
     xco = (scr->width / 2) - (46 / 2) - 2;
     uC_win_printf(win, "%@%fcDemo Application.  Press %U+%B+F10%B-%U- to pull down Menu",
-        xco, yco++, uC_COLOR_CYAN);
+        UC_XY(xco, yco++), uC_COLOR_CYAN);
 
     yco++;
 
     xco = (scr->width / 2) - (50 / 2) - 2;
     uC_win_printf(win, "%@%fcEscape quits each demo:  Escape here quits program!",
-        xco, yco++, uC_COLOR_LT_GREEN);
+        UC_XY(xco, yco++), uC_COLOR_LT_GREEN);
 }
 
 // -----------------------------------------------------------------------

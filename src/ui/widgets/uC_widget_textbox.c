@@ -51,7 +51,7 @@ void draw_textbox(uC_window_t *win, uC_widget_t *widget,
     // %@ set cursor x / y location in window
     // %s write string
 
-    uC_win_printf(win, "%@%s", x, y, widget->name);
+    uC_win_printf(win, "%@%s", UC_XY(x, y), widget->name);
 
     widget_set_attrs(win, widget);
 

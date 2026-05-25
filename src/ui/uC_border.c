@@ -212,7 +212,7 @@ API void uC_window_clear_box(uC_window_t *win,
         // %@ set cursor x / y location within window
         // %* print multiple repetitions of char
 
-        uC_win_printf(win, "%@%*", xco, yco++, width, 0x20);
+        uC_win_printf(win, "%@%*", UC_XY(xco, yco++), width, 0x20);
     }
 }
 
@@ -250,7 +250,7 @@ API void uC_win_draw_box(uC_window_t *win,
     // %8 print utf8 char (top right)
 
     uC_win_printf(win, "%@%8%*%8",
-        x, y++, bdr[BDR_TOP_LEFT],
+        UC_XY(x, y++), bdr[BDR_TOP_LEFT],
         width,  bdr[BDR_HORIZONTAL],
         bdr[BDR_TOP_RIGHT]);
 
@@ -264,7 +264,7 @@ API void uC_win_draw_box(uC_window_t *win,
     while (height != 0)
     {
         uC_win_printf(win, "%@%8%x%8",
-            x, y++,    bdr[BDR_VERTICAL],
+            UC_XY(x, y++), bdr[BDR_VERTICAL],
             x + width + 1, bdr[BDR_VERTICAL]);
         height--;
     }
@@ -272,7 +272,7 @@ API void uC_win_draw_box(uC_window_t *win,
     // draw bottom row of the border
 
     uC_win_printf(win, "%@%8%*%8",
-        x, y,  bdr[BDR_BOTTOM_LEFT],
+        UC_XY(x, y), bdr[BDR_BOTTOM_LEFT],
         width, bdr[BDR_HORIZONTAL],
         bdr[BDR_BOTTOM_RIGHT]);
 }

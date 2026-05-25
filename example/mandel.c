@@ -1,12 +1,10 @@
 
 #include <inttypes.h>
-#include <stdlib.h>
 #include <math.h>
 #include <stdio.h>
-#include <string.h>
 
 #include "uCurses.h"
-#include "uC_menus.h"
+#include "uC_window.h"
 #include "uC_keys.h"
 #include "uC_braille.h"
 #include "uC_win_printf.h"
@@ -26,8 +24,6 @@ uC_screen_t *scr        = NULL;
 uC_window_t *win        = NULL;
 
 // -----------------------------------------------------------------------
-
-char status[STAT_SIZE] = { 0 };
 
 long double MinRe = -3.0;
 long double MaxRe =  4.0;
@@ -163,8 +159,8 @@ static void draw_braille(uC_window_t *win, rgb *buffer,
             // %rf set window foreground to a 24 bit rgb color
 
             uC_win_printf(win, "%@%rf",
-                x / 2, y / 4,
-                r, g, b);
+                UC_XY(x / 2, y / 4),
+                UC_RGB(r, g, b));
                 //fg.r, fg.g, fg.b);
 
             uC_win_emit(win, cc);
@@ -245,34 +241,35 @@ static void mandel(uC_window_t *win, long double x_off,
 
 static void lt(void)
 {
-    x_off += 1 / pow(2, scale_factor) * 0.02;
+    x_off += 1 / powl(2, scale_factor) * 0.02;
 }
 
 static void rt(void)
 {
-    x_off -= 1 / pow(2, scale_factor) * 0.02;
+    x_off -= 1 / powl(2, scale_factor) * 0.02;
 }
 
 static void up(void)
 {
-    y_off += 1 / pow(2, scale_factor) * 0.02;
+    y_off += 1 / powl(2, scale_factor) * 0.02;
 }
 
 static void dn(void)
 {
-    y_off -= 1 / pow(2, scale_factor) * 0.02;
+    y_off -= 1 / powl(2, scale_factor) * 0.02;
 }
 
 static void zi(void)
 {
     scale_factor += 0.02;
-    z_off = 1 / pow(2, scale_factor);
+    if (scale_factor > 54.0L) { scale_factor = 54.0L; }
+    z_off = 1 / powl(2, scale_factor);
 }
 
 static void zo(void)
 {
     scale_factor -= 0.02;
-    z_off = 1 / pow(2, scale_factor);
+    z_off = 1 / powl(2, scale_factor);
 }
 
 // -----------------------------------------------------------------------
@@ -285,22 +282,35 @@ uC_switch_t mandel_keys[] =
 
 // -----------------------------------------------------------------------
 
+static void update_status(void)
+{
+    char xy[STAT_SIZE];
+    char z[16];
+
+    snprintf(xy, sizeof(xy), "X:%1.8Lf  Y:%1.8Lf  ", x_off, y_off);
+    snprintf(z,  sizeof(z),  "Z:%3.2Lf", scale_factor);
+
+    if (scale_factor >= 54.0L)
+    {
+        uC_win_printf(status_win, "%0%fs%s%rf%s", uC_GRAY_09, xy, UC_RGB(255, 140, 0), z);
+    }
+    else
+    {
+        uC_win_printf(status_win, "%0%fs%s%s", uC_GRAY_09, xy, z);
+    }
+}
+
+// -----------------------------------------------------------------------
+
 void mandel_demo(void)
 {
-    int i;
     uint8_t k;
 
     mandel(win, x_off, y_off, z_off);
 
     do
     {
-        memset(status, 0, 33);
-
-        snprintf(status, STAT_SIZE - 1,
-             "X:%1.8Lf  Y:%1.8Lf  Z:%3.2Lf",
-              x_off, y_off, scale_factor);
-
-        uC_set_status(status_win, status);
+        update_status();
 
         mandel(win, x_off, y_off, z_off);
 
@@ -364,8 +374,6 @@ int main(void)
 
     status_win = uC_add_status(scr, 40, 55, 0);
     uC_win_printf(status_win, "%fs%bs%0", uC_GRAY_09, uC_GRAY_03);
-
-    uC_set_status(status_win, status);
 
     mandel_demo();
 

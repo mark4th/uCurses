@@ -8,7 +8,7 @@
          ╚██████╔╝╚██████╗╚██████╔╝██║  ██║███████║███████╗███████║
           ╚═════╝  ╚═════╝ ╚═════╝ ╚═╝  ╚═╝╚══════╝╚══════╝╚══════╝
 
-                       The micro-sized curses library 
+                       The micro-sized curses library
                         for Linux virtual terminals.
 
                      https://github.com/mark4th/uCurses
@@ -30,7 +30,7 @@
 ---------------------
 
     1..........Introduction
-    1.1............Whats documented
+    1.1............What's documented
 
     2..........Terminfo
     2.1...........uC_ti_parse.c
@@ -51,18 +51,19 @@
     4.1............uC_key_read.c
     4.2............uC_key_sequence.c
     4.3............uC_key_table.c
+    4.4............uC_mouse.c
 
     5..........The Screen
     5.1............uC_screen_ctrl.c
     5.2............Drawing it all
     5.3............Updating the console
     5.4............uC_screen_draw.c
-    5.5............uC_screen_ctrl.c
 
     6..........The Window
     6.1............uC_window_ctrl.c
     6.2............uC_window_attr.c
     6.3............uC_borders.c
+    6.4............uC_window_draw.c
 
     7..........Status windows
     7.1............uC_status.c
@@ -74,7 +75,7 @@
     8.4............uC_menu_key.c
 
     9..........Widgets
-    9.1............uC_wigets.c
+    9.1............uC_widgets.c
     9.2............uC_widget_view.c
     9.3............uC_widget_view_group.c
     9.4............uC_widget_draw.c
@@ -93,7 +94,7 @@
     10.5...........uC_eval.c
     10.6...........uC_list.c
     10.7...........uC_rgb_hsl.c
-    10.8...........uC_swtitch.c
+    10.8...........uC_switch.c
     10.9...........uC_utf8.c
     10.10..........uC_win_printf.c
     10.11..........uC_winch.c
@@ -116,7 +117,7 @@
 ---------------
 
 First of all, this library is not a replacement for ncurses and it was
-never intended to be.  It's primary purpose is to give developers of
+never intended to be.  Its primary purpose is to give developers of
 embedded Linux systems with limited resources the ability to create simple
 yet powerful terminal based user interfaces.
 
@@ -144,7 +145,7 @@ This library does however have a few things that ncurses does not.
         size and I may have missed counting a few files.  It also takes a
         little over seven minutes to compile on my laptop.
 
-        uCurses on the other hand currently takes up about 87k and 
+        uCurses on the other hand currently takes up about 87k and
         compiles in about two or three seconds ish depending on planetary
         alignment.  This means that recompiling this on any embedded
         system it is installed on would probably not bog that system down
@@ -154,10 +155,10 @@ This library does however have a few things that ncurses does not.
         brings a lot of utility to the table and it fully supports pretty
         much any hardware you throw at it, including ancient hardware.
 
-        uCurses OTOH has a tendency to not cooperate well with certain
-        virtual terminals (such as xterm which just happens to be another
-        thing TED maintains!).  It is known to work "almost" perfectly in
-        gnome-terminal, ptyxis and Konsole!   YMMV (tm).
+        uCurses is a younger library than ncurses and has not yet
+        received the same breadth of real-world testing across terminal
+        emulators.  It is known to work well in gnome-terminal, ptyxis,
+        Konsole and xterm.  As with any young library, YMMV.
 
     Moveable, overlapping windows.
 
@@ -211,8 +212,8 @@ API macro nor marked as static will have global visibility only within the
 library itself.
 
 
-1.1 Whats documented (or will be)
----------------------------------
+1.1: What's documented (or will be)
+-----------------------------------
 
 The documentation for uCurses will detail every aspect of this library.
 It will show you not only how to use it but how it works and why it does
@@ -267,7 +268,7 @@ library to compile the correct escape sequence for the required operation
 on almost any terminal.
 
 These 'format strings' are written in a very simple interpreted language.
-They are passed to an interpreter along with what ever parameters are
+They are passed to an interpreter along with whatever parameters are
 required which will parse them and compile the appropriate escape
 sequences.
 
@@ -292,7 +293,7 @@ called 'ti_vars' which is of type 'ti_vars_t'.  This structure is defined
 in the uC_terminfo.h file.
 
 This structure contains the following entities.  The purpose of each of
-these is described in more details below.
+these is described in more detail below.
 
     * A pointer to the current position within the current terminfo
       format string.
@@ -311,10 +312,10 @@ console until either the escape sequences for the entire update have been
 compiled or the escape buffer becomes full.
 
 While some effort has been made to allow for flushing of the buffer when
-it is filled, this might not actually work if said buffer is flushed half
-way through the current escape sequence.  This is of course just a "Simple
-matter of programming" but I am not sure whether I shall be 'fixing' it or
-not.  See Below!
+it is filled, this will not work correctly if a flush occurs mid-way
+through an escape sequence.  In practice the 64k buffer is large enough
+that this situation does not arise, so it is documented here as a known
+theoretical limitation rather than an active bug.
 
 The parsing of terminfo format strings is a very simple affair.  You have
 a format string, you have parameters, you have variables and you have a
@@ -329,7 +330,7 @@ acted on by the various operators during said parsing (see below).
 
 The following functions support the format parser and the various
 primitives it references based on specifiers contained in the format
-strings which are explained below..
+strings which are explained below.
 
     void alloc_parse(void)
 
@@ -340,31 +341,24 @@ strings which are explained below..
 
         This function also allocates the escape sequence buffer which at
         the time of writing has a hard coded size of 64k.  This is
-        probably overkill and it's use could be easily monitored within
-        your application with the addition of some simple profiling code
-        here.  If this is done it could allow application developers to
-        shrink its size to its minimum used space plus some wiggle room.
-
-        I may eventually add this as a debug build option. (or add a debug
-        API?)
+        probably overkill.  A debug build option will be added to track
+        the high-water mark of the buffer so that application developers
+        targeting memory-constrained systems can tune it to its minimum
+        required size plus some headroom.
 
     API void uC_terminfo_flush(void)
 
-        This function is were all the compiled escape sequences are
-        written out to the virtual terminals stdout.  There is a small
-        'todo' left in here for handling the condition where the write
-        fails.  I have never actually seen that write fail and am not sure
-        of the correct way to handle such an occurrence, hence the todo.
+        This function is where all the compiled escape sequences are
+        written out to the virtual terminals stdout.  If the write fails
+        a single immediate retry is attempted.  This covers transient
+        EAGAIN / EINTR conditions.  Persistent failure is silently
+        ignored; the terminal is considered unrecoverable at that point.
 
-        At a minimum I should probably attempt at least one retry.
+    API void uC_terminfo_purge(void)
 
-    void terminfo_purge(void)
-
-        This function which is not exposed but which probably should be is
-        used to abort the current update and wipe all currently compiled
-        escape sequences from the buffer.  I am toying with finding a new
-        name for the 'flush' function because a 'flush' and a 'purge'
-        sound like the same thing.  Any suggestions?
+        Discards all currently compiled escape sequences without writing
+        them to the terminal.  Useful for aborting a UI update that
+        cannot be completed cleanly.  flush writes; purge discards.
 
     void c_emit(char c1)
 
@@ -375,18 +369,12 @@ strings which are explained below..
 
         As stated above, this is not quite right in its implementation
         because if the new character is part of an already partially
-        compiled escape sequence then we probably cant flush half of that
+        compiled escape sequence then we probably can't flush half of that
         incomplete sequence now and half later.
 
-        One answer to this would be to add a variable to remember where in
-        the buffer the start of the most recent escape sequence is so we
-        can simply flush up to that point but not beyond.  We simply leave
-        one escape sequence from the previous run in the buffer if said
-        sequence is incomplete!
-
-        This solution however may very well be a minor solution to a huge
-        non problem problem and I need to investigate further before I
-        commit to implementing it.
+        This is a known theoretical limitation.  Given the 64k buffer
+        size and typical usage patterns this condition has never been
+        observed in practice.
 
     static void fs_push(int64_t n)
 
@@ -442,42 +430,34 @@ make use of C's evil variadic functions.  I do that elsewhere tho } : )
     This 'skill' does have its uses.
 
 
-2.2.1: If / And / But
----------------------
+2.2.1: Conditionals
+-------------------
 
-The terminfo format string 'language' allows for conditionals which may be
-nested.  The if / else / then format specifiers are %?, %t, %e and %;.
-
-A conditional sequence within a format string is in the form...
+The terminfo format string language supports conditionals of the form:
 
     %? ccc %t ttt %e fff %;
 
-I treat %? as a 'no operation' and continue to parse the 'ccc' (condition)
-part above.  This will place either a true or a false condition on the
-stack.
+where ccc is the condition expression, ttt is the true branch and fff is
+the optional false branch.  Read it as: if ccc then ttt else fff end.
 
-The %t (I call this the test) will pop that condition off the stack and
-will either do nothing and continue parsing and interpreting the ttt part
-of the above example (condition true) or will parse and ignore the
-format string up to the character just beyond the following %e or %; if
-there is no %e.  It will then continue interpreting from that point.
+The condition expression ccc is evaluated by whatever format specifiers
+appear between %? and %t.  Those specifiers leave a value on the stack
+exactly as they would anywhere else in the format string.  %? itself
+is a structural delimiter with no stack or output effect.
 
-As stated, if the condition was true then the 'ttt' (true) part of the
-above example format string will be parsed and interpreted up to the
-following %e or %; if there is no %e.  If the parser sees a %e here it
-will then parse and discard everything from the %e to the %;
+%t pops the condition value.  If true, interpretation continues with ttt;
+when the parser subsequently encounters %e it scans forward to %; and
+stops, skipping fff entirely.  If false, %t scans forward past ttt to the
+%e or %; and resumes from there, executing fff if present.
 
-If the condition was false then the format string will be scanned from the
-%t up to the character just beyond the %e specifier where the 'fff'
-(false) portion of the above example will be interpreted.
+%; is also a structural delimiter with no stack or output effect.  By the
+time the parser reaches it the correct branch has already been executed or
+skipped, so nothing remains to be done.
 
-In uCurses %; is also a no operation.
+Conditionals may be nested.  This is almost exactly the way a Forth
+system handles if / else / then.
 
-    This just happens to be almost exactly the same way a Forth system
-    would handle if / and / but loops!
-
-The following function is used when parsing and interpreting conditionals
-within a terminfo format string.
+The following helper function is used when parsing conditionals.
 
     static char scan(void)
 
@@ -492,8 +472,8 @@ within a terminfo format string.
 -------------------------------
 
 The following list shows the form of each specifier as it would appear in
-a format string and the name of the function that performs that specifiers
-associated operation.
+a format string and the name of the function that performs that
+specifier's associated operation.
 
     %%  static void _percent(void)
 
@@ -528,8 +508,8 @@ associated operation.
 
     %O  static void _orl(void)
 
-        Pops two items off the terinfo format stack which must have been
-        placed there by previous operations and preforms a logical OR
+        Pops two items off the terminfo format stack which must have been
+        placed there by previous operations and performs a logical OR
         operation on them.  The result is then pushed onto the stack to be
         returned to the interpreter.
 
@@ -538,7 +518,7 @@ associated operation.
     %~  static void _not(void)
 
         Pops one item off the terminfo format stack which must have been
-        placed there by a previous operation and preforms a bitwise NOT
+        placed there by a previous operation and performs a bitwise NOT
         (ones complement) operation on it.  The result is then pushed onto
         the stack to be returned to the interpreter.
 
@@ -547,7 +527,7 @@ associated operation.
     %!  static void _notl(void)
 
         Pops one item off the terminfo format stack which must have been
-        placed there by a previous operation and preforms a logical NOT
+        placed there by a previous operation and performs a logical NOT
         operation on it.  The result is then pushed onto the stack to be
         returned to the interpreter.
 
@@ -556,7 +536,7 @@ associated operation.
     %^  static void _xor(void)
 
         Pops two items off the terminfo format stack which must have been
-        placed there by previous operations and preforms a bitwise XOR
+        placed there by previous operations and performs a bitwise XOR
         operation on them.  The result is then pushed onto the stack to be
         returned to the interpreter.
 
@@ -597,7 +577,7 @@ associated operation.
 
     %m  static void _mod(void)
 
-        Pops two items off the termninfo format stack which must have been
+        Pops two items off the terminfo format stack which must have been
         placed there by previous operations and divides the value of the
         first item pushed by the value of the second item pushed.  The
         remainder of the result is then pushed onto the stack to be
@@ -616,7 +596,7 @@ associated operation.
     %>  static void _greater(void)
 
         Pops two items off the terminfo format stack which must have been
-        placed thee by previous operations and tests that the item pushed
+        placed there by previous operations and tests that the item pushed
         first is greater than the item pushed second.  A result of 0
         (false) or 1 (true) is then pushed onto the stack to be returned
         to the interpreter.
@@ -659,7 +639,7 @@ associated operation.
         Pops the address of an application based ASCIIZ string (from your
         applications address space) off the terminfo format stack which
         must have been placed there by a previous operation and pushes a
-        value equal to the length of what ever string is at this address
+        value equal to the length of whatever string is at this address
         onto the stack.
 
         In uCurses it is assumed that this string might be a UTF-8 string
@@ -695,42 +675,28 @@ associated operation.
         The value of this decimal number is pushed onto the stack to be
         returned to the interpreter.
 
-    %?  void uC_noop(void)     performs no operation
+    %?  void uC_noop(void)
 
-        This format specifier is a no operation in uCurses.  It basically
-        marks the start of a conditional.   If this should perform any
-        actual operations interpreting a conditional I can not see what
-        those might be.
+        Marks the start of a conditional.  No stack or output effect;
+        see section 2.2.1 for the full conditional semantics.
 
     %t  static void _t(void)
 
-        This format specifier will act on the condition given in the top
-        item on the terminfo format stack.  It's job is to select which
-        part of the format string following it should be interpreted based
-        on the value of the aforementioned condition value.
-
-        If the condition is true then this specifier will act as a no
-        operation and interpretation will continue with the characters
-        immediately following it.
-
-        If the condition was false then this specifier will parse the
-        current format string up to either the following %e or the
-        following %; if there is no %e.  Interpretation will then continue
-        from that point.
+        Pops the condition value left on the stack by the ccc expression.
+        If true, returns immediately and the then-branch executes
+        normally.  If false, scans forward past the then-branch to the
+        next %e or %; and resumes from there.
 
     %e  static void _e(void)
 
-        This operator will scan the current format string for a
-        terminating %; conditional.  It will do this by repeatedly parsing
-        that string up to the next format specifier, what ever it may be.
+        Reached at the end of a true then-branch.  Scans forward to the
+        closing %; and resumes from there, skipping the false branch.
 
-        If that specifier is not the %; then this operation is repeated.
+    %;  void uC_noop(void)
 
-    %;  void uC_noop(void)     performs no operation
-
-        This format specifier like %? above performs no actual operation.
-        it's presence is used to mark a place where conditionals can scan
-        to as needed.  It marks the end of said conditional.
+        Marks the end of a conditional.  No stack or output effect;
+        the correct branch has already been executed or skipped by the
+        time the parser arrives here.
 
     %d  static void _d(void)
 
@@ -759,8 +725,8 @@ associated operation.
 
         Pops one item off the terminfo format stack which must have been
         placed there by a previous operation and uses that as an index
-        into the terminfo parameters array.  The value which always starts
-        at 1 is first zero based.
+        into the terminfo parameters array.  The index in the format
+        string is 1-based but is decremented to 0-based before use.
 
         The indexed parameter is then pushed onto the stack to be returned
         to the interpreter.
@@ -799,7 +765,7 @@ interpret the various format specifiers and act on them appropriately.
 
         I personally consider C's switch statements to be horrendously
         FUGLY and I see this as a much neater presentation.  It may be a
-        fact that this code wont optimize as efficiently as an actual
+        fact that this code won't optimize as efficiently as an actual
         switch statement but...  err...  this is a text based user
         interface and that is going to be so horrendously slow (in
         computer terms not human) that this 'inefficiency' is literally in
@@ -856,7 +822,8 @@ Each of these macros has a name identical to the terminfo name for their
 escape sequence with a 'ti_' prefix added.  Most are considered not part
 of the public API and are only used internally (if at all).
 
-2.2.5 uC_terminfo.c
+
+2.2.5: uC_terminfo.c
 -------------------
 
 This file contains wrappers to the above terminfo macros giving the
@@ -880,7 +847,7 @@ name.  Others have names that describe their function better.
 
         This function clears the console display and sets the cursor to
         the upper left of the display.  If there is currently an active
-        screen then the state buffers of this structure is also erased
+        screen then the state buffers of this structure are also erased
         and its cursor is also reset to top left.
 
     API void uC_hpa(int16_t x)
@@ -1012,20 +979,27 @@ name.  Others have names that describe their function better.
 
         This function is documented in man 5 terminfo as placing the
         keypad in transmit mode.  I have no idea what that means but I
-        have seen that the cursor UP and DOWN keyes can return different
+        have seen that the cursor UP and DOWN keys can return different
         sequences depending on whether or not the keypad is in this
         mysterious mode or not.
 
-        Placing the keypad in transmit mode allows the uCurses keboard
+        Placing the keypad in transmit mode allows the uCurses keyboard
         handlers to recognize the cursor up and down keys using the
         format strings that are contained within the terminals terminfo
         database.   Not being in transmit mode prevents it from being able
         to do so.
 
+        uC_smkx() is now called automatically by uCurses_init().
+        Application code should not need to call it directly.
+
     API void uC_rmkx(void)
 
-        This function turns off the keypad transmit mode what ever that
+        This function turns off the keypad transmit mode whatever that
         is.  See smkx above.
+
+        uC_rmkx() is now called automatically by uC_restore_terminal()
+        which is called by uCurses_deInit().  Application code should
+        not need to call it directly.
 
 
 3: Terminal Attributes
@@ -1040,11 +1014,11 @@ various attributes which are used when writing characters into user
 interface entities such as windows or the screen.
 
 Supported attributes include foreground and background colors using a
-normal palatalized value, a full 24 bit RGB value or a gray scale color.
-The attributes structure contains flags which indicate which of these are
-being used. The following list describes each supported flag...
+normal palette-indexed value, a full 24 bit RGB value or a gray scale
+color.  The attributes structure contains flags which indicate which of
+these are being used. The following list describes each supported flag...
 
-    * ul         Characters are underline
+    * ul         Characters are underlined
     * rev        Characters are drawn in reverse video
     * bold       Characters are drawn in bold
     * rgb_fg     Characters have a 24 bit RGB foreground
@@ -1062,8 +1036,8 @@ those color formats because they are not an officially recognized part of
 the terminfo specification (yet?).
 
     Note: Actually, I think there are 7465728345 different specs and
-    ncurses has to support all of them or people might get uppity.  I wont
-    be supporting all of them because I get uppity too.
+    ncurses has to support all of them or people might get uppity.  I
+    won't be supporting all of them because I get uppity too.
 
 This means that applications compiled to use uCurses which make use of
 these color formats will probably not act in a reliable manner across all
@@ -1084,8 +1058,9 @@ be given a terminfo capabilities entry and applications could then decide
 at run time which features were or were not supported and take appropriate
 action.
 
-    FYI: uCurses does not currently pay any attention to terminal
-    capabilities.
+    Note: uCurses deliberately ignores terminal capabilities.  The
+    library targets modern xterm-compatible terminals and relies on
+    that baseline rather than probing at runtime.
 
 As each character is written out to some user interface entity it gets its
 own instance of the attributes structure along with that characters
@@ -1106,13 +1081,10 @@ stated color representations.
     because the "alt char set" does not first need to be enabled to be
     used.
 
-    P.S.  I stripped the alt char set handling out of uCurses many moons
-    ago because I added UTF-8 support, totally abandoning uCurses being of
-    any use within an ordinary every day run of the mill ho-hum Linux
-    console (the Linux console support for UTF-8 characters is effectively
-    non existent).
-
-    Was that removal a mistake? Should I add it back in?
+    Note: alt charset support was removed when UTF-8 box-drawing was
+    added, which effectively dropped support for the Linux console TTY
+    (which has poor UTF-8 support).  Re-adding it as an optional build
+    target is under consideration for a future branch.
 
 
 3.1: uC_attribs.c
@@ -1135,7 +1107,7 @@ applicable across all terminals.  Ditto gray scales.  These sequences are
         the terminal will set the console foreground color to the
         specified RGB values.
 
-        This is known to work just fine in my terminal! (tm)
+        This is known to work correctly in most modern terminals.
 
     static void rgb_bg(void)
 
@@ -1180,7 +1152,7 @@ applicable across all terminals.  Ditto gray scales.  These sequences are
         arbitrate which escape sequences needs to be emitted in order to
         affect that change.
 
-        This will either be one of the above rfb_fg() or gray_fg() calls
+        This will either be one of the above rgb_fg() or gray_fg() calls
         or will simply be a call to one or other of the official terminfo
         functions to set a foreground color, setf() or setaf().
 
@@ -1276,7 +1248,8 @@ applicable across all terminals.  Ditto gray scales.  These sequences are
         in that we don't actually need to emit the sequence to turn
         underline off because the sgr0 will have already done that for us.
 
-        Note: uCurses does not support flasy blinky text or standout mode.
+        Note: uCurses does not support flashy blinky text or standout
+        mode.
 
         Interesting Note:  Translation: Rant Incoming! (tm):
 
@@ -1299,6 +1272,11 @@ applicable across all terminals.  Ditto gray scales.  These sequences are
             for *EVERY SINGLE* attribute.
 
             P.S. As we know, Some things make me uppity!
+
+               Note to TED:  I have recently learned that if a color
+               format change is made in Xterm such as changing from rgb to
+               gray scale coloring then an sgr0 is required.  Any chance
+               this can be fixed?
 
 
 3.1.1: Modifying attributes variables
@@ -1337,41 +1315,41 @@ any instance of a uC_attribs_t structure such as is found in...
     API void uC_attr_clr_flags(uC_attribs_t *attribs, uint16_t bits)
 
         This public API function will turn off any given attribute within
-        a passed in uC_atrribs_t parameter.  Each attribute that is to be
+        a passed in uC_attribs_t parameter.  Each attribute that is to be
         turned off is specified within the bits parameter to this
         function.
 
     void set_fg(uC_attribs_t *attr, uC_color_t color)
 
-        This helper function is used to set a normal paletized foreground
-        color within the specified attributes structure.
+        This helper function is used to set a normal palette-indexed
+        foreground color within the specified attributes structure.
 
     void set_bg(uC_attribs_t *attr, uC_color_t color)
 
-        This helper function is used to set a normal paletized background
-        color within the specified attributes structure.
+        This helper function is used to set a normal palette-indexed
+        background color within the specified attributes structure.
 
     void set_gray_fg(uC_attribs_t *attr, uC_colors_gray_t color)
 
         This helper function is used to set a foreground color within an
-        attributes strcuture to a gray scale value.
+        attributes structure to a gray scale value.
 
     void set_gray_bg(uC_attribs_t *attr, uC_colors_gray_t color)
 
         This helper function is used to set a background color within an
-        attributes strcuture to a gray scale value.
+        attributes structure to a gray scale value.
 
     void set_rgb_fg(uC_attribs_t *attr, uC_color_t r, uC_color_t g,
         uC_color_t b)
 
         This helper function is used to set a foreground color within an
-        attributes strcuture to a 32 bit RGB value.
+        attributes structure to a 32 bit RGB value.
 
     void set_rgb_bg(uC_attribs_t *attr, uC_color_t r, uC_color_t g,
         uC_color_t b)
 
         This helper function is used to set a background color within an
-        attributes strcuture to a 32 bit RGB value.
+        attributes structure to a 32 bit RGB value.
 
 
 3.2 Terminfo database files.
@@ -1383,7 +1361,7 @@ environment for a $TERM variable to determine which terminal it is
 running in and it will then attempt to load the terminfo file for that
 specific terminal.
 
-If it is not able find any terminfo file for the current terminal then
+If it is not able to find any terminfo file for the current terminal then
 this is considered a critical error and the application will abort.
 
 uCurses will look in the following directories for this file.
@@ -1394,7 +1372,7 @@ uCurses will look in the following directories for this file.
 
 I personally consider /lib/terminfo to be an utterly incorrect place to
 put these files but that's where Debian places them (why?).  The terminfo
-man pages also suggest that ~/terminfo might be a possiblity too but this
+man pages also suggest that ~/terminfo might be a possibility too but this
 library does not check there as I consider it unsafe.
 
 The following files are used to search for and load the correct terminfo
@@ -1459,7 +1437,7 @@ database file for the current console.
             * Strings section.
             * String table section.
 
-        uCurses is mainliy interested in the strings and string table
+        uCurses is mainly interested in the strings and string table
         sections.   The strings section is an array of offsets to format
         strings contained within the string table section.  The order of
         items in the strings section is well defined so the offset to a
@@ -1493,10 +1471,10 @@ attributes on the terminal.
         This function writes an escape sequence out to the terminal that
         sets its foreground color to a specified gray scale value.
 
-    API void console_set_gray_bg(uC_colors_gray_t color)
+    API void uC_console_set_gray_bg(uC_colors_gray_t color)
 
         This function writes an escape sequence out to the terminal that
-        sets is background color to a specified gray scale value.
+        sets its background color to a specified gray scale value.
 
     API void uC_console_set_rgb_fg(uC_color_t r, uC_color_t g,
         uC_color_t b)
@@ -1507,27 +1485,27 @@ attributes on the terminal.
     API void uC_console_set_rgb_bg(uC_color_t r, uC_color_t g, uC_color_t b)
 
         This function writes an escape sequence out to the terminal that
-        sets is background to a specified 24 bit RGB color.
+        sets its background to a specified 24 bit RGB color.
 
-    API void console_clr_flags(uint16_t flags)
+    void console_clr_flags(uint16_t flags)
 
         This function writes all the escape sequences required to clear a
         specified set of flags which control things like bold, underline,
         reverse video being active.   Clearing certain flags and thereby
         modifying the state of the console can require multiple escape
-        sequences be emitted to ensure that other attribute are not lost.
+        sequences be emitted to ensure that other attributes are not lost.
 
     void console_set_flags(uint16_t flags)
 
         This function writes all the escape sequences required to set a
-        specified set of flags which control things like bold. underline,
+        specified set of flags which control things like bold, underline,
         reverse video being active.   A flag being set will have the
         library write the specific escape sequences required to affect
         that change.
 
 The following public API calls use the above functions to enable or
 disable various attributes in the console.  Turning either underline mode
-or bold mode off has some associated caveat's documented elsewhere here.
+or bold mode off has some associated caveats documented elsewhere here.
 
        API void uC_console_set_ul(void)
 
@@ -1538,7 +1516,7 @@ or bold mode off has some associated caveat's documented elsewhere here.
        API void uC_console_set_rev(void)
 
            This function writes the escape sequence which will turn on
-           revers video mode for all characters subsequently written to
+           reverse video mode for all characters subsequently written to
            the terminal.
 
        API void uC_console_set_bold(void)
@@ -1588,11 +1566,12 @@ that terminal.
     more modern terminfo used here.
 
 There is also the problem of being able to read and reliably recognize key
-presses with or without any combination of control, alt, shift and meta.
-Supporting all such key presses across all the various terminal types is
-very much non trivial.  Partially because of the fact that any one of
-those key presses could literally be hijacked by the desktop environment
-or even the specific terminal the application is running within.
+presses with modifier keys (control, alt, shift, meta).  uCurses targets
+xterm-compatible terminals which expose most modifier combinations as
+well-defined escape sequences.  Full cross-terminal support for every
+possible modifier combination is not feasible and is not a goal; any key
+press that is intercepted by the desktop environment or the terminal
+emulator itself is simply not available to the application.
 
     P.S.  The way uCurses handles the keyboard is not as clean as I would
     like it to be and I am considering some changes but I am resisting
@@ -1624,7 +1603,7 @@ terminal input has any characters ready to read.
 
         This helper function will repeatedly read the terminals standard
         input file descriptor until a valid character is returned.  This
-        is somewhat jankey (no pun intended) because it could result in an
+        is somewhat janky (no pun intended) because it could result in an
         infinite loop (tm).
 
         On success, this function returns the character read.
@@ -1635,7 +1614,7 @@ terminal input has any characters ready to read.
         repeatedly read the terminals standard input file descriptor until
         there are no more characters left to read or the buffer becomes
         full.  All characters are saved to the keyboard buffer array and
-        the number of characters read is saved in the num_k' variable.
+        the number of characters read is saved in the num_k variable.
 
         It is assumed that after having read one character from standard
         input, if there are still characters available to be read then
@@ -1643,8 +1622,11 @@ terminal input has any characters ready to read.
         key.  I.E.  We are reading a key sequence not multiple separate
         key presses.
 
-        This may negate type ahead which might need to be revisited in the
-        future?
+        This assumption can interfere with type-ahead.  The standard
+        mitigation is a short read timeout (typically 10-50ms) after
+        seeing an ESC byte: if further bytes arrive within the window
+        the ESC opens a sequence; if not, it is a bare ESC key press.
+        This approach is under consideration for a future revision.
 
 
 4.2: uC_key_sequence.c
@@ -1654,7 +1636,7 @@ When a key is pressed and that key press returns an escape sequence the
 characters of that escape sequence are all saved to the keyboard input
 buffer.
 
-This code will then, interpret each terminfo format string associated with
+This code will then interpret each terminfo format string associated with
 keyboard input and compile its escape sequence into the escape buffer (the
 same one used for output).
 
@@ -1737,14 +1719,8 @@ shift, meta plus key.  see above "pretty plzkthxbai".
         This internal function is used to compare compiled escape
         sequences for each supported key with the sequence which was
         previously read into the keyboard input buffer.  This code does
-        not use the 'unsafe' memcmp function but instead computes a
----
-        FNV-1a
----
-+++
-        FNV-1
-+++
-        hash for each if the items to be compared.  This may very well be
+        not use the 'unsafe' memcmp function but instead computes a FNV-1
+        hash for each of the items to be compared.  This may very well be
         just as unsafe.
 
         If a match is found the index of that match is returned.  If not
@@ -1837,6 +1813,60 @@ deny!
         code.
 
 
+4.4: uC_mouse.c
+---------------
+
+This long overdue module adds SGR mouse protocol support.  When the widget
+system is enabled (UC_WIDGETS build flag) mouse reporting is enabled
+automatically by uCurses_init() and disabled by uCurses_deInit().
+Applications that bypass the widget system can enable and disable mouse
+reporting manually.
+
+    API void uC_mouse_enable(void)
+
+        Enables SGR mouse reporting: button press/release, drag, and
+        all-motion (hover) tracking.  These are enabled as a fixed set;
+        individual modes cannot be toggled independently.  For most
+        applications the enabled set is appropriate for the lifetime of
+        the program.
+
+    API void uC_mouse_disable(void)
+
+        Disables all SGR mouse reporting.  Called automatically by
+        uC_restore_terminal().
+
+    uC_mouse_event_t uC_mouse_event
+
+        Global structure filled by the mouse parser whenever uC_key()
+        returns WIDGET_KEY_MOUSE (0x89).  Fields:
+
+            int16_t x       1-based terminal column (Ansi coordinates)
+            int16_t y       1-based terminal row
+            uint8_t button  button/event type (see constants below)
+            bool pressed    true = press or wheel tick, false = release
+
+        Button constants defined in uC_mouse.h:
+
+            UC_MOUSE_LEFT      0   left button
+            UC_MOUSE_MIDDLE    1   middle button
+            UC_MOUSE_RIGHT     2   right button
+            UC_MOUSE_MOVE      35  motion with no button held
+            UC_MOUSE_WHEEL_UP  64  scroll wheel up
+            UC_MOUSE_WHEEL_DN  65  scroll wheel down
+            UC_MOUSE_WHEEL_LT  66  horizontal scroll left
+            UC_MOUSE_WHEEL_RT  67  horizontal scroll right
+
+        Wheel events always arrive as pressed=true; there is no release
+        event for scroll wheel ticks.
+
+    bool uC_mouse_parse(void)   [visibility hidden]
+
+        Called internally by uC_key() to detect and parse the SGR escape
+        sequence ESC[<btn;x;yM|m from the key buffer.  On success fills
+        uC_mouse_event and stuffs WIDGET_KEY_MOUSE into the key buffer
+        so the caller sees it as a normal key return value.
+
+
 5: The Screen
 -------------
 
@@ -1879,142 +1909,131 @@ described in detail later in this document ...
 
 This source file contains all the code needed to create, destroy and
 control a screen structure.  It also contains a few functions specific to
-the control or placement of windows because putting them in here
-simplified the Gordian knot of circular include dependencies.
+the control or placement of windows because putting them here simplified
+the Gordian knot of circular include dependencies.
 
     int16_t scr_alloc(uC_screen_t *scr)
 
-        The screen structure passed in here is a previously allocated and
-        partially initialized structure which will describe the entire
-        current and previous states of the user interface.
+        This function is slightly mis-named: it does not allocate the
+        screen structure itself.  It requires an already-allocated,
+        partially initialized screen structure to be passed in.
 
-        This function allocates two state buffers equal in size to the
-        dimensions of the console.  These dimensions are contained within
-        the passed in structure so we do not have to query the console
-        here.
+        It allocates two cell buffers sized to the screen dimensions.  The
+        first buffer holds every character and its attributes for the
+        current (new) frame.  The second holds the same data for the
+        previous frame.  On each update only cells that differ between the
+        two buffers are written to the terminal, which makes the update
+        procedure significantly more efficient.
 
-        The allocation of these two state buffers is this functions only
-        purpose in life.  It was originally factored out to allow the JSON
-        parser access to it and (equally importantly) because it gave an
-        anonymous block of code a descriptive name.
-
-            This IMHO is the primary reason why anonymous nested blocks
-            should almost always be factored out into separate NAMED
-            functions.  This applies no matter how trivial that block is
-            but unfortunately, modern "engineers" are almost never taught
-            to factor their code properly.
-
-            If they did so it would absolutely make their code much more
-            readable.  As a general rule I do try to do this but sometimes
-            I too get lazy :/
+        This function was factored out primarily to give it a descriptive
+        name and to allow the JSON parser to call it directly.  This is a
+        good illustration of why even trivial anonymous blocks benefit
+        from being extracted into named functions — it makes code
+        significantly more readable at essentially no cost.
 
     API uC_screen_t *uC_scr_open(int16_t width, int16_t height)
 
-        This is the main API call used to create a new screen.  The width
-        and height parameters should be equal to the dimensions of the
-        console within which the screen is to be displayed.  Their not
-        being equal is undefined behavior (patent pending).
+        The main API call for creating a new screen.  Width and height
+        should match the current terminal dimensions; passing mismatched
+        values is undefined behavior (tm).
 
-        When a screen is opened it is automatically set as the current
-        active screen.  There can (for now?) be only one.
+        After allocating the structure and setting its dimensions it calls
+        scr_alloc() to set up the two state buffers.  If that allocation
+        fails the structure is freed and NULL is returned.  On success the
+        new screen is returned and also stored in the library-internal
+        active_screen variable.
 
-   API void uC_scr_close_view_groups(uC_screen_t *scr)
+    API void uC_scr_close_view_groups(uC_screen_t *scr)
 
-        This public API function is called as part of the user interface
-        tear down procedure.  Any active widget view groups with their
-        associated views and associated widgets will be de-allocated by
-        this call.
+        This public API function is available only when the library is
+        built with UC_WIDGETS enabled.  It is called as part of the
+        interface tear-down procedure.  It iterates through every widget
+        view group attached to the screen; for each group it closes all
+        attached views and their widgets, then closes the group itself.
+        Repeat until no view groups remain.
 
-        I.E.  The entire widget interface goes bye bye.
+        Making this function public lets application code tear down the
+        widget interface without destroying the rest of the UI.  This can
+        be used to rebuild the widget interface on the fly based on
+        application context.
 
-        Making this function public allows the developer to initiate a
-        complete tear down of the widgets interface without affecting any
-        other part of the UI.  This could be used to generate new widgets
-        on the fly based on application context.
-
-        Technically this belongs within the widget sources but putting it
-        here means that the widget functions outside this source file do
-        not need any knowledge of the screen structures.
+        Technically this belongs in the widget sources but placing it here
+        avoids giving those sources any knowledge of the screen structure.
 
     API void uC_scr_close(uC_screen_t *scr)
 
-        This public API call closes a screen and de-allocates all entities
-        associated with it.  This includes the backdrop window (explained
-        below), all application windows, the menu bar and any pull downs,
-        and any widget view groups, associated views and widgets.
+        Closes a screen and deallocates everything associated with it in
+        the following order:
+
+            * The two state buffers.
+            * The backdrop window (if any).
+            * All application windows.
+            * All widget view groups, views and widgets (if UC_WIDGETS).
+            * The menu bar, pull-downs and menu items (if UC_MENUS).
+            * Any status windows.
+            * The screen structure itself.
+
+        If the closed screen is the current active_screen that internal
+        pointer is cleared to prevent stale access.
 
     void init_backdrop(uC_screen_t *scr, uC_window_t *win)
 
-        This function initializes a backdrop window and attaches it to the
-        screen.  This windows attributes are hard coded into the uCurses
-        library but can be modified by the application developer.
+        Initializes a backdrop window and attaches it to the screen.  The
+        backdrop always fills the screen minus a one-cell margin on each
+        side (to leave room for its border), is scroll-locked, and is
+        given a single-line border with pre-defined gray-scale foreground
+        and background colors.
 
-        The window always uses hard coded foreground and background
-        colors, its border is always a double line border and also uses
-        hard coded foreground and background colors.
+        Application developers can modify any of these defaults after the
+        fact by pulling the window address out of scr->backdrop and using
+        the normal window API calls.
 
-        Application developers can simply tweak any settings they don't
-        like prior to the screen being drawn!
-
-        A backdrop window in uCurses is used as a way to put something
-        visually behind all user application windows.  Early on I found
-        that if there was no backdrop then any user application windows
-        that were attached to that screen and animated (moved around)
-        would leave trails behind them.  Having a backdrop window as I
-        call it prevents this from happening.
-
-        This window is just like any other window and can have text or
-        other entities drawn into it.  It is *always* drawn first,
+        The backdrop is always the first entity drawn on a screen update
+        so all other windows and entities are composited on top of it.
+        This prevents moving windows from leaving trails on the display.
 
     API void uC_scr_add_backdrop(uC_screen_t *scr)
 
-        This public API function adds a backdrop window to a specified
-        screen.  Every aspect of a backdrop window is hard coded into this
-        library.  Its color attributes, its border style its border
-        attributes etc are all pre-defined.
-
-        A backdrop window if it exists is always the first thing drawn
-        into a screen view buffer.  All other entities are drawn over the
-        top of it.  (think painters algorithm).
-
-        If the end user wishes to modify any of the attributes of this
-        window they can pull it's structures address out of the screen
-        structure and use the usual API calls to modify it's attributes
-        and appearance.
+        Allocates a new window and calls init_backdrop() to configure it
+        as the screen's backdrop.  This is now called automatically by
+        uCurses_init() for programmatic applications (those that pass NULL
+        for all three parameters).  JSON-based applications have their
+        backdrop created via the JSON build path.  Application code should
+        not normally need to call this directly.
 
     int16_t win_chk_pos(uC_window_t *win, uC_screen_t *scr, int16_t x,
         int16_t y)
 
-        This function is used to verify that a window placement would be
-        lawful.  No part of any window can be placed outside the bounds of
-        the screen it is to be attached to, including any border that it
-        may have.
+        Verifies that a proposed window placement is legal.  No part of
+        any window, including its border, may fall outside the bounds of
+        the screen.  Returns 0 if the placement is valid, -1 otherwise.
 
     API void uC_scr_win_attach(uC_screen_t *scr, uC_window_t *win)
 
-        This pubic API call attaches a specified window structure to a
-        specified screen structure and thereby makes it visible.
-        Windows can be added to and removed from the screen at will and
-        this can be used to push a window to the back or pop it to the
-        front of the view order.  Windows drawn first are overlapped by
-        windows that are drawn later.
+        Attaches a window to a screen, making it visible on the next
+        update.  If the window is already attached to any screen it is
+        first detached from there.  Windows are drawn in list order so
+        attaching a window pops it to the front of the view (it is drawn
+        last, i.e. on top).  This mechanism also provides a clean path for
+        moving windows between screens should multiple screens ever be
+        implemented.
 
     API void uC_scr_win_detach(uC_window_t *win)
 
-        This public API call will detach a window from a screen if any
-        that it is currently attached to.  The window structure is not
-        destroyed by this action.  If it is not currently associated with
-        any screen structure then this call is a silent nop.
+        Detaches a window from whichever screen it is currently attached
+        to and removes it from the view.  The window structure is not
+        destroyed.  If the window is not attached to any screen this call
+        is a silent no-op.
 
     API void uC_scr_win_tab_next(uC_screen_t *scr)
 
         uCurses allows windows to have input focus and for application
-        context to be set accordingly.  Each window could have its own
+        context to be set accordingly.  Each window can have its own
         dedicated keyboard handler.
 
-        This public API call is used to "tab select" the next window in
-        the specified screens window list.   The tab selection order is
-        entirely independent of the window draw order.
+        This call advances focus to the next window in the tab order for
+        the specified screen.  The tab order is entirely independent of
+        the window draw order.
 
 
 5.2: Drawing it all
@@ -2036,7 +2055,7 @@ any status windows are drawn.
     Note: A status window is an optional 'one line' high window which can
     be used to display status information such as current line in a file
     being edited or your characters current map coordinates in a game etc
-    etc, you decide!.  I use the status window as a debug printf type aid
+    etc, you decide!  I use the status window as a debug printf type aid
     as I develop this library (tm)!
 
 Finally, all widget view groups, their associated views and widgets are
@@ -2094,11 +2113,8 @@ This means that most of the time only one single (slow) 'user space' to
     two or (unlikely) more calls to write().  Ignore the man behind the
     curtain!
 
-    P.P.S.  I could track this to see how many calls to write are actually
-    made but this should be a development option and not to be included in
-    production code.
-
-    Should I add said tracking here for the application developer?
+    Note: write-call count tracking will be added as a debug build option
+    alongside buffer high-water-mark tracking.
 
 
 5.4: uC_screen_draw.c
@@ -2130,14 +2146,14 @@ state buffer and then write that new state out to the console for display.
 
         This function will, given a pointer to a list of windows, draw
         every window contained within that list.  If the list is empty
-        this function will silently preform no action.
+        this function will silently perform no action.
 
     static void scr_cup(uC_screen_t *scr, int16_t x, int16_t y)
 
         This function moves the console cursor location to a new position
-        within by emitting ta 'cup' escape sequence.  If however the
+        by emitting a 'cup' escape sequence.  If however the
         console cursor position (which is tracked) is already in the
-        desired new location then this function silently preforms no
+        desired new location then this function silently performs no
         operation (I hope!).
 
     static bool scr_is_modified(uC_screen_t *scr, uint16_t index)
@@ -2169,13 +2185,14 @@ state buffer and then write that new state out to the console for display.
         in fact advance the cursor more than one space on the display.
         This is because UTF-8 characters can be multi width.
 
-            Note: uCurses currently only supports characters that are
-            either one wide or two wide...  possibly on the todo to fix).
+            Note: uCurses supports 1-wide and 2-wide characters.
+            Zero-width combining characters and bidi text are out of
+            scope; see section 10.9 for the rationale.
 
         This code also accounts for conditions where a single width
         character is emitted over the top of one or other half of a double
         width character.  This prevents glitches that make the screen look
-        very messy but doing so makes the code look messy.  You cant win!
+        very messy but doing so makes the code look messy.  You can't win!
 
     void scr_emit(uC_screen_t *scr, int16_t index)
 
@@ -2249,127 +2266,7 @@ state buffer and then write that new state out to the console for display.
         uC_terminfo_flush().
 
 
-5.5: uC_screen_ctrl.c
----------------------
-
-This file contains all the code used to control every aspect of the screen
-structure.  It has code to open (allocate and initialize) a new screen
-structure, close a screen (tear down a screen and everything associated
-with it) and to add and remove windows to / from it.
-
-    int16_t scr_alloc(uC_screen_t *scr)
-
-        This function is slightly miss-named, it does not allocate a
-        screen structure and in fact it requires an already existing,
-        partially initialized screen structure to be passed to it.
-
-        This function allocates the two state buffers where the current
-        state and previous state of the screen are stored.  The current
-        state buffer contains every character and their associated
-        attributes for the current (or new) state of the display.
-
-        The other buffer contains the state of every character and its
-        associated attributes of the previous frame.  After drawing a new
-        frame into the 'current' state buffer we can compare each cell of
-        that to the associated cell in the previous state.
-
-        This enables the screen update to skip any and all unmodified
-        characters between the current (new) state and previous (old)
-        state, dramatically improving the efficiency of the update
-        procedure.
-
-    API uC_screen_t *uC_scr_open(int16_t width, int16_t height)
-
-        This public API function is used to crate a new screen structure.
-        The width and height of this should be equal to the dimensions of
-        the terminal within which it will run.  Their not being the same
-        is undefined behavior (tm).
-
-        After allocating space for the structure it is initialized with
-        its own width and height and then its state buffers are
-        allocated.  If the state buffer allocation fails the structure
-        itself is de-allocated and a NULL is returned.  Otherwise the
-        address of the structure is returned.
-
-    static void close_view_groups(uC_screen_t *scr)
-
-        This function only exists if widgets have been enabled in the
-        build. It is part of the interface tear down procedure performed
-        when a screen is closed.
-
-        It scans through every widget view group attached to the screen
-        and if there are any widget views within any of these view groups
-        then that view is itself scanned for attached widgets.  All
-        attached widgets are closed (de allocated) then their parent view
-        group is closed and when all views associated with a group have
-        been closed the view group itself is closed.
-
-        This procedure is repeated until all view groups associated with
-        the screen have been closed.
-
-    API void uC_scr_close(uC_screen_t *scr)
-
-        This public API function closes a screen and any entities that are
-        associated with it.  It first de allocates the two state buffers
-        associated with it and then all of the following are all closed
-        (de allocated) if they exist.
-
-            * All windows attached to the screen.
-            * All widget view groups, views and widgets.
-            * Any menu bars and associated pull down and menu items.
-
-        At this time the screen structure itself is de allocated.  If the
-        screen we just closed was the currently active screen then the
-        'active_screen' variable is nulled out to prevent erroneous access
-        to the destroyed structures.
-
-    void init_backdrop(uC_screen_t *scr, uC_window_t *win)
-
-        This helper function is used to allocate and initialize a backdrop
-        window.  This window is treated separately from user application
-        windows but in reality is no different from them.  This windows
-        configuration however is pre-defined.  It is always created the
-        same size as the current screen, always has a double line border
-        and all attributes are set to pre-defined defaults.
-
-        If any of these configurations are not to the developers liking he
-        can always modify them later.
-
-        The backdrop window is always drawn first on a screen update so
-        any user application windows and other entities will always be
-        drawn over the top of it.  This window was implemented to allow
-        user application windows to be animated on the display.  Without
-        it, any window that moves across the screen will leave trails
-        behind.
-
-    API void uC_scr_add_backdrop(uC_screen_t *scr)
-
-        This public API function is used to create a backdrop window and
-        to associate it with the specified screen.  The user has no
-        control over any of the configuration items at the time of
-        creation but can always go in and tweak things later if they so
-        desire (and know how }:)
-
-    API void uC_scr_win_attach(uC_screen_t *scr, uC_window_t *win)
-
-        This public API call is used to attach a specified window to a
-        specified screen.  If the specified window is already attached to
-        any other (or the same screen) it is first detached from there.
-
-        This would allow windows to be moved from one screen to another if
-        multiple screens are ever implemented.  It also allows for a
-        window that is currently being overlapped by other windows to be
-        popped to the front of the view (makes it the last window drawn on
-        the next update).
-
-    API void uC_scr_win_detach(uC_window_t *win)
-
-        This public API call is used to detach a specified window from its
-        parent screen and remove it from the view.  This call does not
-        destroy the detached window or alter it in any way.
-
-
-6.0: The Window
+6: The Window
 ---------------
 
 The window structure is where application developers draw almost
@@ -2405,7 +2302,7 @@ The window structure contains the following elements.
     * A pointer to the windows display name
     * Variables giving various attributes for various window entities.
 
-When a window is initially created it does does not have position.  Prior
+When a window is initially created it does not have position.  Prior
 to attaching it to the screen it must be given position and care must be
 taken to ensure that the above limitations are catered to.  A border for
 example is not counted as part of a window so if there is a border around
@@ -2466,7 +2363,7 @@ dependencies that I am not a huge fan of.
 
         This public API call is used to move a window to the start of its
         parent screens draw order.  This will, on the next screen update,
-        cause that window to be drawn immediately after the backdrop).  It
+        cause that window to be drawn immediately after the backdrop.  It
         could therefore be overlapped by other windows drawn into the
         screen.
 
@@ -2530,12 +2427,7 @@ dependencies that I am not a huge fan of.
         change its border type.  It is also used to set the borders
         attributes (focused and non focused).
 
----
-    API void uC_win_set_name(uC_window_t *win, uint8_t *name)
----
-+++
     API void uC_win_set_name(uC_window_t *win, const char *name)
-+++
 
         This public API call is used to change the display name of a
         specified window.   If that window has a border then this name
@@ -2545,7 +2437,7 @@ dependencies that I am not a huge fan of.
     API void uC_win_set_focus(uC_window_t *win)
 
         This public API call is used to give a specified window focus.
-        The tracked tab selection order is for the screen is also updated.
+        The tab selection order for the screen is also updated.
 
 
 6.2: uC_window_attr.c
@@ -2669,7 +2561,7 @@ manage.  No "Wall of text crits you for 50000! You're dead!"
 
     API void uC_win_set_bdr_fg(uC_window_t *win, uC_color_t color)
 
-        This public API call sets the foreground color for the speccified
+        This public API call sets the foreground color for the specified
         windows border.  The next time this window is drawn its border
         characters foreground will be drawn using this color.
 
@@ -2714,7 +2606,7 @@ manage.  No "Wall of text crits you for 50000! You're dead!"
         These attributes only apply when said window does not have focus.
 
     API void uC_win_set_bdr_rgb_bg(uC_window_t *win, uC_color_t r,
-        uC_color_t g, uC_color_t
+        uC_color_t g, uC_color_t b)
 
         This public API call sets the background color for the specified
         windows border to a 24 bit RGB value.  The next time this window
@@ -2867,6 +2759,76 @@ joined vertical or horizontal separators within windows.
         one set of attributes are applicable.
 
 
+6.4: uC_window_draw.c
+---------------------
+
+This source file contains all functions that read or write a window's
+cell buffer directly.  This includes cursor movement, character emission,
+scrolling, panning, and buffer copy.
+
+    API void uC_win_clear_line(uC_window_t *win, int16_t line)
+
+        Clears one line of a window using the window's current attributes
+        and blank character.
+
+    API void uC_win_clear(uC_window_t *win)
+
+        Clears all lines of a window and homes the cursor.
+
+    API void uC_win_copy_win(uC_window_t *dst, uC_window_t *src)
+
+        Copies the entire cell buffer of src into dst.  Both windows must
+        have the same dimensions.  This is used to implement layered
+        rendering: write into a backing (non-displayed) window, then copy
+        to the visible window and stamp any fixed overlays on top.
+        The scroll demo (example/scroll.c) demonstrates this pattern.
+
+    API void uC_win_scroll_up(uC_window_t *win)
+    API void uC_win_scroll_dn(uC_window_t *win)
+    API void uC_win_scroll_lt(uC_window_t *win)
+    API void uC_win_scroll_rt(uC_window_t *win)
+
+        Scroll or pan a window by one line or column.  The newly exposed
+        row or column is cleared to the window's current blank character
+        and attributes.  These are thin wrappers around the _n variants
+        below.  The %up %dn %lt %rt win_printf specifiers call these
+        internally.
+
+    API void uC_win_scroll_up_n(uC_window_t *win, int16_t n)
+    API void uC_win_scroll_dn_n(uC_window_t *win, int16_t n)
+    API void uC_win_scroll_lt_n(uC_window_t *win, int16_t n)
+    API void uC_win_scroll_rt_n(uC_window_t *win, int16_t n)
+
+        Scroll or pan a window by n lines or columns.  Invalid values of
+        n are silently clamped: n <= 0 is a no-op, n >= height (or width
+        for left/right) clears the entire window.  These are the
+        preferred variants when moving more than one line at a time.
+
+
+    API void uC_win_cup(uC_window_t *win, int16_t x, int16_t y)
+
+        Move the window cursor to the specified (x, y) position.  Out
+        of bounds coordinates are silently ignored.
+
+    API void uC_win_emit(uC_window_t *win, uint32_t c)
+
+        Write one UTF-8 code point into the window at the current cursor
+        position and advance the cursor.  CR and LF move to the start of
+        the next line.  Tabs are rejected.  Wide characters (e.g. CJK)
+        consume the correct number of columns.
+
+    API cell_t *uC_win_peek_xy(uC_window_t *win, int16_t x, int16_t y)
+    API cell_t *uC_win_peek(uC_window_t *win)
+
+        Return a pointer to the cell at the specified position or the
+        current cursor position.  Returns NULL if out of bounds.
+
+    API void uC_win_el(uC_window_t *win)
+
+        Erase from the current cursor position to the end of the current
+        line.
+
+
 7: Status windows
 -----------------
 
@@ -2905,12 +2867,12 @@ build will save a small amount of space on your target.
         This public API call will simply clear the specified status window
         for later drawing into.
 
-    API void uC_set_status(uC_window_t *win, char *s)
+    API void uC_set_status(uC_window_t *win, const char *fmt, ...)
 
-        This public API call is used to draw an existing string into the
-        specified status window.  Application developers can allocate
-        their own status buffer and sprintf any information they want in
-        that buffer before calling this function.
+        This public API call is used to write formatted text into the
+        specified status window.  It accepts a printf-style format string
+        and any associated arguments, formatting them internally via
+        uC_win_vprintf().
 
 
 8: Menus
@@ -2927,7 +2889,7 @@ The menu bar structure contains the following elements.
     * A variable stating whether the menu bar is active or not.
     * A variable giving the index of which ever item within it is active.
     * A count of the total number of pulldown items associated with it.
-    * An arry of currently associated pulldown items.
+    * An array of currently associated pulldown items.
     * Various attributes which menu elements will be drawn with.
 
 A menu bar is a container for a number of pull down menu items.  The only
@@ -2981,7 +2943,7 @@ The above "only one flag defined so far" is used to disable and re-enable
 a pulldown menu or a pulldown menu item.
 
 
-8.1 uC_menu_bar.c
+8.1: uC_menu_bar.c
 -----------------
 
     static void pd_set_attr(int16_t i, pulldown_t *pd, uC_attribs_t *p,
@@ -3037,7 +2999,7 @@ a pulldown menu or a pulldown menu item.
         structure itself.
 
         This can be used to activate and deactivate various menu bars
-        based on application context.  For example, it might be possiblle
+        based on application context.  For example, it might be possible
         for an application to activate different menus based on which
         window within it has focus.
 
@@ -3094,7 +3056,7 @@ a pulldown menu or a pulldown menu item.
 
         This function opens a new window for an activated pull down menu.
         The window is created with a width equal to the widest item within
-        the pull down menu and a height equal the the item count for that
+        the pull down menu and a height equal the item count for that
         menu.
 
         The window is then given a single line border with rounded corners
@@ -3321,7 +3283,7 @@ The focus selection of all other widgets is controlled by the widget
 engine based on the developer defined order.
 
 
-9.1: uC_wigets.c
+9.1: uC_widgets.c
 ----------------
 
     uC_widget_t *create_widget(uC_widget_type_t type, char *name,
@@ -3394,7 +3356,7 @@ engine based on the developer defined order.
     API void uC_widget_view_remove_widget(uC_widget_view_t *view,
     uC_widget_t *widget)
 
-        This publivc API call is used to detach a wiget from a view.  The
+        This public API call is used to detach a widget from a view.  The
         view itself is not closed even if the removed widget is the only
         one that was attached.
 
@@ -3415,7 +3377,7 @@ engine based on the developer defined order.
 
         For a scrollable view this function will move the focus down one
         line within the view and will scroll the view if necessary. The
-        selecction will not wrap within the view if it is at the bottom
+        selection will not wrap within the view if it is at the bottom
         thereof.
 
     void widget_scroll_view(uint8_t k)
@@ -3459,12 +3421,10 @@ engine based on the developer defined order.
         screen structure.  Once the view group is attached, all widgets
         within all widget views associated with the attached group will be
         displayed on the next update.
-+++
         If no widget currently has focus when this call is made then the
         widget with sequence number 1 is automatically given focus.  This
         ensures that newly attached view groups are immediately keyboard
         navigable without the caller needing to explicitly set focus.
-+++
 
     API void uC_widget_vg_detach(uC_screen_t *scr, uC_widget_vg_t *vg)
 
@@ -3472,15 +3432,11 @@ engine based on the developer defined order.
         a screen structure.  The detached view group is not destroyed but
         will no longer be drawn into the screen.
 
-    API void uC_widget_vg_close(uC_screen_t *scr, uC_widget_vg_t *vg)
+    API void uC_widget_vg_close(uC_widget_vg_t *vg)
 
-        This public API call is used to close a given view group.  Closing
-        the view group destroys all views and all widgets associated with
-        them and will remove the group from the specified screen
-        structure.
-
-        Once all views have been destroyed and the group detached from the
-        screen the view group is then also destroyed.
+        This public API call closes a view group, destroying all views and
+        all widgets associated with them.  The view group is detached from
+        its parent screen and then destroyed.
 
     API void uC_widget_vg_add_view(uC_widget_vg_t *vg,
         uC_widget_view_t *v)
@@ -3567,7 +3523,7 @@ The following functions perform the entire drawing operation...
     void draw_view_groups(uC_screen_t *scr)
 
         This function is part of the main screen display update procedure.
-        It will drawn all view groups into the specified screen with all
+        It will draw all view groups into the specified screen with all
         their associated views and widgets.
 
 
@@ -3608,7 +3564,7 @@ The following functions perform the entire drawing operation...
         sequence value passed in here is the widgets tab selection order.
 
         The letter parameter is the shortcut key associated with the
-        button.  If the the button has no shortcut key specified then
+        button.  If the button has no shortcut key specified then
         there must be a select parameter specified.  If neither are
         specified then a press of this button will be effectively
         un-selectable.
@@ -3623,7 +3579,7 @@ The following functions perform the entire drawing operation...
         This function is called as part of the widget draw procedure and
         draws a single checkbox widget using the selected UTF-8 characters
         for both on and off states.  The checkbox will be drawn with
-        either it's focused or unfocused attributes.
+        either its focused or unfocused attributes.
 
         The widgets state bit is taken from a 32 bit variable pointed to
         by the *select element within the widget structure.  The widget
@@ -3674,7 +3630,7 @@ one widget may be set within a radio button view.
         This function is called as part of the widget draw procedure and
         draws a single radio button widget using the selected UTF-8
         characters for both on and off states.  The radio button will be
-        drawn with either it's focused or unfocused attributes.
+        drawn with either its focused or unfocused attributes.
 
         The widgets state bit is taken from a 32 bit variable pointed to
         by the *select element within the widget structure.  The widget
@@ -3864,7 +3820,7 @@ view group.
 
     API bool uC_widget_select_widget(uint16_t sequence)
 
-        This static function first removes focus from the currently
+        This public API function first removes focus from the currently
         selected view group's window and marks the currently focused
         widget as no longer focused.  It then searches through all view
         groups attached to the currently active screen for a widget with a
@@ -3875,38 +3831,6 @@ view group.
         marked as having focus and a true result is returned.  Otherwise a
         false result is returned.
 
----
-    char tab_next_widget(void)
-
-        This function is part of the widget keyboard handling routines.
-        It first collects the sequence number of the currently focused
-        widget from the widget_state variable.  If there is no currently
-        focused widget then this value will be zero.   It then adds one to
-        this value and tries to find a widget with this sequence number.
-
-        If no widget is found with this sequence number is found then the
-        current sequence number is left at zero and no widgets, views or
-        view groups are marked as having focus.
-
-    char tab_next_widget(void)
-
-        This function is part of the widget keyboard handling routines. It
-        will attempt to select the widget with a sequence number equal to
-        the currently focused widget sequence number plus one.  If no
-        widget is found with this sequence number then all widgets, views
-        and view groups lose focus and the current sequence number is set
-        to zero.
-
-    char tab_prev_widget(void)
-
-        This function is part of the widget keyboard handling routines. It
-        will attempt to select the widget with a sequence number equal to
-        the currently focused widget sequence number minus one.  If no
-        widget is found with this sequence number then all widgets, views
-        and view groups lose focus and the current sequence number is set
-        to zero.
----
-+++
     uint8_t tab_next_widget(void)
 
         This function is part of the widget keyboard handling routines.
@@ -3929,7 +3853,6 @@ view group.
         focus wraps around to the widget with the highest assigned
         sequence number, ensuring that Shift-Tab always moves focus to
         some widget.
-+++
 
 
 9.10: uC_widget_keys.c
@@ -3947,7 +3870,7 @@ The cursor up and cursor down keys are used to move up or down within a
 scrollable widget view if it has focus and to potentially scroll that
 widget it in one or other direction.
 
-    staticbool check_scrollable(uint8_t k)
+    static bool check_scrollable(uint8_t k)
 
         This static function first checks if the currently focused view is
         scrollable and if so, is either the cursor up key or cursor down
@@ -3955,7 +3878,7 @@ widget it in one or other direction.
 
         If all of the above tests are true it will then call a function
         which will move the focus up or down one widget within that view
-        and wil potentially scroll that view.
+        and will potentially scroll that view.
 
     static uint8_t handle_widget_key(uint8_t k)
 
@@ -3968,13 +3891,13 @@ widget it in one or other direction.
 
     static uint8_t _widget_key(void)
 
-        This static function blocks until a key is ready to read.  key it
-        is tested to see if it is the tab key or back tab key in which
-        case a fucntion is called to tab to either the next or the
-        previous widget in the view.
+        This static function blocks until a key is ready to read.  The
+        key is tested to see if it is the tab key or back-tab key, in
+        which case a function is called to move to either the next or the
+        previous widget.
 
-        If it neither the tab key or back tab key then which ever key was
-        pressed is passed to the above handle_widget_key() function.
+        If it is neither the tab key or back tab key then which ever key
+        was pressed is passed to the above handle_widget_key() function.
 
         If the key pressed was one that returns an escape sequence and is
         registered by the widget handler then that escape sequence will be
@@ -4041,7 +3964,7 @@ of each of these is documented below.
 ----------------
 
 This source file contains many tiny but useful functions which are
-somewhat difficult too categorize within any of the above modules.  They
+somewhat difficult to categorize within any of the above modules.  They
 are used extensively by the library itself but are all public API entities
 so are also available to the application developer.
 
@@ -4064,20 +3987,12 @@ so are also available to the application developer.
 
         This public API call computes a FNV hash on the string passed to
         it.
----
-        It is documented as being the FNV-1a variant but this might
-        actually be incorrect, it might actually be the original FNV-1.
-        This is utterly inconsequential as it still performs its duties
-        perfectly.
----
-+++
         The algorithm used is FNV-1: the hash is first multiplied by the
         FNV prime and then XORed with the next byte.  FNV-1a reverses
         those two operations (XOR then multiply).  The constants used
         (prime 0x01000193, basis 0x811c9dc5) are correct for both
         variants so the distinction has no practical effect on the
         library.
-+++
 
         It is used as a means of negating the need to do string compares
         within the library which are widely accepted as being unsafe.  I
@@ -4106,15 +4021,6 @@ so are also available to the application developer.
         their saved state.  It is used as part of the libraries exit
         procedure so the terminal is not left in a squirly state.
 
----
-    API __attribute__((noreturn)) void uC_abort(char *msg)
-
-        This public API call is used as a somewhat graceful abort.  It
-        restores the terminal to its original state and emits an error
-        string to stderr.  It then exits the application and returns
-        back to the console.
----
-+++
     API __attribute__((noreturn)) void uC_abort(const char *msg)
 
         This public API call is used as a somewhat graceful abort.  If a
@@ -4137,7 +4043,6 @@ so are also available to the application developer.
         restoration and exit(1).
 
         Pass NULL to deregister a previously registered handler.
-+++
 
     API void uC_get_console_size(uint16_t *width, uint16_t *height)
 
@@ -4147,12 +4052,7 @@ so are also available to the application developer.
         I should also be using.  This is on the "some day" todo list to
         fix maybe?
 
----
-    API void uC_assert(bool f, char *file, int line, char *msg)
----
-+++
     API void uC_assert(bool f, const char *file, int line, const char *msg)
-+++
 
         This public API call asserts that a passed in condition is true.
         If the condition is true this function simply returns to the
@@ -4265,7 +4165,7 @@ mechanism to shrink expanded zones.
 10.3: uC_braille.c
 ------------------
 
-This module contains function to allow displaying of graphical entities
+This module contains functions to allow displaying of graphical entities
 using the UTF-8 Braille character set with UTF-8 Code points from 0x2800
 to 0x28ff as follows.
 
@@ -4282,7 +4182,7 @@ This character set comprises of 256 characters which contain a pattern of
 two wide, four high dots ranging from 0 dots to 8 dots total.  They can be
 used to draw almost any graphical image such as bar graphs and the like.
 
-The uC_curses example code shows them being used to draw a texture mapped
+The uCurses example code shows them being used to draw a texture mapped
 3d maze using a ray casting engine which I found on the net (attributed).
 
 They also demonstrate a very cheezy super-sampled Mandelbrot viewer.
@@ -4319,7 +4219,7 @@ They also demonstrate a very cheezy super-sampled Mandelbrot viewer.
 This module contains the entry point code for the library.  This includes
 code to be run if the .so file is ever executed directly.  In this case
 the code here will parse and interpret the command line arguments passed
-to the it.
+to it.
 
     static uint8_t *next_arg(void)
 
@@ -4335,7 +4235,7 @@ to the it.
 
     static void print_cb(uint8_t *path)
 
-        This function writes a small amount of source code out to sdtout.
+        This function writes a small amount of source code out to stdout.
         This code is to be included in an applications sources and will be
         used to associate a function vector with a strings hash value.
 
@@ -4344,7 +4244,7 @@ to the it.
 
     static void print_switch(uint8_t *path)
 
-        This function writes a small amount of source code out to sdtout.
+        This function writes a small amount of source code out to stdout.
         This code is to be included in an applications sources and will be
         used to associate a function vector with a strings hash value.
 
@@ -4377,7 +4277,7 @@ to the it.
     static const uint16_t smushed[]
 
         This static array is a 'compressed' instance of the usage help
-        info.  This compression method is ULTRA cheezy and wont be
+        info.  This compression method is ULTRA cheezy and won't be
         described here but it actually works quite well.
 
         Patent not pending!
@@ -4549,7 +4449,6 @@ absolutely 100% positive that they are now absolutely 100% bug free! (tm)!
 
         There is currently no associated "insert after" function.
 
-+++
     Stack and queue macros
 
         uC_list.h provides four macros that let a uC_list_t serve as a
@@ -4579,7 +4478,6 @@ absolutely 100% positive that they are now absolutely 100% bug free! (tm)!
               first
               second
               third
-+++
 
 
 10.7: uC_rgb_hsl.c
@@ -4601,7 +4499,7 @@ For this reason, this text here is the only documentation I am prepared
 to write at this time. (junk code should be discarded not documented!)
 
 
-10.8: uC_swtitch.c
+10.8: uC_switch.c
 ------------------
 
 If I documented my reasoning for creating this module it would come over
@@ -4613,7 +4511,7 @@ I do still use C's switch mechanisms but I will avoid them where I can.
 
     API int uC_switch(const uC_switch_t *s, int size, int32_t option)
 
-        THe uC_switch_t *s here is an array of uC_switch_t elements with
+        The uC_switch_t *s here is an array of uC_switch_t elements with
         size elements.  Each uC_switch_t contains a 32 bit option value
         and a pointer to a function.
 
@@ -4634,45 +4532,104 @@ I do still use C's switch mechanisms but I will avoid them where I can.
 10.9: uC_utf8.c
 ---------------
 
-The unicode standard was implemented to address the problem of
-representing multi national texts on multiple systems, allowing the same
-numerical values to represent the same text characters acrorss all
-systems.
+Unicode assigns a unique numerical value called a code point to every
+character in every writing system.  These values range from 0x000000 to
+0x10FFFF.  Your terminal does not receive code points directly; they must
+first be encoded into UTF-8 byte sequences.  UTF-8 is a variable length
+encoding that represents code points using one to four bytes depending on
+their value:
 
-Each numerical value in the unicode standard is referred to as a code
-point and these values can be represented using one to four bytes of
-memory in your computer.
+    0x000000 - 0x00007F   1 byte    0xxxxxxx
+    0x000080 - 0x0007FF   2 bytes   110xxxxx 10xxxxxx
+    0x000800 - 0x00FFFF   3 bytes   1110xxxx 10xxxxxx 10xxxxxx
+    0x010000 - 0x10FFFF   4 bytes   11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
 
-When writing these code points out to a display or when transmitting them
-across a network they need to be encoded into UTF-8 characters which are
-also represented using one to four bytes.
+The high bits of the leading byte encode the sequence length.  Every
+continuation byte begins with 10 which means any byte can be immediately
+identified as either a lead byte or a continuation byte without any
+surrounding context.  This self-synchronizing property is one of UTF-8's
+more useful traits.
 
-The UTF-8 standard was devised as a way of solving numerous problems such
-as when transmitting unicode across a network.  This is a huge subject and
-way beyond the scope of this document.  For a greater understanding of the
-problems UTF-8 solves the following link is the best I have seen to date.
+uCurses handles the full four-byte range for both encoding and decoding.
+For display purposes, each code point has a column width of either 1 or
+2.  This is determined by calling the POSIX wcwidth() function which
+implements the Unicode East Asian Width rules.  Characters such as CJK
+ideographs and wide emoji occupy 2 columns; everything else occupies 1.
 
-    https://www.youtube.com/watch?v=vpSkBV5vydg
+A note on what uCurses does not support and will not support:
 
-This text does not document either unicode or UTF-8 but explains how this
-library handles UTF-8 encoded text.  It will cover how UTF-8 characters
-are decode into UTF code points and how UTF code points are encoded into
-UTF-8 characters.
+    Zero-width combining characters (diacritical marks and similar) have
+    a wcwidth() of 0 meaning they overlay the previous character's cell
+    without advancing the cursor.  uCurses does not handle these; they
+    will be written as though they were ordinary 1-column characters.
 
-Your terminal does not print unicode code points.  These are simply a
-convenent means of storing multi national characters in your computer. To
-display these code ponts they must be translated into UTF-8 characters
+    Right-to-left scripts such as Arabic and Hebrew require a
+    bidirectional layout engine that understands text direction, character
+    shaping, and the interaction between LTR and RTL runs within a single
+    line.  Libraries such as FriBidi and Pango exist for exactly this
+    purpose.  Adding equivalent machinery to uCurses would grow it by an
+    order of magnitude and is entirely contrary to its goals.  RTL text
+    is therefore out of scope.
 
+The following functions are contained within this source file.
 
+    utf8_encode_t *utf8_encode(int32_t cp)
 
+        This internal function encodes a Unicode code point into its
+        UTF-8 byte representation and returns a pointer to a static
+        utf8_encode_t structure containing the encoded bytes, their
+        count and the display column width of the character as returned
+        by wcwidth().
 
+    API int16_t uC_utf8_is_wide(uint32_t cp)
 
+        Returns 1 if the specified code point occupies 2 display columns
+        and 0 if it occupies 1.  This is used internally when writing a
+        character into a window to determine how many cells to advance the
+        cursor and whether the following cell should be marked as dead.
 
+Claude: I think we need a section that explains the DEADCODE implementation
+and what it is there for.  The reference to it here has no context and it
+is not a trivial thing and I think it should be explained a little.
 
+    API void uC_utf8_emit(uint32_t cp)
 
+        Encodes the specified code point and writes its UTF-8 bytes
+        directly into the terminfo escape sequence buffer for output to
+        the terminal.  If the code point is the sentinel value DEADC0DE
+        this function does nothing.
 
-utf8 encoding takes code points and converts them to characters
-utf8 decoding takes characters and converts them to code points
+    API uint8_t utf8_decode(uint32_t *cp, uint8_t *s)
+
+        Decodes one UTF-8 character from the byte string at s, stores
+        the resulting code point at the address given by cp and returns
+        the number of bytes consumed.  If the byte sequence is malformed
+        the replacement character (U+FFFD, encoded as 0xEFBFBD) is
+        stored instead.
+
+    API uint8_t uC_utf8_char_length(uint8_t *s)
+
+        Returns the byte length of the UTF-8 character whose leading
+        byte is at s.  This is determined solely from the leading byte's
+        high bits and does not validate the continuation bytes.
+
+    API int16_t uC_utf8_width(uint8_t *s)
+
+        Returns the total number of display columns that the UTF-8 string
+        at s will occupy when written to the terminal.  This accounts for
+        any 2-column wide characters in the string.
+
+    API int16_t uC_utf8_strlen(uint8_t *s)
+
+        Returns the number of Unicode characters in the UTF-8 string at
+        s.  This is a character count, not a byte count.
+
+    API int16_t uC_utf8_strncmp(uint8_t *s1, uint8_t *s2, int16_t len)
+
+        Compares up to len characters of two UTF-8 strings.  Comparison
+        is performed character by character on the encoded byte sequences.
+        Returns 0 if the strings are equal up to len characters or a
+        non-zero difference value if they are not.
 
 
 10.10: uC_win_printf.c
@@ -4694,57 +4651,50 @@ Where appropriate, for each of the following functions which is associated
 with a format specifier I document both the specifier and the function
 which handles it.
 
----
-    API void uC_win_puts(uC_window_t *win, uint8_t *p)
----
-+++
     API void uC_win_puts(uC_window_t *win, const char *p)
-+++
 
         This public API call writes the specified UTF-8 string into a
         window at that windows current cursor location.  It will advance
         that windows cursor by the cell width of each character in the
         string.
 
-    static void up(void)               %up
+    Note: The %up, %dn, %lt and %rt specifiers all use two characters for
+    consistency.  The %r specifier has multiple uses (documented below)
+    and that ambiguity makes the second character necessary for all four.
+
+    static void up(void)               %up(n)
 
         This static function handles the %up format specifier which will
-        scroll a window up one line, erasing the bottom line.
+        scroll a window up n lines, erasing the bottom n lines.
 
-        The reason for the two characters here is it makes the interface
-        consistent across the %up %dn %lt and %rt specifiers.  The %r
-        specifier has multiple uses which is documented below and this
-        fact demands the second character to disambiguate.
+        This specifier takes a count parameter n and calls
+        uC_win_scroll_up_n() internally.  Use n = 1 to scroll by one line.
 
-    static void dn(void)               %dn
+    static void dn(void)               %dn(n)
 
         This static function handles the %dn format specifier which will
-        scroll a window down one line, erasing the top line.
+        scroll a window down n lines, erasing the top n lines.
 
-        The reason for the two characters here is it makes the interface
-        consistent across the %up %dn %lt and %rt specifiers.  The %r
-        specifier has multiple uses which is documented below and this
-        fact demands the second character to disambiguate.
+        This specifier takes a count parameter n and calls
+        uC_win_scroll_dn_n() internally.  Use n = 1 to scroll by one line.
 
-    static void lt(void)               %lt
+    static void lt(void)               %lt(n)
 
         This static function handles the %lt format specifier which will
-        pan a window left one column, erasing the column to the far right.
+        pan a window left n columns, erasing the n columns on the far
+        right.
 
-        The reason for the two characters here is it makes the interface
-        consistent across the %up %dn %lt and %rt specifiers.  The %r
-        specifier has multiple uses which is documented below and this
-        fact demands the second character to disambiguate.
+        This specifier takes a count parameter n and calls
+        uC_win_scroll_lt_n() internally.  Use n=1 to pan by one column.
 
-    static void rt(void)               %rt
+    static void rt(void)               %rt(n)
 
         This static function handles the %rt format specifier which will
-        pan a window right one column, erasing the column on the far left.
+        pan a window right n columns, erasing the n columns on the far
+        left.
 
-        The reason for the two characters here is it makes the interface
-        consistent across the %up %dn %lt and %rt specifiers.  The %r
-        specifier has multiple uses which is documented below and this
-        fact demands the second character to disambiguate.
+        This specifier takes a count parameter n and calls
+        uC_win_scroll_rt_n() internally.  Use n=1 to pan by one column.
 
     static void r(void)                %rf or %rb
 
@@ -4758,13 +4708,13 @@ which handles it.
 
         This static function handles both the %fc and %fs specifiers and
         will modify a windows foreground color setting it to either a
-        specific 8 bit (palatalized) color or to a gray scale value.
+        specific 8 bit (palette-indexed) color or to a gray scale value.
 
     static void b(void)                %bc or %bs
 
         This static function handles both the %bc and %bs specifiers and
         will modify a windows background color setting it to either a
-        specific 8 bit (palatalized) color or to a gray scale value.
+        specific 8 bit (palette-indexed) color or to a gray scale value.
 
     static void xy(void)               %@
 
@@ -4881,12 +4831,7 @@ which handles it.
         This static function executes one of the above handlers based on
         a selection made from a uC_switch_t structure.
 
----
-    API void uC_win_printf(uC_window_t *win, uint8_t *format, ...)
----
-+++
     API void uC_win_printf(uC_window_t *win, const char *format, ...)
-+++
 
         This public API call works in a way that is similar to C's printf
         function but none of C's printf specifiers are valid here.  The
@@ -4894,14 +4839,13 @@ which handles it.
         above or can contain characters to be written directly to the
         specified window.
 
-+++
     Parameter grouping macros
 
         Three macros are defined in uCurses.h to visually associate
         parameters that logically belong together.  Using the C comma
-        operator to group them (e.g. (x, y)) would silently discard all but
-        the last value, so these macros expand to the correct number of
-        separate arguments instead.  They work equally well with
+        operator to group them (e.g. (x, y)) would silently discard all
+        but the last value, so these macros expand to the correct number
+        of separate arguments instead.  They work equally well with
         uC_win_printf format specifiers and with direct API calls.
 
             #define UC_XY(x, y)      (x), (y)    // position
@@ -4920,7 +4864,6 @@ which handles it.
             uC_win_cup(win, UC_XY(x, y));
             uC_win_set_rgb_fg(win, UC_RGB(255, 0, 128));
             uC_widget_vg_create(name, UC_WH(w, h), UC_XY(x, y), attrs);
-+++
 
 
 10.11: uC_winch.c
@@ -4929,7 +4872,7 @@ which handles it.
 This module is a horrendously non functional attempt at handling the
 sigwinch signal within uCurses.  This signal is sent to a process when the
 window it is running within is resized.   In uCurses such a change would
-require a complete tare down of the entire user interface followed by a
+require a complete tear down of the entire user interface followed by a
 re-initialization thereof.
 
 Thus far I have not been able to get this to work reliably at all and have
@@ -4972,7 +4915,7 @@ a space delimited token by token basis.
 
 The initial active state is JSON_STATE_L_BRACE which expects the next
 token parsed to be the left brace '{' char.  If it is then the state is
-set to JSON_STATE_KEY.   If not... oopts!
+set to JSON_STATE_KEY.   If not... oops!
 
 The handler for JSON_STATE_KEY expect to see one of several known tokens
 which will either be a 'key' token or an 'object' token.  Only recognized
@@ -4998,15 +4941,8 @@ And the following key tokens are valid...
     * KEY_SHORTCUT        * KEY_FLAG           * KEY_BLANK
     * KEY_ORDER
 
----
-All tokens are recognized by their 32 bit FNV-1a hash value (which, as
-stated elsewhere in these texts may very well actually be the FNV-1
-algorithm, not 1a).  No string compare functions are called.
----
-+++
 All tokens are recognized by their 32 bit FNV-1 hash value.  No string
 compare functions are called.
-+++
 
 If the parsed token is recognized as a key then that specific key is
 handled (see below) and the next state is set to JSON_STATE_VALUE where we
@@ -5100,7 +5036,7 @@ set a window width equal to a percentage of its parent screens width.
 
         This static function verifies that the most recently parsed space
         delimited token has a comma ',' as its last character.  As parsed
-        tokens are never compared directly but are hashed, the has value
+        tokens are never compared directly but are hashed, the hash value
         calculated for this token will be incorrect (because of the
         comma).
 
@@ -5158,12 +5094,12 @@ set a window width equal to a percentage of its parent screens width.
 
         This function simply runs the JSON parsers state machine on a
         memory mapped instance of a JSON file.   If this file was valid
-        then *somewhere* within that parsing the active_screen global UI
-        variable will have been set.
+        then *somewhere* within that parsing the library-internal screen
+        pointer will have been set.
 
-        If this variable has been initialized then we will need to run
-        some fixup code on the structures built during the JSON parsing
-        so that the interface is complete.
+        If the screen was successfully created then fixup code is run on
+        the structures built during parsing so that the interface is
+        complete.
 
     void json_file_create_ui(char *path, fp_finder_t fp)
 
@@ -5197,7 +5133,7 @@ set a window width equal to a percentage of its parent screens width.
         every pull-down menu item parsed by the state machine.
 
         This function is generated by executing the libraries .so file
-        directly while specifying a fine containing a list of function
+        directly while specifying a file containing a list of function
         names to be associated with menu items.   The library will at
         this time generate sources which, when included in the
         applications build will allow the JSON parser to define the
@@ -5238,10 +5174,10 @@ The following functions are contained within this file...
 
     static void skip_white(void)
 
-        When parsing the next token out of the line buffer this function is
-        called to skip any leading white space prior to parsing that token.
-        If there is no more data within the line buffer to be parsed then
-        the refill function is called here.
+        When parsing the next token out of the line buffer this function
+        is called to skip any leading white space prior to parsing that
+        token. If there is no more data within the line buffer to be
+        parsed then the refill function is called here.
 
         This is also where comments are skipped.  JSON does not have a
         line comment mechanism defined as part of its specification but
@@ -5293,16 +5229,15 @@ pseudo objects are assigned to the pseudo objects parent structure.
         user interface and it must be the first object specified within
         the JSON data.
 
-        When this object structures is allocated the associated
-        STRUCT_SCREEN structure is assigned to the global active_screen
-        variable.
+        When this object structure is allocated it is set as the
+        library-internal active screen.
 
     static void struct_windows(void)
 
         This function allocates a new STRUCT_WINDOWS pseudo object and
         transitions the JSON state machine to the new object state.
 
-        Widow objects are attached to their parent screen in a linked
+        Window objects are attached to their parent screen in a linked
         list.  This pseudo object allows for a collection of windows to be
         defined within a screen.
 
@@ -5387,8 +5322,8 @@ pseudo objects are assigned to the pseudo objects parent structure.
         transitions the JSON state machine to the new object state.
 
         A STRUCT_B_ATTRIBS object is where border attributes are defined.
-        It can therefor only be defined within one of the following object
-        types.
+        It can therefore only be defined within one of the following
+        object types.
 
             * STRUCT_WINDOW
             * STRUCT_BACKDROP
@@ -5533,7 +5468,7 @@ JSON parsers state machine to the new state.
         following.
 
             * KEY_XCO        * KEY_YCO
-            * KEY_WIDTH      * KEY_HEIGH
+            * KEY_WIDTH      * KEY_HEIGHT
 
         It may therefore only be defined within a STRUCT_WINDOW object.
 
@@ -5696,7 +5631,7 @@ machines state structure.
 
     static void value_rgb_fg(uC_attribs_t *gstruct)
 
-        This function is called to set a one element of a RGB foreground
+        This function is called to set one element of a RGB foreground
         color one of the various uC_attribs_t structures. These 'various'
         structures are used to assign attributes to different elements
         within the user interface.
@@ -5711,7 +5646,7 @@ machines state structure.
 
     static void value_rgb_bg(uC_attribs_t *gstruct)
 
-        This function is called to set a one element of a RGB background
+        This function is called to set one element of a RGB background
         color one of the various uC_attribs_t structures. These 'various'
         structures are used to assign attributes to different elements
         within the user interface.
@@ -5813,7 +5748,7 @@ machines state structure.
         file directly and passing it a file containing the names of every
         function we need the address of at run time.  The .so file will
         output sources to be added to your build which associate each name
-        has value with its associated function.
+        hash value with its associated function.
 
         The function supplied by the .so file will return a menu functions
         address given that functions name hash.
@@ -5849,7 +5784,7 @@ machines state structure.
 
         It can also be expressed as a percentage of some other value based
         on JSON context.  For example, windows can be sized and located
-        based on a percentage of the scree size.
+        based on a percentage of the screen size.
 
         Values are assumed to be expressed in decimal if the 0x prefix
         is not specified.
@@ -5903,7 +5838,7 @@ when an object structure is defined as part of some other parent object
 structure the state machine will not make that assignment.
 
 Every object other than the root screen object will have a parent object
-and this function will populate each parent object with what ever child
+and this function will populate each parent object with whatever child
 objects were defined within it.
 
 This function is called by the JSON state machine for each object
@@ -5912,7 +5847,7 @@ objects parent with that object.
 
     static void populate_attribs(void *pstruct, int32_t ptype)
 
-        This function will populate a parent structure with ts child
+        This function will populate a parent structure with its child
         uC_attribs_t object.  The parent object will be one of the
         following...
 
@@ -6067,7 +6002,7 @@ initialization of the applications user interface.
         This function is called as the final operation of the JSON state
         machine, once the JSON_STATE_DONE state is reached.
 
-        It allocates the backing store for the now existent active_screen
+        It allocates the backing store for the newly created screen
         structure and fixes all the windows and any menu bar attached to
         that screen using the above functions.
 
@@ -6093,7 +6028,7 @@ it is neither as consistent nor as reliable as ncurses (tyvm TED!).
 
     BUT!
 
-It actually preforms amazingly well considering and was a joyful challenge
+It actually performs amazingly well considering and was a joyful challenge
 to implement.
 
 Writing this document however was certainly not fun and I am certain there

@@ -51,11 +51,11 @@ static void kbs(void)  { set_esc0(0x08); }
 // if the back tab is stolen comment out kcbt below and use this (alt tab)
 
 // I hate the way the operating system steals key presses from applications
-// I hate the way the desktop env steals  key presses from applications
-// I hate the way the terminal emulator  key presses from applications
+// I hate the way the desktop env steals key presses from applications
+// I hate the way the terminal emulator key presses from applications
 
 // I actually want to TERMINATE WITH EXTREME PREJUDICE every single
-// keyboard shortcut throuhout MY ENTIER FUCKING SYSTEM.  Cant be done.
+// keyboard shortcut throuhout MY ENTIER *$%&! SYSTEM.  Cant be done.
 
 // static void kcbt(void)
 // {

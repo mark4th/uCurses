@@ -85,9 +85,6 @@ static void rgb_bg(void)
 }
 
 // -----------------------------------------------------------------------
-// hard coded format string to set a gray fg
-
-// known to not work in a utf8 enabled rxvt  why?
 
 static void gray_fg(void)
 {

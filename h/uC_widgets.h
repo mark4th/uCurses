@@ -10,6 +10,7 @@
 #include <stdbool.h>
 
 #include "uCurses.h"
+#include "uC_mouse.h"
 #include "uC_list.h"
 #include "uC_borders.h"
 #include "uC_screen.h"
@@ -233,6 +234,7 @@ enum
     WIDGET_KEY_DELETE,
     WIDGET_KEY_HOME,
     WIDGET_KEY_END,
+    // WIDGET_KEY_MOUSE = 0x89 defined in uC_mouse.h
 };
 
 // -----------------------------------------------------------------------
@@ -259,6 +261,7 @@ void widget_close_view(uC_widget_view_t *view);
 void widget_scroll_view(uint8_t k);
 uint8_t tab_next_widget(void);
 uint8_t tab_prev_widget(void);
+void uC_widget_mouse_handle(void);
 
 void widget_set_attrs(uC_window_t *window, uC_widget_t *widget);
 

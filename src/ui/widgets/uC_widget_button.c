@@ -46,7 +46,7 @@ static void draw_btn_txt(uC_window_t *win, uint16_t x, uint16_t y,
     // %* emit single char multiple times
 
     uC_win_printf(win, "%@%*%x%*",
-        x, y, width, 0x20, x, pad, 0x20);
+        UC_XY(x, y), width, 0x20, x, pad, 0x20);
 
     while (*name && width--)
     {

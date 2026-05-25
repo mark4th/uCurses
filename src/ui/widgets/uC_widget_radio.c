@@ -45,7 +45,7 @@ void draw_radio(uC_window_t *win, uC_widget_t *widget,
         // %s write string
 
         uC_win_printf(win, "%@%*%x%8 %s",
-            x, y, widget->width, 0x20,
+            UC_XY(x, y), widget->width, 0x20,
             x, c, widget->name);
     }
 }

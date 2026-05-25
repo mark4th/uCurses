@@ -49,7 +49,7 @@ static uC_screen_t *scr;
 
 static uC_window_t *make_window(int16_t x, int16_t y)
 {
-    uC_window_t *win = uC_win_open(WIN_W, WIN_H);
+    uC_window_t *win = uC_win_open(UC_WH(WIN_W, WIN_H));
 
     uC_scr_win_attach(scr, win);
     uC_win_set_pos(win, x, y);
@@ -65,28 +65,28 @@ static void build_demo(void)
 
     // no border (default)
     win = make_window(COL_1, ROW_1);
-    uC_win_printf(win, "%@%fc%B+No Border%B-",     1, 1, uC_COLOR_LT_WHITE);
-    uC_win_printf(win, "%@%fc(uC_BDR_NONE)",       1, 3, uC_COLOR_GRAY);
+    uC_win_printf(win, "%@%fc%B+No Border%B-",     UC_XY(1, 1), uC_COLOR_LT_WHITE);
+    uC_win_printf(win, "%@%fc(uC_BDR_NONE)",       UC_XY(1, 3), uC_COLOR_GRAY);
 
     // single border, no name
     win = make_window(COL_2, ROW_1);
     uC_win_set_border(win, uC_BDR_SINGLE, bdr_attrs, bdr_focus_attrs);
-    uC_win_printf(win, "%@%fc%B+Single Border%B-", 1, 1, uC_COLOR_LT_WHITE);
-    uC_win_printf(win, "%@%fc(uC_BDR_SINGLE)",     1, 3, uC_COLOR_CYAN);
+    uC_win_printf(win, "%@%fc%B+Single Border%B-", UC_XY(1, 1), uC_COLOR_LT_WHITE);
+    uC_win_printf(win, "%@%fc(uC_BDR_SINGLE)",     UC_XY(1, 3), uC_COLOR_CYAN);
 
     // double border with name
     win = make_window(COL_1, ROW_2);
     uC_win_set_border(win, uC_BDR_DOUBLE, bdr_attrs, bdr_focus_attrs);
     uC_win_set_name(win, "double border");
-    uC_win_printf(win, "%@%fc%B+Double Border%B-", 1, 1, uC_COLOR_LT_WHITE);
-    uC_win_printf(win, "%@%fc(uC_BDR_DOUBLE)",     1, 3, uC_COLOR_CYAN);
+    uC_win_printf(win, "%@%fc%B+Double Border%B-", UC_XY(1, 1), uC_COLOR_LT_WHITE);
+    uC_win_printf(win, "%@%fc(uC_BDR_DOUBLE)",     UC_XY(1, 3), uC_COLOR_CYAN);
 
     // curved border with name
     win = make_window(COL_2, ROW_2);
     uC_win_set_border(win, uC_BDR_CURVED, bdr_attrs, bdr_focus_attrs);
     uC_win_set_name(win, "curved border");
-    uC_win_printf(win, "%@%fc%B+Curved Border%B-", 1, 1, uC_COLOR_LT_WHITE);
-    uC_win_printf(win, "%@%fc(uC_BDR_CURVED)",     1, 3, uC_COLOR_CYAN);
+    uC_win_printf(win, "%@%fc%B+Curved Border%B-", UC_XY(1, 1), uC_COLOR_LT_WHITE);
+    uC_win_printf(win, "%@%fc(uC_BDR_CURVED)",     UC_XY(1, 3), uC_COLOR_CYAN);
 }
 
 // -----------------------------------------------------------------------

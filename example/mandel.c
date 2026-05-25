@@ -159,8 +159,8 @@ static void draw_braille(uC_window_t *win, rgb *buffer,
             // %rf set window foreground to a 24 bit rgb color
 
             uC_win_printf(win, "%@%rf",
-                x / 2, y / 4,
-                r, g, b);
+                UC_XY(x / 2, y / 4),
+                UC_RGB(r, g, b));
                 //fg.r, fg.g, fg.b);
 
             uC_win_emit(win, cc);
@@ -292,7 +292,7 @@ static void update_status(void)
 
     if (scale_factor >= 54.0L)
     {
-        uC_win_printf(status_win, "%0%fs%s%rf%s", uC_GRAY_09, xy, 255, 140, 0, z);
+        uC_win_printf(status_win, "%0%fs%s%rf%s", uC_GRAY_09, xy, UC_RGB(255, 140, 0), z);
     }
     else
     {

@@ -434,6 +434,7 @@ API void uC_scr_draw_screen(uC_screen_t *scr)
         // attribute is still set (for reasons unknown)
 
         ti_sgr0();
+        old_attrs.blob = 0;
 
         // move this to uCurses initialization?
         setlocale(LC_CTYPE, "");

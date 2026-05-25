@@ -81,7 +81,7 @@ static void draw_widget(uC_window_t *win, uC_widget_t *widget,
 
     // %@ set cursor x / y location within window
 
-    uC_win_printf(win, "%@", x, y);
+    uC_win_printf(win, "%@", UC_XY(x, y));
 
     uC_attribs_t save = win->attrs;
 
@@ -117,7 +117,7 @@ static void draw_view_box(uC_window_t *win, uC_widget_view_t *view)
         // %8 emit single utf8 character
 
         uC_win_printf(win, "%@%8%s%8",
-            view->xco, view->yco - 1,
+            UC_XY(view->xco, view->yco - 1),
             b[BDR_RIGHT_T], view->name,
             b[BDR_LEFT_T]);
     }

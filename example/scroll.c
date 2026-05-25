@@ -94,7 +94,7 @@ static void draw_labels(void)
     {
         vrow = org_y + r;
         snprintf(label, sizeof(label), "%02d: ", (vrow % 100 + 100) % 100);
-        uC_win_printf(win, "%@", 0, r);
+        uC_win_printf(win, "%@", UC_XY(0, r));
 
         if (vrow & 1)
         {
@@ -124,7 +124,7 @@ static void draw_grid_row(int16_t win_r, int16_t vrow)
     int16_t c;
 
     (void)vrow;
-    uC_win_printf(grid_win, "%@", 0, win_r);
+    uC_win_printf(grid_win, "%@", UC_XY(0, win_r));
 
     for (c = 0; c < WIN_W; c++)
     {
@@ -141,7 +141,7 @@ static void draw_grid_col(int16_t win_c, int16_t vcol)
 
     for (r = 0; r < WIN_H; r++)
     {
-        uC_win_printf(grid_win, "%@", win_c, r);
+        uC_win_printf(grid_win, "%@", UC_XY(win_c, r));
         draw_grid_cell(vcol);
     }
 }
@@ -229,16 +229,16 @@ int main(void)
 
     backdrop = scr->backdrop;
     uC_win_printf(backdrop, "%fs%bs%0", uC_GRAY_03, uC_GRAY_02);
-    uC_win_printf(backdrop, "%@%fs%s", WIN_X, 1, uC_GRAY_07,
+    uC_win_printf(backdrop, "%@%fs%s", UC_XY(WIN_X, 1), uC_GRAY_07,
         "uC_win_scroll_up/dn/lt/rt_n() — also available as win_printf %up(n) %dn(n) %lt(n) %rt(n)");
 
-    win = uC_win_open(WIN_W, WIN_H);
+    win = uC_win_open(UC_WH(WIN_W, WIN_H));
     uC_scr_win_attach(scr, win);
     uC_win_set_pos(win, WIN_X, WIN_Y);
     uC_win_set_border(win, uC_BDR_SINGLE, bdr_attrs, bdr_focus_attrs);
     uC_win_set_name(win, "scroll demo");
 
-    grid_win = uC_win_open(WIN_W, WIN_H);
+    grid_win = uC_win_open(UC_WH(WIN_W, WIN_H));
     // not attached to screen - backing buffer only
 
     stat_win = uC_add_status(scr, WIN_W, WIN_X, WIN_Y + WIN_H + 1);

@@ -551,13 +551,13 @@ int main(void)
     win = active_screen->backdrop;
 
     uC_win_printf(win, "%@%fc%bs Press W to activate   ",
-        10, 3, uC_COLOR_CYAN, uC_GRAY_04);
+        UC_XY(10, 3), uC_COLOR_CYAN, uC_GRAY_04);
 
-    uC_win_printf(win, "%@ Press TAB to select   ", 10, 4);
-    uC_win_printf(win, "%@ Press Cursor to move  ", 10, 5);
-    uC_win_printf(win, "%@ Press SPACE to toggle ", 10, 6);
-    uC_win_printf(win, "%@ Press ENTER on button ", 10, 7);
-    uC_win_printf(win, "%@ -- or hit O or C key  ", 10, 8);
+    uC_win_printf(win, "%@ Press TAB to select   ", UC_XY(10, 4));
+    uC_win_printf(win, "%@ Press Cursor to move  ", UC_XY(10, 5));
+    uC_win_printf(win, "%@ Press SPACE to toggle ", UC_XY(10, 6));
+    uC_win_printf(win, "%@ Press ENTER on button ", UC_XY(10, 7));
+    uC_win_printf(win, "%@ -- or hit O or C key  ", UC_XY(10, 8));
 
     widget_loop();
 

@@ -8,15 +8,18 @@ OBJECTS = $(addprefix $(OBJDIR)/, main.o menus.o hello.o)
 
 $(shell   mkdir -p obj)
 
-demo : $(OBJECTS) window raycast dots mandel lion widgets
+demo : $(OBJECTS) window raycast dots mandel lion widgets borders scroll list_demo
 	$(CC) -L /usr/local/lib64 -o demo $(OBJECTS) -lm -luCurses 
 #	strip -R .comment demo
 
 $(OBJDIR)/%.o : %.c demo.h $(SOURCES)
 	$(CC) -c $(CFLAGS) -o $@ $<
 
+scroll: scroll.c
+	$(CC) $(CFLAGS) -L /usr/local/lib64 -lm -luCurses -o scroll scroll.c
+
 clean:
-	@rm -fr obj demo console wtest window raycast dots mandel lion widgets list_demo *.o
+	@rm -fr obj demo console wtest window raycast dots mandel lion widgets borders scroll list_demo *.o
 
 console: console.c
 	$(CC) $(CFLAGS) -L /usr/local/lib64 -lm -luCurses -o console console.c
@@ -40,6 +43,9 @@ dots: dots.o shapes.o
 mandel: mandel.o
 	$(CC) $(CFLAGS) -L /usr/local/lib64 -lm -luCurses -o mandel mandel.c
 	strip -R .comment mandel
+
+borders: borders.c
+	$(CC) $(CFLAGS) -L /usr/local/lib64 -lm -luCurses -o borders borders.c
 
 lion:
 	$(CC) $(CFLAGS) -L /usr/local/lib64 -lm -luCurses -o lion lion.c

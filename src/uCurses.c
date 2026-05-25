@@ -45,6 +45,7 @@ API uC_screen_t *uCurses_init(char *file, json_mem_t *json, fp_finder_t fp)
 
     init_winch();
     uC_curoff();
+    uC_smkx();
 
 #ifdef UC_WIDGETS
     uC_mouse_enable();
@@ -78,6 +79,7 @@ API uC_screen_t *uCurses_init(char *file, json_mem_t *json, fp_finder_t fp)
     {
         uC_get_console_size(&width, &height);
         active_screen = uC_scr_open(width, height);
+        uC_scr_add_backdrop(active_screen);
     }
 #endif
 

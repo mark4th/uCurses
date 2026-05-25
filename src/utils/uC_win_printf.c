@@ -1,15 +1,56 @@
 // uC_win_printf.c     printf strings into uC_window_t
 // -----------------------------------------------------------------------
-
-// this module is used to perform the numerous actions within the UI such
-// as setting window attributes such as fg and bg colors, moving the
-// cursor, displaying *pre-formatted* strings, clearing or moving a window
-// etc.
+//
+// Format specifiers (none are standard printf specifiers):
+//
+//   Cursor movement within window:
+//     %@(x,y)   move cursor to absolute (x, y)
+//     %x(x)     move cursor to column x on current line
+//     %y(y)     move cursor to row y in current column
+//     %cu       move cursor up one line
+//     %cd       move cursor down one line (scrolls if at bottom and unlocked)
+//     %cl       move cursor left one column (wraps to line above)
+//     %cr       move cursor right one column (wraps to line below)
+//
+//   Window operations:
+//     %P(x,y)   move window to (x, y) within parent screen
+//     %0        clear window and home cursor
+//     %e        carriage return / line feed (scrolls if at bottom and unlocked)
+//
+//   Scroll / pan (n = number of lines or columns):
+//     %up(n)    scroll window up n lines   (clears bottom n lines)
+//     %dn(n)    scroll window down n lines (clears top n lines)
+//     %lt(n)    pan window left n columns  (clears rightmost n columns)
+//     %rt(n)    pan window right n columns (clears leftmost n columns)
+//
+//   Foreground color:
+//     %fc(c)      8-bit palette color index
+//     %fs(gray)   grayscale index
+//     %rf(r,g,b)  24-bit RGB
+//
+//   Background color:
+//     %bc(c)      8-bit palette color index
+//     %bs(gray)   grayscale index
+//     %rb(r,g,b)  24-bit RGB
+//
+//   Text attributes:
+//     %B+  enable bold        %B-  disable bold
+//     %U+  enable underline   %U-  disable underline
+//     %R+  enable reverse     %R-  disable reverse
+//
+//   Output:
+//     %s(str)        write string at cursor
+//     %8(codepoint)  write single UTF-8 character
+//     %*(n,c)        write character c exactly n times
+//
+// NOTE: %0 is "clear window", NOT printf-style zero-padding.
+//       "%02d" hits %0 and clears the window — use snprintf then %s instead.
 
 // -----------------------------------------------------------------------
 
 #include <inttypes.h>
 #include <stdarg.h>
+#include <stddef.h>
 #include <stdio.h>
 
 #include "uCurses.h"
@@ -27,7 +68,7 @@ static const char *p;
 static uC_window_t *w;
 
 // -----------------------------------------------------------------------
-// write string into specified window at its currnt cursor location
+// write string into specified window at its current cursor location
 
 API void uC_win_puts(uC_window_t *win, const char *p)
 {
@@ -42,6 +83,65 @@ API void uC_win_puts(uC_window_t *win, const char *p)
     }
 }
 
+// =======================================================================
+// control specifiers
+// =======================================================================
+
+// -----------------------------------------------------------------------
+// %@    set cursor x/y within window
+
+static void xy(void)
+{
+    int x = va_arg(arg, int);
+    int y = va_arg(arg, int);
+
+    uC_win_cup(w, x, y);
+}
+
+// -----------------------------------------------------------------------
+// %x   set cursor x in window
+
+static void x(void)
+{
+    uC_win_set_cx(w, va_arg(arg, int));
+}
+
+// -----------------------------------------------------------------------
+// %y   set cursor y in window
+
+static void y(void)
+{
+    uC_win_set_cy(w, va_arg(arg, int));
+}
+
+// -----------------------------------------------------------------------
+// %cu %cd %cl %cr    move cursor up, down, left or right in window
+
+static void c(void)
+{
+    switch (*p)
+    {
+        case 'u': uC_win_crsr_up(w); break;
+        case 'd': uC_win_crsr_dn(w); break;
+        case 'l': uC_win_crsr_lt(w); break;
+        case 'r': uC_win_crsr_rt(w); break;
+        default:
+            uC_abort("Expected u, d, l or r on win_printf %c");
+    }
+    p++;
+}
+
+// -----------------------------------------------------------------------
+// %P  set window X/Y position within screen
+
+static void P(void)
+{
+    int x = va_arg(arg, int);
+    int y = va_arg(arg, int);
+
+    uC_win_set_pos(w, x, y);
+}
+
 // -----------------------------------------------------------------------
 // %up  scroll window up specified amount
 
@@ -51,10 +151,7 @@ static void up(void)
 
     if (*p == 'p')
     {
-        while (y-- != 0)
-        {
-            uC_win_scroll_up(w);
-        }
+        uC_win_scroll_up_n(w, (int16_t)y);
         p++;
         return;
     }
@@ -70,10 +167,7 @@ static void dn(void)
 
     if (*p == 'n')
     {
-        while (y-- != 0)
-        {
-            uC_win_scroll_dn(w);
-        }
+        uC_win_scroll_dn_n(w, (int16_t)y);
         p++;
         return;
     }
@@ -89,11 +183,7 @@ static void lt(void)
 
     if (*p == 't')
     {
-
-        while (x-- != 0)
-        {
-            uC_win_scroll_lt(w);
-        }
+        uC_win_scroll_lt_n(w, (int16_t)x);
         p++;
         return;
     }
@@ -109,10 +199,7 @@ static void rt(void)
 
     if (*p == 't')
     {
-        while (x-- != 0)
-        {
-            uC_win_scroll_rt(w);
-        }
+        uC_win_scroll_rt_n(w, (int16_t)x);
         p++;
         return;
     }
@@ -120,32 +207,41 @@ static void rt(void)
 }
 
 // -----------------------------------------------------------------------
-// %rf or %rb  set 24 bit rgb fg / bg   or %rt above
+// %0    clear window
+
+static void wclear(void)
+{
+    uC_win_clear(w);
+}
+
+// =======================================================================
+// attribute specifiers
+// =======================================================================
+
+// -----------------------------------------------------------------------
+// %rf or %rb  set 24-bit rgb fg / bg   or %rt (delegates to rt above)
 
 static void r(void)
 {
     int r, g, b;
 
-    r = va_arg(arg, int) & 0xff;
-    g = va_arg(arg, int) & 0xff;
-    b = va_arg(arg, int) & 0xff;
-
     if (*p == 'f' || *p == 'b')
     {
+        r = va_arg(arg, int) & 0xff;
+        g = va_arg(arg, int) & 0xff;
+        b = va_arg(arg, int) & 0xff;
+
         (*p == 'f')
             ? uC_win_set_rgb_fg(w, r, g, b)
             : uC_win_set_rgb_bg(w, r, g, b);
         p++;
         return;
     }
-    else
-    {
-        rt();
-    }
+    rt();
 }
 
 // -----------------------------------------------------------------------
-// %fc or %fs  set foreground color or gray scale
+// %fc or %fs  set foreground indexed color or gray scale
 
 static void f(void)
 {
@@ -164,7 +260,7 @@ static void f(void)
 }
 
 // -----------------------------------------------------------------------
-// %bc or %bs  set backgorund color or gray scale
+// %bc or %bs  set background indexed color or gray scale
 
 static void b(void)
 {
@@ -175,96 +271,11 @@ static void b(void)
         b = va_arg(arg, int);
         (*p == 'c')
             ? uC_win_set_bg(w, b)
-            : uC_win_set_gray_bg(w, (b % 23));
+            : uC_win_set_gray_bg(w, b % 23);
         p++;
         return;
     }
     uC_abort("Expected c or s on win_printf %b");
-}
-
-// -----------------------------------------------------------------------
-// %@    set cursor x/y within window
-
-static void xy(void)
-{
-    int x = va_arg(arg, int);
-    int y = va_arg(arg, int);
-
-    uC_win_cup(w, x, y);
-}
-
-// -----------------------------------------------------------------------
-// %P  set window X/Y position within screen
-
-static void P(void)
-{
-    int x = va_arg(arg, int);
-    int y = va_arg(arg, int);
-
-    uC_win_set_pos(w, x, y);
-}
-
-// -----------------------------------------------------------------------
-// %x   set cursor x in window
-
-static void x(void)
-{
-    int x = va_arg(arg, int);
-
-    uC_win_set_cx(w, x);
-}
-
-// -----------------------------------------------------------------------
-// %y   set cursor y in window
-
-static void y(void)
-{
-    int y = va_arg(arg, int);
-
-    uC_win_set_cy(w, y);
-}
-
-// -----------------------------------------------------------------------
-// %8    draw UTF-8 codepoint
-
-static void utf8(void)
-{
-    uint32_t cc = va_arg(arg, int);
-    uC_win_emit(w, cc);
-}
-
-// -----------------------------------------------------------------------
-// %cu %cd %cl %cr    move cursor up, down, left or right in window
-
-static void c(void)
-{
-    switch (*p)
-    {
-        case 'u' :   uC_win_crsr_up(w); break;
-        case 'd' :   uC_win_crsr_dn(w); break;
-        case 'l' :   uC_win_crsr_lt(w); break;
-        case 'r' :   uC_win_crsr_rt(w); break;
-        default :
-            uC_abort("Expected u, d, l or r on win_printf %c");
-    }
-    p++;
-}
-
-// -----------------------------------------------------------------------
-// %0    clear window
-
-static void wclear(void)
-{
-    uC_win_clear(w);
-}
-
-// -----------------------------------------------------------------------
-// %s   just a wrapper for puts which is at the top of this file
-
-static void u_puts(void)
-{
-    const char *s = va_arg(arg, const char *);
-    uC_win_puts(w, s);
 }
 
 // -----------------------------------------------------------------------
@@ -300,13 +311,13 @@ static void uline(void)
 }
 
 // -----------------------------------------------------------------------
-// %R+ or %R-   turn reverse video on / off
+// %R+ or %R-   turn reverse video on or off
 
 static void rev(void)
 {
     if (*p == '+' || *p == '-')
     {
-       (*p == '+')
+        (*p == '+')
             ? uC_win_set_rev(w)
             : uC_win_clr_rev(w);
         p++;
@@ -315,39 +326,63 @@ static void rev(void)
     uC_abort("Expected + or - win_printf %R");
 }
 
+// =======================================================================
+// output specifiers
+// =======================================================================
+
+// -----------------------------------------------------------------------
+// %s   print string into window
+
+static void u_puts(void)
+{
+    const char *s = va_arg(arg, const char *);
+    uC_win_puts(w, s);
+}
+
+// -----------------------------------------------------------------------
+// %8    draw UTF-8 codepoint
+
+static void utf8(void)
+{
+    uC_win_emit(w, va_arg(arg, int));
+}
+
 // -----------------------------------------------------------------------
 // %e   write eol to window
 
 static void e(void)
 {
-     uC_win_emit(w, 0x0d);
+    uC_win_emit(w, 0x0d);
 }
 
 // -----------------------------------------------------------------------
-// emit same char a number of times
+// %*   emit same char n times
 
 static void star(void)
 {
     int l = va_arg(arg, int);
     int c = va_arg(arg, int);
 
-    while (l != 0)
-    {
-        uC_win_emit(w, c);
-        l--;
-    }
+    while (l-- != 0) { uC_win_emit(w, c); }
 }
 
-// -----------------------------------------------------------------------
+// =======================================================================
 
 static uC_switch_t commands[] =
 {
-    { 'r', &r      }, { 'f', &f      }, { 'b', &b      },
-    { '@', &xy     }, { 'x', &x      }, { 'y', &y      },
-    { 'u', &up     }, { 'd', &dn     }, { 'P', &P      },
-    { 'l', &lt     }, { '0', &wclear }, { 'c', &c      },
-    { 'B', &bold   }, { 'U', &uline  }, { 'R', rev     },
-    { 's', u_puts  }, { '8', &utf8   }, { 'e', &e      },
+    // control: cursor
+    { '@', &xy     }, { 'x', &x      }, { 'y', &y     },
+    { 'c', &c      }, { 'P', &P      },
+    // control: scroll
+    { 'u', &up     }, { 'd', &dn     }, { 'l', &lt    },
+    // control: window
+    { '0', &wclear },
+    // attribs: color
+    { 'r', &r      }, { 'f', &f      }, { 'b', &b     },
+    // attribs: style
+    { 'B', &bold   }, { 'U', &uline  }, { 'R', rev    },
+    // output
+    { 's', u_puts  }, { '8', &utf8   }, { 'e', &e     },
     { '*', star    }
 };
 
@@ -361,24 +396,18 @@ static void specifier(void)
 }
 
 // -----------------------------------------------------------------------
-// window string writing and window attribute control
 
-API void uC_win_printf(uC_window_t *win, const char *format, ...)
+static void do_win_printf(void)
 {
     uint32_t codepoint;
-    uint8_t skip;
-
-    va_start(arg, format);
-
-    p = format;
-    w = win;
+    uint8_t  skip;
 
     while (*p != '\0')
     {
         while ((*p != '%') && (*p != '\0'))
         {
             skip = utf8_decode(&codepoint, (uint8_t *)p);
-            uC_win_emit(win, codepoint);
+            uC_win_emit(w, codepoint);
             p += skip;
         }
 
@@ -388,7 +417,27 @@ API void uC_win_printf(uC_window_t *win, const char *format, ...)
             specifier();
         }
     }
+}
 
+// -----------------------------------------------------------------------
+
+API void uC_win_vprintf(uC_window_t *win, const char *format, va_list args)
+{
+    p = format;
+    w = win;
+    va_copy(arg, args);
+    do_win_printf();
+    va_end(arg);
+}
+
+// -----------------------------------------------------------------------
+
+API void uC_win_printf(uC_window_t *win, const char *format, ...)
+{
+    p = format;
+    w = win;
+    va_start(arg, format);
+    do_win_printf();
     va_end(arg);
 }
 

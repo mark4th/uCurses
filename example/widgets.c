@@ -389,7 +389,7 @@ static void init_widgets(void)
 
     uC_ASSERT(view != NULL, "Cannot create view");
 
-    view_add_buttons(view, 8);
+    view_add_buttons(view, 6);
     uC_widget_vg_add_view(vg1, view, 0);
 }
 
@@ -543,7 +543,6 @@ int main(void)
     uC_win_printf(status_win, "%fs%bs%0", uC_GRAY_09, uC_GRAY_03);
 
     init_widgets();         // initialize all widgets
-    uC_smkx();              // make cursor up and down actually work
 
     // you can actually display things in the backdrop widnow but it
     // is *always* the first window drawn so everything else will

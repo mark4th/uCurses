@@ -42,9 +42,11 @@ static void k_ent(void) { uC_set_key(0x0a); }
 static void k_cbt(void) { uC_set_key(0x88); }
 
 // -----------------------------------------------------------------------
-// the system indirectly calls the function pointers pointed to by the
-// items in this array.  the end user does not get to modify this array as
-// the order of items within it is critical
+// Default key handler table.  The system calls entries by key_index_t
+// ordinal when uC_key() matches an escape sequence.  Order is fixed and
+// must match key_index_t exactly.  Cursor keys default to uC_noop so
+// uC_key() returns 0 for them unless the app installs custom handlers
+// via uC_alloc_kh() + uC_set_key_action().
 
 static uC_key_handler_t *default_key_actions[] =
 {

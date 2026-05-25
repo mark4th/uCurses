@@ -51,6 +51,9 @@
     4.1............uC_key_read.c
     4.2............uC_key_sequence.c
     4.3............uC_key_table.c
++++
+    4.4............uC_mouse.c
++++
 
     5..........The Screen
     5.1............uC_screen_ctrl.c
@@ -63,6 +66,9 @@
     6.1............uC_window_ctrl.c
     6.2............uC_window_attr.c
     6.3............uC_borders.c
++++
+    6.4............uC_window_draw.c
++++
 
     7..........Status windows
     7.1............uC_status.c
@@ -1022,10 +1028,21 @@ name.  Others have names that describe their function better.
         database.   Not being in transmit mode prevents it from being able
         to do so.
 
++++
+        uC_smkx() is now called automatically by uCurses_init().
+        Application code should not need to call it directly.
++++
+
     API void uC_rmkx(void)
 
         This function turns off the keypad transmit mode what ever that
         is.  See smkx above.
+
++++
+        uC_rmkx() is now called automatically by uC_restore_terminal()
+        which is called by uCurses_deInit().  Application code should
+        not need to call it directly.
++++
 
 
 3: Terminal Attributes
@@ -1837,6 +1854,61 @@ deny!
         code.
 
 
++++
+4.4: uC_mouse.c
+---------------
+
+SGR mouse protocol support.  When the widget system is enabled
+(UC_WIDGETS build flag) mouse reporting is enabled automatically by
+uCurses_init() and disabled by uCurses_deInit().  Applications that
+bypass the widget system can enable and disable mouse reporting manually.
+
+    API void uC_mouse_enable(void)
+
+        Enables SGR mouse reporting: button press/release, drag, and
+        all-motion (hover) tracking.  These are enabled as a fixed set;
+        individual modes cannot be toggled independently.  For most
+        applications the enabled set is appropriate for the lifetime of
+        the program.
+
+    API void uC_mouse_disable(void)
+
+        Disables all SGR mouse reporting.  Called automatically by
+        uC_restore_terminal().
+
+    uC_mouse_event_t uC_mouse_event
+
+        Global structure filled by the mouse parser whenever uC_key()
+        returns WIDGET_KEY_MOUSE (0x89).  Fields:
+
+            int16_t x       1-based terminal column
+            int16_t y       1-based terminal row
+            uint8_t button  button/event type (see constants below)
+            bool    pressed true = press or wheel tick, false = release
+
+        Button constants defined in uC_mouse.h:
+
+            UC_MOUSE_LEFT      0   left button
+            UC_MOUSE_MIDDLE    1   middle button
+            UC_MOUSE_RIGHT     2   right button
+            UC_MOUSE_MOVE      35  motion with no button held
+            UC_MOUSE_WHEEL_UP  64  scroll wheel up
+            UC_MOUSE_WHEEL_DN  65  scroll wheel down
+            UC_MOUSE_WHEEL_LT  66  horizontal scroll left
+            UC_MOUSE_WHEEL_RT  67  horizontal scroll right
+
+        Wheel events always arrive as pressed=true; there is no release
+        event for scroll wheel ticks.
+
+    bool uC_mouse_parse(void)   [visibility hidden]
+
+        Called internally by uC_key() to detect and parse the SGR escape
+        sequence ESC[<btn;x;yM|m from the key buffer.  On success fills
+        uC_mouse_event and stuffs WIDGET_KEY_MOUSE into the key buffer
+        so the caller sees it as a normal return value.
++++
+
+
 5: The Screen
 -------------
 
@@ -1981,6 +2053,14 @@ simplified the Gordian knot of circular include dependencies.
         window they can pull it's structures address out of the screen
         structure and use the usual API calls to modify it's attributes
         and appearance.
+
++++
+        uC_scr_add_backdrop() is now called automatically by
+        uCurses_init() for programmatic applications (those that pass
+        NULL for all three parameters).  JSON-based applications have
+        their backdrop created by the JSON build path as before.
+        Application code should not need to call this directly.
++++
 
     int16_t win_chk_pos(uC_window_t *win, uC_screen_t *scr, int16_t x,
         int16_t y)
@@ -2865,6 +2945,81 @@ joined vertical or horizontal separators within windows.
         window so there is no need for these functions to account for
         potential visual glitches.  Boxes also never have 'focus' so only
         one set of attributes are applicable.
+
+
++++
+6.4: uC_window_draw.c
+---------------------
+
+This source file contains all functions that read or write a window's
+cell buffer directly.  This includes cursor movement, character emission,
+scrolling, panning, and buffer copy.
+
+    API void uC_win_clear_line(uC_window_t *win, int16_t line)
+
+        Clears one line of a window using the window's current attributes
+        and blank character.
+
+    API void uC_win_clear(uC_window_t *win)
+
+        Clears all lines of a window and homes the cursor.
+
+    API void uC_win_copy_win(uC_window_t *dst, uC_window_t *src)
+
+        Copies the entire cell buffer of src into dst.  Both windows must
+        have the same dimensions.  This is used to implement layered
+        rendering: write into a backing (non-displayed) window, then copy
+        to the visible window and stamp any fixed overlays on top.
+        The scroll demo (example/scroll.c) demonstrates this pattern.
+
+    API void uC_win_scroll_up(uC_window_t *win)
+    API void uC_win_scroll_dn(uC_window_t *win)
+    API void uC_win_scroll_lt(uC_window_t *win)
+    API void uC_win_scroll_rt(uC_window_t *win)
+
+        Scroll or pan a window by one line or column.  The newly exposed
+        row or column is cleared to the window's current blank character
+        and attributes.  These are thin wrappers around the _n variants
+        below.  The %up %dn %lt %rt win_printf specifiers call these
+        internally.
+
+    API void uC_win_scroll_up_n(uC_window_t *win, int16_t n)
+    API void uC_win_scroll_dn_n(uC_window_t *win, int16_t n)
+    API void uC_win_scroll_lt_n(uC_window_t *win, int16_t n)
+    API void uC_win_scroll_rt_n(uC_window_t *win, int16_t n)
+
+        Scroll or pan a window by n lines or columns.  Invalid values of
+        n are silently clamped: n <= 0 is a no-op, n >= height (or width
+        for left/right) clears the entire window.  These are the
+        preferred variants when moving more than one line at a time.
+
+        The BME tile map engine uses tile-sized steps (4 columns wide,
+        3 rows tall per tile) which is the primary motivation for these
+        multi-step variants.
+
+    API void uC_win_cup(uC_window_t *win, int16_t x, int16_t y)
+
+        Move the window cursor to the specified (x, y) position.  Out
+        of bounds coordinates are silently ignored.
+
+    API void uC_win_emit(uC_window_t *win, uint32_t c)
+
+        Write one UTF-8 code point into the window at the current cursor
+        position and advance the cursor.  CR and LF move to the start of
+        the next line.  Tabs are rejected.  Wide characters (e.g. CJK)
+        consume the correct number of columns.
+
+    API cell_t *uC_win_peek_xy(uC_window_t *win, int16_t x, int16_t y)
+    API cell_t *uC_win_peek(uC_window_t *win)
+
+        Return a pointer to the cell at the specified position or the
+        current cursor position.  Returns NULL if out of bounds.
+
+    API void uC_win_el(uC_window_t *win)
+
+        Erase from the current cursor position to the end of the current
+        line.
++++
 
 
 7: Status windows
@@ -4706,45 +4861,65 @@ which handles it.
         that windows cursor by the cell width of each character in the
         string.
 
-    static void up(void)               %up
+    static void up(void)               %up(n)
 
         This static function handles the %up format specifier which will
-        scroll a window up one line, erasing the bottom line.
+        scroll a window up n lines, erasing the bottom n lines.
 
         The reason for the two characters here is it makes the interface
         consistent across the %up %dn %lt and %rt specifiers.  The %r
         specifier has multiple uses which is documented below and this
         fact demands the second character to disambiguate.
 
-    static void dn(void)               %dn
++++
+        This specifier takes a count parameter n and calls
+        uC_win_scroll_up_n() internally.  Use n=1 to scroll by one line.
++++
+
+    static void dn(void)               %dn(n)
 
         This static function handles the %dn format specifier which will
-        scroll a window down one line, erasing the top line.
+        scroll a window down n lines, erasing the top n lines.
 
         The reason for the two characters here is it makes the interface
         consistent across the %up %dn %lt and %rt specifiers.  The %r
         specifier has multiple uses which is documented below and this
         fact demands the second character to disambiguate.
 
-    static void lt(void)               %lt
++++
+        This specifier takes a count parameter n and calls
+        uC_win_scroll_dn_n() internally.  Use n=1 to scroll by one line.
++++
+
+    static void lt(void)               %lt(n)
 
         This static function handles the %lt format specifier which will
-        pan a window left one column, erasing the column to the far right.
+        pan a window left n columns, erasing the n columns on the far right.
 
         The reason for the two characters here is it makes the interface
         consistent across the %up %dn %lt and %rt specifiers.  The %r
         specifier has multiple uses which is documented below and this
         fact demands the second character to disambiguate.
 
-    static void rt(void)               %rt
++++
+        This specifier takes a count parameter n and calls
+        uC_win_scroll_lt_n() internally.  Use n=1 to pan by one column.
++++
+
+    static void rt(void)               %rt(n)
 
         This static function handles the %rt format specifier which will
-        pan a window right one column, erasing the column on the far left.
+        pan a window right n columns, erasing the n columns on the far left.
 
         The reason for the two characters here is it makes the interface
         consistent across the %up %dn %lt and %rt specifiers.  The %r
         specifier has multiple uses which is documented below and this
         fact demands the second character to disambiguate.
+
++++
+        This specifier takes a count parameter n and calls
+        uC_win_scroll_rt_n() internally.  Use n=1 to pan by one column.
++++
 
     static void r(void)                %rf or %rb
 

@@ -106,92 +106,113 @@ API void uC_win_copy_win(uC_window_t *dst, uC_window_t *src)
 }
 
 // -----------------------------------------------------------------------
-// scroll window up one line
+// scroll window up by n lines
 
-API void uC_win_scroll_up(uC_window_t *win)
+API void uC_win_scroll_up_n(uC_window_t *win, int16_t n)
 {
     int16_t i;
 
-    if (win != NULL)
-    {
-        for (i = 0; i < win->height - 1; i++)
-        {
-            win_copy_line(win, i + 1, i);
-        }
+    if (!win) { return; }
+    if (n <= 0) { return; }
+    if (n >= win->height) { n = win->height; }
 
-        uC_win_clear_line(win, win->height - 1);
+    for (i = 0; i < win->height - n; i++)
+    {
+        win_copy_line(win, i + n, i);
+    }
+
+    for (i = win->height - n; i < win->height; i++)
+    {
+        uC_win_clear_line(win, i);
     }
 }
 
 // -----------------------------------------------------------------------
-// scroll widnow down one line
+// scroll window down by n lines
 
-API void uC_win_scroll_dn(uC_window_t *win)
+API void uC_win_scroll_dn_n(uC_window_t *win, int16_t n)
 {
     int16_t i;
 
-    if (win != NULL)
-    {
-        for (i = win->height - 1; i != 1; i--)
-        {
-            win_copy_line(win, i - 1, i);
-        }
+    if (!win) { return; }
+    if (n <= 0) { return; }
+    if (n >= win->height) { n = win->height; }
 
-        uC_win_clear_line(win, 0);
+    for (i = win->height - 1; i >= n; i--)
+    {
+        win_copy_line(win, i - n, i);
+    }
+
+    for (i = 0; i < n; i++)
+    {
+        uC_win_clear_line(win, i);
     }
 }
 
 // -----------------------------------------------------------------------
-// pan window left one column
+// pan window left by n columns
 
-API void uC_win_scroll_lt(uC_window_t *win)
+API void uC_win_scroll_lt_n(uC_window_t *win, int16_t n)
 {
     int16_t i;
+    int16_t j;
+    cell_t *row;
+    cell_t  cell;
 
-    cell_t *src;
-    cell_t *dst;
-    cell_t cell;
+    if (!win) { return; }
+    if (n <= 0) { return; }
+    if (n >= win->width) { n = win->width; }
 
-    if (win != NULL)
+    cell.attrs = win->attrs;
+    cell.code  = win->blank;
+
+    for (i = 0; i < win->height; i++)
     {
-        cell.attrs = win->attrs;
-        cell.code  = win->blank;
+        row = win_line_addr(win, i);
+        memmove(row, row + n, (win->width - n) * sizeof(cell_t));
 
-        for (i = 0; i < win->height; i++)
+        for (j = win->width - n; j < win->width; j++)
         {
-            src = win_line_addr(win, i);
-            dst = src++;
-            memcpy(dst, src, (win->width - 1) * sizeof(cell_t));
-            dst[win->width - 1] = cell;
+            row[j] = cell;
         }
     }
 }
 
 // -----------------------------------------------------------------------
-// pan window right one column
+// pan window right by n columns
 
-API void uC_win_scroll_rt(uC_window_t *win)
+API void uC_win_scroll_rt_n(uC_window_t *win, int16_t n)
 {
-    int8_t i;
+    int16_t i;
+    int16_t j;
+    cell_t *row;
+    cell_t  cell;
 
-    cell_t *src;
-    cell_t *dst;
-    cell_t cell;
+    if (!win) { return; }
+    if (n <= 0) { return; }
+    if (n >= win->width) { n = win->width; }
 
-    if (win != NULL)
+    cell.attrs = win->attrs;
+    cell.code  = win->blank;
+
+    for (i = 0; i < win->height; i++)
     {
-        cell.attrs = win->attrs;
-        cell.code  = win->blank;
+        row = win_line_addr(win, i);
+        memmove(row + n, row, (win->width - n) * sizeof(cell_t));
 
-        for (i = 0; i < win->height; i++)
+        for (j = 0; j < n; j++)
         {
-            dst = win_line_addr(win, i);
-            src = dst++;
-            memmove(&dst[1], src, (win->width - 1) * sizeof(cell_t));
-            src[0] = cell;
+            row[j] = cell;
         }
     }
 }
+
+// -----------------------------------------------------------------------
+
+API void uC_win_scroll_up(uC_window_t *win) { uC_win_scroll_up_n(win, 1); }
+API void uC_win_scroll_dn(uC_window_t *win) { uC_win_scroll_dn_n(win, 1); }
+API void uC_win_scroll_lt(uC_window_t *win) { uC_win_scroll_lt_n(win, 1); }
+API void uC_win_scroll_rt(uC_window_t *win) { uC_win_scroll_rt_n(win, 1); }
 
 // -----------------------------------------------------------------------
 // set cursor position within window

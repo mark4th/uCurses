@@ -16,11 +16,9 @@
 // -----------------------------------------------------------------------
 // visibility hidden
 
-API void uC_ui_free(void *mem);
-API int32_t fnv_hash(uint8_t *s);
+int32_t fnv_hash(uint8_t *s);
 void uC_assert(bool f, const char *file, int line, const char *msg);
-
-__attribute__((noreturn)) void uC_abort(const char *msg);
+void uC_ui_free(void *mem);
 
 // -----------------------------------------------------------------------
 
@@ -28,13 +26,13 @@ __attribute__((noreturn)) void uC_abort(const char *msg);
 
 // -----------------------------------------------------------------------
 
+API __attribute__((noreturn)) void uC_abort(const char *msg);
+API void uC_set_fatal_handler(void (*fp)(const char *msg));
 API void uC_noop(void);
 API void uC_clock_sleep(int32_t when);
 API void uC_restore_terminal(void);
 API void uC_init_terminal(void);
 API void uC_get_console_size(uint16_t *width, uint16_t *height);
-API void uC_assert(bool f, const char *file, int line, const char *msg);
-API void uC_set_fatal_handler(void (*fp)(const char *msg));
 API uint8_t eval(uint8_t *s, uint32_t *result, uint8_t radix);
 
 // -----------------------------------------------------------------------

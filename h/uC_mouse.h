@@ -22,10 +22,14 @@ typedef struct
 
 // -----------------------------------------------------------------------
 
-#define UC_MOUSE_LEFT    0
-#define UC_MOUSE_MIDDLE  1
-#define UC_MOUSE_RIGHT   2
-#define UC_MOUSE_MOVE    35
+#define UC_MOUSE_LEFT      0
+#define UC_MOUSE_MIDDLE    1
+#define UC_MOUSE_RIGHT     2
+#define UC_MOUSE_MOVE      35
+#define UC_MOUSE_WHEEL_UP  64
+#define UC_MOUSE_WHEEL_DN  65
+#define UC_MOUSE_WHEEL_LT  66
+#define UC_MOUSE_WHEEL_RT  67
 
 // sentinel returned by uC_key() when a mouse event has been parsed
 #define WIDGET_KEY_MOUSE  0x89

@@ -11,7 +11,7 @@
 
 extern ti_vars_t *ti_vars;
 
-uC_mouse_event_t uC_mouse_event;
+API uC_mouse_event_t uC_mouse_event;
 
 // -----------------------------------------------------------------------
 

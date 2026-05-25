@@ -65,6 +65,7 @@ static void refill(void)
     json_vars->line_buff[i] = '\0';    // make line_buff asciiz
 
     // in forth these would be called #tib and >in
+
     json_vars->line_left    = i;       // how much data now needs parsing
     json_vars->line_index   = 0;       // reset current parse index
 }

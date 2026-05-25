@@ -38,6 +38,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 char status[STAT_SIZE];
 
 // -----------------------------------------------------------------------
+// this is not a raycasting demo. this is a uCurses demo showing ray
+// casting.  i.e. showing off }:)
 
 static uint16_t mapWidth  = 24;
 static uint16_t mapHeight = 24;
@@ -476,30 +478,30 @@ void raycast(void)
         gettimeofday(&tv, NULL);
         time = tv.tv_sec;
 
-    if (old_time != time)
-    {
-        old_time = time;
-        fps = framecount - old_count;
-        old_count = framecount;
-    }
+        if (old_time != time)
+        {
+            old_time = time;
+            fps = framecount - old_count;
+            old_count = framecount;
+        }
 
 
-    gettimeofday(&frame_end, NULL);
+        gettimeofday(&frame_end, NULL);
 
-    elapsed_ns = (frame_end.tv_sec  - frame_start.tv_sec)  * 1000000000LL +
-                 (frame_end.tv_usec - frame_start.tv_usec) * 1000LL;
+        elapsed_ns = (frame_end.tv_sec  - frame_start.tv_sec)  * 1000000000LL +
+                     (frame_end.tv_usec - frame_start.tv_usec) * 1000LL;
 
-    if (elapsed_ns < TARGET_FRAME_NS)
-    {
-        uC_clock_sleep(TARGET_FRAME_NS - elapsed_ns);
-    }
+        if (elapsed_ns < TARGET_FRAME_NS)
+        {
+            uC_clock_sleep(TARGET_FRAME_NS - elapsed_ns);
+        }
 
 
 
-    // frame_time as a proper double in seconds for speed calculations
-    double frame_time_d = elapsed_ns / 1000000000.0;
-    moveSpeed = frame_time_d * 500.0;
-    rotSpeed  = frame_time_d * 200.0;
+        // frame_time as a proper double in seconds for speed calculations
+        double frame_time_d = elapsed_ns / 1000000000.0;
+        moveSpeed = frame_time_d * 800.0;
+        rotSpeed  = frame_time_d * 300.0;
 
         if (uC_test_keys() != 0)
         {

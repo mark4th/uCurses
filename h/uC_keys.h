@@ -10,6 +10,29 @@
 #include <stdbool.h>
 
 // -----------------------------------------------------------------------
+// Key handler table system
+// -----------------------------------------------------------------------
+// The library maintains a current key handler table — an array of function
+// pointers, one per named key (see key_index_t below).  When uC_key()
+// matches an escape sequence it calls the corresponding handler, which may
+// stuff a synthetic key code via uC_set_key() so the caller sees it as a
+// normal return value.  Unhandled keys default to uC_noop and cause
+// uC_key() to return 0.
+//
+// Cursor keys (K_CUU1 / K_CUD1 / K_CUB1 / K_CUF1) default to uC_noop.
+// Any app that needs cursor key input must install its own handlers:
+//
+//   uC_kh_t saved = uC_alloc_kh();          // push new table (copy of defaults)
+//   uC_set_key_action(K_CUU1, my_up);       // override individual keys
+//   uC_set_key_action(K_CUD1, my_dn);
+//   ...
+//   uC_release_kh(saved);                   // pop table and restore previous
+//
+// uC_alloc_kh() returns the PREVIOUS table handle, not the new one.
+// Pass that handle to uC_release_kh() on cleanup — not saving it leaks
+// the allocated table.  The widget system manages its own table internally;
+// apps that bypass the widget system must manage it themselves.
+//
 // this enumeration defines the order in which keyboard handlers are
 // defined for each key press. they all correspond to an index into the
 // key-action arrays (which can be user defined but the order cant)

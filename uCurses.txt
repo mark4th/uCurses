@@ -91,6 +91,8 @@
     10.2...........uC_alloc.c
     10.3...........uC_braille.c
     10.4...........uC_entry.c
+    10.4.1.............Executing the .so directly - the ELF trick
+    10.4.2.............The menu dispatch code generation workflow
     10.5...........uC_eval.c
     10.6...........uC_list.c
     10.7...........uC_rgb_hsl.c
@@ -4220,6 +4222,83 @@ This module contains the entry point code for the library.  This includes
 code to be run if the .so file is ever executed directly.  In this case
 the code here will parse and interpret the command line arguments passed
 to it.
+
+10.4.1: Executing the .so directly - the ELF trick
+---------------------------------------------------
+
+Shared libraries are not normally executable.  uCurses uses two standard
+ELF mechanisms to make libuCurses.so directly executable from the shell:
+
+    1.  A .interp section is embedded in the .so which contains the path
+        to the system dynamic linker (/lib64/ld-linux-x86-64.so.2).  This
+        tells the kernel how to load and run the file as a program.
+
+    2.  The linker is invoked with -Wl,--entry=entry which causes the
+        entry() function in this module to be used as the ELF entry point
+        rather than the default _start symbol.
+
+The result is that the library can be run as both a shared library loaded
+by client applications and as a standalone program:
+
+    ./build/libuCurses.so --help
+    ./build/libuCurses.so my_vectors.txt
+
+Because this entry point is not main(), the standard argc/argv mechanism
+is not available.  Command line arguments are instead read directly from
+/proc/self/cmdline, whose content is the NUL-separated argv array written
+by the kernel for every running process.
+
+10.4.2: The menu dispatch code generation workflow
+---------------------------------------------------
+
+JSON-described menus attach a "vector" string to each menu item.  This
+string is the name of the C function that should be called when the item
+is selected.  At runtime the JSON parser needs to resolve that string to
+an actual function pointer.  C provides no reflection mechanism for this;
+a function pointer cannot be looked up from its name at runtime.
+
+The solution is to pre-compute FNV hash values for every vector name at
+build time and embed the resulting dispatch table as ordinary C source code
+in the application.  The JSON parser then hashes the vector string once
+when the JSON is loaded and performs a single integer comparison against
+the table rather than a series of strcmp calls.  The function name strings
+themselves never appear in the final application binary.
+
+The workflow is:
+
+    Step 1 - create a plain text file containing one vector name per line.
+    These must exactly match the "vector" values in your JSON file.
+    Lines beginning with '/' are treated as comments and ignored.
+
+    For example, vectors.txt might contain:
+
+        file_new
+        file_open
+        file_save
+        file_quit
+        // edit menu
+        edit_cut
+        edit_copy
+        edit_paste
+
+    Step 2 - run the library against that file:
+
+        ./build/libuCurses.so vectors.txt
+
+    The library writes ready-to-compile C code to stdout.  Redirect it
+    to a source file in your project:
+
+        ./build/libuCurses.so vectors.txt > menu_dispatch.c
+
+    The generated output contains a switch_t array of {hash, function
+    pointer} pairs and a menu_address_cb() callback function that the
+    JSON parser calls to resolve a vector name to its function pointer.
+
+    Step 3 - add menu_dispatch.c to your application build.  The JSON
+    parser will call menu_address_cb() automatically during menu
+    construction; no other integration is required.
+
+    The --help argument to the library describes this same process.
 
     static uint8_t *next_arg(void)
 

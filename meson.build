@@ -107,6 +107,8 @@ static_library(
     c_args : build_args,
 )
 
+subdir('example')
+
 full_path = run_command('basename', shared_object.full_path()).stdout().strip()
 target_name = 'stripped @0@'.format(full_path)
 

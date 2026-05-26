@@ -42,9 +42,10 @@ significant.
 make
 ```
 
-The default build produces a shared library.  See `meson.build` for the
-Meson build system alternative.  Menus, widgets, and the JSON parser each
-have their own build flags — consult the Makefile for details.
+Both `libuCurses.so` and `libuCurses.a` are built by default.  The build
+uses Meson/Ninja under the hood — the Makefile is a thin wrapper.  Menus,
+widgets, and the JSON parser each have their own build flags in
+`meson.build` and can be stripped from the build independently.
 
 ---
 

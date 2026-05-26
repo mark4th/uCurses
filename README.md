@@ -121,6 +121,70 @@ windows, borders, menus, widgets, mouse handling, and more.
 
 ---
 
+## Menu dispatch code generator
+
+The shared library doubles as a code-generation tool.  Because the ELF
+`.interp` section is embedded in the `.so` and the linker entry point is
+set to a custom `entry()` symbol, `libuCurses.so` can be executed directly
+from the shell like a regular program:
+
+```
+./build/libuCurses.so --help
+./build/libuCurses.so my_menu_vectors.txt
+```
+
+### The problem it solves
+
+JSON-described menus carry a `"vector"` string on each menu item — the name
+of the C function that should be called when that item is selected.  At
+runtime the JSON parser needs to turn that string into a C function pointer.
+Using `strcmp` for every lookup on every keypress works, but it keeps
+function-name strings in the binary and touches them repeatedly at runtime.
+
+uCurses uses FNV hashing instead.  The library hashes the vector string once
+when the JSON is loaded, then compares a single `uint32_t` against a
+pre-built dispatch table.  The strings never appear in the final binary.
+
+### How to use it
+
+1. Create a plain text file with one vector name per line — the names must
+   exactly match the `"vector"` values in your JSON:
+
+   ```
+   file_new
+   file_open
+   file_save
+   file_quit
+   ```
+
+2. Run the library against that file:
+
+   ```
+   ./build/libuCurses.so my_vectors.txt
+   ```
+
+3. The library prints ready-to-compile C code — a `switch_t` array with
+   pre-computed hashes and a callback function — which you paste into your
+   application source:
+
+   ```c
+   static switch_t my_vectors.txt
+   {
+       { 0x1a2b3c4d, file_new  },
+       { 0x5e6f7a8b, file_open },
+       ...
+   };
+
+   static opt_t menu_address_cb(uint32_t hash) { ... }
+   ```
+
+4. The JSON parser calls `menu_address_cb` to resolve vector names to
+   function pointers when the menu JSON is loaded.
+
+Lines beginning with `/` are treated as comments and skipped.
+
+---
+
 ## Documentation
 
 Full documentation — including the terminfo parser internals, attribute

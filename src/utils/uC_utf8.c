@@ -170,14 +170,15 @@ API uint8_t uC_utf8_char_length(uint8_t *s)
 
 API int16_t uC_utf8_width(uint8_t *s)
 {
-    utf8_encode_t *encode;
+    uint32_t cp;
+    uint8_t n;
     int16_t width = 0;
 
     while (*s != '\0')
     {
-        encode = utf8_encode(*s);
-        s += encode->len;
-        width += encode->width;
+        n = utf8_decode(&cp, s);
+        s += n;
+        width += wcwidth((wchar_t)cp);
     }
 
     return width;
@@ -190,13 +191,13 @@ API int16_t uC_utf8_width(uint8_t *s)
 
 API int16_t uC_utf8_strlen(uint8_t *s)
 {
-    utf8_encode_t *encode;
     int16_t len = 0;
+    uint8_t n;
 
     while (*s != '\0')
     {
-        encode = utf8_encode(*s);
-        s += encode->len;
+        n = uC_utf8_char_length(s);
+        s += n;
         len++;
     }
 
@@ -207,24 +208,20 @@ API int16_t uC_utf8_strlen(uint8_t *s)
 
 API int16_t uC_utf8_strncmp(uint8_t *s1, uint8_t *s2, int16_t len)
 {
-    utf8_encode_t e1, e2;
+    uint32_t cp1, cp2;
+    uint8_t n1, n2;
 
     while ((*s1 != '\0') && (len != 0))
     {
-        e1 = *utf8_encode(*s1);
-        e2 = *utf8_encode(*s2);
+        n1 = utf8_decode(&cp1, s1);
+        n2 = utf8_decode(&cp2, s2);
 
-        if ((e1.len == e2.len) &&
-           (*(int64_t *)&e1.str == *(int64_t *)&e2.str))
-        {
-            s1 += e1.len;
-            s2 += e2.len;
-            len--;
-        }
-        else
-        {
-            return *(int64_t *)&e1.str - *(int64_t *)&e2.str;
-        }
+        if (cp1 != cp2)
+            return (int16_t)((int32_t)cp1 - (int32_t)cp2);
+
+        s1 += n1;
+        s2 += n2;
+        len--;
     }
 
     return 0;

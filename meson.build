@@ -108,6 +108,7 @@ static_library(
 )
 
 subdir('example')
+subdir('test')
 
 full_path = run_command('basename', shared_object.full_path()).stdout().strip()
 target_name = 'stripped @0@'.format(full_path)

@@ -10,27 +10,14 @@
 
 static uint8_t digit(uint8_t c, uint8_t radix, uint8_t *result)
 {
-    if (c < '0')
-    {
-        return 0;
-    }
+    uint8_t d;
 
-    c -= '0';
+    if      (c >= '0' && c <= '9') { d = c - '0'; }
+    else if (c >= 'A' && c <= 'Z') { d = c - 'A' + 10; }
+    else if (c >= 'a' && c <= 'z') { d = c - 'a' + 10; }
+    else                            { return 0; }
 
-    if (c > 17)
-    {
-        c -= 7;
-    }
-    else if (c > 9)
-    {
-        return 0;
-    }
-
-    if (c < radix)
-    {
-        *result = c;
-        return 1;
-    }
+    if (d < radix) { *result = d; return 1; }
 
     return 0;
 }

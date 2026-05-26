@@ -7,6 +7,10 @@ examples: .build
 	$_
 	cd $(BUILD) && ninja examples
 
+tests: .build
+	$_
+	cd $(BUILD) && ninja meson-test-prereq && meson test --no-rebuild
+
 help:
 	$_
 	set -x

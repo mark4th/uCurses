@@ -93,6 +93,20 @@ shared_object = shared_library(
     soversion : meson.project_version(),
 )
 
+static_library(
+    meson.project_name(),
+    project_source_files,
+    json_source_files,
+    key_source_files,
+    ti_source_files,
+    ui_source_files,
+    menu_source_files,
+    wdgt_source_files,
+    util_source_files,
+    install : true,
+    c_args : build_args,
+)
+
 full_path = run_command('basename', shared_object.full_path()).stdout().strip()
 target_name = 'stripped @0@'.format(full_path)
 

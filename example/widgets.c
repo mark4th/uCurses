@@ -262,7 +262,7 @@ static void view_add_check_buttons(uC_widget_view_t *view)
 
 // -----------------------------------------------------------------------
 
-static void view_add_text_boxes(uC_widget_view_t *view)
+static void view_add_text_boxes(uC_widget_view_t *view, uint16_t sequence)
 {
     uC_widget_t *t1 = uC_widget_textbox_create(
         (char *)&hex_data, "Hex    :",
@@ -295,11 +295,11 @@ static void view_add_text_boxes(uC_widget_view_t *view)
     uC_widget_set_position(t4, BIN_X, BIN_Y);
     uC_widget_set_position(t5, ALPHA_X, ALPHA_Y);
 
-    uC_widget_view_add_widget(view, t1, 0);
-    uC_widget_view_add_widget(view, t2, 0);
-    uC_widget_view_add_widget(view, t3, 0);
-    uC_widget_view_add_widget(view, t4, 0);
-    uC_widget_view_add_widget(view, t5, 0);
+    uC_widget_view_add_widget(view, t1, sequence);
+    uC_widget_view_add_widget(view, t2, sequence + 1);
+    uC_widget_view_add_widget(view, t3, sequence + 2);
+    uC_widget_view_add_widget(view, t4, sequence + 3);
+    uC_widget_view_add_widget(view, t5, sequence + 4);
 }
 
 // -----------------------------------------------------------------------
@@ -371,7 +371,7 @@ static void init_widgets(void)
 
     uC_widget_view_add_border(view, uC_BDR_CURVED, box_attrs);
     uC_widget_vg_add_view(vg1, view, TEXT_SEQUENCE);
-    view_add_text_boxes(view);
+    view_add_text_boxes(view, TEXT_SEQUENCE);
 
     // -------------------------------------------------------------------
     // anonymous view within view group 1 for buttons
@@ -389,7 +389,7 @@ static void init_widgets(void)
 
     uC_ASSERT(view != NULL, "Cannot create view");
 
-    view_add_buttons(view, 6);
+    view_add_buttons(view, TEXT_SEQUENCE + 5);
     uC_widget_vg_add_view(vg1, view, 0);
 }
 

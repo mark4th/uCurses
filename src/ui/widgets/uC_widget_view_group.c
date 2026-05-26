@@ -137,6 +137,8 @@ API void uC_widget_vg_add_view(uC_widget_vg_t *vg, uC_widget_view_t *v,
 {
     if (v)
     {
+        if (sequence)
+            sync_seq(sequence);
         v->sequence = sequence ? sequence : auto_sequence();
     }
     uC_list_push_tail(&vg->views, v);

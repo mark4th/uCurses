@@ -95,7 +95,7 @@ static uint16_t widget_hit_test(int16_t sx, int16_t sy)
 }
 
 // -----------------------------------------------------------------------
-// dispatch a parsed mouse event: movement changes focus, left-click activates
+// dispatch a parsed mouse event: left-click transfers focus and activates
 
 void uC_widget_mouse_handle(void)
 {
@@ -105,22 +105,21 @@ void uC_widget_mouse_handle(void)
 
     if (!widget_state.screen) return;
 
+    if (uC_mouse_event.button != UC_MOUSE_LEFT || !uC_mouse_event.pressed)
+        return;
+
     seq = widget_hit_test(sx, sy);
     if (!seq) return;
 
-    if (uC_mouse_event.button == UC_MOUSE_MOVE)
+    if (seq != widget_state.sequence)
     {
-        if (seq != widget_state.sequence)
-        {
-            uC_widget_select_widget(seq);
-        }
+        uC_widget_select_widget(seq);
     }
-    else if (uC_mouse_event.button == UC_MOUSE_LEFT && uC_mouse_event.pressed)
+
+    // textboxes just receive focus from the click; button/radio/check
+    // treat SPACE as their activation key
+    if (widget_state.widget && widget_state.widget->type != uC_WIDGET_TEXTBOX)
     {
-        if (seq != widget_state.sequence)
-        {
-            uC_widget_select_widget(seq);
-        }
         uC_set_key(0x20);
     }
 }

@@ -245,6 +245,7 @@ uC_widget_t *create_widget(uC_widget_type_t type,
     uC_attribs_t attrs, uC_attribs_t focus);
 
 uint16_t auto_sequence(void);
+void     sync_seq(uint16_t seq);
 
 API void uC_widget_close_widget(uC_widget_t *widget);
 API bool uC_widget_select_widget(uint16_t sequence);

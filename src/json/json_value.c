@@ -30,168 +30,86 @@ extern json_state_t *json_state;
 // int16_t nsi;
 
 // -----------------------------------------------------------------------
+// fg, bg, gray-fg, gray-bg: all write to parent attribs via API setter.
+// range: fg/bg 0-255, gray 0-23.  shared error check, then direct call.
 
-static void value_fgbg(void)
+static void value_attrib(void)
 {
-    json_type_t ktype     = json_state->struct_type;
-    json_state_t *parent  = json_state->parent;
-    uC_attribs_t *pstruct = parent->structure;
+    json_state_t *parent = json_state->parent;
+    uC_attribs_t *p      = parent->structure;
+    json_type_t   ktype  = json_state->struct_type;
+    int32_t       v      = json_vars->key_value;
+    bool          gray   = (ktype == KEY_GRAY_FG) || (ktype == KEY_GRAY_BG);
 
-    // ensure key value is within 8 bits
+    if ((uint32_t)v > (uint32_t)(gray ? 23 : 255))
+        json_error("Attrib value out of range");
 
-    if ((json_vars->key_value & ~255) == 0)
-    {
-        (ktype == KEY_FG)
-           ? uC_set_fg(pstruct, json_vars->key_value)
-           : uC_set_bg(pstruct, json_vars->key_value);
-
-        return;
-    }
-
-    json_error("FG/BG Value out of range");
+    if      (ktype == KEY_FG)      uC_set_fg(p,      v);
+    else if (ktype == KEY_BG)      uC_set_bg(p,      v);
+    else if (ktype == KEY_GRAY_FG) uC_set_gray_fg(p, v);
+    else                           uC_set_gray_bg(p, v);
 }
 
 // -----------------------------------------------------------------------
-
-#define MIN_GRAY (0)    // probably belongs elsewhere
-#define MAX_GRAY (23)
-
-static void value_gray_fgbg(void)
-{
-    json_type_t ktype     = json_state->struct_type;
-    json_state_t *parent  = json_state->parent;
-    uC_attribs_t *pstruct = parent->structure;
-
-    // gray scale values must be between 0 and 23
-
-    if ((json_vars->key_value >= MIN_GRAY) &&
-        (json_vars->key_value <= MAX_GRAY))
-    {
-        (ktype == KEY_GRAY_FG)
-            ? uC_set_gray_fg(pstruct, json_vars->key_value)
-            : uC_set_gray_bg(pstruct, json_vars->key_value);
-
-        return;
-    }
-
-    json_error("Gray FG/BG Value out of range");
-}
-
-// -----------------------------------------------------------------------
-
-static void value_rgb_fg(uC_attribs_t *gstruct)
-{
-    gstruct->flags.bits |= ATTR_FLAG_RGB_FG;
-    gstruct->flags.bits &= ~ATTR_FLAG_GRAY_FG;
-
-    if (json_state->struct_type == KEY_RED)
-    {
-        gstruct->fg_r = json_vars->key_value;
-        return;
-    }
-
-    if (json_state->struct_type == KEY_GREEN)
-    {
-        gstruct->fg_g = json_vars->key_value;
-        return;
-    }
-
-    gstruct->fg_b = json_vars->key_value;
-}
-
-// -----------------------------------------------------------------------
-
-static void value_rgb_bg(uC_attribs_t *gstruct)
-{
-    gstruct->flags.bits |= ATTR_FLAG_RGB_BG;
-    gstruct->flags.bits &= ~ATTR_FLAG_GRAY_BG;
-
-    if (json_state->struct_type == KEY_RED)
-    {
-        gstruct->bg_r = json_vars->key_value;
-        return;
-    }
-
-    if (json_state->struct_type == KEY_GREEN)
-    {
-        gstruct->bg_g = json_vars->key_value;
-        return;
-    }
-
-    gstruct->bg_b = json_vars->key_value;
-}
-
-// -----------------------------------------------------------------------
+// red, green, blue: navigate to grandparent attribs; fg/bg selected by
+// parent type (STRUCT_RGB_FG vs STRUCT_RGB_BG)
 
 static void value_rgb(void)
 {
-    json_state_t *parent, *gp;
-    int16_t ptype;
-    uC_attribs_t *gstruct;
+    json_state_t *parent  = json_state->parent;  // STRUCT_RGB_FG/BG
+    json_state_t *gp      = parent->parent;      // STRUCT_ATTRIBS etc.
+    uC_attribs_t *a       = gp->structure;
+    json_type_t   ktype   = json_state->struct_type;
+    bool          is_bg   = (parent->struct_type == STRUCT_RGB_BG);
 
-    parent  = json_state->parent;  // rgb psudo structure
-    gp      = parent->parent;      // attribs structure
-    gstruct = gp->structure;       // really a char* of 8 bytes
-    ptype   = parent->struct_type;
+    if ((json_vars->key_value & ~255) != 0)
+        json_error("RGB FG/BG Value out of range");
 
-    if ((json_vars->key_value & ~255) == 0)
+    uint8_t val = (uint8_t)json_vars->key_value;
+
+    if (is_bg)
     {
-        (ptype == STRUCT_RGB_FG)   // or its STRUCT_RGB_BG
-            ? value_rgb_fg(gstruct)
-            : value_rgb_bg(gstruct);
-        return;
+        a->flags.bits |= ATTR_FLAG_RGB_BG; a->flags.bits &= ~ATTR_FLAG_GRAY_BG;
+        if (ktype == KEY_RED)   { a->bg_r = val; return; }
+        if (ktype == KEY_GREEN) { a->bg_g = val; return; }
+        a->bg_b = val;
     }
-
-    json_error("RGB FG/BG Value out of range");
+    else
+    {
+        a->flags.bits |= ATTR_FLAG_RGB_FG; a->flags.bits &= ~ATTR_FLAG_GRAY_FG;
+        if (ktype == KEY_RED)   { a->fg_r = val; return; }
+        if (ktype == KEY_GREEN) { a->fg_g = val; return; }
+        a->fg_b = val;
+    }
 }
 
 // -----------------------------------------------------------------------
+// xco, yco, width, height: all write int16_t fields in parent window.
+// xco/width use console_width for percentage; yco/height use console_height.
+// width/height mark the value with 0x8000 when a percentage so that
+// value_flag can shrink them by 2 if WIN_BOXED is also set.
 
-static void value_xy(void)
+static void value_window_dim(void)
 {
     json_state_t *parent = json_state->parent;
-    uC_window_t *win     = parent->structure;
+    uC_window_t  *win    = parent->structure;
+    json_type_t   ktype  = json_state->struct_type;
+    bool use_w = (ktype == KEY_XCO) || (ktype == KEY_WIDTH);
 
-    int16_t mult;
-
-    if (json_vars->percent != false)
+    if (json_vars->percent)
     {
-        mult = (json_state->struct_type == KEY_XCO)
-            ? json_vars->console_width
-            : json_vars->console_height;
-        json_vars->key_value *= mult;
-        json_vars->key_value /= 100;
+        int16_t mult = use_w ? json_vars->console_width : json_vars->console_height;
+        json_vars->key_value = (json_vars->key_value * mult) / 100;
+
+        if ((ktype == KEY_WIDTH) || (ktype == KEY_HEIGHT))
+            json_vars->key_value |= 0x8000;
     }
 
-    (json_state->struct_type == KEY_XCO)
-        ? (win->xco = json_vars->key_value)
-        : (win->yco = json_vars->key_value);
-}
-
-// -----------------------------------------------------------------------
-
-static void value_wh(void)
-{
-    json_state_t *parent = json_state->parent;
-
-    uC_window_t *win = parent->structure;
-
-    int16_t mult;
-
-    if (json_vars->percent != false)
-    {
-        mult = (json_state->struct_type == KEY_WIDTH)
-            ? json_vars->console_width
-            : json_vars->console_height;
-        json_vars->key_value *= mult;
-        json_vars->key_value /= 100;
-        // mark for correction if window is given a border
-        json_vars->key_value |= 0x8000;
-    }
-
-    (json_state->struct_type == KEY_WIDTH)
-        ? (win->width = json_vars->key_value)
-        : (win->height = json_vars->key_value);
+    int16_t *field = (ktype == KEY_XCO)   ? &win->xco    :
+                     (ktype == KEY_YCO)   ? &win->yco    :
+                     (ktype == KEY_WIDTH) ? &win->width  :
+                                            &win->height;
+    *field = (int16_t)json_vars->key_value;
 }
 
 // -----------------------------------------------------------------------
@@ -375,17 +293,17 @@ static void value_shortcut(void)
 
 static const uC_switch_t value_types[] =
 {
-    { KEY_FG,          value_fgbg        },
-    { KEY_BG,          value_fgbg        },
-    { KEY_GRAY_FG,     value_gray_fgbg   },
-    { KEY_GRAY_BG,     value_gray_fgbg   },
+    { KEY_FG,          value_attrib      },
+    { KEY_BG,          value_attrib      },
+    { KEY_GRAY_FG,     value_attrib      },
+    { KEY_GRAY_BG,     value_attrib      },
     { KEY_RED,         value_rgb         },
     { KEY_GREEN,       value_rgb         },
     { KEY_BLUE,        value_rgb         },
-    { KEY_XCO,         value_xy          },
-    { KEY_YCO,         value_xy          },
-    { KEY_WIDTH,       value_wh          },
-    { KEY_HEIGHT,      value_wh          },
+    { KEY_XCO,         value_window_dim  },
+    { KEY_YCO,         value_window_dim  },
+    { KEY_WIDTH,       value_window_dim  },
+    { KEY_HEIGHT,      value_window_dim  },
     { KEY_NAME,        value_name        },
     { KEY_FLAGS,       value_flag        },
     { KEY_BORDER_TYPE, value_border_type },

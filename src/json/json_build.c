@@ -3,7 +3,6 @@
 
 #include <inttypes.h>
 #include <string.h>
-#include <stdio.h>
 
 #include "uCurses.h"
 #include "uC_screen.h"
@@ -20,23 +19,20 @@ extern json_vars_t *json_vars;
 extern uC_screen_t *active_screen;
 
 // -----------------------------------------------------------------------
-// vereify window is within bounds of screen
+// verify window is within bounds of screen
 
 static void bounds_check(uC_window_t *win)
 {
     int16_t xco = win->xco;
     int16_t yco = win->yco;
+    int16_t z   = (win->flags & uC_WIN_BOXED) ? 1 : 0;
 
-    int16_t z = (win->flags & uC_WIN_BOXED) ? 1 : 0;
-
-    if (((xco + win->width + z) <= json_vars->console_width) &&
-       ((yco + win->height + z) <= json_vars->console_height) &&
-       ((xco - z) >= 0) && ((yco - z) >= 0))
+    if (((xco + win->width  + z) > json_vars->console_width)  ||
+        ((yco + win->height + z) > json_vars->console_height) ||
+        (xco < z) || (yco < z))
     {
-        return;
+        json_error("Window outside bounds of screen");
     }
-
-    json_error("Window outside bounds of screen");
 }
 
 // -----------------------------------------------------------------------
@@ -44,24 +40,11 @@ static void bounds_check(uC_window_t *win)
 
 static void fix_win(uC_screen_t *scr, uC_window_t *win)
 {
-    int16_t fudge = 1;
+    uC_window_t *bd    = scr->backdrop;
+    int16_t      fudge = 1 + ((bd != NULL) && (bd->flags & uC_WIN_BOXED));
 
-    uC_window_t *bd = scr->backdrop;
-
-    if ((bd != NULL) && ((bd->flags & uC_WIN_BOXED) != 0))
-    {
-        fudge++;
-    }
-
-    if (win->xco == WIN_FAR)
-    {
-        win->xco = scr->width - (win->width + fudge);
-    }
-
-    if (win->yco == WIN_FAR)
-    {
-        win->yco = scr->height - (win->height + fudge);
-    }
+    if (win->xco == WIN_FAR) win->xco = scr->width  - (win->width  + fudge);
+    if (win->yco == WIN_FAR) win->yco = scr->height - (win->height + fudge);
 }
 
 // -----------------------------------------------------------------------
@@ -69,21 +52,18 @@ static void fix_win(uC_screen_t *scr, uC_window_t *win)
 
 static void fix_windows(uC_screen_t *scr)
 {
-    uC_window_t *win = scr->backdrop;
+    uC_window_t    *win = scr->backdrop;
     uC_list_node_t *n1;
 
     if (win != NULL)
     {
-        win->xco         = 1;
-        win->yco         = 1;
-        win->width       = scr->width - 2;
-        win->height      = scr->height - 2;
-        // win->blank       = 0x20; // SOLID;
-        win->screen      = scr;
-
-        // init_backdrop(scr, scr->backdrop);
-        win_alloc(scr->backdrop);
-        uC_win_clear(scr->backdrop);
+        win->xco    = 1;
+        win->yco    = 1;
+        win->width  = scr->width  - 2;
+        win->height = scr->height - 2;
+        win->screen = scr;
+        win_alloc(win);
+        uC_win_clear(win);
     }
 
     n1 = uC_list_scan(&scr->windows, NULL);
@@ -104,18 +84,16 @@ static void fix_windows(uC_screen_t *scr)
 
 static void fix_menus(uC_screen_t *scr)
 {
-    menu_bar_t *bar = scr->menu_bar;
-    pulldown_t *pd;
+    menu_bar_t  *bar = scr->menu_bar;
+    pulldown_t  *pd;
     uC_window_t *win;
-
-    int16_t i, j;
-    int16_t width;
+    int16_t      i, j;
 
     win = uC_win_open(scr->width, 1);
-    if (win == NULL)
+    if (!win)
     {
         json_error("Unable to create window for menu bar");
-        return; // prevent scan-build make error
+        return; // prevent scan-build false positive
     }
 
     bar->window   = win;
@@ -127,24 +105,14 @@ static void fix_menus(uC_screen_t *scr)
 
     for (i = 0; i < bar->count; i++)
     {
-        pd = bar->items[i];
-
-        // set the x coordinate where the pull down window will be
-        // drawn when activated
-
-        pd->xco = bar->xco;
+        pd       = bar->items[i];
+        pd->xco  = bar->xco;
         bar->xco += strlen((char *)pd->name) + 2;
-
-        // widest item in pulldown defines the width of the window
 
         for (j = 0; j < pd->count; j++)
         {
-            width = strlen((char *)pd->items[j]->name);
-
-            if (pd->width < width)
-            {
-                pd->width = width;
-            }
+            int16_t w = strlen((char *)pd->items[j]->name);
+            if (w > pd->width) pd->width = w;
         }
     }
 }
@@ -153,20 +121,15 @@ static void fix_menus(uC_screen_t *scr)
 
 void json_build_ui(void)
 {
-    int16_t result;
     uC_screen_t *scr = active_screen;
 
-    result = scr_alloc(scr);
-    if (result != 0)
-    {
+    if (scr_alloc(scr) != 0)
         json_error("Out of memory allocating screen");
-    }
 
     fix_windows(scr);
+
     if (scr->menu_bar != NULL)
-    {
         fix_menus(scr);
-    }
 }
 
 // -----------------------------------------------------------------------

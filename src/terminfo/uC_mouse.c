@@ -1,6 +1,7 @@
 // uC_mouse.c
 // -----------------------------------------------------------------------
 
+#include <sys/types.h>
 #include <unistd.h>
 
 #include "uCurses.h"
@@ -20,12 +21,14 @@ static const char mouse_disable[] = "\033[?1003l\033[?1006l\033[?1000l";
 
 API void uC_mouse_enable(void)
 {
-    (void)write(1, mouse_enable,  sizeof(mouse_enable)  - 1);
+    ssize_t w = write(1, mouse_enable,  sizeof(mouse_enable)  - 1);
+    (void)w;
 }
 
 API void uC_mouse_disable(void)
 {
-    (void)write(1, mouse_disable, sizeof(mouse_disable) - 1);
+    ssize_t w = write(1, mouse_disable, sizeof(mouse_disable) - 1);
+    (void)w;
 }
 
 // -----------------------------------------------------------------------

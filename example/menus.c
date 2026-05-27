@@ -40,6 +40,7 @@ static void run_demo(char *demo)
     int s = system(demo);
 
     uC_init_terminal();
+    uC_menu_init_keys();   // re-enable smkx and menu key bindings
     uC_curoff();
     uC_flush_keys();
     uC_clear();

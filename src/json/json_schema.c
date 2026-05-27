@@ -163,14 +163,14 @@ static const json_schema_t schema[] =
 #define NUM_SCHEMA  (sizeof(schema) / sizeof(schema[0]))
 
 // -----------------------------------------------------------------------
-// find the first schema entry matching hash in a context where the
-// current parent struct_type is allowed.  valid_parents == 0 marks a
-// root-only entry (matches when struct_type == -1, i.e. pmask == 0).
+// find the first schema entry matching hash where the current parent
+// is allowed.  pmask is a bitmask of the current parent struct_type
+// (0 at root, 1<<struct_type otherwise).  valid_parents == 0 in the
+// table means root-only: matches only when pmask == 0.
 // SF_BREAK entries always match regardless of parent.
 
-static const json_schema_t *find_schema(int32_t hash, int32_t stype)
+static const json_schema_t *find_schema(int32_t hash, uint32_t pmask)
 {
-    uint32_t pmask = (stype >= 0) ? (1u << (uint32_t)stype) : 0;
     uint16_t i;
 
     for (i = 0; i < NUM_SCHEMA; i++)
@@ -223,8 +223,16 @@ static void check_colon(void)
 
 static void json_schema_dispatch(void)
 {
-    const json_schema_t *s = find_schema(json_vars->json_hash,
-                                         json_state->struct_type);
+    // json_type_t is a packed (uint8_t) enum; the root state is initialised
+    // with struct_type = -1 which wraps to 255.  Use the stack count to
+    // detect root instead of a signed comparison against -1, then build
+    // a bitmask that is 0 at root or (1 << struct_type) otherwise.
+
+    uint32_t pmask = json_vars->json_stack.count
+        ? (1u << (uint32_t)json_state->struct_type)
+        : 0;
+
+    const json_schema_t *s = find_schema(json_vars->json_hash, pmask);
 
     if (!s)
     {

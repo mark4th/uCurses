@@ -21,6 +21,11 @@ int16_t scr_alloc(uC_screen_t *scr)
     size_t size;
     cell_t *p1, *p2;
 
+    if ((scr == NULL) || (scr->width <= 0) || (scr->height <= 0))
+    {
+        return -1;
+    }
+
     size = (scr->width * scr->height) * sizeof(*p1);
 
     // allocate buffers 1 and 2 for screen
@@ -149,7 +154,7 @@ void init_backdrop(uC_screen_t *scr, uC_window_t *win)
 {
     uC_attribs_t bdr_attrs =
     {
-        .flags.bits = (ATTR_FLAG_GRAY_FG | ATTR_FLAG_GRAY_BG),
+        .flags.bits = (uC_ATTR_FLAG_GRAY_FG | uC_ATTR_FLAG_GRAY_BG),
         .fg         = uC_GRAY_12,
         .bg         = uC_GRAY_06,
     };

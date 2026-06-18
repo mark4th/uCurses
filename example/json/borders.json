@@ -15,24 +15,24 @@
                 "gray-bg"   : 2
             },
 
-            "border-type"   : "BDR_DOUBLE",
+            "border-type"   : "uC_BDR_DOUBLE",
 
             "flags" :
             {
-               "flag" : "WIN_BOXED",
-               "flag" : "WIN_LOCKED"
+               "flag" : "uC_WIN_BOXED",
+               "flag" : "uC_WIN_LOCKED"
             }
         },
         "menu-bar" :
         {
             "attribs" :
             {
-                "fg"      : "BROWN",
+                "fg"      : "uC_COLOR_BROWN",
                 "gray-bg" : 5
             },
             "selected-attribs" :
             {
-                "fg"      : "CYAN",
+                "fg"      : "uC_COLOR_CYAN",
                 "gray-bg" : 8
             },
             "disabled-attribs" :
@@ -47,12 +47,12 @@
                     "name"    : "Demo",
                     "attribs" :
                     {
-                        "fg"      : "BROWN",
+                        "fg"      : "uC_COLOR_BROWN",
                         "gray-bg" : 5
                     },
                     "selected-attribs" :
                     {
-                        "fg"      : "CYAN",
+                        "fg"      : "uC_COLOR_CYAN",
                         "gray-bg" : 8
                     },
                     "disabled-attribs" :

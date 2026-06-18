@@ -22,11 +22,6 @@
 #define TI_NULL  (-1)       // null terminfo file string section entry
 
 // -----------------------------------------------------------------------
-// winch support is currently disabled because i cant get it to work right
-
-extern bool winch;
-
-// -----------------------------------------------------------------------
 // pointer to variables
 
 ti_vars_t *ti_vars;

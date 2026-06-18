@@ -9,7 +9,7 @@
 
 uC_attribs_t box_attrs =
 {
-    .flags.bits = (ATTR_FLAG_GRAY_FG | ATTR_FLAG_GRAY_BG),
+    .flags.bits = (uC_ATTR_FLAG_GRAY_FG | uC_ATTR_FLAG_GRAY_BG),
     .fg_gray    = uC_GRAY_07,
     .bg_gray    = uC_GRAY_03,
 };
@@ -18,7 +18,7 @@ uC_attribs_t box_attrs =
 
 API uC_attribs_t box_focus_attrs =
 {
-    .flags.bits = ATTR_FLAG_GRAY_BG,
+    .flags.bits = uC_ATTR_FLAG_GRAY_BG,
     .fg         = uC_COLOR_CYAN,
     .bg_gray    = uC_GRAY_03,
 };
@@ -28,7 +28,7 @@ API uC_attribs_t box_focus_attrs =
 
 uC_attribs_t view_attrs =
 {
-    .flags.bits = (ATTR_FLAG_GRAY_FG | ATTR_FLAG_GRAY_BG),
+    .flags.bits = (uC_ATTR_FLAG_GRAY_FG | uC_ATTR_FLAG_GRAY_BG),
     .fg         = uC_GRAY_07,
     .bg_gray    = uC_GRAY_03,
 };
@@ -38,7 +38,7 @@ uC_attribs_t view_attrs =
 
 uC_attribs_t vg_attrs =
 {
-    .flags.bits = (ATTR_FLAG_GRAY_FG | ATTR_FLAG_GRAY_BG),
+    .flags.bits = (uC_ATTR_FLAG_GRAY_FG | uC_ATTR_FLAG_GRAY_BG),
     .fg         = uC_GRAY_05,
     .bg_gray    = uC_GRAY_03,
 };
@@ -48,7 +48,7 @@ uC_attribs_t vg_attrs =
 
 uC_attribs_t btn_attrs =
 {
-    .flags.bits = (ATTR_FLAG_BOLD | ATTR_FLAG_GRAY_BG),
+    .flags.bits = (uC_ATTR_FLAG_BOLD | uC_ATTR_FLAG_GRAY_BG),
     .fg         = uC_COLOR_CYAN,
     .bg_gray    = uC_GRAY_06,
 };
@@ -58,7 +58,7 @@ uC_attribs_t btn_attrs =
 
 uC_attribs_t btn_focus_attrs =
 {
-    .flags.bits = (ATTR_FLAG_BOLD),
+    .flags.bits = (uC_ATTR_FLAG_BOLD),
     .fg         = uC_COLOR_GREEN,
     .bg         = uC_COLOR_BROWN,
 };
@@ -68,7 +68,7 @@ uC_attribs_t btn_focus_attrs =
 
 uC_attribs_t radio_attrs =
 {
-    .flags.bits = (ATTR_FLAG_GRAY_BG),
+    .flags.bits = (uC_ATTR_FLAG_GRAY_BG),
     .fg         = uC_COLOR_BROWN,
     .bg_gray    = uC_GRAY_03,
 };
@@ -78,7 +78,7 @@ uC_attribs_t radio_attrs =
 
 uC_attribs_t radio_focus_attrs =
 {
-    .flags.bits = (ATTR_FLAG_BOLD),
+    .flags.bits = (uC_ATTR_FLAG_BOLD),
     .fg         = uC_COLOR_LT_GREEN,
     .bg         = uC_COLOR_BROWN,
 };
@@ -88,7 +88,7 @@ uC_attribs_t radio_focus_attrs =
 
 uC_attribs_t text_attrs =
 {
-    .flags.bits = (ATTR_FLAG_GRAY_BG),
+    .flags.bits = (uC_ATTR_FLAG_GRAY_BG),
     .fg         = uC_COLOR_BROWN,
     .bg_gray    = uC_GRAY_04,
 };
@@ -98,7 +98,7 @@ uC_attribs_t text_attrs =
 
 uC_attribs_t text_focus_attrs =
 {
-    .flags.bits = (ATTR_FLAG_GRAY_BG),
+    .flags.bits = (uC_ATTR_FLAG_GRAY_BG),
     .fg         = uC_COLOR_BROWN,
     .bg         = uC_GRAY_06,
 };

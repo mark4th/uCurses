@@ -24,8 +24,6 @@
 #ifdef UC_JSON
 
 extern uC_screen_t *active_screen;
-extern bool winch;
-
 // -----------------------------------------------------------------------
 // should i make the state struct a child of the vars struct?
 
@@ -206,8 +204,6 @@ static void run_state_machine(void)
 
     do
     {
-        if (winch) { return; }
-
         // read next space delimited token from json data
         token();
 

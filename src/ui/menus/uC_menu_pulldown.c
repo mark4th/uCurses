@@ -104,7 +104,7 @@ int32_t bar_create_pd_win(uC_screen_t *scr, pulldown_t *pd)
         win->blank = 0x20;
 
         win->bdr_attrs.flags.bits =
-            (ATTR_FLAG_GRAY_FG | ATTR_FLAG_GRAY_BG | ATTR_FLAG_BOLD);
+            (uC_ATTR_FLAG_GRAY_FG | uC_ATTR_FLAG_GRAY_BG | uC_ATTR_FLAG_BOLD);
 
         win->bdr_attrs.fg = 11;
         win->bdr_attrs.bg = 4;

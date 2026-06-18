@@ -6036,7 +6036,7 @@ initialization of the applications user interface.
 
     static void fix_win(uC_screen_t *scr, uC_window_t *win)
 
-        Window positional coordinates can be expressed as "WIN_FAR" in the
+        Window positional coordinates can be expressed as "uC_WIN_FAR" in the
         JSON data.  This means the window is meant to be situated either
         as far right or as far down the screen as it can go and still fit
         within the bounds of that screen.

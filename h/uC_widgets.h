@@ -10,7 +10,11 @@
 #include <stdbool.h>
 
 #include "uCurses.h"
+#ifdef UC_MOUSE
 #include "uC_mouse.h"
+#else
+#define WIDGET_KEY_MOUSE 0x89
+#endif
 #include "uC_list.h"
 #include "uC_borders.h"
 #include "uC_screen.h"
@@ -262,7 +266,9 @@ void widget_close_view(uC_widget_view_t *view);
 void widget_scroll_view(uint8_t k);
 uint8_t tab_next_widget(void);
 uint8_t tab_prev_widget(void);
+#ifdef UC_MOUSE
 void uC_widget_mouse_handle(void);
+#endif
 
 void widget_set_attrs(uC_window_t *window, uC_widget_t *widget);
 

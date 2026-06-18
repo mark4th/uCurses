@@ -90,7 +90,9 @@ static uint8_t _widget_key(void)
     {
         case 0x09:             tab_next_widget();       break;
         case 0x88:             tab_prev_widget();       break;
+#ifdef UC_MOUSE
         case WIDGET_KEY_MOUSE: uC_widget_mouse_handle(); break;
+#endif
 
         default:
             k = handle_widget_key(k);

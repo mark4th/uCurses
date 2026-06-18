@@ -13,12 +13,10 @@
 #define SLEEP      (15000000)
 #define STATUS_X   (55)
 #define STATUS_Y   (0)
-#define WINCH_KEY  (0xec)  // randomly chosen value
 
 uC_screen_t *active_screen;
 uC_window_t *status_win;
-
-extern bool winch;
+static uint32_t resize_count;
 
 // -----------------------------------------------------------------------
 
@@ -42,18 +40,6 @@ static void on_fatal(const char *msg)
 }
 
 // -----------------------------------------------------------------------
-// user winch handler registered with the library (can be only one)
-
-// we cant process a winch here because it would take way too long so
-// instead we inject a key into the input stream to be handled in the main
-// loop below
-
-void my_winch(void)
-{
-    uC_set_key(WINCH_KEY);
-}
-
-// -----------------------------------------------------------------------
 
 static void init_main(void)
 {
@@ -68,31 +54,49 @@ static void init_main(void)
 
     uC_win_printf(status_win, "%fs%bs%0", 9, 3);
 
-//    uC_register_winch(my_winch);
 }
 
 // -----------------------------------------------------------------------
 // called by the main loop when it receives notification
 
+static void wait_winch_quiet(void)
+{
+    do
+    {
+        uC_winch_ack();
+        uC_clock_sleep(SLEEP * 4);
+    } while (uC_winch_pending());
+}
+
+// -----------------------------------------------------------------------
+
 static void do_winch(void)
 {
+    wait_winch_quiet();
+    resize_count++;
+
     uCurses_deInit();
     init_main();
 
-    hello();
-
-    winch = false;
+    if (active_screen != NULL)
+    {
+        hello();
+        uC_clear();
+        uC_scr_draw_screen(active_screen);
+    }
 }
 
 // -----------------------------------------------------------------------
 // lazy wait for key (spends a lot of time sleeping!)
 
-static void wait_key(void)
+static bool wait_key(void)
 {
-    while (uC_test_keys() == 0)
+    while ((uC_test_keys() == 0) && !uC_winch_pending())
     {
         uC_clock_sleep(SLEEP);
     }
+
+    return uC_winch_pending();
 }
 
 // -----------------------------------------------------------------------
@@ -103,7 +107,7 @@ static void main_loop(void)
     size_t z2;
     size_t z3;
     uint8_t k = 0;
-    char status[33];
+    char status[STAT_SIZE];
 
     uC_screen_t *scr;
 
@@ -115,23 +119,19 @@ static void main_loop(void)
         z2 = uC_zone_query(uC_MEM_ZONE_UI);
         z3 = uC_zone_query(uC_MEM_ZONE_JSON);
 
-        sprintf(status, "%zu %zu %zu ", z1, z2, z3);
+        snprintf(status, sizeof(status), "%zu %zu %zu R%" PRIu32 " ",
+            z1, z2, z3, resize_count);
         uC_set_status(status_win, status);
 
         uC_scr_draw_screen(scr);
 
-        wait_key();
-        k = uC_key();
-
-        // the user winch handler above cannot resize the user interface
-        // so it injects a randomly selected non-sensical key into the
-        // input stream which tells this main loop that it now needs to
-        // destroy and recreate the entire user interface.
-
-        if (k == WINCH_KEY)
+        if (wait_key())
         {
             do_winch();
+            continue;
         }
+
+        k = uC_key();
 
     } while (k != 0x1b);
 }

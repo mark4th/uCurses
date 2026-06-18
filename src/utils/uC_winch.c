@@ -1,33 +1,27 @@
-// uC_winch.h   - uCurses sigwinch handling
+// uC_winch.c   - uCurses SIGWINCH handling
 // -----------------------------------------------------------------------
 
-#include <unistd.h>
 #include <signal.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 #include "uCurses.h"
 
 // -----------------------------------------------------------------------
 
-user_winch_t user_winch;
-API bool winch;
-struct sigaction old_action;
+static user_winch_t user_winch;
+static struct sigaction old_action;
+static bool have_old_action;
+
+API volatile sig_atomic_t winch;
 
 // -----------------------------------------------------------------------
 
-void winch_handler(int sig)
+static void winch_handler(int sig)
 {
-    (void) sig;
+    (void)sig;
 
-    if (winch == false)
-    {
-        winch = true;           // set global flag == winch signal received
-
-        if (user_winch != NULL)
-        {
-            (user_winch)();     // dont do "too much" in here
-        }
-    }
+    winch = 1;
 }
 
 // -----------------------------------------------------------------------
@@ -36,40 +30,72 @@ void init_winch(void)
 {
     struct sigaction new_action;
 
-    winch = false;
+    winch = 0;
+    have_old_action = (sigaction(SIGWINCH, NULL, &old_action) == 0);
 
-    new_action.sa_handler = winch_handler;
+    if (have_old_action && (old_action.sa_handler == SIG_IGN))
+    {
+        return;
+    }
 
     sigemptyset(&new_action.sa_mask);
+    new_action.sa_handler = winch_handler;
     new_action.sa_flags = 0;
 
-    sigaction(SIGWINCH, NULL, &old_action);
-
-    if (old_action.sa_handler != SIG_IGN)
-    {
-        sigaction(SIGWINCH, &new_action, NULL);
-    }
+    sigaction(SIGWINCH, &new_action, NULL);
 }
 
 // -----------------------------------------------------------------------
 
 void de_init_winch(void)
 {
-    if (old_action.sa_handler != SIG_IGN)
+    if (have_old_action && (old_action.sa_handler != SIG_IGN))
     {
         sigaction(SIGWINCH, &old_action, NULL);
     }
 
+    have_old_action = false;
+    winch = 0;
+}
+
+// -----------------------------------------------------------------------
+
+API bool uC_winch_pending(void)
+{
+    return winch != 0;
+}
+
+// -----------------------------------------------------------------------
+
+API void uC_winch_ack(void)
+{
+    winch = 0;
+}
+
+// -----------------------------------------------------------------------
+
+API bool uC_winch_dispatch(void)
+{
+    if (!uC_winch_pending())
+    {
+        return false;
+    }
+
+    uC_winch_ack();
+
+    if (user_winch != NULL)
+    {
+        user_winch();
+    }
+
+    return true;
 }
 
 // -----------------------------------------------------------------------
 
 API void uC_register_winch(user_winch_t handler)
 {
-    if (handler != NULL)
-    {
-        user_winch = handler;
-    }
+    user_winch = handler;
 }
 
 // -----------------------------------------------------------------------

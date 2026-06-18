@@ -69,14 +69,14 @@ static void value_rgb(void)
 
     if (is_bg)
     {
-        a->flags.bits |= ATTR_FLAG_RGB_BG; a->flags.bits &= ~ATTR_FLAG_GRAY_BG;
+        a->flags.bits |= uC_ATTR_FLAG_RGB_BG; a->flags.bits &= ~uC_ATTR_FLAG_GRAY_BG;
         if (ktype == KEY_RED)   { a->bg_r = val; return; }
         if (ktype == KEY_GREEN) { a->bg_g = val; return; }
         a->bg_b = val;
     }
     else
     {
-        a->flags.bits |= ATTR_FLAG_RGB_FG; a->flags.bits &= ~ATTR_FLAG_GRAY_FG;
+        a->flags.bits |= uC_ATTR_FLAG_RGB_FG; a->flags.bits &= ~uC_ATTR_FLAG_GRAY_FG;
         if (ktype == KEY_RED)   { a->fg_r = val; return; }
         if (ktype == KEY_GREEN) { a->fg_g = val; return; }
         a->fg_b = val;
@@ -87,7 +87,7 @@ static void value_rgb(void)
 // xco, yco, width, height: all write int16_t fields in parent window.
 // xco/width use console_width for percentage; yco/height use console_height.
 // width/height mark the value with 0x8000 when a percentage so that
-// value_flag can shrink them by 2 if WIN_BOXED is also set.
+// value_flag can shrink them by 2 if uC_WIN_BOXED is also set.
 
 static void value_window_dim(void)
 {
@@ -320,21 +320,21 @@ static const uC_switch_t value_types[] =
 
 static int32_t constant_hash[] =
 {
-    // MENU_DISABLED  BDR_SINGLE   BDR_DOUBLE   BDR_CURVED,
-    0x0ed8a8cf,       0xfa264646,  0x4e4f416d,  0x8cb49b59,
-    // WIN_LOCKED     WIN_FILLED   WIN_BOXED    WIN_FAR,
-    0x901cbb7a,       0xd6b11d20,  0x6f7f7df8,  0x264116fc,
-    // WIN_FOCUS      WIN_NAMED
-    0x618e2ff0,       0xfd8f5c9f,
+    // uC_MENU_DISABLED  uC_BDR_SINGLE  uC_BDR_DOUBLE  uC_BDR_CURVED,
+    0xd4d2d628,         0x19a4bb97,    0x59a80744,    0x08832084,
+    // uC_WIN_LOCKED  uC_WIN_FILLED  uC_WIN_BOXED  uC_WIN_FAR,
+    0xc58d5fe7,      0xe32fa129,      0xe03a18cf,    0x61b63280,
+    // uC_WIN_FOCUS  uC_WIN_NAMED
+    0xbbcce08f,     0xc1cbb244,
 
-    // BLACK    RED         GREEN       BROWN
-    0xdc51d022, 0x5a235332, 0xe3671392, 0x4ff50adb,
-    // BLUE     MAGENTA     CYAN        WHITE
-    0xd1e100a9, 0x7dc1a602, 0x7cde54cc, 0xc2f8ecb8,
-    // GRAY     PINK        LT_GREEN    YELLOW
-    0xbabf7ce4, 0xf62236fd, 0x064123b9, 0x4d265959,
-    // LT_BLUE  LT_MAGENTA  CYAN        LT_WHITE
-    0x2805c15c, 0x186aeb45, 0x7cde54cc, 0x060a9a87
+    // uC_COLOR_BLACK  uC_COLOR_RED    uC_COLOR_GREEN  uC_COLOR_BROWN
+    0x353c0341,       0x1b8459ad,    0xd6a8fd81,      0xc3645914,
+    // uC_COLOR_BLUE   uC_COLOR_MAGENTA  uC_COLOR_CYAN   uC_COLOR_WHITE
+    0x043c5f94,       0x84d347dd,        0x88dc1e7d,     0x3b87c23f,
+    // uC_COLOR_GRAY   uC_COLOR_LT_RED  uC_COLOR_LT_GREEN  uC_COLOR_YELLOW
+    0x64e0ae05,       0xfbab764c,       0x05a9f85c,        0xe0283848,
+    // uC_COLOR_LT_BLUE  uC_COLOR_LT_MAGENTA  uC_COLOR_LT_CYAN  uC_COLOR_LT_WHITE
+    0x4d07c677,         0xdf77ab90,           0xf9424e06,       0x47891f9a
 };
 
 #define NUM_CONSTANTS (sizeof(constant_hash) / sizeof(constant_hash[0]))
@@ -342,13 +342,19 @@ static int32_t constant_hash[] =
 static int32_t constant_val[] =
 {
     uC_MENU_DISABLED, uC_BDR_SINGLE, uC_BDR_DOUBLE, uC_BDR_CURVED,
-    uC_WIN_LOCKED,    uC_WIN_FILLED, uC_WIN_BOXED,  WIN_FAR,
+    uC_WIN_LOCKED,    uC_WIN_FILLED, uC_WIN_BOXED,  uC_WIN_FAR,
     uC_WIN_FOCUS,     uC_WIN_NAMED,
 
     // color values
 
-    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
-    0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f
+    uC_COLOR_BLACK,    uC_COLOR_RED,
+    uC_COLOR_GREEN,    uC_COLOR_BROWN,
+    uC_COLOR_BLUE,     uC_COLOR_MAGENTA,
+    uC_COLOR_CYAN,     uC_COLOR_WHITE,
+    uC_COLOR_GRAY,     uC_COLOR_LT_RED,
+    uC_COLOR_LT_GREEN, uC_COLOR_YELLOW,
+    uC_COLOR_LT_BLUE,  uC_COLOR_LT_MAGENTA,
+    uC_COLOR_LT_CYAN,  uC_COLOR_LT_WHITE
 };
 
 // -----------------------------------------------------------------------

@@ -43,8 +43,8 @@ static void fix_win(uC_screen_t *scr, uC_window_t *win)
     uC_window_t *bd    = scr->backdrop;
     int16_t      fudge = 1 + ((bd != NULL) && (bd->flags & uC_WIN_BOXED));
 
-    if (win->xco == WIN_FAR) win->xco = scr->width  - (win->width  + fudge);
-    if (win->yco == WIN_FAR) win->yco = scr->height - (win->height + fudge);
+    if (win->xco == uC_WIN_FAR) win->xco = scr->width  - (win->width  + fudge);
+    if (win->yco == uC_WIN_FAR) win->yco = scr->height - (win->height + fudge);
 }
 
 // -----------------------------------------------------------------------
@@ -62,7 +62,8 @@ static void fix_windows(uC_screen_t *scr)
         win->width  = scr->width  - 2;
         win->height = scr->height - 2;
         win->screen = scr;
-        win_alloc(win);
+        if (win_alloc(win) != 0)
+            json_error("Unable to allocate backdrop window");
         uC_win_clear(win);
     }
 
@@ -73,7 +74,8 @@ static void fix_windows(uC_screen_t *scr)
         win = n1->payload;
         fix_win(scr, win);
         bounds_check(win);
-        win_alloc(win);
+        if (win_alloc(win) != 0)
+            json_error("Unable to allocate window");
         win->blank = 0x20;
         uC_win_clear(win);
         n1 = uC_list_scan(NULL, n1);

@@ -17,7 +17,6 @@
 #include "uC_utf8.h"
 #include "uC_widgets.h"
 
-extern bool winch;
 
 // -----------------------------------------------------------------------
 
@@ -147,7 +146,7 @@ static void scr_draw_windows(uC_list_t *list)
 
     while (n1 != NULL)
     {
-        if (winch) { break; }
+        if (uC_winch_pending()) { break; }
 
         win = (uC_window_t *)n1->payload;
         scr_draw_win(win);
@@ -326,7 +325,7 @@ static int16_t inner_update(uC_screen_t *scr, int16_t index, int16_t end)
 
     do
     {
-        // if (winch) { break; }
+        // if (uC_winch_pending()) { break; }
 
         f = scr_is_modified(scr, index);
 
@@ -385,7 +384,7 @@ static void outer_update(uC_screen_t *scr)
 
     do
     {
-        // if (winch)          // abort mission?
+        // if (uC_winch_pending()) // abort mission?
         // {
         //     break;
         // }
@@ -485,22 +484,18 @@ API void uC_scr_draw_screen(uC_screen_t *scr)
 
         outer_update(scr);
 
-        // winch not working yet
+        // If the terminal resized while this frame was being composed,
+        // discard the partial update.  The application can then rebuild
+        // from its layout source after noticing uC_winch_pending().
 
-        // if we got a window change notification while updating the
-        // screen then purge all output without writing it out to the
-        // system... otherwise go ahead and write it all out
-
-        // todo: rename flush because it sounds like its doing the same
-        // thing as purge.
-
-        // (winch)
-            // ? terminfo_purge()
-            // : uC_terminfo_flush();
-
-        // write all compiled escape sequences out to the terminal.
-
-        uC_terminfo_flush();
+        if (uC_winch_pending())
+        {
+            terminfo_purge();
+        }
+        else
+        {
+            uC_terminfo_flush();
+        }
     }
 }
 

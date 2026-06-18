@@ -34,15 +34,18 @@ typedef struct
 typedef enum
 {
     // bit positions
-    BOXED     = 0,   LOCKED    = 1,   NAMED = 2,
-    FILLED    = 3,   FOCUS     = 4,
+    uC_WIN_BIT_BOXED  = 0,
+    uC_WIN_BIT_LOCKED = 1,
+    uC_WIN_BIT_NAMED  = 2,
+    uC_WIN_BIT_FILLED = 3,
+    uC_WIN_BIT_FOCUS  = 4,
 
     // bit masks
-    uC_WIN_BOXED    = 1 << BOXED,   // has a border
-    uC_WIN_LOCKED   = 1 << LOCKED,  // scroll locked
-    uC_WIN_NAMED    = 1 << NAMED,   // window has a name
-    uC_WIN_FILLED   = 1 << FILLED,  // backfilled with SOLID character
-    uC_WIN_FOCUS    = 1 << FOCUS,   // window has focus
+    uC_WIN_BOXED    = 1 << uC_WIN_BIT_BOXED,   // has a border
+    uC_WIN_LOCKED   = 1 << uC_WIN_BIT_LOCKED,  // scroll locked
+    uC_WIN_NAMED    = 1 << uC_WIN_BIT_NAMED,   // window has a name
+    uC_WIN_FILLED   = 1 << uC_WIN_BIT_FILLED,  // backfilled with SOLID character
+    uC_WIN_FOCUS    = 1 << uC_WIN_BIT_FOCUS,   // window has focus
 } __attribute__((packed)) win_flags_t;
 
 // -----------------------------------------------------------------------

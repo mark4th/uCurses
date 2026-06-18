@@ -27,7 +27,7 @@ uC_attribs_t old_attrs;
 
 API uC_attribs_t uC_attrs_normal =
 {
-    .flags.bits = ATTR_FLAG_GRAY_BG,
+    .flags.bits = uC_ATTR_FLAG_GRAY_BG,
     .fg         = uC_COLOR_BROWN,
     .bg_gray    = uC_GRAY_05,
 };
@@ -37,7 +37,7 @@ API uC_attribs_t uC_attrs_normal =
 
 API uC_attribs_t uC_attrs_selected =
 {
-    .flags.bits = ATTR_FLAG_GRAY_BG,
+    .flags.bits = uC_ATTR_FLAG_GRAY_BG,
     .fg         = uC_COLOR_CYAN,
     .bg_gray    = uC_GRAY_08,
 };
@@ -47,7 +47,7 @@ API uC_attribs_t uC_attrs_selected =
 
 API uC_attribs_t uC_attrs_disabled =
 {
-    .flags.bits = (ATTR_FLAG_GRAY_BG | ATTR_FLAG_GRAY_FG),
+    .flags.bits = (uC_ATTR_FLAG_GRAY_BG | uC_ATTR_FLAG_GRAY_FG),
     .fg_gray    = uC_GRAY_08,
     .bg_gray    = uC_GRAY_04,
 };
@@ -308,7 +308,7 @@ API void uC_attr_clr_flags(uC_attribs_t *attribs, uint16_t bits)
 API void uC_set_fg(uC_attribs_t *attribs, uC_color_t color)
 {
     attribs->fg = color;
-    uC_attr_clr_flags(attribs, (ATTR_FLAG_RGB_FG | ATTR_FLAG_GRAY_FG));
+    uC_attr_clr_flags(attribs, (uC_ATTR_FLAG_RGB_FG | uC_ATTR_FLAG_GRAY_FG));
 }
 
 // -----------------------------------------------------------------------
@@ -316,7 +316,7 @@ API void uC_set_fg(uC_attribs_t *attribs, uC_color_t color)
 API void uC_set_bg(uC_attribs_t *attribs, uC_color_t color)
 {
     attribs->bg = color;
-    uC_attr_clr_flags(attribs, (ATTR_FLAG_RGB_BG | ATTR_FLAG_GRAY_BG));
+    uC_attr_clr_flags(attribs, (uC_ATTR_FLAG_RGB_BG | uC_ATTR_FLAG_GRAY_BG));
 }
 
 // -----------------------------------------------------------------------
@@ -324,7 +324,7 @@ API void uC_set_bg(uC_attribs_t *attribs, uC_color_t color)
 API void uC_set_gray_fg(uC_attribs_t *attr, uC_colors_gray_t color)
 {
     attr->fg_gray = color;
-    uC_attr_set_flags(attr, ATTR_FLAG_GRAY_FG);
+    uC_attr_set_flags(attr, uC_ATTR_FLAG_GRAY_FG);
 }
 
 // -----------------------------------------------------------------------
@@ -332,7 +332,7 @@ API void uC_set_gray_fg(uC_attribs_t *attr, uC_colors_gray_t color)
 API void uC_set_gray_bg(uC_attribs_t *attr, uC_colors_gray_t color)
 {
     attr->bg_gray = color;
-    uC_attr_set_flags(attr, ATTR_FLAG_GRAY_BG);
+    uC_attr_set_flags(attr, uC_ATTR_FLAG_GRAY_BG);
 }
 
 // -----------------------------------------------------------------------
@@ -343,7 +343,7 @@ API void uC_set_rgb_fg(uC_attribs_t *attr, uC_color_t r, uC_color_t g,
     attr->fg_r = r;
     attr->fg_g = g;
     attr->fg_b = b;
-    uC_attr_set_flags(attr, ATTR_FLAG_RGB_FG);
+    uC_attr_set_flags(attr, uC_ATTR_FLAG_RGB_FG);
 }
 
 // -----------------------------------------------------------------------
@@ -354,7 +354,7 @@ API void uC_set_rgb_bg(uC_attribs_t *attr, uC_color_t r, uC_color_t g,
     attr->bg_r = r;
     attr->bg_g = g;
     attr->bg_b = b;
-    uC_attr_set_flags(attr, ATTR_FLAG_RGB_BG);
+    uC_attr_set_flags(attr, uC_ATTR_FLAG_RGB_BG);
 }
 
 // =======================================================================

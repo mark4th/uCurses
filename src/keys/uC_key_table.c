@@ -11,7 +11,9 @@
 #include "uC_keys.h"
 #include "uC_alloc.h"
 #include "uC_terminfo.h"
+#ifdef UC_MOUSE
 #include "uC_mouse.h"
+#endif
 
 // -----------------------------------------------------------------------
 
@@ -149,10 +151,12 @@ API uint8_t uC_key(void)
             ti_vars->num_k = 0;
             return 0;
         }
+#ifdef UC_MOUSE
         else if (uC_mouse_parse())
         {
             break;
         }
+#endif
     }
 
     // no matter what value your terminal returns for a press of the

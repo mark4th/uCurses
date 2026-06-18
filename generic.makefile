@@ -1,4 +1,6 @@
 # We are not using any builtins
+SHELL := /bin/bash
+
 MAKEFLAGS:= --warn-undefined-variables \
 	--no-builtin-rules \
 	--no-builtin-variables \
@@ -12,13 +14,14 @@ MAKEFLAGS:= --warn-undefined-variables \
 CC := $(shell which clang >/dev/null && CC=$${CC:-clang}; echo $$CC)
 CC_LD := $(shell which lld >/dev/null && CC_LD=$${CC_LLD:-lld}; echo $$CC_LD)
 
-PROJECT_ROOT := $(PWD)
+PROJECT_ROOT := $(CURDIR)
 
 BUILD := $(PROJECT_ROOT)/build
 MESON_OPT :=
 NINJA_OPT := --verbose
 BUILD_TOUCHED := $(BUILD)/.touched
 MESON_BUILD := meson.build
+MESON_OPTIONS := meson_options.txt
 
 export CC
 export CC_LD
@@ -36,6 +39,7 @@ default: .build
 	echo MESON_OPT=$(MESON_OPT)
 	echo NINJA_OPT=$(NINJA_OPT)
 	echo MESON_BUILD=$(MESON_BUILD)
+	echo MESON_OPTIONS=$(MESON_OPTIONS)
 	echo BUILD_TOUCHED=$(BUILD_TOUCHED)
 
 format:
@@ -48,7 +52,7 @@ clean:
 	rm -rf $(BUILD)
 
 
-$(BUILD_TOUCHED): $(MESON_BUILD) generic.makefile Makefile
+$(BUILD_TOUCHED): $(MESON_BUILD) $(MESON_OPTIONS) generic.makefile Makefile
 	make clean
 	$_
 	meson setup $(BUILD) $(MESON_OPT)

@@ -63,7 +63,7 @@ backdrop :
 {
     "attribs"        : |attribs|
     "border-attribs" : |attribs|
-    "border-type"    : BDR_SINGLE | BDR_DOUBLE | BDR_ROUND
+    "border-type"    : uC_BDR_SINGLE | uC_BDR_DOUBLE | uC_BDR_CURVED
 }
 
 # ------------------------------------------------------------------------
@@ -77,7 +77,7 @@ menu-item :
     # optional flag to disable this item
     "flags"    :
     {
-       flag : MENU_DISABLED
+       flag : uC_MENU_DISABLED
     }
 }
 
@@ -90,7 +90,7 @@ pulldown :
     # optional flag to disable this item
     "flags"  :
     {
-       "flag" : "MENU_DISABLED"
+       "flag" : "uC_MENU_DISABLED"
     },
 
     "attribs"          : |attribs| ,
@@ -133,15 +133,15 @@ window :
     "xco"    : 80 to screen width - width   | centered around % of screen width ,
     "yco"    : 80 to screen height - height | centered around % of secrrn width ,
 
-    "border-type"    : BDR_SINGLE | BDR_DOUBLE | BDR_ROUND ,
+    "border-type"    : uC_BDR_SINGLE | uC_BDR_DOUBLE | uC_BDR_CURVED ,
     "attribs"        : |attribs| ,
     "border-attribs" : |attribs| ,
 
     "flags" :
     {
-       "flag" : "WIN_LOCKED" ,
-       "flag" : "WIN_BOXED" ,
-       "flag" : "WIN_FILLED"
+       "flag" : "uC_WIN_LOCKED" ,
+       "flag" : "uC_WIN_BOXED" ,
+       "flag" : "uC_WIN_FILLED"
     }
 }
 

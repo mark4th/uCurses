@@ -86,11 +86,11 @@ void console_set_flags(uint16_t flags)
 
 // -----------------------------------------------------------------------
 
-API void uC_console_set_ul(void)   { console_set_flags(ATTR_FLAG_UL);   }
-API void uC_console_set_rev(void)  { console_set_flags(ATTR_FLAG_REV);  }
-API void uC_console_set_bold(void) { console_set_flags(ATTR_FLAG_BOLD); }
-API void uC_console_clr_ul(void)   { console_clr_flags(ATTR_FLAG_UL);   }
-API void uC_console_clr_rev(void)  { console_clr_flags(ATTR_FLAG_REV);  }
-API void uC_console_clr_bold(void) { console_clr_flags(ATTR_FLAG_BOLD); }
+API void uC_console_set_ul(void)   { console_set_flags(uC_ATTR_FLAG_UL);   }
+API void uC_console_set_rev(void)  { console_set_flags(uC_ATTR_FLAG_REV);  }
+API void uC_console_set_bold(void) { console_set_flags(uC_ATTR_FLAG_BOLD); }
+API void uC_console_clr_ul(void)   { console_clr_flags(uC_ATTR_FLAG_UL);   }
+API void uC_console_clr_rev(void)  { console_clr_flags(uC_ATTR_FLAG_REV);  }
+API void uC_console_clr_bold(void) { console_clr_flags(uC_ATTR_FLAG_BOLD); }
 
 // =======================================================================

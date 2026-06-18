@@ -11,7 +11,7 @@
                 "xco"    : 1,               // within bounds of backdrop border
                 "yco"    : 1,
 
-                "border-type" : "BDR_SINGLE",
+                "border-type" : "uC_BDR_SINGLE",
 
                 "attribs" :
                 {
@@ -27,8 +27,8 @@
 
                 "flags" :
                 {
-                   "flag" : "WIN_BOXED",
-                   "flag" : "WIN_LOCKED"
+                   "flag" : "uC_WIN_BOXED",
+                   "flag" : "uC_WIN_LOCKED"
                 }
             },
         },
@@ -36,12 +36,12 @@
         {
             "attribs" :
             {
-                "fg"      : "BROWN",
+                "fg"      : "uC_COLOR_BROWN",
                 "gray-bg" : 5
             },
             "selected-attribs" :
             {
-                "fg"      : "CYAN",
+                "fg"      : "uC_COLOR_CYAN",
                 "gray-bg" : 8
             },
             "disabled-attribs" :
@@ -56,12 +56,12 @@
                     "name"    : "Demos",
                     "attribs" :
                     {
-                        "fg"      : "BROWN",
+                        "fg"      : "uC_COLOR_BROWN",
                         "gray-bg" : 5
                     },
                     "selected-attribs" :
                     {
-                        "fg"      : "CYAN",
+                        "fg"      : "uC_COLOR_CYAN",
                         "gray-bg" : 8
                     },
                     "disabled-attribs" :

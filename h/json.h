@@ -21,7 +21,7 @@
 
 enum
 {
-    WIN_FAR  = 0x7fff
+    uC_WIN_FAR  = 0x7fff
 } __attribute__((__packed__)) ;
 
 // -----------------------------------------------------------------------
@@ -145,7 +145,6 @@ void strip_quotes(int16_t len);
 void json_de_tab(char *s, int len);
 void token(void);
 void json_state_value(void);
-void json_validate(uint32_t parent, uint32_t child);
 void json_file_create_ui(char *path, fp_finder_t fp);
 void json_mem_create_ui(char *json_data, int len, fp_finder_t fp);
 

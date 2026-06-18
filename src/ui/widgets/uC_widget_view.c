@@ -101,7 +101,9 @@ API bool uC_widget_view_add_widget(uC_widget_view_t *view,
     else
     {
         if (sequence)
+        {
             sync_seq(sequence);
+        }
         widget->sequence = sequence ? sequence : auto_sequence();
     }
 

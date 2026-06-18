@@ -11,7 +11,9 @@
 #include "uC_keys.h"
 #include "uC_alloc.h"
 #include "uC_terminfo.h"
+#ifdef UC_MOUSE
 #include "uC_mouse.h"
+#endif
 
 // -----------------------------------------------------------------------
 
@@ -116,6 +118,18 @@ API uint8_t uC_key(void)
         memset(ti_vars->keybuff, 0, KEY_BUFF_SZ);
         uC_read_keys();     // read key or sequence into keyboard buff
 
+        // if the first byte is a regular character (not 0x1b) then we
+        // have a normal keypress that may have arrived alongside mouse
+        // event bytes (all-motion mouse generates bytes continuously).
+        // truncate to one byte and return it immediately rather than
+        // looping, which would memset the buffer and lose the keypress.
+
+        if (ti_vars->keybuff[0] != 0x1b)
+        {
+            ti_vars->num_k = 1;
+            break;
+        }
+
         c = match_key();    // compare input with all handled escapes
 
         if (c != -1)        // if escape sequence is one we handle
@@ -137,10 +151,12 @@ API uint8_t uC_key(void)
             ti_vars->num_k = 0;
             return 0;
         }
+#ifdef UC_MOUSE
         else if (uC_mouse_parse())
         {
             break;
         }
+#endif
     }
 
     // no matter what value your terminal returns for a press of the

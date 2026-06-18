@@ -20,11 +20,12 @@
 #include "json.h"
 
 // -----------------------------------------------------------------------
+// todo add a linter as a built in checker for application developers
+// -----------------------------------------------------------------------
 
 #ifdef UC_JSON
 
 extern uC_screen_t *active_screen;
-extern bool winch;
 
 // -----------------------------------------------------------------------
 // should i make the state struct a child of the vars struct?
@@ -33,7 +34,7 @@ json_vars_t *json_vars;
 json_state_t *json_state;
 
 // -----------------------------------------------------------------------
-// fnv-1a hash values for various json syntax entities
+// fnv-1 hash values for various json syntax entities
 
 const int32_t json_syntax[] =
 {
@@ -175,6 +176,7 @@ void json_state_r_brace(void)
         populate_parent();
         json_pop();
 
+        // todo:
         // i am not sure how json_state can ever be null here
         // but I think this was a "bug fix" from way back where
         // i intended to investigate further and forgot
@@ -206,8 +208,6 @@ static void run_state_machine(void)
 
     do
     {
-        if (winch) { return; }
-
         // read next space delimited token from json data
         token();
 

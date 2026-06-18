@@ -2,10 +2,20 @@ include generic.makefile
 
 project = uCurses
 shared_object=lib$(project).so
+example_bins = demo scroll console widgets window raycast dots mandel borders lion list_demo
 
 examples: .build
 	$_
-	cd $(BUILD) && ninja examples
+	for exe in $(example_bins); do
+		rm -f "$(PROJECT_ROOT)/example/$$exe"
+	done
+	cd $(BUILD)
+	ninja examples
+	for exe in example/*; do
+		if [[ -f "$$exe" && -x "$$exe" ]]; then
+			cp -f "$$exe" "$(PROJECT_ROOT)/example/"
+		fi
+	done
 
 tests: .build
 	$_

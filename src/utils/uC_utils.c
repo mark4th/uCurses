@@ -10,7 +10,9 @@
 #include <stdlib.h>
 
 #include "uCurses.h"
+#ifdef UC_MOUSE
 #include "uC_mouse.h"
+#endif
 #include "uC_terminfo.h"
 #include "uC_utf8.h"
 #include "uC_utils.h"
@@ -93,7 +95,9 @@ API void uC_init_terminal(void)
 
 API void uC_restore_terminal(void)
 {
+#ifdef UC_MOUSE
     uC_mouse_disable();
+#endif
     uC_rmkx();
     tcsetattr(STDIN_FILENO, TCSANOW, &term_save);
     uC_curon();

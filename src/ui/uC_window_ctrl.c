@@ -15,7 +15,7 @@ int16_t win_alloc(uC_window_t *win)
     size_t size;
     int16_t rv = -1;        // assume failure
 
-    if (win != NULL)
+    if ((win != NULL) && (win->width > 0) && (win->height > 0))
     {
         size = (win->width * win->height) * sizeof(cell_t);
         p = uC_alloc(uC_MEM_ZONE_UI, size);

@@ -17,12 +17,12 @@
 
             "blank" : 9618,
 
-            "border-type"   : "BDR_DOUBLE",
+            "border-type"   : "uC_BDR_DOUBLE",
 
             "flags" :
             {
-               "flag" : "WIN_BOXED",
-               "flag" : "WIN_LOCKED"
+               "flag" : "uC_WIN_BOXED",
+               "flag" : "uC_WIN_LOCKED"
             }
         },
 
@@ -36,23 +36,23 @@
                 "xco"    : 2,               // within bounds of backdrop border
                 "yco"    : 2,
 
-                "border-type" : "BDR_SINGLE",
+                "border-type" : "uC_BDR_SINGLE",
 
                 "attribs" :
                 {
-                    "fg" : "WHITE",
-                    "bg" : "BROWN"
+                    "fg" : "uC_COLOR_WHITE",
+                    "bg" : "uC_COLOR_BROWN"
                 },
 
                 "border-attribs" :
                 {
-                    "fg"      : "YELLOW",
+                    "fg"      : "uC_COLOR_YELLOW",
                     "gray-bg" : 6
                 },
 
                 "flags" :
                 {
-                   "flag" : "WIN_BOXED"
+                   "flag" : "uC_WIN_BOXED"
                 }
             },
 
@@ -64,23 +64,23 @@
                 "xco" : "FAR",   // as far right/down as it can go and
                 "yco" : "FAR",   // still be completely within bounds
 
-                "border-type" : "BDR_SINGLE",
+                "border-type" : "uC_BDR_SINGLE",
 
                 "attribs" :
                 {
-                    "fg" : "LT_WHITE",
-                    "bg" : "GRAY"
+                    "fg" : "uC_COLOR_LT_WHITE",
+                    "bg" : "uC_COLOR_GRAY"
                 },
 
                 "border-attribs" :
                 {
-                    "fg"      : "LT_GREEN",
+                    "fg"      : "uC_COLOR_LT_GREEN",
                     "gray-bg" : 6
                 },
 
                 "flags" :
                 {
-                   "flag" : "WIN_BOXED"
+                   "flag" : "uC_WIN_BOXED"
                 }
             }
         },
@@ -88,12 +88,12 @@
         {
             "attribs" :
             {
-                "fg"      : "BROWN",
+                "fg"      : "uC_COLOR_BROWN",
                 "gray-bg" : 5
             },
             "selected-attribs" :
             {
-                "fg"      : "CYAN",
+                "fg"      : "uC_COLOR_CYAN",
                 "gray-bg" : 8
             },
             "disabled-attribs" :
@@ -108,12 +108,12 @@
                     "name"    : "Demos",
                     "attribs" :
                     {
-                        "fg"      : "BROWN",
+                        "fg"      : "uC_COLOR_BROWN",
                         "gray-bg" : 5
                     },
                     "selected-attribs" :
                     {
-                        "fg"      : "CYAN",
+                        "fg"      : "uC_COLOR_CYAN",
                         "gray-bg" : 8
                     },
                     "disabled-attribs" :

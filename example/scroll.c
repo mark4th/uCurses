@@ -34,14 +34,14 @@
 
 static uC_attribs_t bdr_attrs =
 {
-    .flags.bits = ATTR_FLAG_GRAY_BG,
+    .flags.bits = uC_ATTR_FLAG_GRAY_BG,
     .fg         = uC_COLOR_CYAN,
     .bg_gray    = uC_GRAY_04,
 };
 
 static uC_attribs_t bdr_focus_attrs =
 {
-    .flags.bits = ATTR_FLAG_GRAY_BG,
+    .flags.bits = uC_ATTR_FLAG_GRAY_BG,
     .fg         = uC_COLOR_LT_CYAN,
     .bg_gray    = uC_GRAY_06,
 };

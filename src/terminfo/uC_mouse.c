@@ -1,6 +1,7 @@
 // uC_mouse.c
 // -----------------------------------------------------------------------
 
+#include <sys/types.h>
 #include <unistd.h>
 
 #include "uCurses.h"
@@ -18,14 +19,20 @@ API uC_mouse_event_t uC_mouse_event;
 static const char mouse_enable[]  = "\033[?1000h\033[?1006h\033[?1003h";
 static const char mouse_disable[] = "\033[?1003l\033[?1006l\033[?1000l";
 
+// -----------------------------------------------------------------------
+
 API void uC_mouse_enable(void)
 {
-    (void)write(1, mouse_enable,  sizeof(mouse_enable)  - 1);
+    ssize_t w = write(1, mouse_enable,  sizeof(mouse_enable)  - 1);
+    (void)w;
 }
+
+// -----------------------------------------------------------------------
 
 API void uC_mouse_disable(void)
 {
-    (void)write(1, mouse_disable, sizeof(mouse_disable) - 1);
+    ssize_t w = write(1, mouse_disable, sizeof(mouse_disable) - 1);
+    (void)w;
 }
 
 // -----------------------------------------------------------------------
@@ -46,19 +53,34 @@ bool uC_mouse_parse(void)
     if (buf[1] != '[')  return false;
     if (buf[2] != '<')  return false;
 
-    while (i < num && buf[i] != ';') btn = btn * 10 + (buf[i++] - '0');
-    if (i >= num || buf[i] != ';')   return false;
+    while (i < num && buf[i] != ';')
+    {
+        btn = btn * 10 + (buf[i++] - '0');
+    }
+    if (i >= num || buf[i] != ';')
+    {
+        return false;
+    }
     i++;
 
-    while (i < num && buf[i] != ';') x = x * 10 + (buf[i++] - '0');
-    if (i >= num || buf[i] != ';')   return false;
+    while (i < num && buf[i] != ';')
+    {
+        x = x * 10 + (buf[i++] - '0');
+    }
+    if (i >= num || buf[i] != ';')
+    {
+        return false;
+    }
     i++;
 
     while (i < num && buf[i] != 'M' && buf[i] != 'm')
     {
         y = y * 10 + (buf[i++] - '0');
     }
-    if (i >= num || (buf[i] != 'M' && buf[i] != 'm')) return false;
+    if (i >= num || (buf[i] != 'M' && buf[i] != 'm'))
+    {
+        return false;
+    }
 
     uC_mouse_event.button  = (uint8_t)btn;
     uC_mouse_event.x       = (int16_t)x;

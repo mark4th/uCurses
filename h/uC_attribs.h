@@ -46,16 +46,18 @@ typedef enum
 
 enum
 {
-    UL,     REV,     BOLD,    RGB_FG,
-    RGB_BG, GRAY_FG, GRAY_BG,
+    uC_ATTR_BIT_UL,      uC_ATTR_BIT_REV,
+    uC_ATTR_BIT_BOLD,    uC_ATTR_BIT_RGB_FG,
+    uC_ATTR_BIT_RGB_BG,  uC_ATTR_BIT_GRAY_FG,
+    uC_ATTR_BIT_GRAY_BG,
 
-    ATTR_FLAG_UL      = (1 << UL),
-    ATTR_FLAG_REV     = (1 << REV),
-    ATTR_FLAG_BOLD    = (1 << BOLD),
-    ATTR_FLAG_RGB_FG  = (1 << RGB_FG),
-    ATTR_FLAG_RGB_BG  = (1 << RGB_BG),
-    ATTR_FLAG_GRAY_FG = (1 << GRAY_FG),
-    ATTR_FLAG_GRAY_BG = (1 << GRAY_BG),
+    uC_ATTR_FLAG_UL      = (1 << uC_ATTR_BIT_UL),
+    uC_ATTR_FLAG_REV     = (1 << uC_ATTR_BIT_REV),
+    uC_ATTR_FLAG_BOLD    = (1 << uC_ATTR_BIT_BOLD),
+    uC_ATTR_FLAG_RGB_FG  = (1 << uC_ATTR_BIT_RGB_FG),
+    uC_ATTR_FLAG_RGB_BG  = (1 << uC_ATTR_BIT_RGB_BG),
+    uC_ATTR_FLAG_GRAY_FG = (1 << uC_ATTR_BIT_GRAY_FG),
+    uC_ATTR_FLAG_GRAY_BG = (1 << uC_ATTR_BIT_GRAY_BG),
 } __attribute__((__packed__)) ;
 
 // -----------------------------------------------------------------------

@@ -8,6 +8,8 @@ project(
 )
 project_description = 'TUI app builder for consoles and terminals.'
 
+mouse_enabled = get_option('mouse')
+
 build_args = [
     '-fno-inline',
     '-Werror',
@@ -44,6 +46,10 @@ build_args += [
     '-DUC_WIDGETS'
 ]
 
+if mouse_enabled
+    build_args += ['-DUC_MOUSE']
+endif
+
 message('@0@: @1@'.format(compiler.get_id(), build_args))
 
 
@@ -75,6 +81,24 @@ ui_source_files      = source_ui.stdout().strip().split('\n')
 menu_source_files    = source_menu.stdout().strip().split('\n')
 wdgt_source_files    = source_wdgt.stdout().strip().split('\n')
 util_source_files    = source_util.stdout().strip().split('\n')
+
+if not mouse_enabled
+    filtered_ti_source_files = []
+    foreach source_file : ti_source_files
+        if source_file != 'src/terminfo/uC_mouse.c'
+            filtered_ti_source_files += source_file
+        endif
+    endforeach
+    ti_source_files = filtered_ti_source_files
+
+    filtered_wdgt_source_files = []
+    foreach source_file : wdgt_source_files
+        if source_file != 'src/ui/widgets/uC_widget_mouse.c'
+            filtered_wdgt_source_files += source_file
+        endif
+    endforeach
+    wdgt_source_files = filtered_wdgt_source_files
+endif
 
 shared_object = shared_library(
     meson.project_name(),

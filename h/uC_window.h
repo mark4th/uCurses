@@ -18,7 +18,7 @@
 typedef struct
 {
     uC_attribs_t attrs;     // bold, underline, gray scale, rgb
-    uint32_t code;           // utf-8 codepoint
+    uint32_t code;          // utf-8 codepoint
 } cell_t;
 
 // -----------------------------------------------------------------------

@@ -43,8 +43,14 @@ static void fix_win(uC_screen_t *scr, uC_window_t *win)
     uC_window_t *bd    = scr->backdrop;
     int16_t      fudge = 1 + ((bd != NULL) && (bd->flags & uC_WIN_BOXED));
 
-    if (win->xco == uC_WIN_FAR) win->xco = scr->width  - (win->width  + fudge);
-    if (win->yco == uC_WIN_FAR) win->yco = scr->height - (win->height + fudge);
+    if (win->xco == uC_WIN_FAR)
+    {
+        win->xco = scr->width  - (win->width  + fudge);
+    }
+    if (win->yco == uC_WIN_FAR)
+    {
+        win->yco = scr->height - (win->height + fudge);
+    }
 }
 
 // -----------------------------------------------------------------------

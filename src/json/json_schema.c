@@ -30,16 +30,21 @@ extern const int32_t  json_syntax[3];
 #define PM(x)  (1u << (x))
 
 // all five attrib container types (attribs / b_attribs / s_attribs / ...)
-#define PM_ATTRIB_TYPES  (PM(STRUCT_ATTRIBS)   | PM(STRUCT_B_ATTRIBS) | \
-                          PM(STRUCT_S_ATTRIBS)  | PM(STRUCT_F_ATTRIBS) | \
-                          PM(STRUCT_D_ATTRIBS))
+#define PM_ATTRIB_TYPES  \
+    (PM(STRUCT_ATTRIBS)   | PM(STRUCT_B_ATTRIBS) | \
+     PM(STRUCT_S_ATTRIBS)  | PM(STRUCT_F_ATTRIBS) | \
+     PM(STRUCT_D_ATTRIBS))
 
 // objects that can directly contain an attribs block
-#define PM_ATTRIB_HOSTS  (PM(STRUCT_BACKDROP)  | PM(STRUCT_WINDOW) | \
-                          PM(STRUCT_PULLDOWN)   | PM(STRUCT_MENU_BAR))
+#define PM_ATTRIB_HOSTS  \
+    (PM(STRUCT_BACKDROP)  | PM(STRUCT_WINDOW) | \
+     PM(STRUCT_PULLDOWN)   | PM(STRUCT_MENU_BAR))
 
 // -----------------------------------------------------------------------
 // schema entry flags
+
+// would this be better an a packed enum or is this actually
+// better?
 
 #define SF_OBJ   0x01   // this is an object: expects a { } block
 #define SF_ROOT  0x02   // must be outermost object (stack must be empty)
@@ -58,7 +63,7 @@ typedef struct
 } json_schema_t;
 
 // -----------------------------------------------------------------------
-// Hash values are the same FNV-1a values already in the existing
+// Hash values are the same FNV-1 values already in the existing
 // object_types[] and key_types[] dispatch tables in the old json_key.c.
 // Objects are listed first so that when two entries share the same hash
 // (the "flags" key), the object entry wins for ambiguous parent contexts.
@@ -67,11 +72,14 @@ static const json_schema_t schema[] =
 {
     // ---- objects (SF_OBJ) -----------------------------------------------
 
-    { 0x2ff97421, 0,
-      STRUCT_SCREEN,    sizeof(uC_screen_t),   SF_OBJ | SF_ROOT },
+    {
+        0x2ff97421, 0,  STRUCT_SCREEN, sizeof(uC_screen_t),
+        SF_OBJ | SF_ROOT
+    },
 
-    { 0x1025ba8c, PM(STRUCT_SCREEN),
-      STRUCT_WINDOWS,   0,                     SF_OBJ           },
+    {
+        0x1025ba8c, PM(STRUCT_SCREEN), STRUCT_WINDOWS,
+        0, SF_OBJ           },
 
     { 0x8ae7f465, PM(STRUCT_WINDOWS),
       STRUCT_WINDOW,    sizeof(uC_window_t),   SF_OBJ           },
@@ -176,20 +184,28 @@ static const json_schema_t *find_schema(int32_t hash, uint32_t pmask)
     for (i = 0; i < NUM_SCHEMA; i++)
     {
         if (schema[i].hash != hash)
+        {
             continue;
+        }
 
         if (schema[i].flags & SF_BREAK)
+        {
             return &schema[i];
+        }
 
         if (!schema[i].valid_parents)
         {
             if (!pmask)
+            {
                 return &schema[i];   // root-only entry, root context
+            }
             continue;
         }
 
         if (schema[i].valid_parents & pmask)
+        {
             return &schema[i];
+        }
     }
 
     return NULL;
@@ -248,7 +264,7 @@ static void json_schema_dispatch(void)
         return;
     }
 
-    // --- screen: must be outermost, one-per-file, needs extra init -------
+    // --- screen: must be outermost, one-per-file, needs extra init -----
 
     if (s->flags & SF_ROOT)
     {
@@ -273,7 +289,7 @@ static void json_schema_dispatch(void)
         return;
     }
 
-    // --- silently consumed key (e.g. "order" inside a backdrop) ---------
+    // --- silently consumed key (e.g. "order" inside a backdrop) --------
     // push a throwaway state so json_state_value's json_pop() is balanced
 
     if ((s->flags & SF_SKIP) && (json_state->struct_type == STRUCT_BACKDROP))

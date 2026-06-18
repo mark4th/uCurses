@@ -21,15 +21,6 @@ extern json_vars_t *json_vars;
 extern json_state_t *json_state;
 
 // -----------------------------------------------------------------------
-// with a max menu item/bar name of 32 chars (way too long) this gives
-// you a max of 64 items at full length (dont do it!)
-
-// windows now have names too not just menus
-
-// char name_string_buff[2048];
-// int16_t nsi;
-
-// -----------------------------------------------------------------------
 // fg, bg, gray-fg, gray-bg: all write to parent attribs via API setter.
 // range: fg/bg 0-255, gray 0-23.  shared error check, then direct call.
 
@@ -63,7 +54,9 @@ static void value_rgb(void)
     bool          is_bg   = (parent->struct_type == STRUCT_RGB_BG);
 
     if ((json_vars->key_value & ~255) != 0)
+    {
         json_error("RGB FG/BG Value out of range");
+    }
 
     uint8_t val = (uint8_t)json_vars->key_value;
 
@@ -98,7 +91,9 @@ static void value_window_dim(void)
 
     if (json_vars->percent)
     {
-        int16_t mult = use_w ? json_vars->console_width : json_vars->console_height;
+        int16_t mult = use_w
+            ? json_vars->console_width
+            : json_vars->console_height;
         json_vars->key_value = (json_vars->key_value * mult) / 100;
 
         if ((ktype == KEY_WIDTH) || (ktype == KEY_HEIGHT))

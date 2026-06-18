@@ -186,7 +186,11 @@ void init_backdrop(uC_screen_t *scr, uC_window_t *win)
 // size of the screen and is always framed with a single line border
 
 // if you dont want any of your windows to move up / down / left / right
-// within the screen you might not need one of these.
+// within the screen you might not need one of these but if the windows
+// you define do not take up the entire width and height of the console
+// you will have to clear the display prior to drawing your view or what
+// ever was there before you launched your application will still be
+// visible
 
 API void uC_scr_add_backdrop(uC_screen_t *scr)
 {

@@ -253,8 +253,10 @@ void     sync_seq(uint16_t seq);
 
 API void uC_widget_close_widget(uC_widget_t *widget);
 API bool uC_widget_select_widget(uint16_t sequence);
-API void uC_widget_set_position(uC_widget_t *widget, uint16_t xco, uint16_t yco);
-API void uC_widget_view_set_position(uC_widget_view_t *view, uint16_t xco, uint16_t yco);
+API void uC_widget_set_position(uC_widget_t *widget, uint16_t xco,
+    uint16_t yco);
+API void uC_widget_view_set_position(uC_widget_view_t *view, uint16_t xco,
+    uint16_t yco);
 API void uC_widget_reset_sequence(void);
 
 uint8_t handle_button(uint8_t k);

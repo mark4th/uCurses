@@ -10,19 +10,28 @@
 #ifdef UC_WIDGETS
 
 // -----------------------------------------------------------------------
+// current tab selection sequence number
 
 static uint16_t next_seq = 1;
+
+// -----------------------------------------------------------------------
 
 uint16_t auto_sequence(void)
 {
     return next_seq++;
 }
 
+// -----------------------------------------------------------------------
+
 void sync_seq(uint16_t seq)
 {
     if (seq >= next_seq)
+    {
         next_seq = seq + 1;
+    }
 }
+
+// -----------------------------------------------------------------------
 
 API void uC_widget_reset_sequence(void)
 {

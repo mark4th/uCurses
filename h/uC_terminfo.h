@@ -436,6 +436,7 @@ typedef struct
 #define ti_setab() uC_format(360)  // set bg using ansi
 
 // -----------------------------------------------------------------------
+// public API wrappers to some of the above
 
 API void uC_curoff(void);
 API void uC_curon(void);

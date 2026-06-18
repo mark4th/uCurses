@@ -146,8 +146,7 @@ static void draw_scrollable(uC_window_t *win, uC_widget_view_t *view)
     {
         widget = (uC_widget_t *)n1->payload;
 
-        widget->focused = (i == view->cy); // &&
-//            (widget_state.sequence == view->sequence));
+        widget->focused = (i == view->cy);
 
         // the view controls the placement of widgets when
         // the view is scrollable.

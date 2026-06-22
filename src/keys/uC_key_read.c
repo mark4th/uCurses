@@ -22,6 +22,8 @@ static struct pollfd pfd =
     0
 };
 
+#define ESC_SEQUENCE_POLL_MS (25)
+
 // -----------------------------------------------------------------------
 // returns 0 = no keys available, greater than zero = keys available
 
@@ -76,7 +78,8 @@ void uC_read_keys(void)
             break;
         }
         ti_vars->keybuff[ti_vars->num_k++] = read_key();
-    } while (uC_test_keys() != 0);
+    } while (poll(&pfd, 1,
+        (ti_vars->keybuff[0] == 0x1b) ? ESC_SEQUENCE_POLL_MS : 0) != 0);
 }
 
 // =======================================================================

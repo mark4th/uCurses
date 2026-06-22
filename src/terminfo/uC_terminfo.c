@@ -76,8 +76,8 @@ API void uC_cup(uint16_t x, uint16_t y)
         }
     }
 
-    ti_vars->params[0] = x;
-    ti_vars->params[1] = y;
+    ti_vars->params[0] = y;
+    ti_vars->params[1] = x;
     ti_cup();
 }
 

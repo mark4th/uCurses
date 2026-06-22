@@ -239,6 +239,7 @@ enum
     WIDGET_KEY_HOME,
     WIDGET_KEY_END,
     // WIDGET_KEY_MOUSE = 0x89 defined in uC_mouse.h
+    WIDGET_KEY_F10 = 0x8a,
 };
 
 // -----------------------------------------------------------------------
@@ -324,6 +325,7 @@ API void uC_widget_view_remove_widget(uC_widget_view_t *view,
 
 API void uC_widget_to_view_index(uC_widget_view_t *view,
     uint16_t index);
+API uint16_t uC_widget_view_index(uC_widget_view_t *view);
 
 // -----------------------------------------------------------------------
 
@@ -348,6 +350,7 @@ API uC_widget_t *uC_widget_textbox_create(
 
 // -----------------------------------------------------------------------
 
+API uint16_t uC_widget_current_sequence(void);
 API char uC_widget_main(void);
 
 // -----------------------------------------------------------------------

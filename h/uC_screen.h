@@ -48,6 +48,7 @@ API void uC_scr_close_view_groups(uC_screen_t *scr);
 API void uC_scr_close(uC_screen_t *scr);
 API void uC_scr_add_backdrop(uC_screen_t *scr);
 API void uC_scr_draw_screen(uC_screen_t *scr);
+API bool uC_scr_resize_hold(uC_screen_t *scr);
 API void uC_scr_win_attach(uC_screen_t *scr, uC_window_t *win);
 API void uC_scr_win_detach(uC_window_t *win);
 API void uC_scr_win_tab_next(uC_screen_t *scr);

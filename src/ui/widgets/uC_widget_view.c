@@ -270,6 +270,28 @@ API void uC_widget_view_set_position(uC_widget_view_t *view,
 
 // -----------------------------------------------------------------------
 
+API uint16_t uC_widget_view_index(uC_widget_view_t *view)
+{
+    uint32_t index;
+
+    if (!view || !view->widgets.count)
+    {
+        return 0;
+    }
+
+    index = view->top + view->cy;
+
+    if (index >= view->widgets.count)
+    {
+        index = view->widgets.count - 1;
+    }
+
+    return (uint16_t)index;
+}
+
+
+// -----------------------------------------------------------------------
+
 #endif // UC_WIDGETS
 
 // =======================================================================

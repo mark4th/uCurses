@@ -1,6 +1,8 @@
 // uC_widget_keys.c
 // -----------------------------------------------------------------------
 
+#include <string.h>
+
 #include "uCurses.h"
 #include "uC_keys.h"
 #include "uC_terminfo.h"
@@ -20,6 +22,12 @@ extern uC_kh_t user_key_actions;
 
 uC_kh_t saved_key_actions;
 API widget_state_t widget_state;
+
+void uC_widget_reset_state(void)
+{
+    memset(&widget_state, 0, sizeof(widget_state));
+    uC_widget_reset_sequence();
+}
 
 // ----------------------------------------------------------------
 // if current view is scrollable and k is a cursor up or dowwn...
@@ -145,6 +153,7 @@ static void widget_key_insert(void) { uC_set_key(WIDGET_KEY_INSERT); }
 static void widget_key_delete(void) { uC_set_key(WIDGET_KEY_DELETE); }
 static void widget_key_home(void)   { uC_set_key(WIDGET_KEY_HOME);   }
 static void widget_key_end(void)    { uC_set_key(WIDGET_KEY_END);    }
+static void widget_key_f10(void)    { uC_set_key(WIDGET_KEY_F10);    }
 
 // -----------------------------------------------------------------------
 // the other option is to simply have each of these perform the desired
@@ -169,8 +178,16 @@ static void set_widget_key_actions(void)
     // as long as there are any widgets active the menu system is
     // disabled.
 
-    uC_set_key_action(K_F10, uC_noop);
+    uC_set_key_action(K_F10, widget_key_f10);
 }
+
+// -----------------------------------------------------------------------
+
+API uint16_t uC_widget_current_sequence(void)
+{
+    return widget_state.sequence;
+}
+
 
 // -----------------------------------------------------------------------
 

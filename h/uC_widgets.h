@@ -10,10 +10,11 @@
 #include <stdbool.h>
 
 #include "uCurses.h"
+#include "uC_keys.h"
 #ifdef UC_MOUSE
 #include "uC_mouse.h"
 #else
-#define WIDGET_KEY_MOUSE 0x89
+#define WIDGET_KEY_MOUSE UC_KEY_MOUSE
 #endif
 #include "uC_list.h"
 #include "uC_borders.h"
@@ -194,6 +195,7 @@ typedef struct
     uC_widget_type_t type;  // one of the following
 
     uC_widget_view_t *view;
+    uC_screen_t *shortcut_screen;
 
     // i hate unions, they make the code look like a cluster fuck
     // and this blob is as large as the largest of is elements which
@@ -224,22 +226,23 @@ typedef struct
 
 enum
 {
-    WIDGET_KEY_BS   = 0x08,
+    WIDGET_KEY_BS   = UC_KEY_BS,
 
     // keys which return escape sequences are translated into the
     // following values.  no key can actually return any of these
     // so they are safe to use.
 
-    WIDGET_KEY_UP   = 0x81,
-    WIDGET_KEY_DOWN,
-    WIDGET_KEY_LEFT,
-    WIDGET_KEY_RIGHT,
-    WIDGET_KEY_INSERT,
-    WIDGET_KEY_DELETE,
-    WIDGET_KEY_HOME,
-    WIDGET_KEY_END,
+    WIDGET_KEY_UP   = UC_KEY_UP,
+    WIDGET_KEY_DOWN = UC_KEY_DOWN,
+    WIDGET_KEY_LEFT = UC_KEY_LEFT,
+    WIDGET_KEY_RIGHT = UC_KEY_RIGHT,
+    WIDGET_KEY_INSERT = UC_KEY_INSERT,
+    WIDGET_KEY_DELETE = UC_KEY_DELETE,
+    WIDGET_KEY_HOME = UC_KEY_HOME,
+    WIDGET_KEY_END = UC_KEY_END,
     // WIDGET_KEY_MOUSE = 0x89 defined in uC_mouse.h
-    WIDGET_KEY_F10 = 0x8a,
+    WIDGET_KEY_F10 = UC_KEY_F10,
+    WIDGET_KEY_BACKTAB = UC_KEY_BACKTAB,
 };
 
 // -----------------------------------------------------------------------
@@ -251,6 +254,7 @@ uC_widget_t *create_widget(uC_widget_type_t type,
 
 uint16_t auto_sequence(void);
 void     sync_seq(uint16_t seq);
+void     widget_detach_widget(uC_widget_t *widget);
 
 API void uC_widget_close_widget(uC_widget_t *widget);
 API bool uC_widget_select_widget(uint16_t sequence);
@@ -264,13 +268,15 @@ uint8_t handle_button(uint8_t k);
 uint8_t handle_check(uint8_t k);
 uint8_t handle_radio(uint8_t k);
 uint8_t handle_textbox(uint8_t k);
+bool widget_key(uC_screen_t *scr, uint8_t key, uint8_t *out);
+bool widget_text_input_active(uC_screen_t *scr);
 
 void widget_close_view(uC_widget_view_t *view);
 void widget_scroll_view(uint8_t k);
 uint8_t tab_next_widget(void);
 uint8_t tab_prev_widget(void);
 #ifdef UC_MOUSE
-void uC_widget_mouse_handle(void);
+uint8_t uC_widget_mouse_handle(void);
 #endif
 
 void widget_set_attrs(uC_window_t *window, uC_widget_t *widget);

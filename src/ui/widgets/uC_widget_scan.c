@@ -221,7 +221,7 @@ uint8_t tab_prev_widget(void)
     widget_state.sequence = 0;
     uC_widget_select_widget(sequence);
 
-    return 0x88;
+    return UC_KEY_BACKTAB;
 }
 
 // -----------------------------------------------------------------------

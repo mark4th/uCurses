@@ -11,6 +11,13 @@
 #include "uC_keys.h"
 #include "uC_alloc.h"
 #include "uC_terminfo.h"
+#include "uC_screen.h"
+#ifdef UC_MENUS
+#include "uC_menus.h"
+#endif
+#ifdef UC_WIDGETS
+#include "uC_widgets.h"
+#endif
 #ifdef UC_MOUSE
 #include "uC_mouse.h"
 #endif
@@ -19,6 +26,7 @@
 
 extern ti_vars_t *ti_vars;
 extern void (*k_table[])(void);
+extern uC_screen_t *active_screen;
 
 // -----------------------------------------------------------------------
 
@@ -39,23 +47,33 @@ API void uC_flush_keys(void)
 // -----------------------------------------------------------------------
 // add backspace, add enter key to keyboard input buffer
 
-static void k_bs(void)  { uC_set_key(0x08); }
-static void k_ent(void) { uC_set_key(0x0a); }
-static void k_cbt(void) { uC_set_key(0x88); }
+static void k_bs(void)      { uC_set_key(UC_KEY_BS);      }
+static void k_ent(void)     { uC_set_key(UC_KEY_ENTER);   }
+static void k_up(void)      { uC_set_key(UC_KEY_UP);      }
+static void k_down(void)    { uC_set_key(UC_KEY_DOWN);    }
+static void k_left(void)    { uC_set_key(UC_KEY_LEFT);    }
+static void k_right(void)   { uC_set_key(UC_KEY_RIGHT);   }
+static void k_delete(void)  { uC_set_key(UC_KEY_DELETE);  }
+static void k_insert(void)  { uC_set_key(UC_KEY_INSERT);  }
+static void k_home(void)    { uC_set_key(UC_KEY_HOME);    }
+static void k_end(void)     { uC_set_key(UC_KEY_END);     }
+static void k_pgdn(void)    { uC_set_key(UC_KEY_PGDN);    }
+static void k_pgup(void)    { uC_set_key(UC_KEY_PGUP);    }
+static void k_cbt(void)     { uC_set_key(UC_KEY_BACKTAB); }
 
 // -----------------------------------------------------------------------
 // Default key handler table.  The system calls entries by key_index_t
 // ordinal when uC_key() matches an escape sequence.  Order is fixed and
-// must match key_index_t exactly.  Cursor keys default to uC_noop so
-// uC_key() returns 0 for them unless the app installs custom handlers
-// via uC_alloc_kh() + uC_set_key_action().
+// must match key_index_t exactly.  Common navigation/editing keys default
+// to UC_KEY_* values, and features can opt in extra keys before apps
+// override individual handlers via uC_alloc_kh() + uC_set_key_action().
 
 static uC_key_handler_t *default_key_actions[] =
 {
 //  ENTER    UP       DOWN     LEFT     RIGHT    BS       DEL
-    k_ent,   uC_noop, uC_noop, uC_noop, uC_noop, k_bs,    uC_noop,
+    k_ent,   k_up,    k_down,  k_left,  k_right, k_bs,    k_delete,
 //  INSERT   HOME     END      PDN      PUP      BACKTAB
-    uC_noop, uC_noop, uC_noop, uC_noop, uC_noop, k_cbt,
+    k_insert, k_home, k_end,   k_pgdn,  k_pgup,  k_cbt,
 //  F1       F2       F3       F4       F5       F6
     uC_noop, uC_noop, uC_noop, uC_noop, uC_noop, uC_noop,
 //  F7       F8       F9       F10      F11      F12
@@ -107,9 +125,48 @@ API uC_key_handler_t *uC_set_key_action(key_index_t index,
 }
 
 // -----------------------------------------------------------------------
+
+uC_key_handler_t *uC_set_default_key_action(key_index_t index,
+    uC_key_handler_t *action)
+{
+    uC_key_handler_t *x = default_key_actions[index];
+    default_key_actions[index] = action;
+
+    return x;
+}
+
+// -----------------------------------------------------------------------
+
+bool uC_restore_default_key_action(key_index_t index,
+    uC_key_handler_t *expected, uC_key_handler_t *action)
+{
+    if (default_key_actions[index] != expected)
+    {
+        return false;
+    }
+
+    default_key_actions[index] = action;
+    return true;
+}
+
+// -----------------------------------------------------------------------
+
+bool uC_restore_key_action(key_index_t index,
+    uC_key_handler_t *expected, uC_key_handler_t *action)
+{
+    if (user_key_actions[index] != expected)
+    {
+        return false;
+    }
+
+    user_key_actions[index] = action;
+    return true;
+}
+
+// -----------------------------------------------------------------------
 // keep processing key sequences till we get a normal key
 
-API uint8_t uC_key(void)
+uint8_t uC_key_raw(void)
 {
     int16_t c;
 
@@ -171,6 +228,42 @@ API uint8_t uC_key(void)
     ti_vars->num_k = 0;
 
     return ti_vars->keybuff[0];
+}
+
+// -----------------------------------------------------------------------
+
+API uint8_t uC_key(void)
+{
+    uint8_t key;
+    uint8_t out = UC_KEY_NONE;
+
+    key = uC_key_raw();
+
+    if (uC_scr_shortcuts_enabled(active_screen) &&
+#ifdef UC_WIDGETS
+        !widget_text_input_active(active_screen) &&
+#endif
+        uC_shortcut_run(active_screen, key))
+    {
+        out = uC_key_raw();
+        return (out == 0xff) ? UC_KEY_NONE : out;
+    }
+
+#ifdef UC_MENUS
+    if (menu_key(active_screen, key, &out))
+    {
+        return out;
+    }
+#endif
+
+#ifdef UC_WIDGETS
+    if (widget_key(active_screen, key, &out))
+    {
+        return out;
+    }
+#endif
+
+    return key;
 }
 
 // =======================================================================

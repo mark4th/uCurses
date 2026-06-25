@@ -19,6 +19,7 @@
 #include "uC_utils.h"
 #include "uC_utf8.h"
 #include "uC_widgets.h"
+#include "uC_win_printf.h"
 
 
 // -----------------------------------------------------------------------
@@ -28,6 +29,9 @@ uC_screen_t *active_screen;
 extern border_t *const borders[];
 extern uC_attribs_t attrs;
 extern uC_attribs_t old_attrs;
+extern uC_attribs_t uC_attrs_normal;
+extern uC_attribs_t uC_attrs_selected;
+extern uC_attribs_t uC_attrs_disabled;
 
 void terminfo_purge(void);
 void scr_update_menus(uC_screen_t *scr);
@@ -157,6 +161,114 @@ static void scr_draw_windows(uC_list_t *list)
         n1 = uC_list_scan(NULL, n1);
     }
 }
+
+// -----------------------------------------------------------------------
+
+#ifdef UC_POPUPS
+static bool scr_is_too_small(uC_screen_t *scr)
+{
+    return ((scr->min_width > 0) && (scr->width < scr->min_width)) ||
+        ((scr->min_height > 0) && (scr->height < scr->min_height));
+}
+
+static void too_small_write(uC_window_t *win, int16_t x, int16_t y,
+    const char *text, uC_attribs_t attrs)
+{
+    int16_t i;
+    uC_attribs_t save;
+
+    if (!win || !text || x < 0 || y < 0 ||
+        x >= win->width || y >= win->height)
+    {
+        return;
+    }
+
+    save = win->attrs;
+    win->attrs = attrs;
+    uC_win_cup(win, x, y);
+
+    for (i = 0; text[i] && (x + i) < win->width; i++)
+    {
+        uC_win_emit(win, (uint8_t)text[i]);
+    }
+
+    win->attrs = save;
+}
+
+static int16_t text_len_i16(const char *text)
+{
+    int16_t len = 0;
+
+    while (text[len] != '\0')
+    {
+        len++;
+    }
+
+    return len;
+}
+
+static bool too_small_popup_prepare(uC_screen_t *scr)
+{
+    const char *message = "Too small";
+    int16_t width = 14;
+    int16_t height = 3;
+    int16_t x;
+    uC_window_t *win;
+
+    if (scr->width < width + 2 || scr->height < height + 2)
+    {
+        return false;
+    }
+
+    win = scr->too_small_popup;
+    if ((win != NULL) && ((win->width != width) || (win->height != height)))
+    {
+        uC_win_close(win);
+        win = NULL;
+        scr->too_small_popup = NULL;
+    }
+
+    if (win == NULL)
+    {
+        win = uC_win_open(width, height);
+        if (win == NULL)
+        {
+            return false;
+        }
+
+        win->xco = (scr->width - width) / 2;
+        win->yco = (scr->height - height) / 2;
+        win->flags = uC_WIN_LOCKED;
+        win->blank = 0x20;
+        win->attrs = uC_attrs_normal;
+        uC_win_set_border(win, uC_BDR_CURVED, uC_attrs_selected,
+            uC_attrs_selected);
+        win->screen = scr;
+        scr->too_small_popup = win;
+    }
+
+    uC_win_clear(win);
+    x = (width - text_len_i16(message)) / 2;
+    too_small_write(win, x, 1, message, uC_attrs_selected);
+
+    return true;
+}
+
+static void scr_draw_too_small_popup(uC_screen_t *scr)
+{
+    if (!scr_is_too_small(scr))
+    {
+        uC_win_close(scr->too_small_popup);
+        scr->too_small_popup = NULL;
+        return;
+    }
+
+    if (too_small_popup_prepare(scr))
+    {
+        scr_draw_win(scr->too_small_popup);
+    }
+}
+#endif
 
 // -----------------------------------------------------------------------
 // set terminal cursor location to same location as screens cursor
@@ -668,21 +780,29 @@ API void uC_scr_draw_screen(uC_screen_t *scr)
 // if this gets out of hand im reverting to ZERO conditionals buried
 // in these soures
 
-#ifdef UC_MENUS
-        scr_update_menus(scr);
-#endif // UC_MENUS
-
 #ifdef UC_STATUS
         scr_draw_windows(&scr->status);
 #endif // UC_STATUS
 
 
-// widgets, if active are always drawn over the top of any other
-// entity in view including menus -- should I reverse the order?
+// widgets draw over normal windows and status lines. Menus draw after
+// widgets so pulldowns are not covered by widget view groups.
 
 #ifdef UC_WIDGETS
         draw_view_groups(scr);
 #endif // UC_WIDGETS
+
+#ifdef UC_MENUS
+        scr_update_menus(scr);
+#endif // UC_MENUS
+
+#ifdef UC_POPUPS
+        // Popup windows are modal overlays. Draw them after widgets so
+        // they are not covered by view groups.
+
+        scr_draw_win(scr->popup);
+        scr_draw_too_small_popup(scr);
+#endif
 
         // at this point everything that should be displayed has been
         // drawn into the screen buffers.   we can now compile all the

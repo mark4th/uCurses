@@ -4,10 +4,15 @@
 #include "uCurses.h"
 #include "uC_widgets.h"
 #include "uC_list.h"
+#include "uC_keys.h"
 
 // -----------------------------------------------------------------------
 
 #ifdef UC_WIDGETS
+
+// -----------------------------------------------------------------------
+
+extern widget_state_t widget_state;
 
 // -----------------------------------------------------------------------
 // current tab selection sequence number
@@ -72,19 +77,69 @@ API void uC_widget_set_position(uC_widget_t *widget,
 
 // -----------------------------------------------------------------------
 
-API void uC_widget_close_widget(uC_widget_t *widget)
+static void widget_clear_focus(uC_widget_t *widget)
+{
+    if (widget == NULL)
+    {
+        return;
+    }
+
+    widget->focused = false;
+
+    if (widget_state.widget != widget)
+    {
+        return;
+    }
+
+    if (widget_state.vg != NULL)
+    {
+        widget_state.vg->window.flags &= ~uC_WIN_FOCUS;
+    }
+    if (widget_state.view != NULL)
+    {
+        widget_state.view->view_node = NULL;
+    }
+
+    widget_state.widget = NULL;
+    widget_state.view = NULL;
+    widget_state.vg = NULL;
+    widget_state.sequence = 0;
+}
+
+// -----------------------------------------------------------------------
+
+void widget_detach_widget(uC_widget_t *widget)
 {
     uC_widget_view_t *view;
 
-    if (widget)
+    if (widget == NULL)
     {
-        view = widget->view;
+        return;
+    }
 
-        if (view)
-        {
-            uC_list_remove_node(&view->widgets, widget);
-        }
+    if (widget->shortcut_screen != NULL)
+    {
+        uC_shortcut_remove_owner(widget->shortcut_screen, widget);
+        widget->shortcut_screen = NULL;
+    }
 
+    widget_clear_focus(widget);
+
+    view = widget->view;
+    if (view != NULL)
+    {
+        uC_list_remove_node(&view->widgets, widget);
+        widget->view = NULL;
+    }
+}
+
+// -----------------------------------------------------------------------
+
+API void uC_widget_close_widget(uC_widget_t *widget)
+{
+    if (widget != NULL)
+    {
+        widget_detach_widget(widget);
         uC_free(uC_MEM_ZONE_UI, widget);
     }
 }

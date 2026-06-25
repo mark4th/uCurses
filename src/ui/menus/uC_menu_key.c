@@ -7,6 +7,7 @@
 #include "uC_menus.h"
 #include "uC_keys.h"
 #include "uC_terminfo.h"
+#include "uC_utils.h"
 
 // -----------------------------------------------------------------------
 
@@ -15,6 +16,9 @@
 // -----------------------------------------------------------------------
 
 static uC_screen_t *menu_screen;
+static bool menu_keys_initialized;
+static uC_key_handler_t *menu_saved_default_f10;
+static uC_key_handler_t *menu_saved_current_f10;
 
 void menu_set_screen(uC_screen_t *scr)
 {
@@ -23,40 +27,16 @@ void menu_set_screen(uC_screen_t *scr)
 
 // -----------------------------------------------------------------------
 
-static void redraw_pulldown(menu_bar_t *bar)
+static bool pd_enabled(pulldown_t *pd)
 {
-    int32_t f;
-
-    pulldown_t *pd = bar->items[bar->which];
-
-    if (pd->count != 0)
-    {
-        f = bar_create_pd_win(menu_screen, pd);
-
-        if (f != 0)
-        {
-            draw_pd(pd);
-        }
-    }
+    return (pd != NULL) && ((pd->flags & uC_MENU_DISABLED) == 0);
 }
 
 // -----------------------------------------------------------------------
 
-static void menu_activate(void)
+static bool item_enabled(menu_item_t *item)
 {
-    menu_bar_t *bar = menu_screen->menu_bar;
-    pulldown_t *pd;
-
-    bar->active ^= 1;
-    pd = bar->items[bar->which];
-
-    if (bar->active != 0)
-    {
-        redraw_pulldown(bar);
-        return;
-    }
-    uC_win_close(pd->window);
-    pd->window = NULL;
+    return (item != NULL) && ((item->flags & uC_MENU_DISABLED) == 0);
 }
 
 // -----------------------------------------------------------------------
@@ -102,33 +82,260 @@ static void prev_pd(menu_bar_t *bar)
 
 // -----------------------------------------------------------------------
 
-static void menu_up_down(int dir)
+static bool select_enabled_pd(menu_bar_t *bar, int dir, bool advance)
 {
-    menu_bar_t *bar = menu_screen->menu_bar;
-    pulldown_t *pd;
     int16_t n;
-    menu_item_t *item;
 
-    if ((bar != NULL) && (bar->active != 0))
+    if ((bar == NULL) || (bar->count == 0))
     {
-        pd = bar->items[bar->which];
-        n  = bar->count;
+        return false;
+    }
 
-        while (n != 0)
+    if ((bar->which < 0) || (bar->which >= bar->count))
+    {
+        bar->which = 0;
+    }
+
+    for (n = 0; n < bar->count; n++)
+    {
+        if (advance || (n != 0))
+        {
+            (dir > 0)
+                ? prev_pd(bar)
+                : next_pd(bar);
+            advance = false;
+        }
+
+        if (pd_enabled(bar->items[bar->which]))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+// -----------------------------------------------------------------------
+
+static bool select_enabled_item(pulldown_t *pd, int dir, bool advance)
+{
+    int16_t n;
+
+    if ((pd == NULL) || (pd->count == 0))
+    {
+        return false;
+    }
+
+    if ((pd->which < 0) || (pd->which >= pd->count))
+    {
+        pd->which = 0;
+    }
+
+    for (n = 0; n < pd->count; n++)
+    {
+        if (advance || (n != 0))
         {
             (dir > 0)
                 ? to_prev_menu_item(pd)
                 : to_next_menu_item(pd);
-
-            n--;
-
-            item = pd->items[pd->which];
-
-            if ((item->flags & uC_MENU_DISABLED) == 0)
-            {
-                break;
-            }
+            advance = false;
         }
+
+        if (item_enabled(pd->items[pd->which]))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+// -----------------------------------------------------------------------
+
+static void redraw_pulldown(menu_bar_t *bar)
+{
+    int32_t f;
+
+    pulldown_t *pd = bar->items[bar->which];
+
+    if (pd_enabled(pd) && (pd->count != 0))
+    {
+        select_enabled_item(pd, MENU_DOWN, false);
+        f = bar_create_pd_win(menu_screen, pd);
+
+        if (f != 0)
+        {
+            draw_pd(pd);
+        }
+    }
+}
+
+// -----------------------------------------------------------------------
+
+static void menu_activate(void)
+{
+    menu_bar_t *bar = menu_screen->menu_bar;
+    pulldown_t *pd;
+
+    if (bar == NULL)
+    {
+        return;
+    }
+
+    if (bar->active == 0)
+    {
+        if (!select_enabled_pd(bar, MENU_RIGHT, false))
+        {
+            return;
+        }
+
+        bar->active = 1;
+        redraw_pulldown(bar);
+        return;
+    }
+
+    bar->active = 0;
+    pd = bar->items[bar->which];
+
+    if (pd != NULL)
+    {
+        uC_win_close(pd->window);
+        pd->window = NULL;
+    }
+}
+
+// -----------------------------------------------------------------------
+
+API bool uC_menu_is_active(uC_screen_t *scr)
+{
+    menu_bar_t *bar = scr ? scr->menu_bar : NULL;
+
+    return (bar != NULL) && (bar->active != 0);
+}
+
+// -----------------------------------------------------------------------
+
+API void uC_menu_open(uC_screen_t *scr)
+{
+    menu_bar_t *bar;
+    pulldown_t *pd;
+
+    if ((scr == NULL) || (scr->menu_bar == NULL))
+    {
+        return;
+    }
+
+    menu_set_screen(scr);
+    uC_menu_init_keys();
+
+    bar = scr->menu_bar;
+    if ((bar->count == 0) || (bar->active != 0))
+    {
+        return;
+    }
+
+    if (!select_enabled_pd(bar, MENU_RIGHT, false))
+    {
+        return;
+    }
+
+    pd = bar->items[bar->which];
+    if (pd != NULL)
+    {
+        select_enabled_item(pd, MENU_DOWN, false);
+    }
+    bar->active = 1;
+    redraw_pulldown(bar);
+}
+
+// -----------------------------------------------------------------------
+
+API void uC_menu_close(uC_screen_t *scr)
+{
+    menu_bar_t *bar;
+    pulldown_t *pd;
+
+    if ((scr == NULL) || (scr->menu_bar == NULL))
+    {
+        return;
+    }
+
+    bar = scr->menu_bar;
+    if (bar->active == 0)
+    {
+        return;
+    }
+
+    bar->active = 0;
+    pd = bar->items[bar->which];
+    if (pd != NULL)
+    {
+        uC_win_close(pd->window);
+        pd->window = NULL;
+    }
+}
+
+// -----------------------------------------------------------------------
+
+void menu_normalize_selection(uC_screen_t *scr)
+{
+    menu_bar_t *bar;
+    pulldown_t *old_pd = NULL;
+    pulldown_t *pd;
+
+    if ((scr == NULL) || (scr->menu_bar == NULL))
+    {
+        return;
+    }
+
+    menu_set_screen(scr);
+    bar = scr->menu_bar;
+
+    if ((bar->which >= 0) && (bar->which < bar->count))
+    {
+        old_pd = bar->items[bar->which];
+    }
+
+    if (!select_enabled_pd(bar, MENU_RIGHT, false))
+    {
+        if (old_pd != NULL)
+        {
+            uC_win_close(old_pd->window);
+            old_pd->window = NULL;
+        }
+        bar->active = 0;
+        return;
+    }
+
+    pd = bar->items[bar->which];
+    select_enabled_item(pd, MENU_DOWN, false);
+
+    if (bar->active != 0)
+    {
+        if ((old_pd != NULL) && (old_pd != pd))
+        {
+            uC_win_close(old_pd->window);
+            old_pd->window = NULL;
+        }
+
+        if ((pd != NULL) && (pd->window == NULL))
+        {
+            redraw_pulldown(bar);
+        }
+    }
+}
+
+// -----------------------------------------------------------------------
+
+static void menu_up_down(int dir)
+{
+    menu_bar_t *bar = menu_screen->menu_bar;
+    pulldown_t *pd;
+
+    if ((bar != NULL) && (bar->active != 0))
+    {
+        pd = bar->items[bar->which];
+        select_enabled_item(pd, dir, true);
     }
 }
 
@@ -138,31 +345,30 @@ static void menu_left_rt(int dir)
 {
     menu_bar_t *bar = menu_screen->menu_bar;
     pulldown_t *pd;
-    int16_t n;
 
     if ((bar != NULL) && (bar->active != 0))
     {
-        n = bar->count;
-
         pd = bar->items[bar->which];
-        uC_win_close(pd->window);
-        pd->window = NULL;
 
-        while (n != 0)
+        if (!pd_enabled(pd))
         {
-            (dir > 0)
-                ? prev_pd(bar)
-                : next_pd(bar);
+            pd = NULL;
+        }
+        if (pd != NULL)
+        {
+            uC_win_close(pd->window);
+            pd->window = NULL;
+        }
 
-            n--;
-
+        if (select_enabled_pd(bar, dir, true))
+        {
             pd = bar->items[bar->which];
-
-            if ((pd->flags & uC_MENU_DISABLED) == 0)
-            {
-                redraw_pulldown(bar);
-                break;
-            }
+            select_enabled_item(pd, MENU_DOWN, false);
+            redraw_pulldown(bar);
+        }
+        else
+        {
+            bar->active = 0;
         }
     }
 }
@@ -177,18 +383,16 @@ static void menu_cr(void)
 
     if ((bar != NULL) && (bar->active != 0))
     {
+        pd = bar->items[bar->which];
+        item = (pd != NULL) ? pd->items[pd->which] : NULL;
+
         uC_set_key(-1);
 
-        bar->active = 0;
-        pd = bar->items[bar->which];
-
-        uC_win_close(pd->window);
-        pd->window = NULL;
-
-        item = pd->items[pd->which];
-
-        if (item->fp != NULL)
+        if (pd_enabled(pd) && item_enabled(item) && (item->fp != NULL))
         {
+            bar->active = 0;
+            uC_win_close(pd->window);
+            pd->window = NULL;
             (item->fp)();
         }
     }
@@ -200,29 +404,195 @@ static void menu_cr(void)
 
 // -----------------------------------------------------------------------
 
+static uint8_t menu_action_key(void)
+{
+    uint8_t key = uC_key_raw();
+
+    return (key == 0xff) ? 0 : key;
+}
+
+// -----------------------------------------------------------------------
+
 static void menu_up(void)    { menu_up_down(MENU_UP);    }
 static void menu_down(void)  { menu_up_down(MENU_DOWN);  }
 static void menu_left(void)  { menu_left_rt(MENU_LEFT);  }
 static void menu_right(void) { menu_left_rt(MENU_RIGHT); }
 
 // -----------------------------------------------------------------------
+
+static void menu_key_f10(void)
+{
+    uC_set_key(UC_KEY_F10);
+}
+
+// -----------------------------------------------------------------------
+
+API void uC_menu_cursor_up(uC_screen_t *scr)
+{
+    menu_set_screen(scr);
+    menu_up();
+}
+
+API void uC_menu_cursor_down(uC_screen_t *scr)
+{
+    menu_set_screen(scr);
+    menu_down();
+}
+
+API void uC_menu_cursor_left(uC_screen_t *scr)
+{
+    menu_set_screen(scr);
+    menu_left();
+}
+
+API void uC_menu_cursor_right(uC_screen_t *scr)
+{
+    menu_set_screen(scr);
+    menu_right();
+}
+
+API void uC_menu_select(uC_screen_t *scr)
+{
+    menu_set_screen(scr);
+    menu_cr();
+}
+
+// -----------------------------------------------------------------------
+
+bool menu_key(uC_screen_t *scr, uint8_t key, uint8_t *out)
+{
+    menu_bar_t *bar;
+
+    if (out != NULL)
+    {
+        *out = 0;
+    }
+
+    if ((scr == NULL) || (scr->menu_bar == NULL))
+    {
+        return false;
+    }
+
+    menu_set_screen(scr);
+    uC_menu_init_keys();
+    bar = scr->menu_bar;
+
+    if (key == UC_KEY_F10)
+    {
+        menu_activate();
+        return true;
+    }
+
+    if (bar->active == 0)
+    {
+        return false;
+    }
+
+    switch (key)
+    {
+        case UC_KEY_ESC:
+            uC_menu_close(scr);
+            return true;
+
+        case UC_KEY_UP:
+            menu_up();
+            uC_scr_draw_screen(scr);
+            return true;
+
+        case UC_KEY_DOWN:
+            menu_down();
+            uC_scr_draw_screen(scr);
+            return true;
+
+        case UC_KEY_LEFT:
+            menu_left();
+            uC_scr_draw_screen(scr);
+            return true;
+
+        case UC_KEY_RIGHT:
+            menu_right();
+            uC_scr_draw_screen(scr);
+            return true;
+
+        case '\r':
+        case UC_KEY_ENTER:
+            menu_cr();
+            if (out != NULL)
+            {
+                *out = menu_action_key();
+            }
+            return true;
+
+        default:
+            break;
+    }
+
+    return false;
+}
+
+// -----------------------------------------------------------------------
+
+API uint8_t uC_menu_run(uC_screen_t *scr)
+{
+    uint8_t key;
+
+    if ((scr == NULL) || (scr->menu_bar == NULL))
+    {
+        return 0;
+    }
+
+    menu_set_screen(scr);
+    uC_menu_init_keys();
+
+    while (uC_menu_is_active(scr))
+    {
+        key = uC_key();
+        if (key != 0)
+        {
+            return (key == 0xff) ? 0 : key;
+        }
+        uC_scr_draw_screen(scr);
+    }
+
+    return 0;
+}
+
+// -----------------------------------------------------------------------
 // you should not modify these pointers... but i can! (tm)
 
 API void uC_menu_init_keys(void)
 {
-    uC_set_key_action(K_ENT,  menu_cr);
-    uC_set_key_action(K_CUU1, menu_up);
-    uC_set_key_action(K_CUD1, menu_down);
-    uC_set_key_action(K_CUB1, menu_left);
-    uC_set_key_action(K_CUF1, menu_right);
-    uC_set_key_action(K_F10,  menu_activate);
-
     // without this the cursor up and down keys can return escape
     // sequences that do not match what is specified for them in
     // the terminfo file - emitting an smkx escape sequence to the
     // terminal turns on keyboard transmit mode what ever that is
 
     ti_smkx();
+
+    if (!menu_keys_initialized)
+    {
+        menu_saved_default_f10 = uC_set_default_key_action(K_F10,
+            menu_key_f10);
+        menu_saved_current_f10 = uC_set_key_action(K_F10, menu_key_f10);
+        menu_keys_initialized = true;
+    }
+}
+
+// -----------------------------------------------------------------------
+
+void uC_menu_deinit_keys(void)
+{
+    if (menu_keys_initialized)
+    {
+        uC_restore_default_key_action(K_F10, menu_key_f10,
+            menu_saved_default_f10 ? menu_saved_default_f10 : uC_noop);
+        uC_restore_key_action(K_F10, menu_key_f10,
+            menu_saved_current_f10 ? menu_saved_current_f10 : uC_noop);
+
+        menu_saved_default_f10 = NULL;
+        menu_saved_current_f10 = NULL;
+        menu_keys_initialized = false;
+    }
 }
 
 // -----------------------------------------------------------------------
@@ -230,4 +600,3 @@ API void uC_menu_init_keys(void)
 #endif
 
 // =======================================================================
-

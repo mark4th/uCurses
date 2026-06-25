@@ -116,9 +116,9 @@ API bool uC_widget_view_add_widget(uC_widget_view_t *view,
 API void uC_widget_view_remove_widget(uC_widget_view_t *view,
     uC_widget_t *widget)
 {
-    if (view)
+    if ((view != NULL) && (widget != NULL) && (widget->view == view))
     {
-        uC_list_remove_node(&view->widgets, widget);
+        widget_detach_widget(widget);
     }
 }
 

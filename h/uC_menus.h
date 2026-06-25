@@ -7,6 +7,7 @@
 // -----------------------------------------------------------------------
 
 #include "uCurses.h"
+#include "uC_keys.h"
 #include "uC_screen.h"
 
 // -----------------------------------------------------------------------
@@ -37,12 +38,15 @@ typedef struct
     const char *name;
     int16_t flags;          // disable flags etc
     menu_fp_t fp;           // function to execute
-    int16_t shortcut;       // keyboard shortcut
+    uC_shortcut_t shortcut; // keyboard shortcut
+    uC_screen_t *screen;
+    struct pulldown_s *parent;
+    bool shortcut_registered;
 } menu_item_t;
 
 // -----------------------------------------------------------------------
 
-typedef struct
+typedef struct pulldown_s
 {
     const char *name;       // menu bar name for this pulldown menu
     int16_t width;          // width of widest item in pulldown menu
@@ -80,6 +84,17 @@ typedef struct
 
 void draw_pd(pulldown_t *pd);
 int32_t bar_create_pd_win(uC_screen_t *scr, pulldown_t *pd);
+bool menu_key(uC_screen_t *scr, uint8_t key, uint8_t *out);
+void uC_menu_deinit_keys(void);
+bool uC_menu_shortcut_display(uC_shortcut_t shortcut, char *dst,
+    uint16_t dst_len);
+uint16_t uC_menu_shortcut_width(uC_shortcut_t shortcut);
+bool uC_menu_shortcut_matches(uC_shortcut_t shortcut, uint8_t key);
+bool menu_item_shortcut_register(pulldown_t *pd, menu_item_t *item);
+void menu_item_shortcut_remove(menu_item_t *item);
+void menu_pd_shortcuts_register(pulldown_t *pd);
+void menu_pd_shortcuts_remove(pulldown_t *pd);
+void menu_normalize_selection(uC_screen_t *scr);
 
 // -----------------------------------------------------------------------
 
@@ -87,10 +102,23 @@ API int32_t uC_menu_bar_open(uC_screen_t *scr);
 API void uC_menu_bar_close(uC_screen_t *scr);
 API int32_t uC_menu_new_pd(uC_screen_t *scr, const char *name);
 API int32_t uC_menu_new_item(uC_screen_t *scr, const char *name, menu_fp_t fp,
-    int16_t shortcut);
+    uC_shortcut_t shortcut);
 API void uC_menu_pd_disable(uC_screen_t *scr, const char *name);
 API void uC_menu_pd_enable(uC_screen_t *scr, const char *name);
+API void uC_menu_item_disable(uC_screen_t *scr, const char *pd_name,
+    const char *item_name);
+API void uC_menu_item_enable(uC_screen_t *scr, const char *pd_name,
+    const char *item_name);
 API void uC_menu_init_keys(void);
+API bool uC_menu_is_active(uC_screen_t *scr);
+API void uC_menu_open(uC_screen_t *scr);
+API void uC_menu_close(uC_screen_t *scr);
+API uint8_t uC_menu_run(uC_screen_t *scr);
+API void uC_menu_cursor_up(uC_screen_t *scr);
+API void uC_menu_cursor_down(uC_screen_t *scr);
+API void uC_menu_cursor_left(uC_screen_t *scr);
+API void uC_menu_cursor_right(uC_screen_t *scr);
+API void uC_menu_select(uC_screen_t *scr);
 
 // -----------------------------------------------------------------------
 

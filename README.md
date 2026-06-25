@@ -21,15 +21,18 @@ significant.
 - **UTF-8 and Braille** — native UTF-8 codepoint support throughout;
   Braille rendering utilities included.
 - **Keyboard and mouse input** — escape-sequence matching via the terminfo
-  database; mouse events delivered to focused windows and widgets.
-- **Menu system** — menu bar with pull-down menus, keyboard shortcuts, and
-  enable/disable per item.
+  database, stable internal key codes, screen-level shortcuts, and mouse
+  events delivered to focused windows and widgets.
+- **Menu system** — menu bar with pull-down menus, modifier-capable
+  screen-level accelerators, and application-controlled enable/disable
+  state per pulldown or item.
 - **Widget system** — buttons, radio buttons, checkboxes, and editable
   textboxes (decimal, octal, hex, binary, or alphanumeric input); widgets
-  are grouped into scrollable views.
+  are grouped into scrollable views, and button shortcuts use the same
+  screen-level shortcut registry as menu accelerators.
 - **JSON UI description** — screens, windows, and menus can be described in
   a JSON file loaded at startup (or compiled into the executable).  This
-  separates layout from application logic and allows end-user theming.
+  separates layout construction from application logic.
 - **Optional components** — menus, widgets, and the JSON parser are
   independent build options.  Stripping any of them reduces binary size for
   applications that don't need them.

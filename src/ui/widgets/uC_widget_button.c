@@ -20,9 +20,51 @@ extern widget_state_t widget_state;
 bool justify;
 
 // -----------------------------------------------------------------------
-// draws the text on a button and underlines the keyboard shortcut key
-// if there is one (the shortcut key does not actually need to be part
-// of the button name but it would be more helpful if it was :)
+
+static bool button_letter_alpha(char c)
+{
+    return ((c >= 'A') && (c <= 'Z')) || ((c >= 'a') && (c <= 'z'));
+}
+
+// -----------------------------------------------------------------------
+
+static char button_letter_upper(char c)
+{
+    if ((c >= 'a') && (c <= 'z'))
+    {
+        return (char)(c - ('a' - 'A'));
+    }
+    return c;
+}
+
+// -----------------------------------------------------------------------
+
+static char button_letter_from_name(const char *name, char letter)
+{
+    char match;
+
+    if ((name == NULL) || !button_letter_alpha(letter))
+    {
+        return '\0';
+    }
+
+    match = button_letter_upper(letter);
+    while (*name != '\0')
+    {
+        if (button_letter_alpha(*name) &&
+            (button_letter_upper(*name) == match))
+        {
+            return *name;
+        }
+        name++;
+    }
+
+    return '\0';
+}
+
+// -----------------------------------------------------------------------
+// Draws the text on a button and underlines the focused-button return
+// key when that key is present in the displayed name.
 
 static void draw_btn_txt(uC_window_t *win, uint16_t x, uint16_t y,
     uint16_t width, const char *name, char letter)
@@ -96,7 +138,7 @@ uint8_t handle_button(uint8_t k)
 
     b = &widget_state.widget->button;
 
-    if (k == 0x0a)
+    if ((k == UC_KEY_ENTER) || (k == '\r'))
     {
         // there are two ways the application code can determine which
         // button was pressed.   If the button has a key character
@@ -113,13 +155,14 @@ uint8_t handle_button(uint8_t k)
 
         if (b->letter != '\0')
         {
-            k = b->letter;
+            return b->letter;
         }
 
         if (b->select)
         {
             *b->select = widget_state.widget->sequence;
         }
+        return UC_KEY_NONE;
     }
 
     return k;
@@ -136,9 +179,9 @@ API uC_widget_t *uC_widget_button_create(
 
     if (widget)
     {
-        // text displayed on button and optional keybord shortcut
+        // text displayed on button and optional focused-button return key
 
-        widget->button.letter = letter;
+        widget->button.letter = button_letter_from_name(name, letter);
         widget->button.select = select;
     }
 

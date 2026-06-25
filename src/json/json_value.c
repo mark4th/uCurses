@@ -281,7 +281,20 @@ static void value_vector(void)
 
 static void value_shortcut(void)
 {
-    ;
+    json_state_t *parent = json_state->parent;
+    menu_item_t  *item   = parent->structure;
+
+    if (json_vars->quoted == false)
+    {
+        json_error("Shortcut value must be quoted");
+    }
+
+    if (json_vars->json_token[0] == '\0')
+    {
+        json_error("Shortcut value must not be empty");
+    }
+
+    item->shortcut = json_vars->json_token[0];
 }
 
 // -----------------------------------------------------------------------

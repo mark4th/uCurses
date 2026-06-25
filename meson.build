@@ -9,6 +9,7 @@ project(
 project_description = 'TUI app builder for consoles and terminals.'
 
 mouse_enabled = get_option('mouse')
+popups_enabled = get_option('popups')
 
 build_args = [
     '-fno-inline',
@@ -48,6 +49,10 @@ build_args += [
 
 if mouse_enabled
     build_args += ['-DUC_MOUSE']
+endif
+
+if popups_enabled
+    build_args += ['-DUC_POPUPS']
 endif
 
 message('@0@: @1@'.format(compiler.get_id(), build_args))

@@ -24,11 +24,19 @@ extern uC_attribs_t uC_attrs_disabled;
 static pulldown_t *pd_find(uC_screen_t *scr, const char *name)
 {
     pulldown_t *pd = NULL;
-    menu_bar_t *bar = scr->menu_bar;
-    int32_t name_hash = fnv_hash((uint8_t *)name);
+    menu_bar_t *bar;
+    int32_t name_hash;
     int32_t hash;
 
     int16_t i;
+
+    if ((scr == NULL) || (scr->menu_bar == NULL) || (name == NULL))
+    {
+        return NULL;
+    }
+
+    bar = scr->menu_bar;
+    name_hash = fnv_hash((uint8_t *)name);
 
     for (i = 0; i < bar->count; i++)
     {
@@ -51,6 +59,40 @@ static pulldown_t *pd_find(uC_screen_t *scr, const char *name)
 
 // -----------------------------------------------------------------------
 
+static menu_item_t *item_find(pulldown_t *pd, const char *name)
+{
+    menu_item_t *item = NULL;
+    int32_t name_hash;
+    int32_t hash;
+    int16_t i;
+
+    if ((pd == NULL) || (name == NULL))
+    {
+        return NULL;
+    }
+
+    name_hash = fnv_hash((uint8_t *)name);
+
+    for (i = 0; i < pd->count; i++)
+    {
+        item = pd->items[i];
+
+        if (item)
+        {
+            hash = fnv_hash((uint8_t *)item->name);
+            if (hash == name_hash)
+            {
+                break;
+            }
+        }
+        item = NULL;
+    }
+
+    return item;
+}
+
+// -----------------------------------------------------------------------
+
 API void uC_menu_pd_disable(uC_screen_t *scr, const char *name)
 {
     pulldown_t *pd;
@@ -62,6 +104,8 @@ API void uC_menu_pd_disable(uC_screen_t *scr, const char *name)
         if (pd)
         {
             pd->flags |= uC_MENU_DISABLED;
+            menu_pd_shortcuts_remove(pd);
+            menu_normalize_selection(scr);
         }
     }
 }
@@ -79,7 +123,47 @@ API void uC_menu_pd_enable(uC_screen_t *scr, const char *name)
         if (pd)
         {
             pd->flags &= ~uC_MENU_DISABLED;
+            menu_pd_shortcuts_register(pd);
+            menu_normalize_selection(scr);
         }
+    }
+}
+
+// -----------------------------------------------------------------------
+
+API void uC_menu_item_disable(uC_screen_t *scr, const char *pd_name,
+    const char *item_name)
+{
+    pulldown_t *pd;
+    menu_item_t *item;
+
+    pd = pd_find(scr, pd_name);
+    item = item_find(pd, item_name);
+
+    if (item != NULL)
+    {
+        item->flags |= uC_MENU_DISABLED;
+        menu_item_shortcut_remove(item);
+        menu_normalize_selection(scr);
+    }
+}
+
+// -----------------------------------------------------------------------
+
+API void uC_menu_item_enable(uC_screen_t *scr, const char *pd_name,
+    const char *item_name)
+{
+    pulldown_t *pd;
+    menu_item_t *item;
+
+    pd = pd_find(scr, pd_name);
+    item = item_find(pd, item_name);
+
+    if (item != NULL)
+    {
+        item->flags &= ~uC_MENU_DISABLED;
+        menu_item_shortcut_register(pd, item);
+        menu_normalize_selection(scr);
     }
 }
 

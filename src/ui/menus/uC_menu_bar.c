@@ -3,12 +3,14 @@
 
 #include <inttypes.h>
 #include <stddef.h>
+#include <string.h>
 
 #include "uC_menus.h"
 #include "uC_win_printf.h"
 #include "uC_alloc.h"
 #include "uC_attribs.h"
 #include "uC_utils.h"
+#include "uC_utf8.h"
 
 // -----------------------------------------------------------------------
 
@@ -33,11 +35,59 @@ static void pd_set_attr(int16_t i, pulldown_t *pd, uC_attribs_t *p,
     // disabled item?
     // Enabled but not selected?
 
-    *p = (i == pd->which)
-        ? pd->selected_attrs
-        : ((item->flags & uC_MENU_DISABLED) != 0)
-            ? pd->disabled_attrs
+    *p = ((item->flags & uC_MENU_DISABLED) != 0)
+        ? pd->disabled_attrs
+        : (i == pd->which)
+            ? pd->selected_attrs
             : pd->attrs;
+}
+
+// -----------------------------------------------------------------------
+
+static int16_t pd_label_width(pulldown_t *pd)
+{
+    int16_t i;
+    int16_t width = 0;
+
+    for (i = 0; i < pd->count; i++)
+    {
+        int16_t item_width = uC_utf8_strlen(
+            (uint8_t *)pd->items[i]->name);
+
+        if (item_width > width)
+        {
+            width = item_width;
+        }
+    }
+
+    return width;
+}
+
+// -----------------------------------------------------------------------
+
+static void draw_item_shortcut(uC_window_t *win, menu_item_t *item,
+    int16_t label_width)
+{
+    char shortcut[12];
+    const char *p;
+
+    if (!uC_menu_shortcut_display(item->shortcut, shortcut,
+        sizeof(shortcut)) || win->width < 1)
+    {
+        return;
+    }
+
+    while ((win->cx <= label_width) && (win->cx != 0) &&
+        (win->cx < win->width))
+    {
+        uC_win_emit(win, win->blank);
+    }
+
+    p = shortcut;
+    while (*p && (win->cx < win->width) && (win->cx != 0))
+    {
+        uC_win_emit(win, *p++);
+    }
 }
 
 // -----------------------------------------------------------------------
@@ -48,10 +98,12 @@ void draw_pd(pulldown_t *pd)
     menu_item_t *item;
     uC_window_t *win;
     int16_t i;
+    int16_t label_width;
 
     if ((pd != NULL) && (pd->count != 0) && (pd->window != NULL))
     {
         win = pd->window;
+        label_width = pd_label_width(pd);
 
         for (i = 0; i != pd->count; i++)
         {
@@ -60,6 +112,7 @@ void draw_pd(pulldown_t *pd)
             pd_set_attr(i, pd, &win->attrs, item);
             uC_win_cup(win, 0, i);
             uC_win_puts(win, item->name);
+            draw_item_shortcut(win, item, label_width);
 
             // this ensures that the highlight on the selected menu item
             // spans the entire width of the pulldown window
@@ -139,6 +192,7 @@ static void pd_close(pulldown_t *pd)
         {
             item = pd->items[pd->count];
             pd->items[pd->count] = NULL;
+            menu_item_shortcut_remove(item);
             uC_ui_free(item);
         }
 
@@ -180,6 +234,7 @@ API void uC_menu_bar_close(uC_screen_t *scr)
             bar_close_pds(bar);
             uC_win_close(bar->window);
             uC_ui_free(bar);
+            uC_menu_deinit_keys();
         }
         scr->menu_bar = NULL;
     }
@@ -219,6 +274,7 @@ API int32_t uC_menu_bar_open(uC_screen_t *scr)
         if ((bar != NULL) && (win != NULL))
         {
             init_bar(scr, win, bar);
+            uC_menu_init_keys();
             return 0;
         }
         uC_ui_free(bar);

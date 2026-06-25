@@ -19,8 +19,8 @@
 // sees it as a normal return value.  Unhandled keys default to uC_noop
 // and cause uC_key() to return 0.
 //
-// Cursor keys (K_CUU1 / K_CUD1 / K_CUB1 / K_CUF1) default to uC_noop.
-// Any app that needs cursor key input must install its own handlers:
+// Common non-printing keys default to the UC_KEY_* values below. Apps can
+// still override individual handlers when they need custom key translation:
 //
 //   uC_kh_t saved = uC_alloc_kh();      // get new table with defaults
 //   uC_set_key_action(K_CUU1, my_up);   // override individual keys
@@ -30,13 +30,35 @@
 //
 // uC_alloc_kh() returns the PREVIOUS table handle, not the new one.  The
 // new one becomes the active keyboard handler used by the system until it
-// is released and the previous one is restored.  The call to
+// is released and the previous one is restored.
 // Passing the value returned by uC_alloc_kh() to uC_release_kh() restores
 // the previous handler. not saving and restoring it leaks the allocated
 // table.
 // The widget system manages its own table internally. apps that bypass
 // the widget system must manage it themselves.
 //
+enum
+{
+    UC_KEY_NONE    = 0x00,
+    UC_KEY_BS      = 0x08,
+    UC_KEY_TAB     = 0x09,
+    UC_KEY_ENTER   = 0x0a,
+    UC_KEY_ESC     = 0x1b,
+    UC_KEY_UP      = 0x81,
+    UC_KEY_DOWN    = 0x82,
+    UC_KEY_LEFT    = 0x83,
+    UC_KEY_RIGHT   = 0x84,
+    UC_KEY_INSERT  = 0x85,
+    UC_KEY_DELETE  = 0x86,
+    UC_KEY_HOME    = 0x87,
+    UC_KEY_END     = 0x88,
+    UC_KEY_MOUSE   = 0x89,
+    UC_KEY_F10     = 0x8a,
+    UC_KEY_BACKTAB = 0x8b,
+    UC_KEY_PGDN    = 0x8c,
+    UC_KEY_PGUP    = 0x8d,
+};
+
 // this enumeration defines the order in which keyboard handlers are
 // defined for each key press. they all correspond to an index into the
 // key-action arrays (which can be user defined but the order cant)
@@ -54,19 +76,54 @@ typedef enum
 typedef void uC_key_handler_t(void);
 typedef void (**uC_kh_t)(void);
 
+typedef uint16_t uC_shortcut_t;
+typedef void uC_shortcut_action_t(void *context);
+
+struct uC_screen_s;
+
+enum
+{
+    UC_SHORTCUT_KEY_MASK = 0x00ff,
+    UC_SHORTCUT_MOD_CTRL = 0x0100,
+    UC_SHORTCUT_MOD_ALT  = 0x0200,
+    UC_SHORTCUT_MOD_META = 0x0400,
+};
+
+#define UC_SHORTCUT(k)       ((uC_shortcut_t)((uint8_t)(k)))
+#define UC_SHORTCUT_CTRL(k)  ((uC_shortcut_t)(UC_SHORTCUT_MOD_CTRL | \
+                                             (uint8_t)(k)))
+#define UC_SHORTCUT_ALT(k)   ((uC_shortcut_t)(UC_SHORTCUT_MOD_ALT | \
+                                             (uint8_t)(k)))
+#define UC_SHORTCUT_META(k)  ((uC_shortcut_t)(UC_SHORTCUT_MOD_META | \
+                                             (uint8_t)(k)))
+
 // -----------------------------------------------------------------------
 // visibility hidden
 
 void uC_read_keys(void);
 int16_t match_key(void);
+uint8_t uC_key_raw(void);
+bool uC_shortcut_register(struct uC_screen_s *scr,
+    uC_shortcut_t shortcut, uC_shortcut_action_t *action, void *context,
+    void *owner);
+bool uC_shortcut_run(struct uC_screen_s *scr, uint8_t key);
+void uC_shortcut_remove_owner(struct uC_screen_s *scr, void *owner);
+void uC_shortcut_clear(struct uC_screen_s *scr);
+bool uC_shortcut_matches(uC_shortcut_t shortcut, uint8_t key);
 
 // -----------------------------------------------------------------------
 
 API uC_kh_t uC_alloc_kh(void);
 API void uC_release_kh(uC_kh_t saved);
 API int8_t uC_test_keys(void);
+uC_key_handler_t *uC_set_default_key_action(key_index_t index,
+    uC_key_handler_t *action);
+bool uC_restore_default_key_action(key_index_t index,
+    uC_key_handler_t *expected, uC_key_handler_t *action);
 API uC_key_handler_t *uC_set_key_action(key_index_t index,
     uC_key_handler_t *action);
+bool uC_restore_key_action(key_index_t index,
+    uC_key_handler_t *expected, uC_key_handler_t *action);
 API uint8_t uC_key(void);
 API void uC_set_key(uint8_t c);
 API void uC_flush_keys(void);

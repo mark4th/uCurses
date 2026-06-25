@@ -1,1 +1,2 @@
 option('mouse', type: 'boolean', value: false, description: 'Enable SGR mouse support')
+option('popups', type: 'boolean', value: true, description: 'Enable popup overlay windows')

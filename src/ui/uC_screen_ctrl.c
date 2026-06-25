@@ -3,6 +3,7 @@
 
 #include "uCurses.h"
 #include "uC_screen.h"
+#include "uC_keys.h"
 #include "uC_menus.h"
 #include "uC_borders.h"
 #include "uC_attribs.h"
@@ -58,9 +59,11 @@ API uC_screen_t *uC_scr_open(int16_t width, int16_t height)
     {
         scr->width  = width;
         scr->height = height;
+        scr->shortcuts_enabled = true;
 
         scr->windows.zone = uC_MEM_ZONE_UI;
         scr->status.zone  = uC_MEM_ZONE_UI;
+        scr->shortcuts.zone = uC_MEM_ZONE_UI;
 
         // allocate screen buffer based on width / height
 
@@ -74,6 +77,33 @@ API uC_screen_t *uC_scr_open(int16_t width, int16_t height)
     active_screen = scr;
 
     return scr;
+}
+
+// -----------------------------------------------------------------------
+
+API void uC_scr_enable_shortcuts(uC_screen_t *scr)
+{
+    if (scr != NULL)
+    {
+        scr->shortcuts_enabled = true;
+    }
+}
+
+// -----------------------------------------------------------------------
+
+API void uC_scr_disable_shortcuts(uC_screen_t *scr)
+{
+    if (scr != NULL)
+    {
+        scr->shortcuts_enabled = false;
+    }
+}
+
+// -----------------------------------------------------------------------
+
+API bool uC_scr_shortcuts_enabled(uC_screen_t *scr)
+{
+    return (scr != NULL) && scr->shortcuts_enabled;
 }
 
 // -----------------------------------------------------------------------
@@ -121,6 +151,13 @@ API void uC_scr_close(uC_screen_t *scr)
             uC_win_close(win);
         }
 
+#ifdef UC_POPUPS
+        uC_win_close(scr->popup);
+        scr->popup = NULL;
+        uC_win_close(scr->too_small_popup);
+        scr->too_small_popup = NULL;
+#endif
+
 #ifdef UC_WIDGETS
         uC_scr_close_view_groups(scr);
 #endif
@@ -128,6 +165,8 @@ API void uC_scr_close(uC_screen_t *scr)
 #ifdef UC_MENUS
         uC_menu_bar_close(scr);
 #endif
+
+        uC_shortcut_clear(scr);
 
         do
         {
@@ -250,6 +289,18 @@ int16_t win_chk_pos(uC_window_t *win, uC_screen_t *scr,
 }
 
 // -----------------------------------------------------------------------
+// set the minimum usable screen dimensions
+
+API void uC_scr_set_min_size(uC_screen_t *scr, int16_t width, int16_t height)
+{
+    if (scr != NULL)
+    {
+        scr->min_width  = width;
+        scr->min_height = height;
+    }
+}
+
+// -----------------------------------------------------------------------
 // detach window from its parent screen
 
 API void uC_scr_win_detach(uC_window_t *win)
@@ -263,6 +314,16 @@ API void uC_scr_win_detach(uC_window_t *win)
         if (scr != NULL)
         {
             uC_list_remove_node(&scr->windows, win);
+#ifdef UC_POPUPS
+            if (scr->popup == win)
+            {
+                scr->popup = NULL;
+            }
+            if (scr->too_small_popup == win)
+            {
+                scr->too_small_popup = NULL;
+            }
+#endif
             win->screen = NULL;
         }
     }
@@ -299,6 +360,43 @@ API void uC_scr_win_attach(uC_screen_t *scr, uC_window_t *win)
         }
     }
 }
+
+#ifdef UC_POPUPS
+// -----------------------------------------------------------------------
+// attach a popup window to a screen
+
+API void uC_scr_popup_attach(uC_screen_t *scr, uC_window_t *win)
+{
+    int16_t rv;
+
+    uC_scr_win_detach(win);
+
+    if ((scr != NULL) && (win != NULL))
+    {
+        if (scr->popup != NULL)
+        {
+            uC_scr_popup_detach(scr->popup);
+        }
+
+        rv = win_chk_pos(win, scr, win->xco, win->yco);
+        if (rv != 0)
+        {
+            return;
+        }
+
+        scr->popup = win;
+        win->screen = scr;
+    }
+}
+
+// -----------------------------------------------------------------------
+// detach a popup window from its parent screen
+
+API void uC_scr_popup_detach(uC_window_t *win)
+{
+    uC_scr_win_detach(win);
+}
+#endif
 
 // -----------------------------------------------------------------------
 

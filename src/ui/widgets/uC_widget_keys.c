@@ -92,14 +92,14 @@ static uint8_t _widget_key(void)
 {
     uint8_t k;
 
-    k = uC_key();    // blocks till a key is pressed
+    k = uC_key_raw();    // blocks till a key is pressed
 
     switch (k)
     {
-        case 0x09:             tab_next_widget();        break;
-        case 0x88:             tab_prev_widget();        break;
+        case UC_KEY_TAB:       tab_next_widget();        break;
+        case UC_KEY_BACKTAB:   tab_prev_widget();        break;
 #ifdef UC_MOUSE
-        case WIDGET_KEY_MOUSE: uC_widget_mouse_handle(); break;
+        case WIDGET_KEY_MOUSE: k = uC_widget_mouse_handle(); break;
 #endif
 
         default:
@@ -111,7 +111,7 @@ static uint8_t _widget_key(void)
 
 // -----------------------------------------------------------------------
 
-static uint8_t widget_key(void)
+static uint8_t widget_read_key(void)
 {
     uint8_t k = 0;
 
@@ -175,8 +175,8 @@ static void set_widget_key_actions(void)
     uC_set_key_action(K_HOME, widget_key_home);
     uC_set_key_action(K_END,  widget_key_end);
 
-    // as long as there are any widgets active the menu system is
-    // disabled.
+    // The legacy widget loop keeps F10 visible to callers. The consolidated
+    // uC_key() dispatcher gives the menu system first shot at F10.
 
     uC_set_key_action(K_F10, widget_key_f10);
 }
@@ -188,6 +188,76 @@ API uint16_t uC_widget_current_sequence(void)
     return widget_state.sequence;
 }
 
+
+// -----------------------------------------------------------------------
+
+static bool widget_input_active(uC_screen_t *scr)
+{
+    if ((scr == NULL) || (widget_state.screen != scr) ||
+        (widget_state.vg == NULL) || (widget_state.view == NULL) ||
+        (widget_state.widget == NULL))
+    {
+        return false;
+    }
+
+    return (widget_state.vg->flags & uC_vg_flag_inactive) == 0;
+}
+
+// -----------------------------------------------------------------------
+
+bool widget_text_input_active(uC_screen_t *scr)
+{
+    return widget_input_active(scr) &&
+        widget_state.widget->type == uC_WIDGET_TEXTBOX;
+}
+
+// -----------------------------------------------------------------------
+
+bool widget_key(uC_screen_t *scr, uint8_t key, uint8_t *out)
+{
+    if (out != NULL)
+    {
+        *out = key;
+    }
+
+    if (!widget_input_active(scr))
+    {
+        return false;
+    }
+
+    switch (key)
+    {
+        case UC_KEY_TAB:
+            if (out != NULL)
+            {
+                *out = tab_next_widget();
+            }
+            return true;
+
+        case UC_KEY_BACKTAB:
+            if (out != NULL)
+            {
+                *out = tab_prev_widget();
+            }
+            return true;
+
+#ifdef UC_MOUSE
+        case WIDGET_KEY_MOUSE:
+            if (out != NULL)
+            {
+                *out = uC_widget_mouse_handle();
+            }
+            return true;
+#endif
+
+        default:
+            if (out != NULL)
+            {
+                *out = handle_widget_key(key);
+            }
+            return true;
+    }
+}
 
 // -----------------------------------------------------------------------
 
@@ -205,7 +275,7 @@ API char uC_widget_main(void)
 
     set_widget_key_actions();
 
-    k = widget_key();
+    k = widget_read_key();
 
     uC_release_kh(saved_key_actions);
 

@@ -1734,16 +1734,28 @@ shift, meta plus key.  see above "pretty plzkthxbai".
 
 The tables contained within this source file allow the application
 developer and the library itself to define behaviors for each supported
-'special' key press.  The menu system for example interprets the F10 key
-as the menu activation key when menus are enabled.
+'special' key press.  A matched escape sequence calls a handler which may
+stuff a single synthetic key code into the keyboard buffer.  The caller
+then receives that key code exactly as though it had been typed directly.
 
-For most of these key presses the default action is to do absolutely
-nothing.  Each application can however allocate their own table and modify
-(via API calls) each supported key's action.  There may or may not be keys
-which should be supported but which are not.  I can neither confirm nor
-deny!
+Common non-printing keys now have stable UC_KEY_* values.  The cursor
+keys, insert/delete, home/end, page up/down, back-tab and F10 therefore no
+longer disappear by default.  Applications can still allocate their own
+key table and override individual handlers when a different translation is
+needed.
 
-    API void uC_set_key(int8_t c)
+The public uC_key() path is now the consolidated dispatcher.  It reads one
+decoded key, gives the screen-level shortcut registry first chance to
+handle it, then gives the menu system a chance to handle menu navigation,
+then gives the widget system a chance to handle active widgets.  If none
+of those systems consume the key it is returned to the application.
+
+When a uCurses textbox owns focus the global shortcut registry is skipped
+automatically.  This prevents printable shortcut keys from being stolen
+while text is being edited.  Applications that implement their own text
+editors should disable screen shortcuts while those editors own focus.
+
+    API void uC_set_key(uint8_t c)
 
         This public API call can be used by user applications to inject a
         key into the keyboard input buffer as though an actual key press
@@ -1755,7 +1767,12 @@ deny!
 
         This public API call is used to erase the keyboard input buffer.
 
-    static void k_bs(void)    static void k_ent(void)
+    static void k_bs(void)      static void k_ent(void)
+    static void k_up(void)      static void k_down(void)
+    static void k_left(void)    static void k_right(void)
+    static void k_delete(void)  static void k_insert(void)
+    static void k_home(void)    static void k_end(void)
+    static void k_pgdn(void)    static void k_pgup(void)
     static void k_cbt(void)
 
         These static functions are used internally to translate certain
@@ -1796,23 +1813,61 @@ deny!
         This public API call is used to set a specific keys action within
         the applications allocated table of keyboard handlers.
 
+    uint8_t uC_key_raw(void)
+
+        This internal function performs the blocking read and escape
+        sequence translation step only.  It does not route the resulting
+        key through screen shortcuts, menus or widgets.  The consolidated
+        uC_key() dispatcher and a few internal legacy loops use this when
+        they need to avoid recursively dispatching the same key.
+
+    bool uC_shortcut_register(struct uC_screen_s *scr,
+        uC_shortcut_t shortcut, uC_shortcut_action_t *action,
+        void *context, void *owner)
+
+        This internal helper registers a screen-level shortcut.  It is
+        used by menus and by widget button shortcuts.  Other uCurses
+        internals may use the same registry when they need global,
+        screen-scoped keyboard accelerators.  Duplicate registered
+        shortcuts on the same screen are rejected and the function returns
+        false.
+
+        Plain alphabetic shortcuts are case-insensitive, so R and r are
+        treated as the same shortcut.  Control-key shortcuts may be
+        specified with UC_SHORTCUT_CTRL(k).  Alt and Meta shortcuts may be
+        specified with UC_SHORTCUT_ALT(k) and UC_SHORTCUT_META(k).  Alt
+        and Meta shortcuts may be displayed but are not matched until the
+        keyboard reader grows a character-by-character escape sequence
+        state machine.
+
+    bool uC_shortcut_run(struct uC_screen_s *scr, uint8_t key)
+
+        Scans the screen shortcut registry for a matching key.  If one is
+        found the registered action is executed and the original key is
+        consumed.  The action may stuff a replacement application key with
+        uC_set_key(); if it does not, uC_key() returns UC_KEY_NONE.
+
+    void uC_shortcut_remove_owner(struct uC_screen_s *scr, void *owner)
+    void uC_shortcut_clear(struct uC_screen_s *scr)
+
+        Remove shortcuts associated with a specific owner or clear the
+        whole screen registry.  Menu items and widget buttons use
+        themselves as owners so registry entries are cleaned automatically
+        when the menu bar is closed or when a widget view group is detached
+        or closed.
+
     API uint8_t uC_key(void)
 
         This public API call is the main keyboard input handler for the
-        uCurses library.  When called it will remain blocked until a
-        single character (non escape sequence) key is pressed.  That
-        single key is returned to the caller.
+        uCurses library.  When called it will remain blocked until a key
+        press is available.  It first obtains a decoded key through
+        uC_key_raw(), then routes that key through the screen shortcut
+        registry, the menu handler and the widget handler before returning
+        any unhandled key to the caller.
 
-        All keys with recognized escape sequences are handled internally
-        and any which are not recognized are silently dropped.  The
-        operation performed when an escape sequence is recognized is user
-        definable on a key by key basis and can be modified at will.
-
-        A key that returns an escape sequence can thereby be redefined
-        to return a single character.  E.G. the F1 key could have a
-        handler defined to return (for example) 0x81 as a single key
-        press to be interpreted in the normal way by the application
-        code.
+        A matched shortcut or UI handler consumes the original key.  If
+        that handler stuffs a replacement key, the replacement is returned
+        to the application.  If it does not, uC_key() returns UC_KEY_NONE.
 
 
 4.4: uC_mouse.c
@@ -1899,10 +1954,16 @@ described in detail later in this document ...
       character buffers.
     * A list of status windows attached to the screen.
     * A list of widget view groups attached to the screen.
+    * A list of screen-level keyboard shortcuts.
+    * A pointer to a popup window, if UC_POPUPS is enabled.
+    * A pointer to the built-in too-small popup, if UC_POPUPS is enabled.
     * A pointer to an attached menu bar.
     * A pointer to which ever window currently has focus.
-    * Variables specifying the screens dimensions.
+    * Variables specifying the screens dimensions and optional minimum
+      usable dimensions.
     * Variables specifying the current cursor location within the screen.
+    * A flag controlling whether screen-level shortcuts are currently
+      enabled.
     * Pointers to the screens current and previous character buffers.
 
 
@@ -1945,6 +2006,22 @@ the Gordian knot of circular include dependencies.
         new screen is returned and also stored in the library-internal
         active_screen variable.
 
+        The screen-level shortcut registry is initialized here and
+        shortcuts are enabled by default.
+
+    API void uC_scr_enable_shortcuts(uC_screen_t *scr)
+    API void uC_scr_disable_shortcuts(uC_screen_t *scr)
+    API bool uC_scr_shortcuts_enabled(uC_screen_t *scr)
+
+        These public API calls control the screen-level shortcut registry
+        gate.  Registered shortcuts remain attached to the screen, but
+        uC_key() will not execute them while shortcuts are disabled.
+
+        This is useful when an application has its own text editor or
+        command prompt outside the uCurses textbox widget.  Disable
+        shortcuts while the editor owns focus and re-enable them when the
+        editor is closed or focus moves elsewhere.
+
     API void uC_scr_close_view_groups(uC_screen_t *scr)
 
         This public API function is available only when the library is
@@ -1970,8 +2047,10 @@ the Gordian knot of circular include dependencies.
             * The two state buffers.
             * The backdrop window (if any).
             * All application windows.
+            * The popup and too-small popup windows (if UC_POPUPS).
             * All widget view groups, views and widgets (if UC_WIDGETS).
             * The menu bar, pull-downs and menu items (if UC_MENUS).
+            * The screen-level shortcut registry.
             * Any status windows.
             * The screen structure itself.
 
@@ -2026,6 +2105,35 @@ the Gordian knot of circular include dependencies.
         to and removes it from the view.  The window structure is not
         destroyed.  If the window is not attached to any screen this call
         is a silent no-op.
+
+    API void uC_scr_set_min_size(uC_screen_t *scr, int16_t width,
+        int16_t height)
+
+        Sets optional minimum usable screen dimensions.  When UC_POPUPS is
+        enabled, uCurses compares these values against the current screen
+        dimensions during screen drawing.  If the screen is smaller than
+        either minimum and there is enough room for a small overlay,
+        uCurses draws a compact centered "Too small" popup as the final
+        layer.  Applications still decide whether to build their normal
+        layout when below that minimum; this API only provides the common
+        visual warning.
+
+    API void uC_scr_popup_attach(uC_screen_t *scr, uC_window_t *win)
+
+        Available when UC_POPUPS is enabled.  Attaches a normal window as
+        the screen's popup instead of adding it to the normal window list.
+        There is only one popup slot per screen; attaching a new popup
+        detaches the previous popup without destroying it.  Popup windows
+        are intended for modal overlays and transient information panels.
+        They are drawn after status windows, widget view groups, and menus.
+        uCurses does not assign a lifetime, timeout, or input behavior to
+        popups; application code decides when to detach them.
+
+    API void uC_scr_popup_detach(uC_window_t *win)
+
+        Available when UC_POPUPS is enabled.  Detaches a popup window from
+        whichever screen it is currently attached to.  The window structure
+        is not destroyed.
 
     API void uC_scr_win_tab_next(uC_screen_t *scr)
 
@@ -2254,10 +2362,13 @@ state buffer and then write that new state out to the console for display.
         draws the screens backdrop window followed by all user application
         windows.
 
-        If the user application has menus defined and active they are
-        drawn next followed by any active status windows.  Finally, prior
-        to pushing all the changes to the terminal any active widgets are
-        drawn into the buffers.
+        Active status windows are drawn after application windows.  Any
+        active widgets are then drawn into the buffers.  If the user
+        application has menus defined, the menu bar and any active
+        pulldown are drawn after widgets so pulldowns are not covered by
+        widget view groups.  If UC_POPUPS is enabled, application popups
+        are drawn after menus, followed by the built-in too-small popup
+        when the screen is below its configured minimum size.
 
         Once the entire new state of the display has been drawn into the
         screen state buffers they are blasted out to the escape sequence
@@ -2921,7 +3032,10 @@ A pulldown menu item structure has the following elements...
     * A pointer to the menu items name
     * A flags variable (only one defined so far)
     * A pointer to a function to be executed on selection of this item.
-    * A shortcut key associated with this item (not implemented yet?)
+    * A screen-level shortcut associated with this item.
+    * A pointer to the screen that owns the registered shortcut.
+    * A pointer to the parent pulldown menu.
+    * A flag recording whether the shortcut is currently registered.
 
 The text drawn into a menu bar can be drawn in one of three color
 attributes, active, inactive or disabled.
@@ -2931,10 +3045,39 @@ each item within that pull down is drawn into that window.  As with the
 menu bar, each menu item can be drawn in one of three color attributes,
 active, inactive or disabled.
 
+If a menu item is created with a non-zero shortcut, that shortcut is
+registered against the screen.  Registered menu shortcuts are active
+whether the menu is open or closed.  The menu item still stores the
+shortcut value so the pull down can display it; display and execution are
+therefore both driven by the same item definition.
+
+Shortcut collisions are rejected by the screen registry.  If a duplicate
+shortcut is supplied for an enabled menu item, menu item creation fails
+and returns -1.  Plain letter shortcuts are matched case-insensitively.
+Control-key shortcuts can be registered.  Alt-key and Meta-key shortcuts
+can be represented and displayed but are not matched until the keyboard
+reader grows stateful escape handling for those modifier sequences.
+
 The menu system itself is in control of which item is currently selected
 but the application developer must enable or disable pull down menus and
-menu items manually based on application context.  The menu system itself
-plays no part in this.
+menu items manually based on application context.  The menu system does
+not infer this context; it only applies the enable or disable operations
+requested by the application.
+
+Disabling a pulldown menu removes all registered shortcuts owned by its
+items.  Re-enabling the pulldown attempts to register those shortcuts
+again.  Disabling an individual menu item removes only that items
+shortcut, and re-enabling the item attempts to register it again.  If a
+shortcut is already owned by another menu item or widget when an enable
+call is made, that item remains selectable from the menu but does not get
+the global shortcut until the conflict is removed and the item is enabled
+again.
+
+Menu navigation skips disabled pulldowns and disabled menu items.  If a
+currently selected but closed menu item is disabled, the next menu
+activation normalizes selection to an enabled item before drawing.  If a
+currently active pulldown or item is disabled, uCurses normalizes the
+active selection immediately.  Enter will not execute disabled items.
 
 The values for each of these color attributes is hard coded into the menu
 system and assigned as each entity (pull down or menu item) is created.
@@ -3040,19 +3183,39 @@ a pulldown menu or a pulldown menu item.
         item based on its name.  It is used by the following functions
         which either enable or disable a pull down menu.
 
-    API void uC_pd_disable(uC_screen_t *scr, char *name)
+    API void uC_menu_pd_disable(uC_screen_t *scr, const char *name)
 
         This public API function will search the specified screens pull
         down menus for a pull down with the specified name.  If this item
         is found it will be marked disabled.  Once disabled the pull down
         menu cannot be activated or even selected until it is re-enabled.
+        Registered shortcuts owned by its menu items are removed and the
+        current menu selection is normalized.
 
-    API void uC_pd_enable(uC_screen_t *scr, char *name)
+    API void uC_menu_pd_enable(uC_screen_t *scr, const char *name)
 
         This public API function will search the specified screens pull
         down menus for a pull down with the specified name.  If this item
         is found it will be marked as enabled.  Once enabled it can be
-        activated when selected.
+        activated when selected.  Shortcuts owned by enabled items in
+        that pulldown are registered again if they do not conflict with an
+        existing shortcut.
+
+    API void uC_menu_item_disable(uC_screen_t *scr, const char *pd_name,
+        const char *item_name)
+
+        This public API function finds a named menu item within a named
+        pulldown and marks that item disabled.  Its registered shortcut is
+        removed and menu selection is normalized so the disabled item is
+        not a selectable target.
+
+    API void uC_menu_item_enable(uC_screen_t *scr, const char *pd_name,
+        const char *item_name)
+
+        This public API function finds a named menu item within a named
+        pulldown and marks that item enabled.  If the item has a shortcut
+        and its parent pulldown is enabled, uCurses attempts to register
+        the shortcut again.
 
     int32_t bar_create_pd_win(uC_screen_t *scr, pulldown_t *pd)
 
@@ -3078,29 +3241,32 @@ a pulldown menu or a pulldown menu item.
 8.3: uC_menu_item.c
 -------------------
 
-    static void init_item(pulldown_t *pd, menu_item_t *item,
-        char *name, menu_fp_t fp, uint16_t shortcut)
+    static void init_item(uC_screen_t *scr, pulldown_t *pd,
+        menu_item_t *item, const char *name, menu_fp_t fp,
+        uC_shortcut_t shortcut)
 
         This function is used to initialize a new menu item structure.  It
         adds the item to a pull down structure, sets the display name,
-        function vector address and keyboard shortcut.
+        function vector address, screen pointer and keyboard shortcut.
 
-        It also keeps track of the widest item added to the pull down
-        which is used to set the width of its window when it is activated.
+        It also keeps track of the widest item label and widest displayed
+        shortcut added to the pull down.  These are used to set the width
+        of its window when it is activated.  Shortcut display text is
+        aligned one blank column after the widest item label.
 
-    static int32_t new_item(pulldown_t *pd, char *name, menu_fp_t fp,
-        uint16_t shortcut)
+    static int32_t new_item(uC_screen_t *scr, pulldown_t *pd,
+        const char *name, menu_fp_t fp, uC_shortcut_t shortcut)
 
         This function is part of the following function to create a new
         menu item.  This function will allocate and initialize a new menu
         item structure unless the pull down menu it is to be associated
-        with is full.
+        with is full or the requested shortcut cannot be registered.
 
         On success it returns a result of 0, otherwise it returns a result
         of -1.
 
-    API int32_t uC_menu_new_item(uC_screen_t *scr, char *name,
-        menu_fp_t fp, int16_t shortcut)
+    API int32_t uC_menu_new_item(uC_screen_t *scr, const char *name,
+        menu_fp_t fp, uC_shortcut_t shortcut)
 
         This public API function will create a new menu item and add it to
         the bottom of the most recently created pull down menu.
@@ -3108,6 +3274,10 @@ a pulldown menu or a pulldown menu item.
         It first verifies that the specified screen is not null and that
         it has a non null menu bar.  It then verifies that there is a
         pulldown menu on the bar to add the item to.
+
+        If shortcut is non-zero it is registered as a screen-level
+        shortcut before the item is attached to the pull down.  A duplicate
+        registered shortcut causes this function to fail cleanly.
 
         On success this function will return a result of zero.  On failure
         it will return a result of -1.
@@ -3127,6 +3297,22 @@ a pulldown menu or a pulldown menu item.
         selected pull down menu.  If the pull down menu is being activated
         it will be drawn into the screens state buffer.  Otherwise any
         currently active pull down will have its window closed.
+
+    API bool uC_menu_is_active(uC_screen_t *scr)
+
+        Returns true when the supplied screen has a menu bar and that menu
+        bar currently has an open pull down.
+
+    API void uC_menu_open(uC_screen_t *scr)
+
+        Programmatically opens the menu bar on the supplied screen.  This
+        is useful for applications that want to keep F10 or another key in
+        their own event loop and explicitly decide when menu navigation
+        should take over.
+
+    API void uC_menu_close(uC_screen_t *scr)
+
+        Programmatically closes the active pull down menu, if any.
 
     static void to_prev_menu_item(pulldown_t *pd)
 
@@ -3175,10 +3361,12 @@ a pulldown menu or a pulldown menu item.
     static void menu_cr(void)
 
         This function will close the currently open pull down menu and
-        execute the currently selected items function vector.
+        execute the currently selected items function vector.  Disabled
+        pulldowns and disabled items are ignored.
 
-        If there is no menu bar associated with the active screen then a
-        0x0a (enter) key is returned to the application.
+        If the selected function stuffs an application key with
+        uC_set_key(), the caller can retrieve that synthetic key after the
+        selection has completed.
 
     static void menu_up(void)     static void menu_down(void)
     static void menu_left(void)   static void menu_right(void)
@@ -3186,10 +3374,51 @@ a pulldown menu or a pulldown menu item.
         These four functions are the keyboard handlers for the cursor keys
         when a pull down menu is activated.
 
+    bool menu_key(uC_screen_t *scr, uint8_t key, uint8_t *out)
+
+        Internal dispatch entry used by uC_key().  F10 opens or closes the
+        menu.  When a pull down is active, Escape closes it, cursor keys
+        navigate it and Enter selects the current item.  Keys that are not
+        menu navigation are left for the next layer of the consolidated
+        dispatcher.
+
+        Menu item accelerator shortcuts are not scanned here.  Those are
+        handled by the screen shortcut registry before menu navigation is
+        considered.
+
+    API uint8_t uC_menu_run(uC_screen_t *scr)
+
+        Runs the active menu until the pull down is closed or a selected
+        menu item executes its function vector.  This is the preferred API
+        for applications that want the menu system to own Up, Down, Left,
+        Right, Enter and F10 behavior while a menu is active.
+
+        Menu item functions may stuff an application key with uC_set_key().
+        When that happens uC_menu_run returns that key to the application
+        after the menu item has been executed.  If the menu is closed
+        without selecting an item, it returns zero.
+
+    API void uC_menu_cursor_up(uC_screen_t *scr)
+    API void uC_menu_cursor_down(uC_screen_t *scr)
+    API void uC_menu_cursor_left(uC_screen_t *scr)
+    API void uC_menu_cursor_right(uC_screen_t *scr)
+
+        Programmatic wrappers around the menu cursor handlers.  They are
+        intended for applications that read keys themselves and then route
+        synthetic or decoded cursor-key events into the active menu.
+
+    API void uC_menu_select(uC_screen_t *scr)
+
+        Programmatically selects the current menu item, closes the active
+        pull down, and executes the selected item's function vector.
+
     API void uC_menu_init_keys(void)
 
-        This public API function initializes the keyboard function tables
-        for the pull down menu system.
+        This public API function initializes the keyboard behavior needed
+        by the pull down menu system.  It emits smkx through terminfo so
+        cursor keys are reported in the mode the terminfo table expects.
+        It also installs the default F10 translation used by uC_key() when
+        menus are built in.
 
 
 9: Widgets
@@ -3311,6 +3540,14 @@ engine based on the developer defined order.
         widget can be assigned both a normal set of attributes and a
         focused set of attributes.
 
+    API void uC_widget_close_widget(uC_widget_t *widget)
+
+        This public API call can be used to close any widget at any time.
+        The widget is first detached from its parent view if it has one,
+        any screen-level shortcut owned by that widget is deregistered,
+        and focus is cleared if that widget currently owns focus.  The
+        widget is then destroyed.
+
 
 9.2: uC_widget_view.c
 ---------------------
@@ -3360,7 +3597,9 @@ engine based on the developer defined order.
 
         This public API call is used to detach a widget from a view.  The
         view itself is not closed even if the removed widget is the only
-        one that was attached.
+        one that was attached.  Removing a widget does not destroy it, but
+        it does deregister any screen-level shortcut owned by that widget
+        and clears focus if the removed widget currently owns focus.
 
     void widget_close_view(uC_widget_view_t *view)
 
@@ -3423,6 +3662,11 @@ engine based on the developer defined order.
         screen structure.  Once the view group is attached, all widgets
         within all widget views associated with the attached group will be
         displayed on the next update.
+        Button widgets with assigned shortcut letters are registered with
+        the screen-level shortcut registry at this point.  If another menu
+        item or widget already owns that shortcut on the same screen the
+        duplicate registration is ignored; the button still displays its
+        assigned letter and still works through focus and Enter.
         If no widget currently has focus when this call is made then the
         widget with sequence number 1 is automatically given focus.  This
         ensures that newly attached view groups are immediately keyboard
@@ -3432,7 +3676,11 @@ engine based on the developer defined order.
 
         This public API call is used to detach a specified view group from
         a screen structure.  The detached view group is not destroyed but
-        will no longer be drawn into the screen.
+        will no longer be drawn into the screen.  Detach also removes
+        button shortcut registrations owned by widgets in the group and
+        clears focus if the detached group owned the focused widget.  The
+        view group, its views, its widgets, and its backing window buffer
+        remain allocated so the group can be attached again later.
 
     API void uC_widget_vg_close(uC_widget_vg_t *vg)
 
@@ -3533,40 +3781,54 @@ The following functions perform the entire drawing operation...
 -----------------------
 
     static void draw_btn_txt(uC_window_t *win, uint16_t x, uint16_t y,
-        uint16_t width, char *name, char key)
+        uint16_t width, const char *name, char key)
 
         This static function draws the text name into the button.  If the
-        button has a shortcut character defined the first instance of that
+        button has an associated letter defined the first instance of that
         character within the name is underlined.
 
     void draw_button(uC_window_t *win, uC_widget_t *widget,
         uint16_t x, uint16_t y)
 
         This function simply draws a button with its button text.  If the
-        button also has a shortcut key the first instance of that letter
-        within the text is underlined.
+        button also has an associated letter the first instance of that
+        letter within the text is underlined.
 
     uint8_t handle_button(uint8_t k)
 
         This function is called as part of the widget keyboard handler
-        when a button has focus.  If the key pressed was the enter key and
-        the button has a shortcut character then that shortcut character
-        is returned to the application code.
+        when a button has focus.  If the key pressed was the enter key or
+        carriage return and the button has an associated letter then that
+        letter is returned to the application code.  Mouse clicks on that
+        same button return the same letter.
 
-        If the enter key is pressed but the button does not have a
-        shortcut character then the buttons tab sequence is written into
-        the address pointed to by the buttons select pointer and the enter
-        key is returned to the application code.
+        If the enter key is pressed but the button does not have an
+        associated letter then the buttons tab sequence is written into
+        the address pointed to by the buttons select pointer and
+        UC_KEY_NONE is returned.  In this mode the widget system has
+        already run the button action and no application shortcut key is
+        generated.
 
-    API uC_widget_t *uC_widget_button_create(uint16_t sequence,
-        uint16_t *select, char *name, char letter, uint16_t width,
-        uint8_t xco, uint8_t yco, uC_attribs_t attrs, uC_attribs_t focus)
+        The button letter is automatically registered as a screen-level
+        shortcut when the containing view group is attached to a screen.
+        Duplicate shortcut registration is not fatal; the button still
+        displays and returns its letter when focused or clicked, but the
+        existing shortcut owner keeps the global accelerator.
+
+        Unlike menu shortcuts, a widget button letter is intentionally
+        restricted to a single ASCII letter that appears somewhere in the
+        button text.  The match is case-insensitive at creation time and
+        the stored letter is normalized to the actual character from the
+        button name so the displayed underline lands on real text.
+
+    API uC_widget_t *uC_widget_button_create(uint16_t *select,
+        const char *name, char letter, uint16_t width,
+        uC_attribs_t attrs, uC_attribs_t focus)
 
         This public API call is used to create a new button widget.  The
-        sequence value passed in here is the widgets tab selection order.
-
-        The letter parameter is the shortcut key associated with the
-        button.  If the button has no shortcut key specified then
+        letter parameter is the associated return/display letter.  If that
+        letter is not a single ASCII letter present in the button name, it
+        is ignored.  If the button has no valid letter specified then
         there must be a select parameter specified.  If neither are
         specified then a press of this button will be effectively
         un-selectable.
@@ -3860,17 +4122,22 @@ view group.
 9.10: uC_widget_keys.c
 ----------------------
 
-This source file contains the main keyboard handler for the widget engine.
-Single character key presses are passed to the individual handlers for
-each widget type within their own source files.
+This source file contains the keyboard handling glue for the widget
+engine.  Single decoded key presses are passed to the individual handlers
+for each widget type within their own source files.
 
-Keys which return an escape sequence are translated into single character
-values which are then manually injected into the keyboard input buffer to
-be handled as though they were single character key presses.
+In normal applications widgets are handled through the consolidated
+uC_key() dispatcher.  uC_key() reads and decodes the terminal key, then
+calls the internal widget_key() helper after screen shortcuts and menu
+navigation have had their chance to consume the key.
+
+The older uC_widget_main() loop is still present for applications that use
+the widget engine directly.  That loop reads through uC_key_raw() so it
+does not recursively call the consolidated dispatcher.
 
 The cursor up and cursor down keys are used to move up or down within a
 scrollable widget view if it has focus and to potentially scroll that
-widget it in one or other direction.
+widget in one or other direction.
 
     static bool check_scrollable(uint8_t k)
 
@@ -3891,6 +4158,30 @@ widget it in one or other direction.
 
         After handling the key press it is also returned to the caller.
 
+    bool widget_text_input_active(uC_screen_t *scr)
+
+        Internal helper used by uC_key() to determine whether the current
+        focused widget is a textbox.  When true, the screen shortcut
+        registry is skipped so printable shortcut keys are delivered to
+        the textbox editor.
+
+    bool widget_key(uC_screen_t *scr, uint8_t key, uint8_t *out)
+
+        Internal helper used by uC_key() after shortcut and menu handling.
+        It checks whether the widget engine is active on the supplied
+        screen.  If not, it returns false and the key continues through the
+        dispatcher.
+
+        If widgets are active, Tab and Back-Tab move to the next or
+        previous widget, mouse events are routed to the widget mouse
+        handler when mouse support is enabled, and all other keys are
+        passed to handle_widget_key().  Mouse clicks on key-bearing
+        buttons return that button key.  Mouse clicks on keyless
+        buttons, radio buttons, and checkboxes run the widget action
+        internally.  The resulting key is written to *out and the helper
+        returns true to indicate that the widget layer consumed the
+        original key.
+
     static uint8_t _widget_key(void)
 
         This static function blocks until a key is ready to read.  The
@@ -3906,7 +4197,7 @@ widget it in one or other direction.
         translated into a single key press which will also be handled
         here.
 
-    static uint8_t widget_key(void)
+    static uint8_t widget_read_key(void)
 
         This function is a wrapper for the above _widget_key() function.
         It repeatedly call said function until there are no more keys left
@@ -3933,16 +4224,17 @@ widget it in one or other direction.
     static void set_widget_key_actions(void)
 
         This function registers each of the above escape sequence handlers
-        which translate the key presses into a single character.   It will
-        also assign a do nothing handler for the F10 key so that the menus
-        will not be activated when the widgets are being handled.
+        which translate the key presses into a single character.  This is
+        part of the legacy uC_widget_main() path.  The consolidated
+        uC_key() dispatcher normally uses the default UC_KEY_* translations
+        and gives the menu system first shot at F10.
 
     API char uC_widget_main(void)
 
         This public API is the main keyboard handler for the widget
         engine.  It allocates a key actions array for the widget engine
         and then registers the keys needed by it.   It then calls the
-        above widget_key() function to handle key presses.   When that
+        above widget_read_key() function to handle key presses.  When that
         function returns the key handler is released and the previous one
         is reinstated.
 

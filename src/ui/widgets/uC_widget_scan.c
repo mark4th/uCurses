@@ -14,6 +14,68 @@
 extern widget_state_t widget_state;
 
 // -----------------------------------------------------------------------
+
+static void scan_tab_candidate_in_vg(uC_widget_vg_t *vg, uint16_t current,
+    bool forward, uint16_t *candidate, uint16_t *wrap)
+{
+    uC_list_node_t *n2, *n3;
+    uC_widget_view_t *view;
+    uC_widget_t *widget;
+
+    if ((vg == NULL) || (candidate == NULL) || (wrap == NULL) ||
+        (vg->flags & uC_vg_flag_inactive))
+    {
+        return;
+    }
+
+    n2 = uC_list_scan(&vg->views, NULL);
+    while (n2)
+    {
+        view = (uC_widget_view_t *)n2->payload;
+        n3 = uC_list_scan(&view->widgets, NULL);
+
+        while (n3)
+        {
+            widget = (uC_widget_t *)n3->payload;
+            if (widget->disabled)
+            {
+                n3 = uC_list_scan(NULL, n3);
+                continue;
+            }
+
+            if (forward)
+            {
+                if (((*wrap == 0) || (widget->sequence < *wrap)))
+                {
+                    *wrap = widget->sequence;
+                }
+                if ((widget->sequence > current) &&
+                    ((*candidate == 0) || (widget->sequence < *candidate)))
+                {
+                    *candidate = widget->sequence;
+                }
+            }
+            else
+            {
+                if (widget->sequence > *wrap)
+                {
+                    *wrap = widget->sequence;
+                }
+                if ((widget->sequence < current) &&
+                    (widget->sequence > *candidate))
+                {
+                    *candidate = widget->sequence;
+                }
+            }
+
+            n3 = uC_list_scan(NULL, n3);
+        }
+
+        n2 = uC_list_scan(NULL, n2);
+    }
+}
+
+// -----------------------------------------------------------------------
 // scan widgets within view for one whith specified sequence number
 
 static bool scan_view(uC_widget_view_t *view, uint16_t sequence)
@@ -99,6 +161,11 @@ API bool uC_widget_select_widget(uint16_t sequence)
     if (widget_state.vg)
     {
         widget_state.vg->window.flags &= ~uC_WIN_FOCUS;
+        if ((widget_state.widget != NULL) &&
+            (widget_state.widget->type == uC_WIDGET_TEXTBOX))
+        {
+            widget_state.widget->textbox.editing = false;
+        }
         widget_state.widget->focused   = false;
 
         // this is a pointer to the list node of the widget
@@ -117,7 +184,17 @@ API bool uC_widget_select_widget(uint16_t sequence)
     // scan through all view groups, all views within those
     // view groups and all widgets within those views...
 
-    n1 = uC_list_scan(&widget_state.screen->view_groups, NULL);
+    if ((widget_state.screen != NULL) &&
+        (widget_state.screen->popup_vg != NULL))
+    {
+        vg = (uC_widget_vg_t *)widget_state.screen->popup_vg;
+        if (!(vg->flags & uC_vg_flag_inactive))
+        {
+            f = scan_vg(vg, sequence);
+        }
+    }
+
+    n1 = f ? NULL : uC_list_scan(&widget_state.screen->view_groups, NULL);
 
     while (n1)
     {
@@ -146,15 +223,26 @@ API bool uC_widget_select_widget(uint16_t sequence)
 }
 
 // -----------------------------------------------------------------------
-// find the highest sequence number among all active widgets
+// choose the next/previous real active widget sequence. Sequences may be
+// sparse, so this scans actual widgets once instead of probing every integer
+// between the current sequence and the highest assigned sequence.
 
-static uint16_t max_sequence(void)
+static uint16_t tab_candidate(bool forward)
 {
-    uint16_t max = 0;
-    uC_list_node_t *n1, *n2, *n3;
+    uint16_t current = widget_state.sequence;
+    uint16_t candidate = 0;
+    uint16_t wrap = 0;
+    uC_list_node_t *n1;
     uC_widget_vg_t *vg;
-    uC_widget_view_t *view;
-    uC_widget_t *widget;
+
+    if ((widget_state.screen != NULL) &&
+        (widget_state.screen->popup_vg != NULL))
+    {
+        scan_tab_candidate_in_vg(
+            (uC_widget_vg_t *)widget_state.screen->popup_vg, current,
+            forward, &candidate, &wrap);
+        return candidate ? candidate : wrap;
+    }
 
     n1 = uC_list_scan(&widget_state.screen->view_groups, NULL);
 
@@ -162,35 +250,12 @@ static uint16_t max_sequence(void)
     {
         vg = (uC_widget_vg_t *)n1->payload;
 
-        if (!(vg->flags & uC_vg_flag_inactive))
-        {
-            n2 = uC_list_scan(&vg->views, NULL);
-
-            while (n2)
-            {
-                view = (uC_widget_view_t *)n2->payload;
-                n3 = uC_list_scan(&view->widgets, NULL);
-
-                while (n3)
-                {
-                    widget = (uC_widget_t *)n3->payload;
-
-                    if (widget->sequence > max)
-                    {
-                        max = widget->sequence;
-                    }
-
-                    n3 = uC_list_scan(NULL, n3);
-                }
-
-                n2 = uC_list_scan(NULL, n2);
-            }
-        }
+        scan_tab_candidate_in_vg(vg, current, forward, &candidate, &wrap);
 
         n1 = uC_list_scan(NULL, n1);
     }
 
-    return max;
+    return candidate ? candidate : wrap;
 }
 
 // -----------------------------------------------------------------------
@@ -198,13 +263,12 @@ static uint16_t max_sequence(void)
 
 uint8_t tab_next_widget(void)
 {
-    uint16_t sequence = widget_state.sequence + 1;
+    uint16_t sequence = tab_candidate(true);
 
     widget_state.sequence = 0;
-
-    if (!uC_widget_select_widget(sequence))
+    if (sequence != 0)
     {
-        uC_widget_select_widget(1);
+        uC_widget_select_widget(sequence);
     }
 
     return 0x09;
@@ -215,11 +279,13 @@ uint8_t tab_next_widget(void)
 
 uint8_t tab_prev_widget(void)
 {
-    uint16_t current  = widget_state.sequence;
-    uint16_t sequence = (current > 1) ? current - 1 : max_sequence();
+    uint16_t sequence = tab_candidate(false);
 
     widget_state.sequence = 0;
-    uC_widget_select_widget(sequence);
+    if (sequence != 0)
+    {
+        uC_widget_select_widget(sequence);
+    }
 
     return UC_KEY_BACKTAB;
 }

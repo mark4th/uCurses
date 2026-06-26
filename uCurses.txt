@@ -157,10 +157,10 @@ This library does however have a few things that ncurses does not.
         brings a lot of utility to the table and it fully supports pretty
         much any hardware you throw at it, including ancient hardware.
 
-        uCurses is a younger library than ncurses and has not yet
-        received the same breadth of real-world testing across terminal
-        emulators.  It is known to work well in gnome-terminal, ptyxis,
-        Konsole and xterm.  As with any young library, YMMV.
+        uCurses is a newer library than ncurses and has not yet received
+        the same level of real-world testing across terminal emulators.
+        It is known to work well in gnome-terminal, ptyxis,  Konsole and
+        xterm.  As with any new library, YMMV.
 
     Moveable, overlapping windows.
 
@@ -239,10 +239,10 @@ understand that this might not actually be *entirely* their fault but...
 I still rant because...
 
     I consider terminfo to be a BINDING contract so when (for example)
-    your terminal randomly decides to return either 0x08 or 0x7f (based on
-    who compiled it?) when someone presses the backspace key, when your
-    terminfo explicitly states that it will return 0x08, then I consider
-    you to be in flagrant, wilful violation of your contract.
+    your terminal randomly decides to return either 0x08 or 0x7f when
+    someone presses the backspace key (based on who compiled it?), when
+    your terminfo explicitly states that it will return 0x08, then I
+    consider you to be in flagrant, wilful violation of your contract.
 
 Things like this force me to add special needs 'duct tape' code to fix
 things that in my mind should not need fixing.  This and other "quirks"
@@ -261,8 +261,8 @@ corrections :)
 This library makes extensive use of terminfo.  Every single color change
 or cursor movement is performed using the specific escape sequences for
 the specific virtual terminal being used.  Terminfo supplies templates for
-each escape sequence supported by a given terminal in the form of format
-strings.
+each(ish) escape sequence supported by a given terminal in the form of
+format strings.
 
 Different terminals often use different escape sequences to perform the
 same operations.  The format string for a given terminal allow this
@@ -308,10 +308,9 @@ these is described in more detail below.
     * The keyboard input buffer and other related variables.
 
 As each escape sequence is compiled it is appended onto the end of the
-above mentioned escape sequence buffer.  It should be noted that when
-generating those escape sequences nothing is physically written out to the
-console until either the escape sequences for the entire update have been
-compiled or the escape buffer becomes full.
+above mentioned escape sequence buffer but nothing is physically written
+out to the console until either the escape sequences for the entire update
+have been compiled or the escape buffer becomes full.
 
 While some effort has been made to allow for flushing of the buffer when
 it is filled, this will not work correctly if a flush occurs mid-way
@@ -1543,7 +1542,7 @@ or bold mode off has some associated caveats documented elsewhere here.
             bold mode for the terminal.
 
 
-4: Keyboard input
+4: Keyboard Input
 -----------------
 
 Keyboard input from a terminal is not as simple as reading a single
@@ -1571,9 +1570,9 @@ There is also the problem of being able to read and reliably recognize key
 presses with modifier keys (control, alt, shift, meta).  uCurses targets
 xterm-compatible terminals which expose most modifier combinations as
 well-defined escape sequences.  Full cross-terminal support for every
-possible modifier combination is not feasible and is not a goal; any key
-press that is intercepted by the desktop environment or the terminal
-emulator itself is simply not available to the application.
+possible modifier combination is not feasible and is not a goal;  Also,
+any key press that is intercepted by the desktop environment or the
+terminal emulator itself is simply not available to the application.
 
     P.S.  The way uCurses handles the keyboard is not as clean as I would
     like it to be and I am considering some changes but I am resisting
@@ -1658,7 +1657,8 @@ shift, meta plus key.  see above "pretty plzkthxbai".
         This helper function is used to inject a single character key
         press into the terminfo escape sequence buffer and set the input
         length to one.  This is used internally to translate a key
-        sequence into a single key value.
+        sequence into a single key value which can be returned to the
+        applications keyboard input functions.
 
     static void kent(void)
 
@@ -1728,6 +1728,10 @@ shift, meta plus key.  see above "pretty plzkthxbai".
         If a match is found the index of that match is returned.  If not
         then a result of -1 is returned.
 
+TODO: make an init run over those format strings to compile a list of
+escape sequences to compare aginst ONE TIME ONLY, not for every single
+key press.
+
 
 4.3: uC_key_table.c
 -------------------
@@ -1744,16 +1748,85 @@ longer disappear by default.  Applications can still allocate their own
 key table and override individual handlers when a different translation is
 needed.
 
+The currently reserved single-byte return values are:
+
+    UC_KEY_NONE     0x00
+    UC_KEY_BS       0x08
+    UC_KEY_TAB      0x09
+    UC_KEY_ENTER    0x0a
+    UC_KEY_ESC      0x1b
+    UC_KEY_UP       0x81
+    UC_KEY_DOWN     0x82
+    UC_KEY_LEFT     0x83
+    UC_KEY_RIGHT    0x84
+    UC_KEY_INSERT   0x85
+    UC_KEY_DELETE   0x86
+    UC_KEY_HOME     0x87
+    UC_KEY_END      0x88
+    UC_KEY_MOUSE    0x89
+    UC_KEY_F10      0x8a
+    UC_KEY_BACKTAB  0x8b
+    UC_KEY_PGDN     0x8c
+    UC_KEY_PGUP     0x8d
+
+These values are what application code sees after terminfo sequence
+matching and default key translation.  F1 through F12 also have key table
+indexes, but most function keys default to uC_noop until an application
+or a library subsystem assigns behavior to them.  This keeps the key
+table stable without making F keys accidentally active.
+
+The key_index_t enumeration is the index into the active handler table.
+It currently covers enter, arrows, backspace, delete, insert, home, end,
+page down, page up, back-tab and F1 through F12.  The enumeration order is
+part of the handler-table contract; any custom table must use those
+indexes rather than assuming the physical order in the source file is
+unimportant.
+
 The public uC_key() path is now the consolidated dispatcher.  It reads one
 decoded key, gives the screen-level shortcut registry first chance to
 handle it, then gives the menu system a chance to handle menu navigation,
 then gives the widget system a chance to handle active widgets.  If none
 of those systems consume the key it is returned to the application.
 
-When a uCurses textbox owns focus the global shortcut registry is skipped
-automatically.  This prevents printable shortcut keys from being stolen
-while text is being edited.  Applications that implement their own text
-editors should disable screen shortcuts while those editors own focus.
+When a uCurses textbox is actively being edited the global shortcut
+registry is skipped automatically.  Focus alone is not editing; a textbox
+may be selected for navigation without owning printable input.  This
+prevents printable shortcut keys from being stolen while text is being
+edited.  Applications that implement their own text editors should disable
+screen shortcuts while those editors own input.
+
+Shortcuts are represented by uC_shortcut_t.  The low byte holds the base
+key and the upper bits hold modifier flags:
+
+    UC_SHORTCUT_KEY_MASK
+    UC_SHORTCUT_MOD_CTRL
+    UC_SHORTCUT_MOD_ALT
+    UC_SHORTCUT_MOD_META
+
+The preferred construction macros are:
+
+    UC_SHORTCUT(k)
+    UC_SHORTCUT_CTRL(k)
+    UC_SHORTCUT_ALT(k)
+    UC_SHORTCUT_META(k)
+
+Plain alphabetic shortcuts are normalized case-insensitively, so a
+registered R also matches r.  Control shortcuts are matched against the
+normal ASCII control-code range, so UC_SHORTCUT_CTRL('X') matches a
+received 0x18.  Alt and Meta shortcut values can be stored and displayed
+by the menu code but are not matched by the current keyboard reader.
+Those require the future byte-at-a-time escape sequence state machine.
+Once that parser exists, the intent is to match shortcut modifiers more
+generally, including reasonable combinations of Control, Alt and Meta
+where the terminal can report them unambiguously.
+
+Menu shortcut display uses the same uC_shortcut_t value.  Plain printable
+shortcuts display as their uppercase base key, control shortcuts display
+as ^X, Alt shortcuts as A-X and Meta shortcuts as M-X.  Modifier prefixes
+can combine for display only; for example a Ctrl+Alt shortcut can be
+shown in a pulldown, but the current input reader will not execute any
+shortcut containing Alt or Meta.  Only plain shortcuts and Ctrl shortcuts
+are currently matched.
 
     API void uC_set_key(uint8_t c)
 
@@ -1830,15 +1903,9 @@ editors should disable screen shortcuts while those editors own focus.
         internals may use the same registry when they need global,
         screen-scoped keyboard accelerators.  Duplicate registered
         shortcuts on the same screen are rejected and the function returns
-        false.
-
-        Plain alphabetic shortcuts are case-insensitive, so R and r are
-        treated as the same shortcut.  Control-key shortcuts may be
-        specified with UC_SHORTCUT_CTRL(k).  Alt and Meta shortcuts may be
-        specified with UC_SHORTCUT_ALT(k) and UC_SHORTCUT_META(k).  Alt
-        and Meta shortcuts may be displayed but are not matched until the
-        keyboard reader grows a character-by-character escape sequence
-        state machine.
+        false.  The owner pointer is used for automatic deregistration
+        when a menu item, menu bar, widget button or widget view group is
+        disabled, detached or closed.
 
     bool uC_shortcut_run(struct uC_screen_s *scr, uint8_t key)
 
@@ -1846,6 +1913,15 @@ editors should disable screen shortcuts while those editors own focus.
         found the registered action is executed and the original key is
         consumed.  The action may stuff a replacement application key with
         uC_set_key(); if it does not, uC_key() returns UC_KEY_NONE.
+
+    bool uC_shortcut_run_popup(struct uC_screen_s *scr, uint8_t key)
+
+        Scans the screen shortcut registry for a matching key owned by a
+        widget inside the currently attached popup widget view group.  This
+        is used by the modal popup path in uC_key().  When a widget popup
+        is active, normal menu shortcuts and normal background widget
+        shortcuts are ignored; only shortcuts belonging to widgets in the
+        active popup are allowed to run.
 
     void uC_shortcut_remove_owner(struct uC_screen_s *scr, void *owner)
     void uC_shortcut_clear(struct uC_screen_s *scr)
@@ -1864,6 +1940,13 @@ editors should disable screen shortcuts while those editors own focus.
         uC_key_raw(), then routes that key through the screen shortcut
         registry, the menu handler and the widget handler before returning
         any unhandled key to the caller.
+
+        Popup dispatch is modal.  If a raw popup window is active without a
+        widget popup, uC_key() skips normal screen shortcuts, menus and
+        widgets and returns the decoded key to the application.  If a
+        widget popup is active, uC_key() allows only shortcuts owned by
+        widgets in that popup and routes widget input to the popup widget
+        state; menu handling and background shortcuts remain blocked.
 
         A matched shortcut or UI handler consumes the original key.  If
         that handler stuffs a replacement key, the replacement is returned
@@ -1923,6 +2006,10 @@ reporting manually.
         uC_mouse_event and stuffs WIDGET_KEY_MOUSE into the key buffer
         so the caller sees it as a normal key return value.
 
+TODO: this mouse interface needs to not enable position reporting by
+default.  it should have a public API to turn it on / off but widgets and
+menus should only query position on click.
+
 
 5: The Screen
 -------------
@@ -1965,6 +2052,12 @@ described in detail later in this document ...
     * A flag controlling whether screen-level shortcuts are currently
       enabled.
     * Pointers to the screens current and previous character buffers.
+
+The screen-level keyboard shortcut list is an internal registry, not an
+application-managed list of key bindings.  Menus and widgets register
+their accelerators here so uC_key() can dispatch shortcuts before normal
+menu navigation or widget handling.  The encoding and matching rules for
+these shortcuts are documented in section 4, Keyboard Input.
 
 
 5.1: uC_screen_ctrl.c
@@ -2013,14 +2106,11 @@ the Gordian knot of circular include dependencies.
     API void uC_scr_disable_shortcuts(uC_screen_t *scr)
     API bool uC_scr_shortcuts_enabled(uC_screen_t *scr)
 
-        These public API calls control the screen-level shortcut registry
-        gate.  Registered shortcuts remain attached to the screen, but
-        uC_key() will not execute them while shortcuts are disabled.
-
-        This is useful when an application has its own text editor or
-        command prompt outside the uCurses textbox widget.  Disable
-        shortcuts while the editor owns focus and re-enable them when the
-        editor is closed or focus moves elsewhere.
+        These public API calls control the screen-level keyboard shortcut
+        registry used by the menu and widget systems.  Registered
+        shortcuts can be disabled (required during widget text box
+        editing) and they remain attached to the screen, but uC_key() will
+        not process them until they are re-enabled.
 
     API void uC_scr_close_view_groups(uC_screen_t *scr)
 
@@ -2125,7 +2215,7 @@ the Gordian knot of circular include dependencies.
         There is only one popup slot per screen; attaching a new popup
         detaches the previous popup without destroying it.  Popup windows
         are intended for modal overlays and transient information panels.
-        They are drawn after status windows, widget view groups, and menus.
+        They are drawn after widget view groups, menus, and status windows.
         uCurses does not assign a lifetime, timeout, or input behavior to
         popups; application code decides when to detach them.
 
@@ -2134,6 +2224,39 @@ the Gordian knot of circular include dependencies.
         Available when UC_POPUPS is enabled.  Detaches a popup window from
         whichever screen it is currently attached to.  The window structure
         is not destroyed.
+
+    API void uC_scr_popup_cancel(uC_screen_t *scr)
+
+        Available when UC_POPUPS is enabled.  Detaches the currently
+        attached raw popup window, if any, and the currently attached
+        widget popup view group, if any.  Neither popup object is
+        destroyed.  This is used internally when resize handling observes
+        SIGWINCH so popup attachments do not survive a screen rebuild.
+        Applications may also call it when they want a single "cancel any
+        active popup" operation.
+
+    API bool uC_widget_popup_attach(uC_screen_t *scr, uC_widget_vg_t *vg)
+
+        Available when both UC_POPUPS and UC_WIDGETS are enabled.  Attaches
+        a widget view group as the screen's modal popup.  The popup view
+        group is drawn in the popup phase, after normal widget view groups,
+        menus and status windows.  Normal widget view groups on the screen
+        are marked inactive while the popup is attached, but they are not
+        detached or destroyed.
+
+        There is only one widget popup slot per screen.  Attaching a new
+        widget popup detaches the previous widget popup first.  Popup view
+        groups may contain normal widgets.  Attach selects the first
+        available widget tab stop in the popup so popup widgets immediately
+        receive keyboard input.  Application code may explicitly select a
+        different widget afterward and still decides what key closes the
+        popup.
+
+    API void uC_widget_popup_detach(uC_widget_vg_t *vg)
+
+        Detaches the specified widget popup, removes any button shortcuts
+        owned by its widgets, clears focus if the popup owned focus, and
+        restores the inactive state of normal widget view groups.
 
     API void uC_scr_win_tab_next(uC_screen_t *scr)
 
@@ -2159,8 +2282,9 @@ underline or any other potentially incorrect attributes are made inactive.
 Next the screens backdrop window (if any) is drawn into the screens state
 buffer followed by all the user application windows.
 
-If the application makes use of pull down menus these are drawn next, then
-any status windows are drawn.
+Widget view groups are drawn next.  If the application makes use of pull
+down menus these are drawn after widgets, then any status windows are
+drawn.
 
     Note: A status window is an optional 'one line' high window which can
     be used to display status information such as current line in a file
@@ -2168,8 +2292,8 @@ any status windows are drawn.
     etc, you decide!  I use the status window as a debug printf type aid
     as I develop this library (tm)!
 
-Finally, all widget view groups, their associated views and widgets are
-drawn.
+Finally, any popup windows are drawn.  A popup window can be informational
+or have any type of widget within it.
 
 At this stage the screens state buffer contains the state of every
 character and their associated attributes which now all need to be blasted
@@ -2286,6 +2410,18 @@ state buffer and then write that new state out to the console for display.
         an escape sequence to the output buffer to affect any selected
         attributes changes.
 
+    static void scr_normalize_wide_buffer(uC_screen_t *scr)
+
+        Scans the fully composed screen buffer before it is compared with
+        the previous screen state.  If a DEADC0DE cell no longer has a
+        valid owning wide character immediately to its left, or if a wide
+        character no longer has the expected DEADC0DE continuation cell,
+        the invalid half is converted into a normal space.
+
+        This protects direct screen overlays such as borders and pulldown
+        menus.  The window buffer code already performs the same cleanup
+        for ordinary writes into windows.
+
     static void _scr_emit(uC_screen_t *scr, int16_t index, cell_t *p1,
         cell_t *p2)
 
@@ -2309,9 +2445,12 @@ state buffer and then write that new state out to the console for display.
         Writes the character at the current index out to the escape
         buffer.
 
-        If the character to the left of this one is a double width
-        character then this cell will be marked as a DEADC0DE which is not
-        to be emitted.
+        If this cell is the continuation cell of a double width character
+        then its code point will be DEADC0DE.  This is an internal
+        sentinel, not a printable character.  The left cell owns the real
+        glyph and the DEADC0DE cell only records that this screen column
+        is already occupied by the glyph that began in the previous
+        column.  This cell is not emitted directly.
 
         After writing the character (or not) the data at the current index
         within the current state is written into the screens previous
@@ -2350,6 +2489,22 @@ state buffer and then write that new state out to the console for display.
         which will update that character and every other character that
         shares identical attributes.
 
+    API bool uC_scr_resize_hold(uC_screen_t *scr)
+
+        This public API function is used after SIGWINCH has been observed
+        and uC_winch_pending() returns true.  It snapshots the current
+        screen, acknowledges the pending WINCH state, draws a temporary
+        shadow view during the resize stream, and waits until the resize
+        has been quiet for a short interval.  It returns true when it
+        handled a pending resize and false when there was no pending
+        resize to handle.
+
+        If UC_POPUPS is enabled, this function calls uC_scr_popup_cancel()
+        before drawing the resize hold view.  Popup attachments are
+        therefore cancelled before the application rebuilds the interface
+        for the new terminal dimensions.  The popup objects themselves are
+        not destroyed.
+
     API void uC_scr_draw_screen(uC_screen_t *scr)
 
         This public API function is what an application would call to
@@ -2362,21 +2517,26 @@ state buffer and then write that new state out to the console for display.
         draws the screens backdrop window followed by all user application
         windows.
 
-        Active status windows are drawn after application windows.  Any
-        active widgets are then drawn into the buffers.  If the user
+        Any active widgets are then drawn into the buffers.  If the user
         application has menus defined, the menu bar and any active
         pulldown are drawn after widgets so pulldowns are not covered by
-        widget view groups.  If UC_POPUPS is enabled, application popups
-        are drawn after menus, followed by the built-in too-small popup
-        when the screen is below its configured minimum size.
+        widget view groups.  Active status windows are drawn after menus,
+        which allows a one-line status window to occupy unused space on a
+        menu/status row.  If UC_POPUPS is enabled, application popups are
+        drawn after status windows, followed by the built-in too-small
+        popup when the screen is below its configured minimum size.
 
         Once the entire new state of the display has been drawn into the
         screen state buffers they are blasted out to the escape sequence
         buffer by calling the outer_update() function.
 
         The final operation here is to write the entire terminal escape
-        sequence buffer out to the terminal by calling
-        uC_terminfo_flush().
+        sequence buffer out to the terminal by calling uC_terminfo_flush().
+        If SIGWINCH became pending while the frame was being composed,
+        uCurses cancels active popups when UC_POPUPS is enabled, purges
+        the partially composed terminal buffer, and leaves the pending
+        WINCH state for the application to handle with its normal resize
+        path.
 
 
 6: The Window
@@ -2422,7 +2582,7 @@ example is not counted as part of a window so if there is a border around
 a window then that windows lowest legal coordinates will be X = 1, Y = 1.
 
 Using the public APIs to set a windows position ensures that these
-requirements are not violated however uCurses does not have any code to
+requirements are not violated but uCurses does not have any code to
 "automatically" lay out a display.  The addition of such algorithms would
 add a significant amount of code to the library.
 
@@ -3079,10 +3239,11 @@ activation normalizes selection to an enabled item before drawing.  If a
 currently active pulldown or item is disabled, uCurses normalizes the
 active selection immediately.  Enter will not execute disabled items.
 
-The values for each of these color attributes is hard coded into the menu
-system and assigned as each entity (pull down or menu item) is created.
-If these wonderful colors are not to your liking you can always modify
-them.
+The menu system maintains three separate color attributes for active,
+inactive and disabled menu items.  The values for each of these color
+attributes is hard coded into the menu system and assigned as each entity
+(pull down or menu item) is created.  If these wonderful colors are not to
+your liking you can always modify them.
 
 The above "only one flag defined so far" is used to disable and re-enable
 a pulldown menu or a pulldown menu item.
@@ -3500,10 +3661,12 @@ A widget can only have focus if it is contained within the view that has
 focus and where that view is contained within the view group that has
 focus.
 
-The application developer can assign *ANY* tab focus order on any widgets
-within any views within any view groups on the display.  The only
-limitation here is that the tab order numbering must start at 1 and have
-no gaps.
+The application developer can assign *ANY* unique tab focus order on any
+widgets within any views within any view groups on the display.  Sequence
+values do not need to be contiguous; sparse ranges are legal and useful
+when a modal popup, tool panel, or view group should have an obvious
+sequence range of its own.  Keeping values modest and human-readable is
+still recommended for maintainability.
 
 If however, a view is defined as scrollable (can contain more widgets than
 will fit in the vertical space assigned to it) then the tab selection
@@ -3533,8 +3696,8 @@ engine based on the developer defined order.
         case of a textbox to the left of the edit area.  The sequence
         number is used to select the widgets tab selection order within
         the current display.  The tab selection order is entirely up to
-        the application developer but the sequence must start at 1 and
-        have no gaps.
+        the application developer.  Sequence values must be unique among
+        active widgets, but gaps are allowed.
 
         The coordinates are relative to the widgets parent view and the
         widget can be assigned both a normal set of attributes and a
@@ -3668,9 +3831,9 @@ engine based on the developer defined order.
         duplicate registration is ignored; the button still displays its
         assigned letter and still works through focus and Enter.
         If no widget currently has focus when this call is made then the
-        widget with sequence number 1 is automatically given focus.  This
-        ensures that newly attached view groups are immediately keyboard
-        navigable without the caller needing to explicitly set focus.
+        widget system attempts to give focus to the first available tab
+        stop.  Applications may also explicitly select a widget sequence
+        after attaching the view group.
 
     API void uC_widget_vg_detach(uC_screen_t *scr, uC_widget_vg_t *vg)
 
@@ -3687,6 +3850,35 @@ engine based on the developer defined order.
         This public API call closes a view group, destroying all views and
         all widgets associated with them.  The view group is detached from
         its parent screen and then destroyed.
+
+    bool widget_vg_contains_widget(uC_widget_vg_t *vg,
+        uC_widget_t *target)
+
+        Internal helper that scans all views in a view group and reports
+        whether the specified widget belongs to that group.  Widget popup
+        shortcut dispatch uses this to allow only shortcuts owned by
+        widgets in the active popup view group while a modal popup is
+        attached.
+
+    API bool uC_widget_popup_attach(uC_screen_t *scr, uC_widget_vg_t *vg)
+
+        This public API call attaches a view group as the screen's modal
+        widget popup.  Normal widget view groups on the screen are marked
+        inactive while the popup is attached and their previous inactive
+        state is restored when the popup is detached.  The popup itself is
+        drawn in the popup phase so it appears above normal widgets and
+        windows.
+
+        The first available widget tab stop in the popup is selected during
+        attach.  Applications may call uC_widget_select_widget() or move a
+        scrollable view cursor afterward when they need to restore a
+        specific popup row.
+
+    API void uC_widget_popup_detach(uC_widget_vg_t *vg)
+
+        This public API call detaches a modal widget popup without
+        destroying the view group, its views, its widgets, or its backing
+        window buffer.
 
     API void uC_widget_vg_add_view(uC_widget_vg_t *vg,
         uC_widget_view_t *v)
@@ -4027,8 +4219,11 @@ characters and moving the cursor within the edit field.
     uint8_t handle_textbox(uint8_t k)
 
         This function is called by the widget keyboard handler when a
-        textbox widget has focus.  It handles all key presses associated
-        with the editing functions of the widget.
+        textbox widget has focus.  If the textbox is only focused, Enter
+        starts editing and printable keys are returned to the caller.  Once
+        editing is active the textbox handles cursor movement, insert,
+        delete, backspace, and valid printable characters.  Enter or Esc
+        ends editing.
 
     API uC_widget_t *uC_widget_textbox_create(uint16_t sequence,
         char *data, char *name, uint16_t size, uC_textbox_radix_t radix,
@@ -4042,20 +4237,34 @@ characters and moving the cursor within the edit field.
 9.9: uC_widget_scan.c
 ---------------------
 
-Every widget must have a unique tab select sequence value.  These values
-must start at 1 and have no gaps.  The tab sequence is utterly independent
-of which view or view group a widget is associated with.
+Every widget must have a unique tab select sequence value within the set
+of active widgets.  The values do not need to be contiguous.  The tab
+sequence is utterly independent of which view or view group a widget is
+associated with.
+
+For larger interfaces it is often useful to reserve sequence ranges per
+panel, popup, or logical widget group.  For example:
+
+    #define CONFIG_BASE 0x0100
+    #define STATUS_BASE 0x0200
+
+    #define CONFIG_SEQ(n) (CONFIG_BASE + (n))
+    #define STATUS_SEQ(n) (STATUS_BASE + (n))
+
+This keeps tab sequence ownership obvious in application code.  Because
+Tab and Back-Tab scan real active widgets rather than probing every
+integer in the range, gaps between these reserved ranges are harmless.
 
 When a widget is associated with a scrollable view then the sequence
 number of the first widget within that view is controlling.  The sequence
 number of all other widgets within that view are ignored.
 
-The functions in this source file search every view in every view group
-within the current active screen for the widget with a tab sequence number
-equal to the current sequence plus one.  If a widget with this sequence
-number is found, that widget is marked as having focus and the current
-widget state is updated with a pointer to this widget, its parent view and
-view group.
+The functions in this source file search every view in every active view
+group within the current active screen.  Direct selection searches for an
+exact sequence value.  Tab and Back-Tab scan actual widgets once and pick
+the next or previous real sequence number, wrapping to the lowest or
+highest active sequence as needed.  This means sparse sequence ranges are
+allowed without forcing the tab handler to probe every integer in a gap.
 
     static bool scan_view(uC_widget_view_t *view, uint16_t sequence)
 
@@ -4099,24 +4308,19 @@ view group.
 
         This function is part of the widget keyboard handling routines.
         It retrieves the sequence number of the currently focused widget
-        from the widget_state variable and attempts to select the widget
-        with the next sequence number.
-
-        If no widget is found with that sequence number then focus wraps
-        around to the widget with sequence number 1, ensuring that Tab
-        always moves focus to some widget.
+        from the widget_state variable and selects the active widget with
+        the smallest sequence number greater than the current one.  If no
+        such widget exists, focus wraps to the active widget with the
+        lowest sequence number.
 
     uint8_t tab_prev_widget(void)
 
         This function is part of the widget keyboard handling routines.
         It retrieves the sequence number of the currently focused widget
-        from the widget_state variable and attempts to select the widget
-        with the previous sequence number.
-
-        If the current sequence number is 1 (or no widget is found)
-        focus wraps around to the widget with the highest assigned
-        sequence number, ensuring that Shift-Tab always moves focus to
-        some widget.
+        from the widget_state variable and selects the active widget with
+        the largest sequence number less than the current one.  If no such
+        widget exists, focus wraps to the active widget with the highest
+        sequence number.
 
 
 9.10: uC_widget_keys.c
@@ -4161,9 +4365,10 @@ widget in one or other direction.
     bool widget_text_input_active(uC_screen_t *scr)
 
         Internal helper used by uC_key() to determine whether the current
-        focused widget is a textbox.  When true, the screen shortcut
-        registry is skipped so printable shortcut keys are delivered to
-        the textbox editor.
+        focused widget is a textbox that is actively editing.  When true,
+        the screen shortcut registry is skipped so printable shortcut keys
+        are delivered to the textbox editor.  A focused textbox that is not
+        editing does not block global shortcuts.
 
     bool widget_key(uC_screen_t *scr, uint8_t key, uint8_t *out)
 
@@ -4383,8 +4588,9 @@ not utilized.
 
 This means that this zone can be repurposed in certain cases.  If your
 application is running on a system that could support the sigwinch signal
-and I ever get the handling of this signal working then you would not be
-able to use this zone.  Otherwise knock yourself out!
+and you have the JSON engine built in then you would not be able to
+repurpose this zone as a winch will tear down and rebuild the user
+interface using the JSON engine.  Otherwise knock yourself out!
 
 Each memory zone may have a certain number of allocations made against it.
 Each allocation is tracked within an array within the zone structures.  If
@@ -4515,6 +4721,7 @@ code to be run if the .so file is ever executed directly.  In this case
 the code here will parse and interpret the command line arguments passed
 to it.
 
+
 10.4.1: Executing the .so directly - the ELF trick
 ---------------------------------------------------
 
@@ -4539,6 +4746,7 @@ Because this entry point is not main(), the standard argc/argv mechanism
 is not available.  Command line arguments are instead read directly from
 /proc/self/cmdline, whose content is the NUL-separated argv array written
 by the kernel for every running process.
+
 
 10.4.2: The menu dispatch code generation workflow
 ---------------------------------------------------
@@ -4959,9 +5167,54 @@ The following functions are contained within this source file.
         character into a window to determine how many cells to advance the
         cursor and whether the following cell should be marked as dead.
 
-Claude: I think we need a section that explains the DEADCODE implementation
-and what it is there for.  The reference to it here has no context and it
-is not a trivial thing and I think it should be explained a little.
+    DEADC0DE wide-character sentinel
+
+        uCurses stores window and screen contents as arrays of fixed-width
+        cells, but terminals do not draw every Unicode code point in one
+        column.  Many CJK characters and emoji occupy two columns.  When a
+        wide character is written into a window, the first cell stores the
+        actual Unicode code point and the next cell is marked with the
+        internal sentinel value DEADC0DE, defined in uCurses.h as
+        0xdeadc0de.
+
+        DEADC0DE does not mean that anything has gone wrong and it is not
+        part of the application's text.  It means "this cell is already
+        occupied by the wide character that began in the previous cell".
+        The sentinel allows the draw code to keep the terminal's visual
+        columns synchronized with the window buffer without storing a
+        second copy of the same character.
+
+        The sentinel is important when later drawing overlaps the wide
+        character.  If a single-width character overwrites the left half of
+        a wide glyph, uCurses must also write a space over the right half
+        or the terminal may leave a visual fragment behind.  If a wide
+        character overwrites an area whose right-hand cell contains an
+        ordinary character, uCurses must force that following cell to be
+        redrawn.  The screen drawing code uses the DEADC0DE marker to
+        detect and repair both cases.
+
+        uCurses does not try to support overlapping wide glyph fragments.
+        If a write begins on, or extends across, any cell owned by an
+        existing wide glyph, the old glyph is invalidated as a whole and
+        the new write wins.  This keeps the window buffer in a state that
+        can be represented by a normal fixed-cell terminal.
+
+        After all windows, widgets, menus, status windows and popups have
+        been composed into the screen buffer, uCurses normalizes the screen
+        buffer before diffing and emitting it.  This catches direct
+        overlays such as borders and pulldown menus, which are drawn into
+        the screen rather than into the window that originally owned the
+        wide glyph.
+
+        Application code should not intentionally write DEADC0DE as a
+        character.  It is an implementation detail used by uC_win_emit(),
+        uC_scr_draw(), and uC_utf8_emit().  When uC_utf8_emit() receives
+        DEADC0DE it emits nothing, because the visible character was
+        already emitted from the owning cell to the left.
+
+        uCurses currently treats display width as either one or two
+        columns for layout purposes.  Zero-width combining characters and
+        bidirectional layout are explicitly out of scope for this library.
 
     API void uC_utf8_emit(uint32_t cp)
 
@@ -5240,14 +5493,55 @@ which handles it.
 10.11: uC_winch.c
 -----------------
 
-This module is a horrendously non functional attempt at handling the
-sigwinch signal within uCurses.  This signal is sent to a process when the
-window it is running within is resized.   In uCurses such a change would
-require a complete tear down of the entire user interface followed by a
-re-initialization thereof.
+This module handles the SIGWINCH signal within uCurses.  This signal is
+sent to a process when the terminal window it is running within is
+resized.  uCurses does not try to magically resize an existing interface.
+Instead it records that a resize happened, allows application code to
+detect that state, and expects the application to rebuild its layout for
+the new terminal dimensions.
 
-Thus far I have not been able to get this to work reliably at all and have
-shelved implementing this functionality for now.
+    static void winch_handler(int sig)
+
+        The signal handler installed by init_winch().  It does the minimum
+        async-signal-safe work required here: ignore the signal argument
+        and set the global winch flag.
+
+    void init_winch(void)
+
+        Internal initialization function called by uCurses_init().  It
+        saves the previous SIGWINCH action when possible and installs the
+        uCurses handler unless the previous action explicitly ignored
+        SIGWINCH.
+
+    void de_init_winch(void)
+
+        Internal shutdown function called by uCurses_deInit().  It
+        restores the previous SIGWINCH action when one was saved, clears
+        the saved-state marker, and clears the pending winch flag.
+
+    API bool uC_winch_pending(void)
+
+        Returns true when SIGWINCH has been received and not yet
+        acknowledged.
+
+    API void uC_winch_ack(void)
+
+        Clears the pending winch flag.  Application code should call this
+        only when it has intentionally consumed the resize event.  The
+        resize hold helper also acknowledges the flag while waiting for
+        the resize stream to go quiet.
+
+    API bool uC_winch_dispatch(void)
+
+        Checks for a pending WINCH event, acknowledges it if present, and
+        calls the registered user handler when one exists.  Returns true
+        when a pending event was dispatched and false otherwise.
+
+    API void uC_register_winch(user_winch_t handler)
+    API void uC_deregister_winch(user_winch_t handler)
+
+        Register or deregister the optional user WINCH callback used by
+        uC_winch_dispatch().  Only one callback is stored.
 
 
 11: JSON

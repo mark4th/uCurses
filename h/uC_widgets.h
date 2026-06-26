@@ -98,6 +98,7 @@ typedef struct
     uC_window_t window;     // buffers allocated when attached to screen
     uC_list_t views;        // views to be drawn into above window
     uC_vg_flags_t flags;    // control
+    bool popup_saved_inactive;
 } uC_widget_vg_t;
 
 // -----------------------------------------------------------------------
@@ -165,6 +166,7 @@ typedef struct
     // width is defined in the widget structure, size can be wider
 
     bool insert;
+    bool editing;
     uint8_t size;           // character capacity; data buffer must be size+1 bytes
     uint8_t count;          // how many chars are in the edit buffer
     uint8_t cx;             // cursor position within edit buffer
@@ -255,6 +257,8 @@ uC_widget_t *create_widget(uC_widget_type_t type,
 uint16_t auto_sequence(void);
 void     sync_seq(uint16_t seq);
 void     widget_detach_widget(uC_widget_t *widget);
+bool     widget_vg_contains_widget(uC_widget_vg_t *vg,
+    uC_widget_t *target);
 
 API void uC_widget_close_widget(uC_widget_t *widget);
 API bool uC_widget_select_widget(uint16_t sequence);
@@ -289,6 +293,8 @@ void draw_radio(uC_window_t *win, uC_widget_t *widget,
     uint16_t x, uint16_t y);
 void draw_textbox(uC_window_t *win, uC_widget_t *widget,
     uint16_t x, uint16_t y);
+void draw_widget_view_group(uC_widget_vg_t *vg);
+void draw_popup_view_group(uC_widget_vg_t *vg);
 
 // -----------------------------------------------------------------------
 
@@ -310,6 +316,8 @@ API void uC_widget_vg_add_border(uC_widget_vg_t *vg,
 API void uC_widget_vg_attach(uC_screen_t *scr, uC_widget_vg_t *vg);
 API void uC_widget_vg_detach(uC_screen_t *scr, uC_widget_vg_t *vg);
 API void uC_widget_vg_close(uC_widget_vg_t *vg);
+API bool uC_widget_popup_attach(uC_screen_t *scr, uC_widget_vg_t *vg);
+API void uC_widget_popup_detach(uC_widget_vg_t *vg);
 API void uC_widget_vg_add_view(uC_widget_vg_t *vg, uC_widget_view_t *v,
     uint16_t sequence);
 

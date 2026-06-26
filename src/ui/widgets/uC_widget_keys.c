@@ -208,7 +208,8 @@ static bool widget_input_active(uC_screen_t *scr)
 bool widget_text_input_active(uC_screen_t *scr)
 {
     return widget_input_active(scr) &&
-        widget_state.widget->type == uC_WIDGET_TEXTBOX;
+        widget_state.widget->type == uC_WIDGET_TEXTBOX &&
+        widget_state.widget->textbox.editing;
 }
 
 // -----------------------------------------------------------------------

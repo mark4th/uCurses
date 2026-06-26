@@ -122,6 +122,10 @@ int main(void)
 See the `example/` directory for complete working programs covering
 windows, borders, menus, widgets, mouse handling, and more.
 
+For a task-oriented guide to writing an application with the library, see
+[`USING-uCurses.md`](USING-uCurses.md).  The large `uCurses.txt` file remains
+the reference/manual material for what the library contains and how it works.
+
 ---
 
 ## Menu dispatch code generator

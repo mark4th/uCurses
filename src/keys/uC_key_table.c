@@ -236,28 +236,38 @@ API uint8_t uC_key(void)
 {
     uint8_t key;
     uint8_t out = UC_KEY_NONE;
+    bool raw_popup_active;
+    bool raw_only_popup_active;
+    bool widget_popup_active;
 
     key = uC_key_raw();
+    raw_popup_active = (active_screen != NULL) && (active_screen->popup != NULL);
+    widget_popup_active = (active_screen != NULL) &&
+        (active_screen->popup_vg != NULL);
+    raw_only_popup_active = raw_popup_active && !widget_popup_active;
 
-    if (uC_scr_shortcuts_enabled(active_screen) &&
+    if (uC_scr_shortcuts_enabled(active_screen) && !raw_only_popup_active &&
 #ifdef UC_WIDGETS
         !widget_text_input_active(active_screen) &&
 #endif
-        uC_shortcut_run(active_screen, key))
+        (widget_popup_active
+            ? uC_shortcut_run_popup(active_screen, key)
+            : uC_shortcut_run(active_screen, key)))
     {
         out = uC_key_raw();
         return (out == 0xff) ? UC_KEY_NONE : out;
     }
 
 #ifdef UC_MENUS
-    if (menu_key(active_screen, key, &out))
+    if (!raw_popup_active && !widget_popup_active &&
+        menu_key(active_screen, key, &out))
     {
         return out;
     }
 #endif
 
 #ifdef UC_WIDGETS
-    if (widget_key(active_screen, key, &out))
+    if (!raw_only_popup_active && widget_key(active_screen, key, &out))
     {
         return out;
     }

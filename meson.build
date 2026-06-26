@@ -17,6 +17,8 @@ build_args = [
     '-std=gnu17',
     '-pipe',
     '-fno-align-functions',
+    '-fno-asynchronous-unwind-tables',
+    '-fno-unwind-tables',
     '-fvisibility=hidden',
     '-I../h'
 ]

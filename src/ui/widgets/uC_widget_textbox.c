@@ -91,7 +91,7 @@ void draw_textbox(uC_window_t *win, uC_widget_t *widget,
         // draw it in either reverse video or underlined (based
         // on insert or overwrite status)
 
-        if ((widget->focused) && (i == t->cx))
+        if ((widget->focused) && t->editing && (i == t->cx))
         {
             // %R+ turn on reverse video
             // %8  print single UTF-8 character
@@ -324,10 +324,25 @@ uint8_t handle_textbox(uint8_t k)
 {
     uC_widget_textbox_t *t = &widget_state.widget->textbox;
 
+    if (!t->editing)
+    {
+        if ((k == 0x0a) || (k == 0x0d))
+        {
+            t->editing = true;
+            end(t);
+            return 0;
+        }
+        return k;
+    }
+
     switch (k)
     {
-        case 0x0a:                       break;
-        case 0x1b:              k = 0;   break;
+        case 0x0a:
+        case 0x0d:
+        case 0x1b:
+            t->editing = false;
+            k = 0;
+            break;
         case WIDGET_KEY_LEFT:   lt(t);   break;
         case WIDGET_KEY_RIGHT:  rt(t);   break;
         case WIDGET_KEY_DELETE: del(t);  break;
@@ -355,15 +370,24 @@ API uC_widget_t *uC_widget_textbox_create(
     uint16_t size, uC_textbox_radix_t radix,
     uint16_t width, uC_attribs_t attrs, uC_attribs_t focus)
 {
+    uint16_t count = 0;
+    uint8_t capacity = (size > UINT8_MAX) ? UINT8_MAX : (uint8_t)size;
     uC_widget_t *widget = create_widget(uC_WIDGET_TEXTBOX,
         name, width, attrs, focus);
 
     if (widget)
     {
         widget->textbox.data   = data;
-        widget->textbox.size   = size;
+        widget->textbox.size   = capacity;
         widget->textbox.radix  = radix;
         widget->textbox.insert = true;
+        widget->textbox.editing = false;
+
+        while ((count < capacity) && (data[count] != '\0'))
+        {
+            count++;
+        }
+        widget->textbox.count = (uint8_t)count;
     }
 
     return widget;

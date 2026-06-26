@@ -25,6 +25,154 @@ static cell_t *win_line_addr(uC_window_t *win, int16_t line)
 }
 
 // -----------------------------------------------------------------------
+// return display width for a normal cell.  DEADC0DE is not a character;
+// it only marks continuation cells owned by a preceding wide character.
+
+static int16_t win_cell_width(cell_t *cell)
+{
+    int32_t width;
+
+    if (cell->code == (uint32_t)DEADC0DE)
+    {
+        return 0;
+    }
+
+    width = wcwidth((wchar_t)cell->code);
+    return (width > 1) ? (int16_t)width : 1;
+}
+
+// -----------------------------------------------------------------------
+
+static void win_blank_cell(uC_window_t *win, cell_t *cell)
+{
+    cell->attrs = win->attrs;
+    cell->code  = win->blank;
+}
+
+// -----------------------------------------------------------------------
+
+static void win_blank_range(uC_window_t *win, cell_t *row,
+    int16_t start, int16_t end)
+{
+    while ((start < end) && (start < win->width))
+    {
+        win_blank_cell(win, &row[start++]);
+    }
+}
+
+// -----------------------------------------------------------------------
+// return the owner index if x is covered by a wide glyph.
+
+static int16_t win_wide_owner_at(uC_window_t *win, cell_t *row, int16_t x)
+{
+    int16_t owner;
+    int16_t width;
+
+    if ((x < 0) || (x >= win->width))
+    {
+        return -1;
+    }
+
+    owner = x;
+
+    while ((owner > 0) && (row[owner].code == (uint32_t)DEADC0DE))
+    {
+        owner--;
+    }
+
+    width = win_cell_width(&row[owner]);
+
+    if ((width > 1) && (x < (owner + width)))
+    {
+        return owner;
+    }
+
+    return -1;
+}
+
+// -----------------------------------------------------------------------
+// clear existing wide glyphs that overlap a write range.
+
+static void win_clear_wide_overlap(uC_window_t *win, cell_t *row,
+    int16_t x, int16_t width)
+{
+    int16_t owner;
+    int16_t end;
+    int16_t i;
+
+    end = x + width;
+
+    for (i = x; (i < end) && (i < win->width); i++)
+    {
+        owner = win_wide_owner_at(win, row, i);
+
+        if (owner >= 0)
+        {
+            win_blank_range(win, row, owner,
+                owner + win_cell_width(&row[owner]));
+        }
+    }
+}
+
+// -----------------------------------------------------------------------
+// horizontal scrolling can clip either side of a wide glyph.  Normalize a
+// row so continuation sentinels and wide owners cannot survive alone.
+
+static void win_normalize_wide_row(uC_window_t *win, cell_t *row)
+{
+    int16_t width;
+    int16_t x;
+    int16_t i;
+    bool valid;
+
+    x = 0;
+
+    while (x < win->width)
+    {
+        if (row[x].code == (uint32_t)DEADC0DE)
+        {
+            win_blank_cell(win, &row[x++]);
+            continue;
+        }
+
+        width = win_cell_width(&row[x]);
+
+        if (width <= 1)
+        {
+            x++;
+            continue;
+        }
+
+        if ((x + width) > win->width)
+        {
+            win_blank_range(win, row, x, win->width);
+            x++;
+            continue;
+        }
+
+        valid = true;
+
+        for (i = 1; i < width; i++)
+        {
+            if (row[x + i].code != (uint32_t)DEADC0DE)
+            {
+                valid = false;
+                break;
+            }
+        }
+
+        if (!valid)
+        {
+            win_blank_range(win, row, x, x + width);
+            x++;
+            continue;
+        }
+
+        x += width;
+    }
+}
+
+// -----------------------------------------------------------------------
 // clear one line of a window
 
 API void uC_win_clear_line(uC_window_t *win, int16_t line)
@@ -175,6 +323,8 @@ API void uC_win_scroll_lt_n(uC_window_t *win, int16_t n)
         {
             row[j] = cell;
         }
+
+        win_normalize_wide_row(win, row);
     }
 }
 
@@ -204,6 +354,8 @@ API void uC_win_scroll_rt_n(uC_window_t *win, int16_t n)
         {
             row[j] = cell;
         }
+
+        win_normalize_wide_row(win, row);
     }
 }
 
@@ -348,6 +500,11 @@ static void _win_emit(uC_window_t *win, uint32_t c)
         return;
     }
 
+    if (width > win->width)
+    {
+        return;
+    }
+
     // auto carriage return should be an optional setting
     if ((win->cx + width) > win->width)
     {
@@ -358,6 +515,7 @@ static void _win_emit(uC_window_t *win, uint32_t c)
     cell.code  = c;
 
     p = win_line_addr(win, win->cy);
+    win_clear_wide_overlap(win, p, win->cx, (int16_t)width);
     p[win->cx] = cell;
 
     uC_win_crsr_rt(win);

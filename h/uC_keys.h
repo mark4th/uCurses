@@ -9,6 +9,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "uCurses.h"
+
 // -----------------------------------------------------------------------
 // Key handler table system
 // -----------------------------------------------------------------------
@@ -79,7 +81,7 @@ typedef void (**uC_kh_t)(void);
 typedef uint16_t uC_shortcut_t;
 typedef void uC_shortcut_action_t(void *context);
 
-struct uC_screen_s;
+// -----------------------------------------------------------------------
 
 enum
 {
@@ -88,6 +90,8 @@ enum
     UC_SHORTCUT_MOD_ALT  = 0x0200,
     UC_SHORTCUT_MOD_META = 0x0400,
 };
+
+// -----------------------------------------------------------------------
 
 #define UC_SHORTCUT(k)       ((uC_shortcut_t)((uint8_t)(k)))
 #define UC_SHORTCUT_CTRL(k)  ((uC_shortcut_t)(UC_SHORTCUT_MOD_CTRL | \
@@ -103,12 +107,13 @@ enum
 void uC_read_keys(void);
 int16_t match_key(void);
 uint8_t uC_key_raw(void);
-bool uC_shortcut_register(struct uC_screen_s *scr,
+bool uC_shortcut_register(uC_screen_t *scr,
     uC_shortcut_t shortcut, uC_shortcut_action_t *action, void *context,
     void *owner);
-bool uC_shortcut_run(struct uC_screen_s *scr, uint8_t key);
-void uC_shortcut_remove_owner(struct uC_screen_s *scr, void *owner);
-void uC_shortcut_clear(struct uC_screen_s *scr);
+bool uC_shortcut_run(uC_screen_t *scr, uint8_t key);
+bool uC_shortcut_run_popup(uC_screen_t *scr, uint8_t key);
+void uC_shortcut_remove_owner(uC_screen_t *scr, void *owner);
+void uC_shortcut_clear(uC_screen_t *scr);
 bool uC_shortcut_matches(uC_shortcut_t shortcut, uint8_t key);
 
 // -----------------------------------------------------------------------

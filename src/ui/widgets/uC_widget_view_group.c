@@ -22,7 +22,7 @@ extern widget_state_t widget_state;
 
 // -----------------------------------------------------------------------
 
-static bool widget_vg_contains_widget(uC_widget_vg_t *vg,
+bool widget_vg_contains_widget(uC_widget_vg_t *vg,
     uC_widget_t *target)
 {
     uC_list_node_t *view_node;
@@ -67,6 +67,13 @@ static bool widget_shortcut_attached_active(uC_widget_t *widget)
     }
 
     scr = widget->shortcut_screen;
+    if ((scr->popup_vg != NULL) &&
+        widget_vg_contains_widget((uC_widget_vg_t *)scr->popup_vg, widget))
+    {
+        vg = (uC_widget_vg_t *)scr->popup_vg;
+        return (vg->flags & uC_vg_flag_inactive) == 0;
+    }
+
     for (node = uC_list_scan(&scr->view_groups, NULL);
          node != NULL;
          node = uC_list_scan(NULL, node))
@@ -169,6 +176,81 @@ static void widget_remove_shortcuts(uC_widget_vg_t *vg)
 
 // -----------------------------------------------------------------------
 
+static void widget_set_vg_inactive(uC_widget_vg_t *vg, bool inactive)
+{
+    if (vg == NULL)
+    {
+        return;
+    }
+
+    if (inactive)
+    {
+        vg->flags |= uC_vg_flag_inactive;
+    }
+    else
+    {
+        vg->flags &= ~uC_vg_flag_inactive;
+    }
+}
+
+// -----------------------------------------------------------------------
+
+static void widget_modal_deactivate_others(uC_screen_t *scr,
+    uC_widget_vg_t *popup)
+{
+    uC_list_node_t *node;
+    uC_widget_vg_t *vg;
+
+    if ((scr == NULL) || (popup == NULL))
+    {
+        return;
+    }
+
+    for (node = uC_list_scan(&scr->view_groups, NULL);
+         node != NULL;
+         node = uC_list_scan(NULL, node))
+    {
+        vg = node->payload;
+        if (vg == popup)
+        {
+            continue;
+        }
+
+        vg->popup_saved_inactive =
+            (vg->flags & uC_vg_flag_inactive) != 0;
+        widget_set_vg_inactive(vg, true);
+    }
+}
+
+// -----------------------------------------------------------------------
+
+static void widget_modal_restore_others(uC_screen_t *scr,
+    uC_widget_vg_t *popup)
+{
+    uC_list_node_t *node;
+    uC_widget_vg_t *vg;
+
+    if (scr == NULL)
+    {
+        return;
+    }
+
+    for (node = uC_list_scan(&scr->view_groups, NULL);
+         node != NULL;
+         node = uC_list_scan(NULL, node))
+    {
+        vg = node->payload;
+        if (vg == popup)
+        {
+            continue;
+        }
+
+        widget_set_vg_inactive(vg, vg->popup_saved_inactive);
+    }
+}
+
+// -----------------------------------------------------------------------
+
 static bool widget_clear_focus_for_vg(uC_widget_vg_t *vg)
 {
     if ((vg == NULL) || (widget_state.vg != vg))
@@ -179,6 +261,10 @@ static bool widget_clear_focus_for_vg(uC_widget_vg_t *vg)
     vg->window.flags &= ~uC_WIN_FOCUS;
     if (widget_state.widget != NULL)
     {
+        if (widget_state.widget->type == uC_WIDGET_TEXTBOX)
+        {
+            widget_state.widget->textbox.editing = false;
+        }
         widget_state.widget->focused = false;
     }
     if (widget_state.view != NULL)
@@ -298,7 +384,10 @@ API void uC_widget_vg_attach(uC_screen_t *scr, uC_widget_vg_t *vg)
 
             if (!widget_state.sequence)
             {
-                uC_widget_select_widget(1);
+                if (!uC_widget_select_widget(1))
+                {
+                    tab_next_widget();
+                }
             }
         }
     }
@@ -315,6 +404,12 @@ API void uC_widget_vg_detach(uC_screen_t *scr, uC_widget_vg_t *vg)
         if (scr == NULL)
         {
             scr = vg->window.screen;
+        }
+
+        if ((scr != NULL) && (scr->popup_vg == vg))
+        {
+            uC_widget_popup_detach(vg);
+            return;
         }
 
         widget_remove_shortcuts(vg);
@@ -356,6 +451,87 @@ API void uC_widget_vg_close(uC_widget_vg_t *vg)
 
 // -----------------------------------------------------------------------
 
+API bool uC_widget_popup_attach(uC_screen_t *scr, uC_widget_vg_t *vg)
+{
+    int16_t rv;
+
+    if ((scr == NULL) || (vg == NULL))
+    {
+        return false;
+    }
+
+    if (vg->window.screen != NULL)
+    {
+        uC_widget_vg_detach(vg->window.screen, vg);
+    }
+
+    if (scr->popup_vg != NULL)
+    {
+        uC_widget_popup_detach((uC_widget_vg_t *)scr->popup_vg);
+    }
+
+    rv = win_chk_pos(&vg->window, scr, vg->window.xco, vg->window.yco);
+    if (rv != 0)
+    {
+        return false;
+    }
+
+    rv = (vg->window.buffer != NULL) ? 0 : win_alloc(&vg->window);
+    if (rv != 0)
+    {
+        return false;
+    }
+
+    widget_clear_focus_for_vg(widget_state.vg);
+    widget_modal_deactivate_others(scr, vg);
+    widget_set_vg_inactive(vg, false);
+
+    vg->window.screen = scr;
+    uC_win_clear(&vg->window);
+    scr->popup_vg = vg;
+    widget_register_shortcuts(scr, vg);
+    widget_state.screen = scr;
+
+    if (!uC_widget_select_widget(1))
+    {
+        tab_next_widget();
+    }
+
+    return true;
+}
+
+// -----------------------------------------------------------------------
+
+API void uC_widget_popup_detach(uC_widget_vg_t *vg)
+{
+    uC_screen_t *scr;
+    bool had_focus;
+
+    if (vg == NULL)
+    {
+        return;
+    }
+
+    scr = vg->window.screen;
+    if ((scr == NULL) || (scr->popup_vg != vg))
+    {
+        return;
+    }
+
+    widget_remove_shortcuts(vg);
+    had_focus = widget_clear_focus_for_vg(vg);
+    scr->popup_vg = NULL;
+    vg->window.screen = NULL;
+    widget_modal_restore_others(scr, vg);
+
+    if (had_focus && (widget_state.screen != NULL))
+    {
+        uC_widget_select_widget(1);
+    }
+}
+
+// -----------------------------------------------------------------------
+
 API void uC_widget_vg_add_view(uC_widget_vg_t *vg, uC_widget_view_t *v,
     uint16_t sequence)
 {
@@ -367,8 +543,6 @@ API void uC_widget_vg_add_view(uC_widget_vg_t *vg, uC_widget_view_t *v,
     }
     uC_list_push_tail(&vg->views, v);
 }
-
-// -----------------------------------------------------------------------
 
 #endif // UC_WIDGETS
 

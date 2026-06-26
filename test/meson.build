@@ -22,6 +22,7 @@ foreach t : [
     ['test_fnv',    ['test_fnv.c']],
     ['test_utf8',   ['test_utf8.c']],
     ['test_list',   ['test_list.c']],
+    ['test_window_wide', ['test_window_wide.c']],
 ]
     exe = executable(t[0], t[1] + [unity_src],
         dependencies     : ucurses_test_dep,

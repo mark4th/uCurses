@@ -9,6 +9,9 @@
 #include "uC_list.h"
 #include "uC_screen.h"
 #include "uC_utils.h"
+#ifdef UC_WIDGETS
+#include "uC_widgets.h"
+#endif
 
 // -----------------------------------------------------------------------
 
@@ -120,7 +123,7 @@ bool uC_shortcut_matches(uC_shortcut_t shortcut, uint8_t key)
 
 // -----------------------------------------------------------------------
 
-bool uC_shortcut_register(struct uC_screen_s *scr,
+bool uC_shortcut_register(uC_screen_t *scr,
     uC_shortcut_t shortcut, uC_shortcut_action_t *action, void *context,
     void *owner)
 {
@@ -168,7 +171,7 @@ bool uC_shortcut_register(struct uC_screen_s *scr,
 
 // -----------------------------------------------------------------------
 
-bool uC_shortcut_run(struct uC_screen_s *scr, uint8_t key)
+bool uC_shortcut_run(uC_screen_t *scr, uint8_t key)
 {
     uC_list_node_t *node;
     uC_shortcut_entry_t *entry;
@@ -196,7 +199,43 @@ bool uC_shortcut_run(struct uC_screen_s *scr, uint8_t key)
 
 // -----------------------------------------------------------------------
 
-void uC_shortcut_remove_owner(struct uC_screen_s *scr, void *owner)
+bool uC_shortcut_run_popup(uC_screen_t *scr, uint8_t key)
+{
+#ifdef UC_WIDGETS
+    uC_list_node_t *node;
+    uC_shortcut_entry_t *entry;
+    uC_widget_vg_t *popup;
+
+    if ((scr == NULL) || (scr->popup_vg == NULL))
+    {
+        return false;
+    }
+
+    popup = (uC_widget_vg_t *)scr->popup_vg;
+    for (node = uC_list_scan(&scr->shortcuts, NULL);
+         node != NULL;
+         node = uC_list_scan(NULL, node))
+    {
+        entry = node->payload;
+        if (entry && uC_shortcut_matches(entry->shortcut, key) &&
+            widget_vg_contains_widget(popup, (uC_widget_t *)entry->owner))
+        {
+            uC_set_key(0xff);
+            entry->action(entry->context);
+            return true;
+        }
+    }
+#else
+    (void)scr;
+    (void)key;
+#endif
+
+    return false;
+}
+
+// -----------------------------------------------------------------------
+
+void uC_shortcut_remove_owner(uC_screen_t *scr, void *owner)
 {
     uC_list_node_t *node;
     uC_list_node_t *next;
@@ -223,7 +262,7 @@ void uC_shortcut_remove_owner(struct uC_screen_s *scr, void *owner)
 
 // -----------------------------------------------------------------------
 
-void uC_shortcut_clear(struct uC_screen_s *scr)
+void uC_shortcut_clear(uC_screen_t *scr)
 {
     uC_shortcut_entry_t *entry;
 

@@ -117,6 +117,13 @@ API void uC_scr_close_view_groups(uC_screen_t *scr)
 
     if (scr != NULL)
     {
+        if (scr->popup_vg != NULL)
+        {
+            vg = (uC_widget_vg_t *)scr->popup_vg;
+            scr->popup_vg = NULL;
+            uC_widget_vg_close(vg);
+        }
+
         while (scr->view_groups.count != 0)
         {
             vg = uC_list_pop_head(&scr->view_groups);
@@ -395,6 +402,29 @@ API void uC_scr_popup_attach(uC_screen_t *scr, uC_window_t *win)
 API void uC_scr_popup_detach(uC_window_t *win)
 {
     uC_scr_win_detach(win);
+}
+
+// -----------------------------------------------------------------------
+// cancel the currently attached popup window and widget popup, if any
+
+API void uC_scr_popup_cancel(uC_screen_t *scr)
+{
+    if (scr == NULL)
+    {
+        return;
+    }
+
+    if (scr->popup != NULL)
+    {
+        uC_scr_popup_detach(scr->popup);
+    }
+
+#ifdef UC_WIDGETS
+    if (scr->popup_vg != NULL)
+    {
+        uC_widget_popup_detach((uC_widget_vg_t *)scr->popup_vg);
+    }
+#endif
 }
 #endif
 

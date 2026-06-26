@@ -216,6 +216,31 @@ static void draw_views(uC_widget_vg_t *vg)
 
 // -----------------------------------------------------------------------
 
+void draw_widget_view_group(uC_widget_vg_t *vg)
+{
+    if (vg == NULL)
+    {
+        return;
+    }
+
+    draw_views(vg);
+}
+
+// -----------------------------------------------------------------------
+
+void draw_popup_view_group(uC_widget_vg_t *vg)
+{
+    if ((vg == NULL) || (vg->window.screen == NULL))
+    {
+        return;
+    }
+
+    draw_widget_view_group(vg);
+    scr_draw_win(&vg->window);
+}
+
+// -----------------------------------------------------------------------
+
 void draw_view_groups(uC_screen_t *scr)
 {
     uC_list_node_t *n1;
@@ -227,7 +252,7 @@ void draw_view_groups(uC_screen_t *scr)
     {
         vg = (uC_widget_vg_t *)n1->payload;
 
-        draw_views(vg);
+        draw_widget_view_group(vg);
         scr_draw_win(&vg->window);
 
         n1 = uC_list_scan(NULL, n1);

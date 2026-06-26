@@ -314,6 +314,105 @@ static void new_attrs(uC_attribs_t a)
 }
 
 // -----------------------------------------------------------------------
+// DEADC0DE is only valid as the continuation of a wide glyph in the same
+// row.  Direct overlays such as borders and menus can cover only part of
+// an underlying wide glyph, so normalize the composed screen before diffing
+// it against the previous frame.
+
+static int16_t scr_cell_width(cell_t *cell)
+{
+    int32_t width;
+
+    if (cell->code == (uint32_t)DEADC0DE)
+    {
+        return 0;
+    }
+
+    width = wcwidth((wchar_t)cell->code);
+    return (width > 1) ? (int16_t)width : 1;
+}
+
+// -----------------------------------------------------------------------
+
+static void scr_blank_cell(cell_t *cell)
+{
+    cell->code = 0x20;
+}
+
+// -----------------------------------------------------------------------
+
+static void scr_normalize_wide_row(uC_screen_t *scr, cell_t *row)
+{
+    int16_t width;
+    int16_t x;
+    int16_t i;
+    bool valid;
+
+    x = 0;
+
+    while (x < scr->width)
+    {
+        if (row[x].code == (uint32_t)DEADC0DE)
+        {
+            scr_blank_cell(&row[x++]);
+            continue;
+        }
+
+        width = scr_cell_width(&row[x]);
+
+        if (width <= 1)
+        {
+            x++;
+            continue;
+        }
+
+        if ((x + width) > scr->width)
+        {
+            scr_blank_cell(&row[x++]);
+            continue;
+        }
+
+        valid = true;
+
+        for (i = 1; i < width; i++)
+        {
+            if (row[x + i].code != (uint32_t)DEADC0DE)
+            {
+                valid = false;
+                break;
+            }
+        }
+
+        if (!valid)
+        {
+            scr_blank_cell(&row[x++]);
+            continue;
+        }
+
+        x += width;
+    }
+}
+
+// -----------------------------------------------------------------------
+
+static void scr_normalize_wide_buffer(uC_screen_t *scr)
+{
+    int16_t y;
+    cell_t *row;
+
+    if (!scr || !scr->buffer1)
+    {
+        return;
+    }
+
+    for (y = 0; y < scr->height; y++)
+    {
+        row = &scr->buffer1[y * scr->width];
+        scr_normalize_wide_row(scr, row);
+    }
+}
+
+// -----------------------------------------------------------------------
 
 static void _scr_emit(uC_screen_t *scr, int16_t index,
     cell_t *p1, cell_t *p2)
@@ -332,7 +431,7 @@ static void _scr_emit(uC_screen_t *scr, int16_t index,
         // is a single width character overlapping it to the right then
         // force an update of the overlapping single width char
 
-        if (wide != 1)
+        if (wide > 1)
         {
             if (p1[1].code != (uint32_t)DEADC0DE)
             {
@@ -671,6 +770,7 @@ static bool resize_draw_shadow(uC_screen_t *scr, cell_t *shadow)
     active_screen = &view;
     ti_set_screen(&view);
     uC_clear();
+    scr_normalize_wide_buffer(&view);
     outer_update(&view);
 
     if (uC_winch_pending())
@@ -700,6 +800,10 @@ API bool uC_scr_resize_hold(uC_screen_t *scr)
     {
         return false;
     }
+
+#ifdef UC_POPUPS
+    uC_scr_popup_cancel(scr);
+#endif
 
     shadow = resize_snapshot(scr);
     uC_winch_ack();
@@ -780,13 +884,9 @@ API void uC_scr_draw_screen(uC_screen_t *scr)
 // if this gets out of hand im reverting to ZERO conditionals buried
 // in these soures
 
-#ifdef UC_STATUS
-        scr_draw_windows(&scr->status);
-#endif // UC_STATUS
-
-
-// widgets draw over normal windows and status lines. Menus draw after
-// widgets so pulldowns are not covered by widget view groups.
+// Widgets draw over normal windows. Menus draw after widgets so pulldowns
+// are not covered by widget view groups. Status windows draw after menus so
+// they can intentionally occupy unused menu/status row space.
 
 #ifdef UC_WIDGETS
         draw_view_groups(scr);
@@ -796,11 +896,18 @@ API void uC_scr_draw_screen(uC_screen_t *scr)
         scr_update_menus(scr);
 #endif // UC_MENUS
 
+#ifdef UC_STATUS
+        scr_draw_windows(&scr->status);
+#endif // UC_STATUS
+
 #ifdef UC_POPUPS
         // Popup windows are modal overlays. Draw them after widgets so
         // they are not covered by view groups.
 
         scr_draw_win(scr->popup);
+#ifdef UC_WIDGETS
+        draw_popup_view_group((uC_widget_vg_t *)scr->popup_vg);
+#endif
         scr_draw_too_small_popup(scr);
 #endif
 
@@ -809,6 +916,7 @@ API void uC_scr_draw_screen(uC_screen_t *scr)
         // escape sequeces needed to physically draw the screen state
         // out to the terminal.
 
+        scr_normalize_wide_buffer(scr);
         outer_update(scr);
 
         // If the terminal resized while this frame was being composed,
@@ -817,6 +925,9 @@ API void uC_scr_draw_screen(uC_screen_t *scr)
 
         if (uC_winch_pending())
         {
+#ifdef UC_POPUPS
+            uC_scr_popup_cancel(scr);
+#endif
             terminfo_purge();
         }
         else

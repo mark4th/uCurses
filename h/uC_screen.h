@@ -21,6 +21,7 @@ typedef struct uC_screen_s
     void *menu_bar;         // menu_bar_t
     void *backdrop;         // uC_window_t always drawn first
     uC_window_t *popup;     // uC_window_t always drawn last
+    void *popup_vg;         // uC_widget_vg_t modal popup widget group
     uC_window_t *too_small_popup;
     uC_window_t *selected;
 
@@ -63,6 +64,7 @@ API bool uC_scr_shortcuts_enabled(uC_screen_t *scr);
 #ifdef UC_POPUPS
 API void uC_scr_popup_attach(uC_screen_t *scr, uC_window_t *win);
 API void uC_scr_popup_detach(uC_window_t *win);
+API void uC_scr_popup_cancel(uC_screen_t *scr);
 #endif
 API void uC_scr_win_tab_next(uC_screen_t *scr);
 

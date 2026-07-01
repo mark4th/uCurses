@@ -367,6 +367,12 @@ API void uC_widget_vg_attach(uC_screen_t *scr, uC_widget_vg_t *vg)
             uC_widget_vg_detach(vg->window.screen, vg);
         }
 
+        rv = win_chk_pos(&vg->window, scr, vg->window.xco, vg->window.yco);
+        if (rv != 0)
+        {
+            return;
+        }
+
         rv = (vg->window.buffer != NULL) ? 0 : win_alloc(&vg->window);
 
         if (!rv)
@@ -532,16 +538,45 @@ API void uC_widget_popup_detach(uC_widget_vg_t *vg)
 
 // -----------------------------------------------------------------------
 
-API void uC_widget_vg_add_view(uC_widget_vg_t *vg, uC_widget_view_t *v,
+static bool widget_view_fits_group(uC_widget_vg_t *vg, uC_widget_view_t *v)
+{
+    uint32_t right;
+    uint32_t bottom;
+
+    if ((vg == NULL) || (v == NULL))
+    {
+        return false;
+    }
+
+    if ((v->flags & (1 << uC_VIEW_BOXED)) &&
+        ((v->xco == 0) || (v->yco == 0)))
+    {
+        return false;
+    }
+
+    right = (uint32_t)v->xco + (uint32_t)v->width;
+    bottom = (uint32_t)v->yco + (uint32_t)v->height;
+
+    return (right <= (uint32_t)vg->window.width) &&
+        (bottom <= (uint32_t)vg->window.height);
+}
+
+// -----------------------------------------------------------------------
+
+API bool uC_widget_vg_add_view(uC_widget_vg_t *vg, uC_widget_view_t *v,
     uint16_t sequence)
 {
-    if (v)
+    if (!widget_view_fits_group(vg, v))
     {
-        if (sequence)
-            sync_seq(sequence);
-        v->sequence = sequence ? sequence : auto_sequence();
+        return false;
     }
-    uC_list_push_tail(&vg->views, v);
+
+    if (sequence)
+    {
+        sync_seq(sequence);
+    }
+    v->sequence = sequence ? sequence : auto_sequence();
+    return uC_list_push_tail(&vg->views, v);
 }
 
 #endif // UC_WIDGETS

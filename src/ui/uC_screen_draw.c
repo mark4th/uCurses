@@ -513,78 +513,15 @@ void scr_emit(uC_screen_t *scr, int16_t index)
 }
 
 // -----------------------------------------------------------------------
-// inner loop of screen update.  write chars with same attrib to escape
-// buffer
-
-static int16_t inner_update(uC_screen_t *scr, int16_t index, int16_t end)
-{
-    cell_t *p1;
-    int indx;
-    bool f;
-
-    uC_attribs_t a;
-
-    indx = 0;
-
-    // select current attributes and write out every character in
-    // the screen buffer that has these atrributes, no matter where
-    // they are located.   it is significantly faster to repeatedly
-    // bounce the cursor all over the map than to constantly have to
-    // activate new attrbute values.
-
-    p1     = &scr->buffer1[index];
-    a.blob = p1->attrs.blob;
-
-    new_attrs(a);
-
-    do
-    {
-        // if (uC_winch_pending()) { break; }
-
-        f = scr_is_modified(scr, index);
-
-        // this removed condition seems to have been causing screen
-        // update problems when single width characters are drawn
-        // over the top of what were previously multi width characters
-
-        if (f == true) // && (p1->code != DEADC0DE))
-        {
-            if (a.blob == p1->attrs.blob)
-            {
-                scr_emit(scr, index);
-            }
-            else if (indx == 0)
-            {
-                // we will later return the index of this character which
-                // is the first modified character that has different
-                // attributes to those we are currently updating.  this
-                // means that the outer loop does not need to scan over
-                // all the unmofified characters we have alredy scanned
-                // past within this loop.
-
-                indx = index;
-            }
-        }
-
-        index++;
-        p1++;
-    } while (index != end);
-
-    // return index of first char that had different attributes to the
-    // ones we were updating
-
-    return indx;
-}
-
-// -----------------------------------------------------------------------
 // outer loop of screen update
 
 static void outer_update(uC_screen_t *scr)
 {
-    bool f;
-
     int16_t index;
     int16_t end;
+    bool have_attrs = false;
+    cell_t *cell;
+    uC_attribs_t active_attrs;
 
     if (scr == NULL)
     {
@@ -604,32 +541,23 @@ static void outer_update(uC_screen_t *scr)
         // }
 
         // if char at index is modified then output every char in the
-        // screen that shares its attributes that has also been modified.
+        // order the composed screen describes.  Updating by attribute
+        // bucket is faster but can make overlays visibly blink because
+        // blanking cells and text cells may be emitted in separate passes.
 
-        f = scr_is_modified(scr, index);
-
-        if (f == true)
+        if (scr_is_modified(scr, index))
         {
-            index = inner_update(scr, index, end);
+            cell = &scr->buffer1[index];
 
-            // the return value is the index of the first character
-            // that update found that had different atributes to the
-            // ones it was setting.  this is our new scan point.
-            // if index is zero then update scanned to the end of the
-            // screen and found no characters that that needed to be
-            // updated so we can exit the loop.
-
-            if (index == 0)
+            if (!have_attrs || (active_attrs.blob != cell->attrs.blob))
             {
-                break;
+                active_attrs = cell->attrs;
+                new_attrs(active_attrs);
+                have_attrs = true;
             }
-            continue;       // skip the ++
-        }
 
-        // this part of the loop is litreally only executed when scanning
-        // the screen state for the first modified character.  The indicies
-        // of subesquent modified characters are returned to us by the
-        // inner loop.
+            scr_emit(scr, index);
+        }
 
         // would splitting this into two separate loops make it faster?
         index++;

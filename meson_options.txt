@@ -1,2 +1,6 @@
+option('menus', type: 'boolean', value: true, description: 'Enable menu bar and pulldown support')
+option('json', type: 'boolean', value: true, description: 'Enable JSON UI description parser')
+option('status', type: 'boolean', value: true, description: 'Enable status windows')
+option('widgets', type: 'boolean', value: true, description: 'Enable widget support')
 option('mouse', type: 'boolean', value: false, description: 'Enable SGR mouse support')
 option('popups', type: 'boolean', value: true, description: 'Enable popup overlay windows')

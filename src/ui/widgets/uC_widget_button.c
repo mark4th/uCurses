@@ -8,6 +8,7 @@
 #include "uC_screen.h"
 #include "uC_widgets.h"
 #include "uC_win_printf.h"
+#include "uC_utf8.h"
 
 // -----------------------------------------------------------------------
 
@@ -69,48 +70,63 @@ static char button_letter_from_name(const char *name, char letter)
 static void draw_btn_txt(uC_window_t *win, uint16_t x, uint16_t y,
     uint16_t width, const char *name, char letter)
 {
-    char c;
+    uint32_t codepoint;
+    uint8_t len;
     bool ul = false;
     uint16_t pad;
+    uint16_t remaining;
+    int16_t text_width;
 
-    if (!win)
+    if (!win || !name)
     {
         return;
     }
 
-    pad = (justify)
+    remaining = widget_clear_width(win, x, y, width);
+    text_width = uC_utf8_width((uint8_t *)name);
+    pad = (justify || (text_width < 0) || ((uint16_t)text_width >= remaining))
        ? 0
-       : (width / 2) - (strlen(name) / 2);
+       : (uint16_t)((remaining - (uint16_t)text_width) / 2u);
 
-    // %@ set cursor location in window
-    // %* emit single char multiple times
-    // %x set cursor X location on current line
-    // %* emit single char multiple times
-
-    uC_win_printf(win, "%@%*%x%*",
-        UC_XY(x, y), width, 0x20, x, pad, 0x20);
-
-    while (*name && width--)
+    while (pad != 0)
     {
-        c = *name++;
+        if (!widget_emit_clipped(win, 0x20, &remaining))
+        {
+            return;
+        }
+        pad--;
+    }
 
-        if (!ul && (c == letter))
+    while ((*name != '\0') && (remaining != 0))
+    {
+        len = utf8_decode(&codepoint, (uint8_t *)name);
+        if ((len == 0) || (len > 4))
+        {
+            break;
+        }
+
+        if (!ul && (codepoint == (uint32_t)letter))
         {
             // make sure only first instance of letter is
             // actually underlined
 
             ul = true;
-
-            // %U+ turn on underlining of text
-            // %8  output a single char
-            // %U- turn underling of text off
-
-            uC_win_printf(win, "%U+%8%U-", c);
+            uC_win_printf(win, "%U+");
+            if (!widget_emit_clipped(win, codepoint, &remaining))
+            {
+                uC_win_printf(win, "%U-");
+                break;
+            }
+            uC_win_printf(win, "%U-");
         }
         else
         {
-            uC_win_emit(win, c);
+            if (!widget_emit_clipped(win, codepoint, &remaining))
+            {
+                break;
+            }
         }
+        name += len;
     }
 }
 

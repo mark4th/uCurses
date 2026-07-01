@@ -31,15 +31,19 @@ extern uC_attribs_t uC_attrs_disabled;
 static void pd_set_attr(int16_t i, pulldown_t *pd, uC_attribs_t *p,
     menu_item_t *item)
 {
-    // currently selected item?
-    // disabled item?
-    // Enabled but not selected?
+    if ((item->flags & uC_MENU_DISABLED) != 0)
+    {
+        *p = pd->disabled_attrs;
+        return;
+    }
 
-    *p = ((item->flags & uC_MENU_DISABLED) != 0)
-        ? pd->disabled_attrs
-        : (i == pd->which)
-            ? pd->selected_attrs
-            : pd->attrs;
+    if (i == pd->which)
+    {
+        *p = pd->selected_attrs;
+        return;
+    }
+
+    *p = pd->attrs;
 }
 
 // -----------------------------------------------------------------------
@@ -136,11 +140,19 @@ void draw_pd(pulldown_t *pd)
 static void bar_set_attrs(int16_t i, menu_bar_t *bar, uC_attribs_t *p,
     pulldown_t *pd)
 {
-    *p = ((i == bar->which) && (bar->active != 0))
-        ? bar->selected_attrs
-        : ((pd->flags & uC_MENU_DISABLED) != 0)
-            ? bar->disabled_attrs
-            : bar->attrs;
+    if ((i == bar->which) && (bar->active != 0))
+    {
+        *p = bar->selected_attrs;
+        return;
+    }
+
+    if ((pd->flags & uC_MENU_DISABLED) != 0)
+    {
+        *p = bar->disabled_attrs;
+        return;
+    }
+
+    *p = bar->attrs;
 }
 
 // -----------------------------------------------------------------------

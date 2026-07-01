@@ -212,18 +212,33 @@ bool uC_shortcut_run_popup(uC_screen_t *scr, uint8_t key)
     }
 
     popup = (uC_widget_vg_t *)scr->popup_vg;
-    for (node = uC_list_scan(&scr->shortcuts, NULL);
-         node != NULL;
-         node = uC_list_scan(NULL, node))
+    node = uC_list_scan(&scr->shortcuts, NULL);
+    while (node != NULL)
     {
         entry = node->payload;
-        if (entry && uC_shortcut_matches(entry->shortcut, key) &&
-            widget_vg_contains_widget(popup, (uC_widget_t *)entry->owner))
+        if (entry == NULL)
         {
-            uC_set_key(0xff);
-            entry->action(entry->context);
-            return true;
+            node = uC_list_scan(NULL, node);
+            continue;
         }
+
+        if (!uC_shortcut_matches(entry->shortcut, key))
+        {
+            node = uC_list_scan(NULL, node);
+            continue;
+        }
+
+        if (!widget_vg_contains_widget(popup, (uC_widget_t *)entry->owner))
+        {
+            node = uC_list_scan(NULL, node);
+            continue;
+        }
+
+        uC_set_key(0xff);
+        entry->action(entry->context);
+        return true;
+
+        node = uC_list_scan(NULL, node);
     }
 #else
     (void)scr;

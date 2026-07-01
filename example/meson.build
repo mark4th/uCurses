@@ -7,12 +7,8 @@ ex_inc  = include_directories('../h', '.')
 ex_rpath = '$ORIGIN/../build'
 ex_args = [
     '-std=gnu17', '-Wall', '-Wextra', '-g', '-O2',
-    '-DUC_MENUS', '-DUC_JSON', '-DUC_STATUS', '-DUC_WIDGETS',
 ]
-
-if mouse_enabled
-    ex_args += ['-DUC_MOUSE']
-endif
+ex_args += feature_args
 
 ucurses_dep = declare_dependency(
     link_with           : shared_object,

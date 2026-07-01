@@ -25,6 +25,7 @@ void draw_radio(uC_window_t *win, uC_widget_t *widget,
     uint16_t x, uint16_t y)
 {
     uint16_t c;
+    uint16_t remaining;
 
     if (win && widget)
     {
@@ -34,19 +35,12 @@ void draw_radio(uC_window_t *win, uC_widget_t *widget,
 
         widget_set_attrs(win, widget);
 
-        // win->attrs = (widget->focused == true)
-        //     ? widget->focus_attrs
-        //     : widget->attrs;
-
-        // %@ set cursor x / y within window
-        // %* write multiple repetitions of char
-        // %x set cursor x location on current window line
-        // %8 emit single utf8 character
-        // %s write string
-
-        uC_win_printf(win, "%@%*%x%8 %s",
-            UC_XY(x, y), widget->width, 0x20,
-            x, c, widget->name);
+        remaining = widget_clear_width(win, x, y, widget->width);
+        if (widget_emit_clipped(win, c, &remaining))
+        {
+            widget_emit_clipped(win, 0x20, &remaining);
+            widget_puts_clipped(win, widget->name, &remaining);
+        }
     }
 }
 
@@ -94,4 +88,3 @@ API uC_widget_t *uC_widget_radio_create(
 #endif // UC_WIDGETS
 
 // =======================================================================
-

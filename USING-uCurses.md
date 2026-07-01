@@ -1,7 +1,7 @@
 # Using uCurses
 
 This is the practical guide for building an application with uCurses.  The
-large `uCurses.txt` file is the reference manual: it describes what exists,
+large `uCurses.md` file is the reference manual: it describes what exists,
 how the pieces work internally, and why they are shaped that way.  This file
 answers the different question: "what do I write in my program?"
 

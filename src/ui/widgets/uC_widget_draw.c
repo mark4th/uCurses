@@ -8,6 +8,7 @@
 #include "uC_utils.h"
 #include "uC_list.h"
 #include "uC_win_printf.h"
+#include "uC_utf8.h"
 
 // -----------------------------------------------------------------------
 
@@ -66,6 +67,102 @@ void widget_set_attrs(uC_window_t *win, uC_widget_t *widget)
     }
 
     win->attrs = attr;
+}
+
+// -----------------------------------------------------------------------
+
+uint16_t widget_clear_width(uC_window_t *win,
+    uint16_t x, uint16_t y, uint16_t width)
+{
+    uint16_t clipped;
+    uint16_t remaining;
+
+    if ((win == NULL) || (x >= win->width) || (y >= win->height))
+    {
+        return 0;
+    }
+
+    clipped = (uint16_t)(win->width - x);
+    if (width < clipped)
+    {
+        clipped = width;
+    }
+
+    uC_win_cup(win, x, y);
+    remaining = clipped;
+    while (remaining != 0)
+    {
+        if (!widget_emit_clipped(win, 0x20, &remaining))
+        {
+            break;
+        }
+    }
+    uC_win_cup(win, x, y);
+    return clipped;
+}
+
+// -----------------------------------------------------------------------
+
+bool widget_emit_clipped(uC_window_t *win, uint32_t codepoint,
+    uint16_t *remaining)
+{
+    utf8_encode_t *encoded;
+    uint16_t line_remaining;
+    uint16_t allowed;
+    int width;
+
+    if ((win == NULL) || (remaining == NULL) || (*remaining == 0) ||
+        (win->cx < 0) || (win->cy < 0) ||
+        (win->cx >= win->width) || (win->cy >= win->height))
+    {
+        return false;
+    }
+
+    encoded = utf8_encode((int32_t)codepoint);
+    width = encoded->width;
+    if (width <= 0)
+    {
+        return true;
+    }
+
+    line_remaining = (uint16_t)(win->width - win->cx);
+    allowed = (*remaining < line_remaining) ? *remaining : line_remaining;
+    if ((uint16_t)width > allowed)
+    {
+        return false;
+    }
+
+    uC_win_emit(win, codepoint);
+    *remaining = (uint16_t)(*remaining - (uint16_t)width);
+    return true;
+}
+
+// -----------------------------------------------------------------------
+
+void widget_puts_clipped(uC_window_t *win, const char *text,
+    uint16_t *remaining)
+{
+    uint32_t codepoint;
+    uint8_t len;
+
+    if ((text == NULL) || (remaining == NULL))
+    {
+        return;
+    }
+
+    while ((*text != '\0') && (*remaining != 0))
+    {
+        len = utf8_decode(&codepoint, (uint8_t *)text);
+        if ((len == 0) || (len > 4))
+        {
+            break;
+        }
+        if (!widget_emit_clipped(win, codepoint, remaining))
+        {
+            break;
+        }
+        text += len;
+    }
 }
 
 // -----------------------------------------------------------------------

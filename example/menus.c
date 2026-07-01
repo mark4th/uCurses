@@ -37,13 +37,14 @@ static void run_demo(char *demo)
 //    uC_deregister_winch(my_winch);
     uC_restore_terminal();
 
-    int s = system(demo);
+    (void)system(demo);
 
     uC_init_terminal();
     uC_menu_init_keys();   // re-enable smkx and menu key bindings
     uC_curoff();
     uC_flush_keys();
-    uC_clear();
+    hello();
+    uC_scr_draw_screen(active_screen);
 //    uC_register_winch(my_winch);
 }
 
@@ -76,7 +77,7 @@ static uC_switch_t menu_vectors[] =
 
 opt_t menu_address_cb(int32_t hash)
 {
-    int16_t i;
+    size_t i;
     uC_switch_t *s = menu_vectors;
 
     for(i = 0; i < VCOUNT; i++)

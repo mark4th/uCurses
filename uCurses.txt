@@ -3825,6 +3825,13 @@ engine based on the developer defined order.
         screen structure.  Once the view group is attached, all widgets
         within all widget views associated with the attached group will be
         displayed on the next update.
+
+        A view group follows the same placement rule as a normal window:
+        it is attached only if the complete view-group window, including
+        any border, fits within the target screen at the requested
+        coordinates.  If it does not fit, this call quietly leaves the
+        group detached.
+
         Button widgets with assigned shortcut letters are registered with
         the screen-level shortcut registry at this point.  If another menu
         item or widget already owns that shortcut on the same screen the
@@ -3880,11 +3887,19 @@ engine based on the developer defined order.
         destroying the view group, its views, its widgets, or its backing
         window buffer.
 
-    API void uC_widget_vg_add_view(uC_widget_vg_t *vg,
-        uC_widget_view_t *v)
+    API bool uC_widget_vg_add_view(uC_widget_vg_t *vg,
+        uC_widget_view_t *v, uint16_t sequence)
 
         This public API call is used to associate a specified view with a
-        view group.
+        view group.  It returns true when the view was attached and false
+        when the view or group is null, the view does not fit within the
+        view-group window, or the list insertion fails.
+
+        A boxed view must have at least one cell of offset from the top and
+        left edges of the view-group window so its border can be drawn
+        inside the group.  Boxed and unboxed views must fit completely
+        within the view group.  Oversized views are ignored rather than
+        being added and later scribbling over unrelated content.
 
 
 9.4: uC_widget_draw.c
@@ -3958,9 +3973,34 @@ The following functions perform the entire drawing operation...
     static void draw_views(uC_widget_vg_t *vg)
 
         This static function will draw all views within the window of the
-        specified view group.  No checks are made to ensure that the
-        associated views or their associated widgets will fit within the
-        view groups window.   It is undefined behavior if they do not.
+        specified view group.  Views are required to fit inside their view
+        group before they can be attached.  Individual widget draw helpers
+        clear and draw only within the widget width and clip label text at
+        the widget boundary instead of wrapping into adjacent cells.
+
+    uint16_t widget_clear_width(uC_window_t *win,
+        uint16_t x, uint16_t y, uint16_t width)
+
+        Internal helper used by widget draw code.  It clears at most width
+        cells on a single row starting at x/y, clipped to the containing
+        window's right edge, resets the cursor to x/y, and returns the
+        number of drawable cells available to the widget.
+
+    bool widget_emit_clipped(uC_window_t *win, uint32_t codepoint,
+        uint16_t *remaining)
+
+        Internal helper used by widget draw code.  It emits one UTF-8
+        codepoint only if that codepoint fits within both the widget's
+        remaining width and the current window row.  It returns false when
+        the codepoint would overflow, allowing callers to stop drawing
+        without triggering the window emitter's normal line wrap.
+
+    void widget_puts_clipped(uC_window_t *win, const char *text,
+        uint16_t *remaining)
+
+        Internal helper used by widget draw code.  It writes a UTF-8 string
+        until the next codepoint would exceed the widget's remaining width
+        or the current window row.
 
     void draw_view_groups(uC_screen_t *scr)
 
@@ -3977,14 +4017,17 @@ The following functions perform the entire drawing operation...
 
         This static function draws the text name into the button.  If the
         button has an associated letter defined the first instance of that
-        character within the name is underlined.
+        character within the name is underlined.  The button text is
+        clipped to the button width and UTF-8 display width is used when
+        centering and clipping.
 
     void draw_button(uC_window_t *win, uC_widget_t *widget,
         uint16_t x, uint16_t y)
 
         This function simply draws a button with its button text.  If the
         button also has an associated letter the first instance of that
-        letter within the text is underlined.
+        letter within the text is underlined.  The rendered button is
+        clipped to the widget width and never wraps into adjacent cells.
 
     uint8_t handle_button(uint8_t k)
 
@@ -4035,7 +4078,9 @@ The following functions perform the entire drawing operation...
         This function is called as part of the widget draw procedure and
         draws a single checkbox widget using the selected UTF-8 characters
         for both on and off states.  The checkbox will be drawn with
-        either its focused or unfocused attributes.
+        either its focused or unfocused attributes.  The checkbox graphic,
+        spacer, and label are clipped to the widget width and never wrap
+        into adjacent cells.
 
         The widgets state bit is taken from a 32 bit variable pointed to
         by the *select element within the widget structure.  The widget
@@ -4086,7 +4131,9 @@ one widget may be set within a radio button view.
         This function is called as part of the widget draw procedure and
         draws a single radio button widget using the selected UTF-8
         characters for both on and off states.  The radio button will be
-        drawn with either its focused or unfocused attributes.
+        drawn with either its focused or unfocused attributes.  The radio
+        graphic, spacer, and label are clipped to the widget width and
+        never wrap into adjacent cells.
 
         The widgets state bit is taken from a 32 bit variable pointed to
         by the *select element within the widget structure.  The widget

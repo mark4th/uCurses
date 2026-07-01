@@ -8,6 +8,10 @@ project(
 )
 project_description = 'TUI app builder for consoles and terminals.'
 
+menus_enabled = get_option('menus')
+json_enabled = get_option('json')
+status_enabled = get_option('status')
+widgets_enabled = get_option('widgets')
 mouse_enabled = get_option('mouse')
 popups_enabled = get_option('popups')
 
@@ -20,8 +24,9 @@ build_args = [
     '-fno-asynchronous-unwind-tables',
     '-fno-unwind-tables',
     '-fvisibility=hidden',
-    '-I../h'
 ]
+
+ucurses_inc = include_directories('h')
 
 usable_pythons = [ 'python3.12', 'python3.11', 'python3.10', 'python3.9', 'python3.8', 'python3.7', 'python3' ]
 
@@ -37,25 +42,37 @@ elif compiler.get_id() == 'clang'
     build_args += ['-Oz']
 endif
 
-build_args += [
-    '-DPROJECT_NAME="@0@"'.format(meson.project_name()),
-    '-DPROJECT_VERSION="@0@"'.format(meson.project_version()),
+feature_args = []
 
-    # optional stuff
+if menus_enabled
+    feature_args += ['-DUC_MENUS']
+endif
 
-    '-DUC_MENUS', 
-    '-DUC_JSON', 
-    '-DUC_STATUS',
-    '-DUC_WIDGETS'
-]
+if json_enabled
+    feature_args += ['-DUC_JSON']
+endif
+
+if status_enabled
+    feature_args += ['-DUC_STATUS']
+endif
+
+if widgets_enabled
+    feature_args += ['-DUC_WIDGETS']
+endif
 
 if mouse_enabled
-    build_args += ['-DUC_MOUSE']
+    feature_args += ['-DUC_MOUSE']
 endif
 
 if popups_enabled
-    build_args += ['-DUC_POPUPS']
+    feature_args += ['-DUC_POPUPS']
 endif
+
+build_args += [
+    '-DPROJECT_NAME="@0@"'.format(meson.project_name()),
+    '-DPROJECT_VERSION="@0@"'.format(meson.project_version()),
+]
+build_args += feature_args
 
 message('@0@: @1@'.format(compiler.get_id(), build_args))
 
@@ -89,6 +106,28 @@ menu_source_files    = source_menu.stdout().strip().split('\n')
 wdgt_source_files    = source_wdgt.stdout().strip().split('\n')
 util_source_files    = source_util.stdout().strip().split('\n')
 
+if not json_enabled
+    json_source_files = []
+endif
+
+if not menus_enabled
+    menu_source_files = []
+endif
+
+if not status_enabled
+    filtered_ui_source_files = []
+    foreach source_file : ui_source_files
+        if source_file != 'src/ui/uC_status.c'
+            filtered_ui_source_files += source_file
+        endif
+    endforeach
+    ui_source_files = filtered_ui_source_files
+endif
+
+if not widgets_enabled
+    wdgt_source_files = []
+endif
+
 if not mouse_enabled
     filtered_ti_source_files = []
     foreach source_file : ti_source_files
@@ -120,6 +159,7 @@ shared_object = shared_library(
     install : true,
     link_args : linker_args,
     c_args : build_args,
+    include_directories : ucurses_inc,
     version : meson.project_version(),
     soversion : meson.project_version(),
 )
@@ -136,6 +176,7 @@ static_library(
     util_source_files,
     install : true,
     c_args : build_args,
+    include_directories : ucurses_inc,
 )
 
 subdir('example')

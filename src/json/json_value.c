@@ -62,14 +62,16 @@ static void value_rgb(void)
 
     if (is_bg)
     {
-        a->flags.bits |= uC_ATTR_FLAG_RGB_BG; a->flags.bits &= ~uC_ATTR_FLAG_GRAY_BG;
+        a->flags.bits |= uC_ATTR_FLAG_RGB_BG;
+        a->flags.bits &= ~uC_ATTR_FLAG_GRAY_BG;
         if (ktype == KEY_RED)   { a->bg_r = val; return; }
         if (ktype == KEY_GREEN) { a->bg_g = val; return; }
         a->bg_b = val;
     }
     else
     {
-        a->flags.bits |= uC_ATTR_FLAG_RGB_FG; a->flags.bits &= ~uC_ATTR_FLAG_GRAY_FG;
+        a->flags.bits |= uC_ATTR_FLAG_RGB_FG;
+        a->flags.bits &= ~uC_ATTR_FLAG_GRAY_FG;
         if (ktype == KEY_RED)   { a->fg_r = val; return; }
         if (ktype == KEY_GREEN) { a->fg_g = val; return; }
         a->fg_b = val;

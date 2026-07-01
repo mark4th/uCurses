@@ -284,6 +284,12 @@ uint8_t uC_widget_mouse_handle(void);
 #endif
 
 void widget_set_attrs(uC_window_t *window, uC_widget_t *widget);
+uint16_t widget_clear_width(uC_window_t *win,
+    uint16_t x, uint16_t y, uint16_t width);
+bool widget_emit_clipped(uC_window_t *win, uint32_t codepoint,
+    uint16_t *remaining);
+void widget_puts_clipped(uC_window_t *win, const char *text,
+    uint16_t *remaining);
 
 void draw_button(uC_window_t *win, uC_widget_t *widget,
     uint16_t x, uint16_t y);
@@ -318,7 +324,7 @@ API void uC_widget_vg_detach(uC_screen_t *scr, uC_widget_vg_t *vg);
 API void uC_widget_vg_close(uC_widget_vg_t *vg);
 API bool uC_widget_popup_attach(uC_screen_t *scr, uC_widget_vg_t *vg);
 API void uC_widget_popup_detach(uC_widget_vg_t *vg);
-API void uC_widget_vg_add_view(uC_widget_vg_t *vg, uC_widget_view_t *v,
+API bool uC_widget_vg_add_view(uC_widget_vg_t *vg, uC_widget_view_t *v,
     uint16_t sequence);
 
 // -----------------------------------------------------------------------

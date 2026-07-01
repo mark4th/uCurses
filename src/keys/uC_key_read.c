@@ -69,17 +69,24 @@ static int8_t read_key(void)
 
 void uC_read_keys(void)
 {
+    bool read_more = true;
+
     ti_vars->num_k = 0;
 
     do
     {
+        int poll_rc;
+
         if (ti_vars->num_k == KEY_BUFF_SZ)
         {
             break;
         }
         ti_vars->keybuff[ti_vars->num_k++] = read_key();
-    } while (poll(&pfd, 1,
-        (ti_vars->keybuff[0] == 0x1b) ? ESC_SEQUENCE_POLL_MS : 0) != 0);
+
+        poll_rc = poll(&pfd, 1,
+            (ti_vars->keybuff[0] == 0x1b) ? ESC_SEQUENCE_POLL_MS : 0);
+        read_more = poll_rc != 0;
+    } while (read_more);
 }
 
 // =======================================================================

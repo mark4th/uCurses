@@ -41,9 +41,6 @@ char status[STAT_SIZE];
 // this is not a raycasting demo. this is a uCurses demo showing ray
 // casting.  i.e. showing off }:)
 
-static uint16_t mapWidth  = 24;
-static uint16_t mapHeight = 24;
-
 static double posX = 22;       // x and y start position
 static double posY = 12;
 static double dirX = -1;       // initial direction vector
@@ -70,6 +67,8 @@ static uint16_t fb_width;     // dimensuons of frame buffer
 static uint16_t fb_height;
 
 #define TARGET_FRAME_NS (33333333)
+#define MOVE_UNITS_PER_SECOND (5.0)
+#define ROT_RADIANS_PER_SECOND (3.0)
 
 // -----------------------------------------------------------------------
 
@@ -384,12 +383,7 @@ void process_key(uint8_t keypress)
 static void draw_walls(void)
 {
     uint16_t c;
-    uint8_t pixle;
     uint8_t x, y;
-
-    cell_t *cell;
-
-    uint32_t offset;
     uint8_t color;
 
     uC_braille_1(win, braile_data, fb, fb_width, fb_height);
@@ -405,8 +399,6 @@ static void draw_walls(void)
         for (y = 0; y < win->height; y++)
         {
             c = braile_data[(y * win->width) + x];
-
-            cell = uC_win_peek_xy(win, x, y);
 
             if (c != 0x2800)
             {
@@ -431,7 +423,6 @@ void raycast(void)
     int framecount = 0;
     int time       = 0;
     int old_time;
-
     double frame_time_d;
 
     gettimeofday(&tv, NULL);
@@ -494,14 +485,18 @@ void raycast(void)
         if (elapsed_ns < TARGET_FRAME_NS)
         {
             uC_clock_sleep(TARGET_FRAME_NS - elapsed_ns);
+            gettimeofday(&frame_end, NULL);
+            elapsed_ns =
+                (frame_end.tv_sec  - frame_start.tv_sec)  * 1000000000LL +
+                (frame_end.tv_usec - frame_start.tv_usec) * 1000LL;
         }
 
 
 
         // frame_time as a proper double in seconds for speed calculations
-        double frame_time_d = elapsed_ns / 1000000000.0;
-        moveSpeed = frame_time_d * 800.0;
-        rotSpeed  = frame_time_d * 300.0;
+        frame_time_d = elapsed_ns / 1000000000.0;
+        moveSpeed = frame_time_d * MOVE_UNITS_PER_SECOND;
+        rotSpeed  = frame_time_d * ROT_RADIANS_PER_SECOND;
 
         if (uC_test_keys() != 0)
         {
@@ -536,7 +531,7 @@ static uC_switch_t menu_vectors[] =
 
 opt_t menu_address_cb(int32_t hash)
 {
-    int16_t i;
+    size_t i;
     uC_switch_t *s = menu_vectors;
 
     for(i = 0; i < VCOUNT; i++)

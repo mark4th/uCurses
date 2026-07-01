@@ -41,6 +41,42 @@ static bool item_enabled(menu_item_t *item)
 
 // -----------------------------------------------------------------------
 
+static menu_item_t *selected_item(pulldown_t *pd)
+{
+    if (pd == NULL)
+    {
+        return NULL;
+    }
+
+    return pd->items[pd->which];
+}
+
+// -----------------------------------------------------------------------
+
+static uint8_t menu_key_return(uint8_t key)
+{
+    if (key == 0xff)
+    {
+        return 0;
+    }
+
+    return key;
+}
+
+// -----------------------------------------------------------------------
+
+static uC_key_handler_t *saved_f10_or_noop(uC_key_handler_t *saved)
+{
+    if (saved != NULL)
+    {
+        return saved;
+    }
+
+    return uC_noop;
+}
+
+// -----------------------------------------------------------------------
+
 static void to_prev_menu_item(pulldown_t *pd)
 {
     if (pd->which == 0)
@@ -54,18 +90,26 @@ static void to_prev_menu_item(pulldown_t *pd)
 
 static void to_next_menu_item(pulldown_t *pd)
 {
-    pd->which = (pd->which != pd->count - 1)
-        ? pd->which + 1
-        : 0;
+    if (pd->which != pd->count - 1)
+    {
+        pd->which++;
+        return;
+    }
+
+    pd->which = 0;
 }
 
 // -----------------------------------------------------------------------
 
 static void next_pd(menu_bar_t *bar)
 {
-    bar->which = (bar->which != bar->count - 1)
-        ? bar->which + 1
-        : 0;
+    if (bar->which != bar->count - 1)
+    {
+        bar->which++;
+        return;
+    }
+
+    bar->which = 0;
 }
 
 // -----------------------------------------------------------------------
@@ -100,9 +144,14 @@ static bool select_enabled_pd(menu_bar_t *bar, int dir, bool advance)
     {
         if (advance || (n != 0))
         {
-            (dir > 0)
-                ? prev_pd(bar)
-                : next_pd(bar);
+            if (dir > 0)
+            {
+                prev_pd(bar);
+            }
+            else
+            {
+                next_pd(bar);
+            }
             advance = false;
         }
 
@@ -135,9 +184,14 @@ static bool select_enabled_item(pulldown_t *pd, int dir, bool advance)
     {
         if (advance || (n != 0))
         {
-            (dir > 0)
-                ? to_prev_menu_item(pd)
-                : to_next_menu_item(pd);
+            if (dir > 0)
+            {
+                to_prev_menu_item(pd);
+            }
+            else
+            {
+                to_next_menu_item(pd);
+            }
             advance = false;
         }
 
@@ -176,6 +230,7 @@ static void menu_activate(void)
 {
     menu_bar_t *bar = menu_screen->menu_bar;
     pulldown_t *pd;
+    bool pd_selected;
 
     if (bar == NULL)
     {
@@ -184,7 +239,8 @@ static void menu_activate(void)
 
     if (bar->active == 0)
     {
-        if (!select_enabled_pd(bar, MENU_RIGHT, false))
+        pd_selected = select_enabled_pd(bar, MENU_RIGHT, false);
+        if (!pd_selected)
         {
             return;
         }
@@ -208,7 +264,12 @@ static void menu_activate(void)
 
 API bool uC_menu_is_active(uC_screen_t *scr)
 {
-    menu_bar_t *bar = scr ? scr->menu_bar : NULL;
+    menu_bar_t *bar = NULL;
+
+    if (scr != NULL)
+    {
+        bar = scr->menu_bar;
+    }
 
     return (bar != NULL) && (bar->active != 0);
 }
@@ -219,6 +280,7 @@ API void uC_menu_open(uC_screen_t *scr)
 {
     menu_bar_t *bar;
     pulldown_t *pd;
+    bool pd_selected;
 
     if ((scr == NULL) || (scr->menu_bar == NULL))
     {
@@ -234,7 +296,8 @@ API void uC_menu_open(uC_screen_t *scr)
         return;
     }
 
-    if (!select_enabled_pd(bar, MENU_RIGHT, false))
+    pd_selected = select_enabled_pd(bar, MENU_RIGHT, false);
+    if (!pd_selected)
     {
         return;
     }
@@ -282,6 +345,7 @@ void menu_normalize_selection(uC_screen_t *scr)
     menu_bar_t *bar;
     pulldown_t *old_pd = NULL;
     pulldown_t *pd;
+    bool pd_selected;
 
     if ((scr == NULL) || (scr->menu_bar == NULL))
     {
@@ -296,7 +360,8 @@ void menu_normalize_selection(uC_screen_t *scr)
         old_pd = bar->items[bar->which];
     }
 
-    if (!select_enabled_pd(bar, MENU_RIGHT, false))
+    pd_selected = select_enabled_pd(bar, MENU_RIGHT, false);
+    if (!pd_selected)
     {
         if (old_pd != NULL)
         {
@@ -345,6 +410,7 @@ static void menu_left_rt(int dir)
 {
     menu_bar_t *bar = menu_screen->menu_bar;
     pulldown_t *pd;
+    bool pd_selected;
 
     if ((bar != NULL) && (bar->active != 0))
     {
@@ -360,7 +426,8 @@ static void menu_left_rt(int dir)
             pd->window = NULL;
         }
 
-        if (select_enabled_pd(bar, dir, true))
+        pd_selected = select_enabled_pd(bar, dir, true);
+        if (pd_selected)
         {
             pd = bar->items[bar->which];
             select_enabled_item(pd, MENU_DOWN, false);
@@ -380,15 +447,24 @@ static void menu_cr(void)
     menu_bar_t *bar = menu_screen->menu_bar;
     pulldown_t *pd;
     menu_item_t *item;
+    bool pd_live;
+    bool item_live;
 
     if ((bar != NULL) && (bar->active != 0))
     {
         pd = bar->items[bar->which];
-        item = (pd != NULL) ? pd->items[pd->which] : NULL;
+        item = selected_item(pd);
 
         uC_set_key(-1);
 
-        if (pd_enabled(pd) && item_enabled(item) && (item->fp != NULL))
+        pd_live = pd_enabled(pd);
+        item_live = item_enabled(item);
+        if (!pd_live || !item_live)
+        {
+            return;
+        }
+
+        if (item->fp != NULL)
         {
             bar->active = 0;
             uC_win_close(pd->window);
@@ -408,7 +484,7 @@ static uint8_t menu_action_key(void)
 {
     uint8_t key = uC_key_raw();
 
-    return (key == 0xff) ? 0 : key;
+    return menu_key_return(key);
 }
 
 // -----------------------------------------------------------------------
@@ -549,7 +625,7 @@ API uint8_t uC_menu_run(uC_screen_t *scr)
         key = uC_key();
         if (key != 0)
         {
-            return (key == 0xff) ? 0 : key;
+            return menu_key_return(key);
         }
         uC_scr_draw_screen(scr);
     }
@@ -585,9 +661,9 @@ void uC_menu_deinit_keys(void)
     if (menu_keys_initialized)
     {
         uC_restore_default_key_action(K_F10, menu_key_f10,
-            menu_saved_default_f10 ? menu_saved_default_f10 : uC_noop);
+            saved_f10_or_noop(menu_saved_default_f10));
         uC_restore_key_action(K_F10, menu_key_f10,
-            menu_saved_current_f10 ? menu_saved_current_f10 : uC_noop);
+            saved_f10_or_noop(menu_saved_current_f10));
 
         menu_saved_default_f10 = NULL;
         menu_saved_current_f10 = NULL;

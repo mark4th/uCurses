@@ -60,6 +60,8 @@ static void k_end(void)     { uC_set_key(UC_KEY_END);     }
 static void k_pgdn(void)    { uC_set_key(UC_KEY_PGDN);    }
 static void k_pgup(void)    { uC_set_key(UC_KEY_PGUP);    }
 static void k_cbt(void)     { uC_set_key(UC_KEY_BACKTAB); }
+static void k_sleft(void)   { uC_set_key(UC_KEY_SLEFT);   }
+static void k_sright(void)  { uC_set_key(UC_KEY_SRIGHT);  }
 
 // -----------------------------------------------------------------------
 // Default key handler table.  The system calls entries by key_index_t
@@ -77,7 +79,9 @@ static uC_key_handler_t *default_key_actions[] =
 //  F1       F2       F3       F4       F5       F6
     uC_noop, uC_noop, uC_noop, uC_noop, uC_noop, uC_noop,
 //  F7       F8       F9       F10      F11      F12
-    uC_noop, uC_noop, uC_noop, uC_noop, uC_noop, uC_noop
+    uC_noop, uC_noop, uC_noop, uC_noop, uC_noop, uC_noop,
+//  SHIFT LEFT  SHIFT RIGHT
+    k_sleft,     k_sright
 };
 
 #define KEY_COUNT (sizeof(default_key_actions) / sizeof(default_key_actions[0]))
@@ -166,7 +170,7 @@ bool uC_restore_key_action(key_index_t index,
 // -----------------------------------------------------------------------
 // keep processing key sequences till we get a normal key
 
-uint8_t uC_key_raw(void)
+API uint8_t uC_key_raw(void)
 {
     int16_t c;
 
@@ -232,46 +236,129 @@ uint8_t uC_key_raw(void)
 
 // -----------------------------------------------------------------------
 
+typedef struct
+{
+    bool raw_popup_active;
+    bool raw_only_popup_active;
+    bool widget_popup_active;
+} key_context_t;
+
+// -----------------------------------------------------------------------
+
+static key_context_t key_context(void)
+{
+    key_context_t context;
+
+    context.raw_popup_active = (active_screen != NULL) &&
+        (active_screen->popup != NULL);
+    context.widget_popup_active = (active_screen != NULL) &&
+        (active_screen->popup_vg != NULL);
+    context.raw_only_popup_active =
+        context.raw_popup_active && !context.widget_popup_active;
+
+    return context;
+}
+
+// -----------------------------------------------------------------------
+
+#if defined(UC_MENUS) || defined(UC_WIDGETS)
+static bool key_shortcuts_blocked(const key_context_t *context)
+{
+    bool blocked = context->raw_only_popup_active;
+
+#ifdef UC_WIDGETS
+    blocked = blocked || widget_text_input_active(active_screen);
+#endif
+
+    return blocked;
+}
+#endif
+
+// -----------------------------------------------------------------------
+
+static bool key_shortcut_run(const key_context_t *context, uint8_t key)
+{
+#if defined(UC_MENUS) || defined(UC_WIDGETS)
+    if (!uC_scr_shortcuts_enabled(active_screen) ||
+        key_shortcuts_blocked(context))
+    {
+        return false;
+    }
+
+    return context->widget_popup_active
+        ? uC_shortcut_run_popup(active_screen, key)
+        : uC_shortcut_run(active_screen, key);
+#else
+    (void)context;
+    (void)key;
+    return false;
+#endif
+}
+
+// -----------------------------------------------------------------------
+
+static bool key_menu_handle(const key_context_t *context, uint8_t key,
+    uint8_t *out)
+{
+#ifdef UC_MENUS
+    if (!context->raw_popup_active && !context->widget_popup_active)
+    {
+        return menu_key(active_screen, key, out);
+    }
+#else
+    (void)key;
+    (void)out;
+#endif
+
+    (void)context;
+    return false;
+}
+
+// -----------------------------------------------------------------------
+
+static bool key_widget_handle(const key_context_t *context, uint8_t key,
+    uint8_t *out)
+{
+#ifdef UC_WIDGETS
+    if (!context->raw_only_popup_active)
+    {
+        return widget_key(active_screen, key, out);
+    }
+#else
+    (void)key;
+    (void)out;
+#endif
+
+    (void)context;
+    return false;
+}
+
+// -----------------------------------------------------------------------
+
 API uint8_t uC_key(void)
 {
     uint8_t key;
     uint8_t out = UC_KEY_NONE;
-    bool raw_popup_active;
-    bool raw_only_popup_active;
-    bool widget_popup_active;
+    key_context_t context;
 
     key = uC_key_raw();
-    raw_popup_active = (active_screen != NULL) && (active_screen->popup != NULL);
-    widget_popup_active = (active_screen != NULL) &&
-        (active_screen->popup_vg != NULL);
-    raw_only_popup_active = raw_popup_active && !widget_popup_active;
+    context = key_context();
 
-    if (uC_scr_shortcuts_enabled(active_screen) && !raw_only_popup_active &&
-#ifdef UC_WIDGETS
-        !widget_text_input_active(active_screen) &&
-#endif
-        (widget_popup_active
-            ? uC_shortcut_run_popup(active_screen, key)
-            : uC_shortcut_run(active_screen, key)))
+    if (key_shortcut_run(&context, key))
     {
         out = uC_key_raw();
         return (out == 0xff) ? UC_KEY_NONE : out;
     }
 
-#ifdef UC_MENUS
-    if (!raw_popup_active && !widget_popup_active &&
-        menu_key(active_screen, key, &out))
+    if (key_menu_handle(&context, key, &out))
     {
         return out;
     }
-#endif
 
-#ifdef UC_WIDGETS
-    if (!raw_only_popup_active && widget_key(active_screen, key, &out))
+    if (key_widget_handle(&context, key, &out))
     {
         return out;
     }
-#endif
 
     return key;
 }

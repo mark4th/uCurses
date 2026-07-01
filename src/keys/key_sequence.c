@@ -96,6 +96,8 @@ static void kf9(void)   { ti_kf9();   }
 static void kf10(void)  { ti_kf10();  }
 static void kf11(void)  { ti_kf11();  }
 static void kf12(void)  { ti_kf12();  }
+static void kLFT(void)  { ti_kLFT();  }
+static void kRIT(void)  { ti_kRIT();  }
 
 // -----------------------------------------------------------------------
 // array of pointers to functions to get each key escape sequence
@@ -107,7 +109,8 @@ void (*k_table[])(void) =
     kent,  kcuu1, kcud1, kcub1, kcuf1, kbs,  kdch1,
     kich1, khome, kend,  knp,   kpp,   kcbt,
     kf1,   kf2,   kf3,   kf4,   kf5,   kf6,
-    kf7,   kf8,   kf9,   kf10,  kf11,  kf12
+    kf7,   kf8,   kf9,   kf10,  kf11,  kf12,
+    kLFT,  kRIT
 };
 
 #define KEY_COUNT (sizeof(k_table) / sizeof(k_table[0]))

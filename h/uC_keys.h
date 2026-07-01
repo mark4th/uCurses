@@ -59,6 +59,8 @@ enum
     UC_KEY_BACKTAB = 0x8b,
     UC_KEY_PGDN    = 0x8c,
     UC_KEY_PGUP    = 0x8d,
+    UC_KEY_SLEFT   = 0x8e,
+    UC_KEY_SRIGHT  = 0x8f,
 };
 
 // this enumeration defines the order in which keyboard handlers are
@@ -70,7 +72,8 @@ typedef enum
     K_ENT,  K_CUU1, K_CUD1, K_CUB1, K_CUF1, K_BS,  K_DCH1,
     K_ICH1, K_HOME, K_END,  K_KNP,  K_KPP,  K_BT,
     K_F1,   K_F2,   K_F3,   K_F4,   K_F5,   K_F6,
-    K_F7,   K_F8,   K_F9,   K_F10,  K_F11,  K_f12
+    K_F7,   K_F8,   K_F9,   K_F10,  K_F11,  K_f12,
+    K_SLFT, K_SRIT
 } __attribute__((__packed__)) key_index_t;
 
 // -----------------------------------------------------------------------
@@ -106,7 +109,6 @@ enum
 
 void uC_read_keys(void);
 int16_t match_key(void);
-uint8_t uC_key_raw(void);
 bool uC_shortcut_register(uC_screen_t *scr,
     uC_shortcut_t shortcut, uC_shortcut_action_t *action, void *context,
     void *owner);
@@ -121,6 +123,7 @@ bool uC_shortcut_matches(uC_shortcut_t shortcut, uint8_t key);
 API uC_kh_t uC_alloc_kh(void);
 API void uC_release_kh(uC_kh_t saved);
 API int8_t uC_test_keys(void);
+API uint8_t uC_key_raw(void);
 uC_key_handler_t *uC_set_default_key_action(key_index_t index,
     uC_key_handler_t *action);
 bool uC_restore_default_key_action(key_index_t index,

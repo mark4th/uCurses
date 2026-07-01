@@ -99,31 +99,13 @@ the same binary works correctly across terminal emulators.
 
 ## Quick start
 
-```c
-#include "uCurses.h"
-#include "uC_window.h"
-#include "uC_win_printf.h"
-
-int main(void)
-{
-    uC_screen_t *scr = uCurses_init(NULL, NULL, NULL);
-
-    uC_window_t *win = uC_win_open(40, 10);
-    uC_win_set_pos(win, 5, 5);
-    uC_win_printf(win, "Hello from uCurses!");
-
-    // attach win to scr, then call screen draw
-
-    uCurses_deInit();
-    return 0;
-}
-```
-
 See the `example/` directory for complete working programs covering
 windows, borders, menus, widgets, mouse handling, and more.
 
-For a task-oriented guide to writing an application with the library, see
-[`USING-uCurses.md`](USING-uCurses.md).  The large `uCurses.txt` file remains
+For the shortest "write your first app" path, start with
+[`GETTING_STARTED.md`](GETTING_STARTED.md).  For a task-oriented guide to
+writing a real application with the library, see
+[`USING-uCurses.md`](USING-uCurses.md).  The large `uCurses.md` file remains
 the reference/manual material for what the library contains and how it works.
 
 ---
@@ -196,7 +178,7 @@ Lines beginning with `/` are treated as comments and skipped.
 
 Full documentation — including the terminfo parser internals, attribute
 system, keyboard matching, screen/window architecture, menu system, widget
-system, and JSON format — is in [`uCurses.txt`](uCurses.txt).
+system, and JSON format — is in [`uCurses.md`](uCurses.md).
 
 ---
 

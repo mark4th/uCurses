@@ -4,6 +4,8 @@ project = uCurses
 shared_object=lib$(project).so
 example_bins = demo scroll console widgets window raycast dots mandel borders lion list_demo
 
+.PHONY: examples tests help
+
 examples: .build
 	$_
 	for exe in $(example_bins); do

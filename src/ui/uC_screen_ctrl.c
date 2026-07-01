@@ -321,6 +321,7 @@ API void uC_scr_win_detach(uC_window_t *win)
         if (scr != NULL)
         {
             uC_list_remove_node(&scr->windows, win);
+            uC_list_remove_node(&scr->status, win);
 #ifdef UC_POPUPS
             if (scr->popup == win)
             {

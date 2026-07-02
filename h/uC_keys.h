@@ -135,8 +135,6 @@ bool uC_restore_key_action(key_index_t index,
 API uint8_t uC_key(void);
 API void uC_set_key(uint8_t c);
 API void uC_flush_keys(void);
-API bool uC_push_key_handler(uC_kh_t user_actions);
-API bool uC_pop_key_handler(void);
 void init_key_handlers(void);
 
 // -----------------------------------------------------------------------

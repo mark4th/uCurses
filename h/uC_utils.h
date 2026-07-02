@@ -14,11 +14,11 @@
 #define FNV_BASIS (0x811c9dc5)
 
 // -----------------------------------------------------------------------
-// visibility hidden
+// Public helpers used by the library and available to applications.
 
-int32_t fnv_hash(uint8_t *s);
-void uC_assert(bool f, const char *file, int line, const char *msg);
-void uC_ui_free(void *mem);
+API int32_t fnv_hash(uint8_t *s);
+API void uC_assert(bool f, const char *file, int line, const char *msg);
+API void uC_ui_free(void *mem);
 
 // -----------------------------------------------------------------------
 

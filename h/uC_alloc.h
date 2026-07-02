@@ -31,6 +31,7 @@ typedef enum
 API size_t uC_zone_query(uC_mem_zone_t zone);
 API void uC_mem_purge(uC_mem_zone_t zone);
 API void *uC_alloc(uC_mem_zone_t zone, size_t size);
+API void *uC_realloc(uC_mem_zone_t zone, void *addr, size_t size);
 API void uC_free(uC_mem_zone_t zone, void *addr);
 
 // -----------------------------------------------------------------------

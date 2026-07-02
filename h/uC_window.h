@@ -88,6 +88,7 @@ int16_t win_alloc(uC_window_t *win);
 
 API uC_window_t *uC_win_open(int16_t width, int16_t height);
 API void uC_win_close(uC_window_t *win);
+API void uC_win_push(uC_window_t *win);
 API int16_t uC_win_set_pos(uC_window_t *win, int16_t x, int16_t y);
 API void uC_win_clear_line(uC_window_t *win, int16_t line);
 API void uC_win_clear(uC_window_t *win);
@@ -124,8 +125,6 @@ API void uC_win_set_bdr_bold(uC_window_t *win);
 API void uC_win_clr_bdr_bold(uC_window_t *win);
 API void uC_win_set_bdr_rev(uC_window_t *win);
 API void uC_win_clr_bdr_rev(uC_window_t *win);
-API void uC_win_set_bdr_ul(uC_window_t *win);
-API void uC_win_clr_bdr_ul(uC_window_t *win);
 API void uC_win_set_fg(uC_window_t *win, uC_color_t color);
 API void uC_win_set_bg(uC_window_t *win, uC_color_t color);
 API void uC_win_set_gray_fg(uC_window_t *win, uC_colors_gray_t color);
@@ -138,6 +137,14 @@ API void uC_win_set_bdr_gray_fg(uC_window_t *win, uC_colors_gray_t color);
 API void uC_win_set_bdr_gray_bg(uC_window_t *win, uC_colors_gray_t color);
 API void uC_win_set_bdr_rgb_fg(uC_window_t *win, uC_color_t r, uC_color_t g, uC_color_t b);
 API void uC_win_set_bdr_rgb_bg(uC_window_t *win, uC_color_t r, uC_color_t g, uC_color_t b);
+API void uC_win_set_focus_fg(uC_window_t *win, uC_color_t color);
+API void uC_win_set_focus_bg(uC_window_t *win, uC_color_t color);
+API void uC_win_set_focus_gray_fg(uC_window_t *win, uC_colors_gray_t color);
+API void uC_win_set_focus_gray_bg(uC_window_t *win, uC_colors_gray_t color);
+API void uC_win_set_focus_rgb_fg(uC_window_t *win, uC_color_t r,
+    uC_color_t g, uC_color_t b);
+API void uC_win_set_focus_rgb_bg(uC_window_t *win, uC_color_t r,
+    uC_color_t g, uC_color_t b);
 API void uC_win_set_border(uC_window_t *win, uint16_t border_type,
     uC_attribs_t bdr_attrs, uC_attribs_t focus_attrs);
 API void uC_win_set_name(uC_window_t *win, const char *name);

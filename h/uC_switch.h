@@ -22,9 +22,9 @@ typedef struct
 } uC_switch_t;
 
 // -----------------------------------------------------------------------
-// visibility hidden
+// visibility normal
 
-int uC_switch(const uC_switch_t *s, int size, int32_t option);
+API int uC_switch(const uC_switch_t *s, int size, int32_t option);
 
 // -----------------------------------------------------------------------
 

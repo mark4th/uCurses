@@ -1,5 +1,4 @@
 # uCurses
-
 ```text
 ██╗   ██╗ ██████╗██╗   ██╗██████╗ ███████╗███████╗███████╗
 ██║   ██║██╔════╝██║   ██║██╔══██╗██╔════╝██╔════╝██╔════╝
@@ -26,8 +25,8 @@
   ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 ```
 
-## Table of Contents
 
+## Table of Contents
 ```text
 
     1..........Introduction
@@ -50,7 +49,7 @@
 
     4..........Keyboard input
     4.1............uC_key_read.c
-    4.2............uC_key_sequence.c
+    4.2............key_sequence.c
     4.3............uC_key_table.c
     4.4............uC_mouse.c
 
@@ -63,7 +62,7 @@
     6..........The Window
     6.1............uC_window_ctrl.c
     6.2............uC_window_attr.c
-    6.3............uC_borders.c
+    6.3............uC_border.c
     6.4............uC_window_draw.c
 
     7..........Status windows
@@ -76,7 +75,7 @@
     8.4............uC_menu_key.c
 
     9..........Widgets
-    9.1............uC_widgets.c
+    9.1............uC_widget.c
     9.2............uC_widget_view.c
     9.3............uC_widget_view_group.c
     9.4............uC_widget_draw.c
@@ -105,21 +104,23 @@
     11.........JSON
     11.1...........json.c
     11.2...........json_token.c
-    11.3...........json_key.c
-    11.3.1.............Object Structures
-    11.3.2.............Key tokens
-    11.3.3.............Key and Object handling
+    11.3...........json_schema.c
+    11.3.1.............Schema entries
+    11.3.2.............Schema helpers
+    11.3.3.............Key dispatch
     11.4...........json_value.c
     11.5...........json_populate.c
     11.6...........json_build.c
 
-    12.........Final words
+    12.........Function coverage appendix
+
+    13.........Final words
 
 
 ```
 
-## 1. Introduction
 
+## 1. Introduction
 First of all, this library is not a replacement for ncurses and it was
 never intended to be.  Its primary purpose is to give developers of
 embedded Linux systems with limited resources the ability to create simple
@@ -203,7 +204,7 @@ The menu system, widgets and JSON parser are all independent build
 options and excluding one or more of them can significantly shrink
 the overall size of the build for your target.
 
-NOTE: This library is built with a -fvisibility=hidden arg passed to the C
+NOTE: This library is built with a `-fvisibility=hidden` arg passed to the C
 compiler.  This will cause all symbols that are not marked as public to be
 stripped out of the executable at link time.  All public API entities are
 prefixed with an API macro which is defined in a header file.  If any
@@ -215,15 +216,18 @@ wherein they are defined and any item that is neither prefixed with the
 API macro nor marked as static will have global visibility only within the
 library itself.
 
-### 1.1. What's documented (or will be)
 
+### 1.1. What's documented (or will be)
 The documentation for uCurses will detail every aspect of this library.
 It will show you not only how to use it but how it works and why it does
-the things it does the way it does them.  This specific document lightly
-covers almost every function or other entity within every C source file
-but it does not describe how they are intended to be used within the
-overall system, that will be covered in a separate (hopefully smaller)
-document.
+the things it does the way it does them.  This specific document is
+intended to cover every function within every C source file, including
+private helpers.  Variables, structures and individual fields are
+documented where they explain the design, but they are not the coverage
+target of this document.
+
+How the public pieces are intended to be used within an application is
+covered in separate, smaller documents.
 
 One of the biggest criticisms I have for the documentation of other API's
 is that while they provide extensive descriptions for every PUBLIC
@@ -238,14 +242,11 @@ in their terminfo databases.  The more I learn the more I come to
 understand that this might not actually be *entirely* their fault but...
 I still rant because...
 
-```c
-I consider terminfo to be a BINDING contract so when (for example)
-```
-
-your terminal randomly decides to return either 0x08 or 0x7f when
-someone presses the backspace key (based on who compiled it?), when
-your terminfo explicitly states that it will return 0x08, then I
-consider you to be in flagrant, wilful violation of your contract.
+> I consider terminfo to be a BINDING contract so when (for example)
+> your terminal randomly decides to return either `0x08` or `0x7f` when
+> someone presses the backspace key (based on who compiled it?), when
+> your terminfo explicitly states that it will return `0x08`, then I
+> consider you to be in flagrant, wilful violation of your contract.
 
 Things like this force me to add special needs 'duct tape' code to fix
 things that in my mind should not need fixing.  This and other "quirks"
@@ -257,8 +258,8 @@ these texts.  The same applies to any of my code.  I will even take
 destructive criticism and flames from "certain quarters" and try to make
 corrections :)
 
-## 2. Terminfo
 
+## 2. Terminfo
 This library makes extensive use of terminfo.  Every single color change
 or cursor movement is performed using the specific escape sequences for
 the specific virtual terminal being used.  Terminfo supplies templates for
@@ -282,16 +283,16 @@ other things to be written to said buffer.
 
 In uCurses, all of this is done by the functions in...
 
-### 2.1. uC_ti_parse.c
 
+### 2.1. `uC_ti_parse.c`
 I believe it is somewhat important for developers to have at least a
 partial understanding of what goes on in here.  This file is the heart of
 the entire system and is literally the first code developed for uCurses.
 The entire rest of the system was built up from right here.
 
 All variables used by this parser are stored in an allocated structure
-called 'ti_vars' which is of type 'ti_vars_t'.  This structure is defined
-in the uC_terminfo.h file.
+called `ti_vars` which is of type `ti_vars_t`.  This structure is defined
+in the `uC_terminfo.h` file.
 
 This structure contains the following entities.  The purpose of each of
 these is described in more detail below.
@@ -355,16 +356,17 @@ API void uC_terminfo_flush(void)
 This function is where all the compiled escape sequences are
 written out to the virtual terminals stdout.  If the write fails
 a single immediate retry is attempted.  This covers transient
-EAGAIN / EINTR conditions.  Persistent failure is silently
+`EAGAIN` / `EINTR` conditions.  Persistent failure is silently
 ignored; the terminal is considered unrecoverable at that point.
 
 ```c
-API void uC_terminfo_purge(void)
+void terminfo_purge(void)
 ```
 
-Discards all currently compiled escape sequences without writing
-them to the terminal.  Useful for aborting a UI update that
-cannot be completed cleanly.  flush writes; purge discards.
+Internal helper that discards all currently compiled escape
+sequences without writing them to the terminal.  It is used when
+a resize invalidates the partially compiled output buffer.  flush
+writes; purge discards.
 
 ```c
 void c_emit(char c1)
@@ -415,8 +417,8 @@ static int64_t *get_var_addr(void)
 ```
 
 This helper function will read one character out of the current
-format string which should be in the range 'a' to 'z' or 'A' to
-'Z'.
+format string which should be in the range `a` to `z` or `A` to
+`Z`.
 
 These are interpreted as single character names for either the
 static or dynamic variables which in turn are used as indices into
@@ -426,8 +428,8 @@ int64_t pointer to the caller.
 The terminfo man page states that in practice there has never been
 any usage difference between the two variable types.
 
-### 2.2. Terminfo format string specifiers.
 
+### 2.2. Terminfo format string specifiers.
 The specifiers within the terminfo format strings are very similar to the
 ones used in C's printf functions.  I.E.  They all start with a percent
 symbol.
@@ -441,8 +443,8 @@ not be vital to the application developers understanding of or the use
 of this library but I still consider it important enough to document.
 This 'skill' does have its uses.
 
-#### 2.2.1. Conditionals
 
+#### 2.2.1. Conditionals
 The terminfo format string language supports conditionals of the form:
 
 ```text
@@ -481,8 +483,8 @@ next format specifier (percent character) within the string has
 been found the specific letter of that specifier is returned to
 the caller.
 
-#### 2.2.2. Format String Specifiers
 
+#### 2.2.2. Format String Specifiers
 The following list shows the form of each specifier as it would appear in
 a format string and the name of the function that performs that
 specifier's associated operation.
@@ -780,8 +782,8 @@ are some crazy terminals out there that require certain values to
 be represented in a very specific way and this is how that is
 accomplished.
 
-The width here is based on the '2' or '3' prefix character (if
-any) that was parsed by the next_c() function documented below.
+The width here is based on the `2` or `3` prefix character (if
+any) that was parsed by the `next_c()` function documented below.
 
 ```text
 %c  static void _c(void)
@@ -803,8 +805,8 @@ string is 1-based but is decremented to 0-based before use.
 The indexed parameter is then pushed onto the stack to be returned
 to the interpreter.
 
-#### 2.2.3. The Beef
 
+#### 2.2.3. The Beef
 The following functions are the core of the format string parser.  They
 interpret the various format specifiers and act on them appropriately.
 
@@ -815,24 +817,24 @@ static char next_c(void)
 This helper function is called to parse the next character after
 having parsed a format specifiers % character.
 
-If the next character is either a '2' or a '3' then the next
-character after that is assumed to be a 'd'.  The digit value here
+If the next character is either a `2` or a `3` then the next
+character after that is assumed to be a `d`.  The digit value here
 is interpreted as a width prefix for emitting a decimal value via
 the above documented %d specifier.  It allows for %d, %2d and %3d
-specifiers which might output '1' or '01' or '001' for example.
+specifiers which might output `1` or `01` or `001` for example.
 
 In this instance we save the width specifier for a 'one time use'
 and then parse the next character from the format string which
-would be the 'd' as stated above.
+would be the `d` as stated above.
 
-If the next character was neither a '2' or a '3' then it is the
+If the next character was neither a `2` or a `3` then it is the
 name of some format specifier and we simply return that as is.
 
 ```c
 static const uC_switch_t p_codes[]
 ```
 
-This is an array of uC_switch_t entries which contain an option
+This is an array of `uC_switch_t` entries which contain an option
 character and a function vector.  This is used to direct the
 parser to the correct handler for the most recently parsed format
 specifier.
@@ -886,10 +888,10 @@ string (such as positioning the cursor, turning on bold, changing
 a color attribute etc) will have a pre-defined entry within the
 terminfo files string section at a pre-defined index.
 
-#### 2.2.4. uC_terminfo.h
 
+#### 2.2.4. `uC_terminfo.h`
 Within this header file there are numerous macros which reference the
-above uC_format() function.  Each of these macros passes a hard coded,
+above `uC_format()` function.  Each of these macros passes a hard coded,
 well known terminfo string section offset to it.
 
 These macros are used within this library to inline one or other of the
@@ -897,11 +899,11 @@ numerous escape sequences.  Some of these have public wrappers allowing
 application developers to leverage them, most however do not.
 
 Each of these macros has a name identical to the terminfo name for their
-escape sequence with a 'ti_' prefix added.  Most are considered not part
+escape sequence with a `ti_` prefix added.  Most are considered not part
 of the public API and are only used internally (if at all).
 
-#### 2.2.5. uC_terminfo.c
 
+#### 2.2.5. `uC_terminfo.c`
 This file contains wrappers to the above terminfo macros giving the
 application developer access to them.   Most of these have names
 identical the terminfo format string name but with a uC_ prefix on that
@@ -1103,7 +1105,7 @@ format strings that are contained within the terminals terminfo
 database.   Not being in transmit mode prevents it from being able
 to do so.
 
-uC_smkx() is now called automatically by uCurses_init().
+`uC_smkx()` is now called automatically by `uCurses_init()`.
 Application code should not need to call it directly.
 
 ```c
@@ -1113,17 +1115,17 @@ API void uC_rmkx(void)
 This function turns off the keypad transmit mode whatever that
 is.  See smkx above.
 
-uC_rmkx() is now called automatically by uC_restore_terminal()
-which is called by uCurses_deInit().  Application code should
+`uC_rmkx()` is now called automatically by `uC_restore_terminal()`
+which is called by `uCurses_deInit()`.  Application code should
 not need to call it directly.
 
-## 3. Terminal Attributes
 
+## 3. Terminal Attributes
 Once we have the ability to compile format strings into escape sequences
 we can emit said escape sequences to modify character properties such as
 foreground color, background color, bold, underline and reverse video etc.
 
-uCurses attributes are stored in uC_attribs_t structures.  These hold the
+uCurses attributes are stored in `uC_attribs_t` structures.  These hold the
 various attributes which are used when writing characters into user
 interface entities such as windows or the screen.
 
@@ -1189,7 +1191,7 @@ Note: Not all escape sequences which are supported by a given virtual
 terminal will have an associated format string entry in their terminfo
 database and not all terminals support all escape sequences.  If a
 terminal does not support a given escape sequence then its string
-section entry for that item will be a -1 value (0xffff).
+section entry for that item will be a -1 value (`0xffff`).
 
 For example, the Linux console does not have an "enacs" format string
 because the "alt char set" does not first need to be enabled to be
@@ -1200,8 +1202,8 @@ added, which effectively dropped support for the Linux console TTY
 (which has poor UTF-8 support).  Re-adding it as an optional build
 target is under consideration for a future branch.
 
-### 3.1. uC_attribs.c
 
+### 3.1. `uC_attribs.c`
 Emitting the escape sequences for enabling both foreground and background
 RGB attributes requires a hard coded format string which may not be
 applicable across all terminals.  Ditto gray scales.  These sequences are
@@ -1274,9 +1276,9 @@ current attributes variable this helper function is called to
 arbitrate which escape sequences needs to be emitted in order to
 affect that change.
 
-This will either be one of the above rgb_fg() or gray_fg() calls
+This will either be one of the above `rgb_fg()` or `gray_fg()` calls
 or will simply be a call to one or other of the official terminfo
-functions to set a foreground color, setf() or setaf().
+functions to set a foreground color, `setf()` or `setaf()`.
 
 If the terminal supports ANSI colors then the terminfo strings
 section will have an entry for the setaf format string.  If so
@@ -1295,9 +1297,9 @@ current attributes variable this helper function is called to
 arbitrate which escape sequence needs to be emitted in order to
 affect that change.
 
-This will either be one of the above rgb_bg() or gray_bg() calls
+This will either be one of the above `rgb_bg()` or `gray_bg()` calls
 or will simply be a call to one or other of the official terminfo
-functions to set a background color, setb() or setab().
+functions to set a background color, `setb()` or `setab()`.
 
 If the terminal supports ANSI colors then the terminfo strings
 section will have an entry for the setab format string.  If so
@@ -1318,11 +1320,11 @@ the foreground color.  Non color changes such as turning bold off
 current foreground color has not been changed we must still update
 it (an annoyance).
 
-The 'changes' parameter here contains flags that indicate whether
+The `changes` parameter here contains flags that indicate whether
 any non color attribute have been modified.  If any such
 modification exists which mandates an update to the foreground
 color or if the foreground color has actually been modified then
-this function will call the above apply_fg() function.
+this function will call the above `apply_fg()` function.
 
 ```c
 if_apply_bg(uint8_t changes)
@@ -1335,11 +1337,11 @@ the background color.  Non color changes such as turning bold off
 current background color has not been changed we must still update
 it. (STILL an annoyance).
 
-The 'changes' parameter here contains flags that indicate whether
+The `changes` parameter here contains flags that indicate whether
 any non color attribute have been modified.  If any such
 modification exists which mandates an update to the background
 color or if the background color has actually been changed then
-this function will call the above apply_bg() function.
+this function will call the above `apply_bg()` function.
 
 ```c
 apply_attribs(void)
@@ -1408,11 +1410,11 @@ format change is made in Xterm such as changing from rgb to
 gray scale coloring then an sgr0 is required.  Any chance
 this can be fixed?
 
-#### 3.1.1. Modifying attributes variables
 
+#### 3.1.1. Modifying attributes variables
 The following functions aid in the setting and updating of color
 attributes.  They modify a specified attributes variable which can be
-any instance of a uC_attribs_t structure such as is found in...
+any instance of a `uC_attribs_t` structure such as is found in...
 
 - The global default attributes variable
 - The various attributes associated with a window
@@ -1438,7 +1440,7 @@ API void uC_attr_set_flags(uC_attribs_t *attribs, uint16_t bits)
 ```
 
 This public API function will turn on any given attribute within a
-passed in uC_attribs_t parameter.  Each attribute that is to be
+passed in `uC_attribs_t` parameter.  Each attribute that is to be
 turned on is specified within the bits parameter to this function.
 
 Mutually exclusive settings will result in one or other of those
@@ -1449,7 +1451,7 @@ API void uC_attr_clr_flags(uC_attribs_t *attribs, uint16_t bits)
 ```
 
 This public API function will turn off any given attribute within
-a passed in uC_attribs_t parameter.  Each attribute that is to be
+a passed in `uC_attribs_t` parameter.  Each attribute that is to be
 turned off is specified within the bits parameter to this
 function.
 
@@ -1497,11 +1499,11 @@ uC_color_t b)
 This helper function is used to set a background color within an
 attributes structure to a 32 bit RGB value.
 
-### 3.2. Terminfo database files.
 
+### 3.2. Terminfo database files.
 The terminfo database files contain information about each terminal types
 capabilities and supported escape sequences.  uCurses queries the current
-environment for a $TERM variable to determine which terminal it is
+environment for a `$TERM` variable to determine which terminal it is
 running in and it will then attempt to load the terminfo file for that
 specific terminal.
 
@@ -1539,7 +1541,7 @@ If the file is not found this function will return a false result.
 static void map_tifile(void)
 ```
 
-This function first attempts to read the $TERM environment
+This function first attempts to read the `$TERM` environment
 variable to determine which terminal type the application is
 running in.  If this variable is not set uCurses will abort.
 
@@ -1562,8 +1564,8 @@ to known values.  If this entry is invalid we abort.
 This magic signature is in the files header and can be one of two
 values as follows...
 
-- 0x011a
-- 0x021e
+- `0x011a`
+- `0x021e`
 
 If it is the latter then this signifies that the numbers section
 within this terminfo file uses 32 bit entries instead of the old
@@ -1595,8 +1597,8 @@ strings contained within the string table section.  The order of
 items in the strings section is well defined so the offset to a
 specific escapes sequence format string can easily be found.
 
-### 3.3. uC_console_attribs.c
 
+### 3.3. `uC_console_attribs.c`
 This file contains public API calls which set or clear the various
 attributes on the terminal.
 
@@ -1675,41 +1677,60 @@ The following public API calls use the above functions to enable or
 disable various attributes in the console.  Turning either underline mode
 or bold mode off has some associated caveats documented elsewhere here.
 
+```c
+API void uC_console_clr_attr(int16_t flags)
+```
+
+This function clears the specified attribute flag bits from the
+terminal's current console attributes and reapplies the result.
+
+```c
 API void uC_console_set_ul(void)
+```
 
 This function writes the escape sequence which will turn on
 underline mode for all characters subsequently written to the
 terminal.
 
+```c
 API void uC_console_set_rev(void)
+```
 
 This function writes the escape sequence which will turn on
 reverse video mode for all characters subsequently written to
 the terminal.
 
+```c
 API void uC_console_set_bold(void)
+```
 
 This function writes the escape sequence which will turn on
 bold mode for all characters subsequently written to the
 terminal.
 
+```c
 API void uC_console_clr_ul(void)
+```
 
 This function writes the escape sequences which will turn off
 underline mode for the terminal.
 
+```c
 API void uC_console_clr_rev(void)
+```
 
 This function writes the escape sequences which will turn off
 reverse video mode for the terminal.
 
+```c
 API void uC_console_clr_bold(void)
+```
 
 This function writes the escape sequences which will turn off
 bold mode for the terminal.
 
-## 4. Keyboard Input
 
+## 4. Keyboard Input
 Keyboard input from a terminal is not as simple as reading a single
 character for every single key press.  Certain keys return entire escape
 sequences as described above and the escape sequence returned by a certain
@@ -1723,7 +1744,7 @@ that terminal.
 FYI:  Keyboard input in Linux / Unix terminals is an absolute
 NIGHTMARE.  Ancient technology is the albatross around the modern
 developers neck.  It is for this reason that VI uses escape colon
-shift F10 backspace F3 to enable overwrite mode and the like (pretty
+shift `F10` backspace `F3` to enable overwrite mode and the like (pretty
 sure that's exactly what it uses).
 
 P.S. I believe Termcap was implemented by the original author of vi
@@ -1748,8 +1769,8 @@ It would be REALLY REALLY nice and helpful (hint hint) if the Linux
 kernel had an API to return flags for which modifier keys were
 currently pressed.   Pretty plzkthxbai?
 
-### 4.1. uC_key_read.c
 
+### 4.1. `uC_key_read.c`
 This source file contains all the code related to the reading of and
 recognition of key presses.  All characters associated with a given key
 press are written into a keyboard input buffer for later interpretation.
@@ -1794,12 +1815,12 @@ key presses.
 
 This assumption can interfere with type-ahead.  The standard
 mitigation is a short read timeout (typically 10-50ms) after
-seeing an ESC byte: if further bytes arrive within the window
-the ESC opens a sequence; if not, it is a bare ESC key press.
+seeing an `ESC` byte: if further bytes arrive within the window
+the `ESC` opens a sequence; if not, it is a bare `ESC` key press.
 This approach is under consideration for a future revision.
 
-### 4.2. uC_key_sequence.c
 
+### 4.2. `key_sequence.c`
 When a key is pressed and that key press returns an escape sequence the
 characters of that escape sequence are all saved to the keyboard input
 buffer.
@@ -1833,7 +1854,7 @@ applications keyboard input functions.
 static void kent(void)
 ```
 
-This helper function injects a hard coded 0x0a character (the
+This helper function injects a hard coded `0x0a` character (the
 enter key) into the terminfo escape sequence buffer to be compared
 with which ever key which was actually pressed.
 
@@ -1841,11 +1862,11 @@ with which ever key which was actually pressed.
 static void kbs(void)
 ```
 
-This helper function injects a hard coded 0x08 character (the
+This helper function injects a hard coded `0x08` character (the
 backspace key) into the terminfo escape sequence buffer to be
 compared with which ever key was actually pressed.
 
-NOTE: The backspace key can actually return either 0x08 or 0x7f
+NOTE: The backspace key can actually return either `0x08` or `0x7f`
 utterly independent of what value is specified within the
 terminals terminfo database.  In fact, the same terminal, in the
 same distribution can potentially return either of these values
@@ -1854,9 +1875,9 @@ was at the time or what specific planetary alignment existed at
 that time. UTTER FUCKING INSANITY!
 
 If a terminfo database specifies that a press of the backspace key
-returns 0x08 then it should damned well return 0x08 and *ONLY*
-0x08.  If the terminfo specifies 0x7f then it should return 0x7f
-and *ONLY* 0x7f.  PERIOD.  This REALLY needs to be fixed.
+returns `0x08` then it should damned well return `0x08` and *ONLY*
+`0x08`.  If the terminfo specifies `0x7f` then it should return `0x7f`
+and *ONLY* `0x7f`.  PERIOD.  This REALLY needs to be fixed.
 
 ```c
 static void kcuu1(void)   static void kcud1(void)
@@ -1874,7 +1895,7 @@ static void kf12(void)
 ```
 
 Each of these helper functions references one of the many macros
-within the uC_terminfo.h source file.  They will each have their
+within the `uC_terminfo.h` source file.  They will each have their
 specific keys format string interpreted and their associated
 escape sequence compiled into the escape buffer.
 
@@ -1911,16 +1932,16 @@ TODO: make an init run over those format strings to compile a list of
 escape sequences to compare aginst ONE TIME ONLY, not for every single
 key press.
 
-### 4.3. uC_key_table.c
 
+### 4.3. `uC_key_table.c`
 The tables contained within this source file allow the application
 developer and the library itself to define behaviors for each supported
 'special' key press.  A matched escape sequence calls a handler which may
 stuff a single synthetic key code into the keyboard buffer.  The caller
 then receives that key code exactly as though it had been typed directly.
 
-Common non-printing keys now have stable UC_KEY_* values.  The cursor
-keys, insert/delete, home/end, page up/down, back-tab and F10 therefore no
+Common non-printing keys now have stable `UC_KEY_`* values.  The cursor
+keys, insert/delete, home/end, page up/down, back-tab and `F10` therefore no
 longer disappear by default.  Applications can still allocate their own
 key table and override individual handlers when a different translation is
 needed.
@@ -1949,19 +1970,19 @@ UC_KEY_PGUP     0x8d
 ```
 
 These values are what application code sees after terminfo sequence
-matching and default key translation.  F1 through F12 also have key table
-indexes, but most function keys default to uC_noop until an application
+matching and default key translation.  `F1` through `F12` also have key table
+indexes, but most function keys default to `uC_noop` until an application
 or a library subsystem assigns behavior to them.  This keeps the key
 table stable without making F keys accidentally active.
 
 The key_index_t enumeration is the index into the active handler table.
 It currently covers enter, arrows, backspace, delete, insert, home, end,
-page down, page up, back-tab and F1 through F12.  The enumeration order is
+page down, page up, back-tab and `F1` through `F12`.  The enumeration order is
 part of the handler-table contract; any custom table must use those
 indexes rather than assuming the physical order in the source file is
 unimportant.
 
-The public uC_key() path is now the consolidated dispatcher.  It reads one
+The public `uC_key()` path is now the consolidated dispatcher.  It reads one
 decoded key, gives the screen-level shortcut registry first chance to
 handle it, then gives the menu system a chance to handle menu navigation,
 then gives the widget system a chance to handle active widgets.  If none
@@ -1974,7 +1995,7 @@ prevents printable shortcut keys from being stolen while text is being
 edited.  Applications that implement their own text editors should disable
 screen shortcuts while those editors own input.
 
-Shortcuts are represented by uC_shortcut_t.  The low byte holds the base
+Shortcuts are represented by `uC_shortcut_t`.  The low byte holds the base
 key and the upper bits hold modifier flags:
 
 ```text
@@ -1995,15 +2016,15 @@ UC_SHORTCUT_META(k)
 
 Plain alphabetic shortcuts are normalized case-insensitively, so a
 registered R also matches r.  Control shortcuts are matched against the
-normal ASCII control-code range, so UC_SHORTCUT_CTRL('X') matches a
-received 0x18.  Alt and Meta shortcut values can be stored and displayed
+normal ASCII control-code range, so `UC_SHORTCUT_CTRL('X')` matches a
+received `0x18`.  Alt and Meta shortcut values can be stored and displayed
 by the menu code but are not matched by the current keyboard reader.
 Those require the future byte-at-a-time escape sequence state machine.
 Once that parser exists, the intent is to match shortcut modifiers more
 generally, including reasonable combinations of Control, Alt and Meta
 where the terminal can report them unambiguously.
 
-Menu shortcut display uses the same uC_shortcut_t value.  Plain printable
+Menu shortcut display uses the same `uC_shortcut_t` value.  Plain printable
 shortcuts display as their uppercase base key, control shortcuts display
 as ^X, Alt shortcuts as A-X and Meta shortcuts as M-X.  Modifier prefixes
 can combine for display only; for example a Ctrl+Alt shortcut can be
@@ -2090,7 +2111,7 @@ uint8_t uC_key_raw(void)
 This internal function performs the blocking read and escape
 sequence translation step only.  It does not route the resulting
 key through screen shortcuts, menus or widgets.  The consolidated
-uC_key() dispatcher and a few internal legacy loops use this when
+`uC_key()` dispatcher and a few internal legacy loops use this when
 they need to avoid recursively dispatching the same key.
 
 ```c
@@ -2115,7 +2136,7 @@ bool uC_shortcut_run(struct uC_screen_s *scr, uint8_t key)
 Scans the screen shortcut registry for a matching key.  If one is
 found the registered action is executed and the original key is
 consumed.  The action may stuff a replacement application key with
-uC_set_key(); if it does not, uC_key() returns UC_KEY_NONE.
+`uC_set_key()`; if it does not, `uC_key()` returns `UC_KEY_NONE`.
 
 ```c
 bool uC_shortcut_run_popup(struct uC_screen_s *scr, uint8_t key)
@@ -2123,7 +2144,7 @@ bool uC_shortcut_run_popup(struct uC_screen_s *scr, uint8_t key)
 
 Scans the screen shortcut registry for a matching key owned by a
 widget inside the currently attached popup widget view group.  This
-is used by the modal popup path in uC_key().  When a widget popup
+is used by the modal popup path in `uC_key()`.  When a widget popup
 is active, normal menu shortcuts and normal background widget
 shortcuts are ignored; only shortcuts belonging to widgets in the
 active popup are allowed to run.
@@ -2146,26 +2167,26 @@ API uint8_t uC_key(void)
 This public API call is the main keyboard input handler for the
 uCurses library.  When called it will remain blocked until a key
 press is available.  It first obtains a decoded key through
-uC_key_raw(), then routes that key through the screen shortcut
+`uC_key_raw()`, then routes that key through the screen shortcut
 registry, the menu handler and the widget handler before returning
 any unhandled key to the caller.
 
 Popup dispatch is modal.  If a raw popup window is active without a
-widget popup, uC_key() skips normal screen shortcuts, menus and
+widget popup, `uC_key()` skips normal screen shortcuts, menus and
 widgets and returns the decoded key to the application.  If a
-widget popup is active, uC_key() allows only shortcuts owned by
+widget popup is active, `uC_key()` allows only shortcuts owned by
 widgets in that popup and routes widget input to the popup widget
 state; menu handling and background shortcuts remain blocked.
 
 A matched shortcut or UI handler consumes the original key.  If
 that handler stuffs a replacement key, the replacement is returned
-to the application.  If it does not, uC_key() returns UC_KEY_NONE.
+to the application.  If it does not, `uC_key()` returns `UC_KEY_NONE`.
 
-### 4.4. uC_mouse.c
 
+### 4.4. `uC_mouse.c`
 This long overdue module adds SGR mouse protocol support.  When the widget
-system is enabled (UC_WIDGETS build flag) mouse reporting is enabled
-automatically by uCurses_init() and disabled by uCurses_deInit().
+system is enabled (`UC_WIDGETS` build flag) mouse reporting is enabled
+automatically by `uCurses_init()` and disabled by `uCurses_deInit()`.
 Applications that bypass the widget system can enable and disable mouse
 reporting manually.
 
@@ -2184,21 +2205,23 @@ API void uC_mouse_disable(void)
 ```
 
 Disables all SGR mouse reporting.  Called automatically by
-uC_restore_terminal().
+`uC_restore_terminal()`.
 
 ```text
 uC_mouse_event_t uC_mouse_event
 ```
 
-Global structure filled by the mouse parser whenever uC_key()
-returns WIDGET_KEY_MOUSE (0x89).  Fields:
+Global structure filled by the mouse parser whenever `uC_key()`
+returns `WIDGET_KEY_MOUSE` (`0x89`).  Fields:
 
+```text
 int16_t x       1-based terminal column (Ansi coordinates)
 int16_t y       1-based terminal row
 uint8_t button  button/event type (see constants below)
 bool pressed    true = press or wheel tick, false = release
+```
 
-Button constants defined in uC_mouse.h:
+Button constants defined in `uC_mouse.h`:
 
 ```text
 UC_MOUSE_LEFT      0   left button
@@ -2218,17 +2241,17 @@ event for scroll wheel ticks.
 bool uC_mouse_parse(void)   [visibility hidden]
 ```
 
-Called internally by uC_key() to detect and parse the SGR escape
-sequence ESC[<btn;x;yM|m from the key buffer.  On success fills
-uC_mouse_event and stuffs WIDGET_KEY_MOUSE into the key buffer
+Called internally by `uC_key()` to detect and parse the SGR escape
+sequence `ESC`[<btn;x;yM|m from the key buffer.  On success fills
+`uC_mouse_event` and stuffs `WIDGET_KEY_MOUSE` into the key buffer
 so the caller sees it as a normal key return value.
 
 TODO: this mouse interface needs to not enable position reporting by
 default.  it should have a public API to turn it on / off but widgets and
 menus should only query position on click.
 
-## 5. The Screen
 
+## 5. The Screen
 While the terminfo parser is the heart of the uCurses library (for both
 input and output), the screen structure is the forward facing visual part
 of it.  A screen structure is an array of UTF-8 characters and their
@@ -2257,8 +2280,8 @@ described in detail later in this document ...
 - A list of status windows attached to the screen.
 - A list of widget view groups attached to the screen.
 - A list of screen-level keyboard shortcuts.
-- A pointer to a popup window, if UC_POPUPS is enabled.
-- A pointer to the built-in too-small popup, if UC_POPUPS is enabled.
+- A pointer to a popup window, if `UC_POPUPS` is enabled.
+- A pointer to the built-in too-small popup, if `UC_POPUPS` is enabled.
 - A pointer to an attached menu bar.
 - A pointer to which ever window currently has focus.
 - Variables specifying the screens dimensions and optional minimum
@@ -2270,12 +2293,12 @@ described in detail later in this document ...
 
 The screen-level keyboard shortcut list is an internal registry, not an
 application-managed list of key bindings.  Menus and widgets register
-their accelerators here so uC_key() can dispatch shortcuts before normal
+their accelerators here so `uC_key()` can dispatch shortcuts before normal
 menu navigation or widget handling.  The encoding and matching rules for
 these shortcuts are documented in section 4, Keyboard Input.
 
-### 5.1. uC_screen_ctrl.c
 
+### 5.1. `uC_screen_ctrl.c`
 This source file contains all the code needed to create, destroy and
 control a screen structure.  It also contains a few functions specific to
 the control or placement of windows because putting them here simplified
@@ -2311,8 +2334,8 @@ should match the current terminal dimensions; passing mismatched
 values is undefined behavior (tm).
 
 After allocating the structure and setting its dimensions it calls
-scr_alloc() to set up the two state buffers.  If that allocation
-fails the structure is freed and NULL is returned.  On success the
+`scr_alloc()` to set up the two state buffers.  If that allocation
+fails the structure is freed and `NULL` is returned.  On success the
 new screen is returned and also stored in the library-internal
 active_screen variable.
 
@@ -2328,7 +2351,7 @@ API bool uC_scr_shortcuts_enabled(uC_screen_t *scr)
 These public API calls control the screen-level keyboard shortcut
 registry used by the menu and widget systems.  Registered
 shortcuts can be disabled (required during widget text box
-editing) and they remain attached to the screen, but uC_key() will
+editing) and they remain attached to the screen, but `uC_key()` will
 not process them until they are re-enabled.
 
 ```c
@@ -2336,7 +2359,7 @@ API void uC_scr_close_view_groups(uC_screen_t *scr)
 ```
 
 This public API function is available only when the library is
-built with UC_WIDGETS enabled.  It is called as part of the
+built with `UC_WIDGETS` enabled.  It is called as part of the
 interface tear-down procedure.  It iterates through every widget
 view group attached to the screen; for each group it closes all
 attached views and their widgets, then closes the group itself.
@@ -2360,9 +2383,9 @@ the following order:
 - The two state buffers.
 - The backdrop window (if any).
 - All application windows.
-- The popup and too-small popup windows (if UC_POPUPS).
-- All widget view groups, views and widgets (if UC_WIDGETS).
-- The menu bar, pull-downs and menu items (if UC_MENUS).
+- The popup and too-small popup windows (if `UC_POPUPS`).
+- All widget view groups, views and widgets (if `UC_WIDGETS`).
+- The menu bar, pull-downs and menu items (if `UC_MENUS`).
 - The screen-level shortcut registry.
 - Any status windows.
 - The screen structure itself.
@@ -2392,9 +2415,9 @@ This prevents moving windows from leaving trails on the display.
 API void uC_scr_add_backdrop(uC_screen_t *scr)
 ```
 
-Allocates a new window and calls init_backdrop() to configure it
+Allocates a new window and calls `init_backdrop()` to configure it
 as the screen's backdrop.  This is now called automatically by
-uCurses_init() for programmatic applications (those that pass NULL
+`uCurses_init()` for programmatic applications (those that pass `NULL`
 for all three parameters).  JSON-based applications have their
 backdrop created via the JSON build path.  Application code should
 not normally need to call this directly.
@@ -2434,7 +2457,7 @@ API void uC_scr_set_min_size(uC_screen_t *scr, int16_t width,
 int16_t height)
 ```
 
-Sets optional minimum usable screen dimensions.  When UC_POPUPS is
+Sets optional minimum usable screen dimensions.  When `UC_POPUPS` is
 enabled, uCurses compares these values against the current screen
 dimensions during screen drawing.  If the screen is smaller than
 either minimum and there is enough room for a small overlay,
@@ -2447,7 +2470,7 @@ visual warning.
 API void uC_scr_popup_attach(uC_screen_t *scr, uC_window_t *win)
 ```
 
-Available when UC_POPUPS is enabled.  Attaches a normal window as
+Available when `UC_POPUPS` is enabled.  Attaches a normal window as
 the screen's popup instead of adding it to the normal window list.
 There is only one popup slot per screen; attaching a new popup
 detaches the previous popup without destroying it.  Popup windows
@@ -2460,7 +2483,7 @@ popups; application code decides when to detach them.
 API void uC_scr_popup_detach(uC_window_t *win)
 ```
 
-Available when UC_POPUPS is enabled.  Detaches a popup window from
+Available when `UC_POPUPS` is enabled.  Detaches a popup window from
 whichever screen it is currently attached to.  The window structure
 is not destroyed.
 
@@ -2468,11 +2491,11 @@ is not destroyed.
 API void uC_scr_popup_cancel(uC_screen_t *scr)
 ```
 
-Available when UC_POPUPS is enabled.  Detaches the currently
+Available when `UC_POPUPS` is enabled.  Detaches the currently
 attached raw popup window, if any, and the currently attached
 widget popup view group, if any.  Neither popup object is
 destroyed.  This is used internally when resize handling observes
-SIGWINCH so popup attachments do not survive a screen rebuild.
+`SIGWINCH` so popup attachments do not survive a screen rebuild.
 Applications may also call it when they want a single "cancel any
 active popup" operation.
 
@@ -2480,7 +2503,7 @@ active popup" operation.
 API bool uC_widget_popup_attach(uC_screen_t *scr, uC_widget_vg_t *vg)
 ```
 
-Available when both UC_POPUPS and UC_WIDGETS are enabled.  Attaches
+Available when both `UC_POPUPS` and `UC_WIDGETS` are enabled.  Attaches
 a widget view group as the screen's modal popup.  The popup view
 group is drawn in the popup phase, after normal widget view groups,
 menus and status windows.  Normal widget view groups on the screen
@@ -2515,8 +2538,8 @@ This call advances focus to the next window in the tab order for
 the specified screen.  The tab order is entirely independent of
 the window draw order.
 
-### 5.2. Drawing it all
 
+### 5.2. Drawing it all
 Drawing the screen is a multi step process.  The first step is to emit a
 sgr0 escape sequence to obliterate any and all attributes associated with
 the previous screen draw.  This was added to account for the case where
@@ -2544,10 +2567,10 @@ At this stage the screens state buffer contains the state of every
 character and their associated attributes which now all need to be blasted
 out to the console as fast as possible.
 
-### 5.3. Updating the console
 
-The console update is performed by two nested loops called inner_update()
-and outer_update().  When the outer loop is called it scans the new screen
+### 5.3. Updating the console
+The console update is performed by two nested loops called `inner_update()`
+and `outer_update()`.  When the outer loop is called it scans the new screen
 state buffer and compares it with the previous state buffer.  If any
 character is found to have been modified during the most recent update
 then that characters index is passed to the inner update loop described
@@ -2556,7 +2579,7 @@ below.
 The outer update loop is repeated until every modified character found has
 been passed to the inner loop.
 
-The inner_update() function will first emit the escape sequences required
+The `inner_update()` function will first emit the escape sequences required
 to set the attributes associated with the character at the index passed to
 it.
 
@@ -2579,7 +2602,7 @@ outer loop informing it that the entire update is now complete.
 
 The escape buffer will now contain every single escape sequence and every
 single character for this new state of the display.  These are now written
-out to the terminal with a call to the Linux write() function.
+out to the terminal with a call to the Linux `write()` function.
 
 This means that most of the time only one single (slow) 'user space' to
 'kernel space' transition will be required to update the ENTIRE display.
@@ -2587,14 +2610,14 @@ This means that most of the time only one single (slow) 'user space' to
 P.S.  If, during the compilation of those escape sequences the escape
 buffer is filled then it will need to be flushed prior to compiling
 any new escape sequences so..  In fact, the screen update could take
-two or (unlikely) more calls to write().  Ignore the man behind the
+two or (unlikely) more calls to `write()`.  Ignore the man behind the
 curtain!
 
 Note: write-call count tracking will be added as a debug build option
 alongside buffer high-water-mark tracking.
 
-### 5.4. uC_screen_draw.c
 
+### 5.4. `uC_screen_draw.c`
 The functions in this file perform the above console update procedure.
 They write all windows, menus, widgets or other thingies into the screen
 state buffer and then write that new state out to the console for display.
@@ -2618,7 +2641,7 @@ buffer.  The window structure itself contains a pointer to the its
 parent screen.
 
 If either the window pointer passed to this function or the screen
-pointer within the referenced window structure is NULL then this
+pointer within the referenced window structure is `NULL` then this
 function will silently perform no action.
 
 ```c
@@ -2634,7 +2657,7 @@ static void scr_cup(uC_screen_t *scr, int16_t x, int16_t y)
 ```
 
 This function moves the console cursor location to a new position
-by emitting a 'cup' escape sequence.  If however the
+by emitting a `cup` escape sequence.  If however the
 console cursor position (which is tracked) is already in the
 desired new location then this function silently performs no
 operation (I hope!).
@@ -2659,7 +2682,7 @@ static void new_attrs(uC_attribs_t a)
 
 If, during the screen update procedure a new set of attributes is
 required, those attributes are written into the global attributes
-variable and a call is made to apply_attribs().  This will write
+variable and a call is made to `apply_attribs()`.  This will write
 an escape sequence to the output buffer to affect any selected
 attributes changes.
 
@@ -2668,9 +2691,9 @@ static void scr_normalize_wide_buffer(uC_screen_t *scr)
 ```
 
 Scans the fully composed screen buffer before it is compared with
-the previous screen state.  If a DEADC0DE cell no longer has a
+the previous screen state.  If a `DEADC0DE` cell no longer has a
 valid owning wide character immediately to its left, or if a wide
-character no longer has the expected DEADC0DE continuation cell,
+character no longer has the expected `DEADC0DE` continuation cell,
 the invalid half is converted into a normal space.
 
 This protects direct screen overlays such as borders and pulldown
@@ -2705,9 +2728,9 @@ Writes the character at the current index out to the escape
 buffer.
 
 If this cell is the continuation cell of a double width character
-then its code point will be DEADC0DE.  This is an internal
+then its code point will be `DEADC0DE`.  This is an internal
 sentinel, not a printable character.  The left cell owns the real
-glyph and the DEADC0DE cell only records that this screen column
+glyph and the `DEADC0DE` cell only records that this screen column
 is already occupied by the glyph that began in the previous
 column.  This cell is not emitted directly.
 
@@ -2748,7 +2771,7 @@ static void outer_update(uC_screen_t *scr)
 This function loops over every character within the current state
 buffer of the screen and compares it with the character in the
 previous state buffer at that same index.  If this character has
-been modified its index is passed to the inner_update() function
+been modified its index is passed to the `inner_update()` function
 which will update that character and every other character that
 shares identical attributes.
 
@@ -2756,15 +2779,15 @@ shares identical attributes.
 API bool uC_scr_resize_hold(uC_screen_t *scr)
 ```
 
-This public API function is used after SIGWINCH has been observed
-and uC_winch_pending() returns true.  It snapshots the current
-screen, acknowledges the pending WINCH state, draws a temporary
+This public API function is used after `SIGWINCH` has been observed
+and `uC_winch_pending()` returns true.  It snapshots the current
+screen, acknowledges the pending `WINCH` state, draws a temporary
 shadow view during the resize stream, and waits until the resize
 has been quiet for a short interval.  It returns true when it
 handled a pending resize and false when there was no pending
 resize to handle.
 
-If UC_POPUPS is enabled, this function calls uC_scr_popup_cancel()
+If `UC_POPUPS` is enabled, this function calls `uC_scr_popup_cancel()`
 before drawing the resize hold view.  Popup attachments are
 therefore cancelled before the application rebuilds the interface
 for the new terminal dimensions.  The popup objects themselves are
@@ -2789,24 +2812,24 @@ application has menus defined, the menu bar and any active
 pulldown are drawn after widgets so pulldowns are not covered by
 widget view groups.  Active status windows are drawn after menus,
 which allows a one-line status window to occupy unused space on a
-menu/status row.  If UC_POPUPS is enabled, application popups are
+menu/status row.  If `UC_POPUPS` is enabled, application popups are
 drawn after status windows, followed by the built-in too-small
 popup when the screen is below its configured minimum size.
 
 Once the entire new state of the display has been drawn into the
 screen state buffers they are blasted out to the escape sequence
-buffer by calling the outer_update() function.
+buffer by calling the `outer_update()` function.
 
 The final operation here is to write the entire terminal escape
-sequence buffer out to the terminal by calling uC_terminfo_flush().
-If SIGWINCH became pending while the frame was being composed,
-uCurses cancels active popups when UC_POPUPS is enabled, purges
+sequence buffer out to the terminal by calling `uC_terminfo_flush()`.
+If `SIGWINCH` became pending while the frame was being composed,
+uCurses cancels active popups when `UC_POPUPS` is enabled, purges
 the partially composed terminal buffer, and leaves the pending
-WINCH state for the application to handle with its normal resize
+`WINCH` state for the application to handle with its normal resize
 path.
 
-## 6. The Window
 
+## 6. The Window
 The window structure is where application developers draw almost
 everything they want displayed on the screen.  These are subsequently
 drawn into the screen as described above.
@@ -2815,11 +2838,11 @@ A window has a configurable set of flags used to define how all text and
 other items should be drawn within it and how the window should look and
 behave.   The following flags are defined...
 
-- uC_WIN_BOXED      The window has a border
-- uC_WIN_LOCKED     The window is scroll locked
-- uC_WIN_NAMED      The window has a display name
-- uC_WIN_FILLED     The window is filled with its fill character
-- uC_WIN_FOCUS      The window currently has input focus
+- `uC_WIN_BOXED`      The window has a border
+- `uC_WIN_LOCKED`     The window is scroll locked
+- `uC_WIN_NAMED`      The window has a display name
+- `uC_WIN_FILLED`     The window is filled with its fill character
+- `uC_WIN_FOCUS`      The window currently has input focus
 
 Windows can have any dimensions and be located anywhere on the screen but
 no part of any window can be situated outside the bounds of the screen.  A
@@ -2851,10 +2874,10 @@ requirements are not violated but uCurses does not have any code to
 "automatically" lay out a display.  The addition of such algorithms would
 add a significant amount of code to the library.
 
-### 6.1. uC_window_ctrl.c
 
+### 6.1. `uC_window_ctrl.c`
 This source file contains some of the functions used to create, control
-and manipulate windows.  There are also a few within the uC_screen_ctrl.c
+and manipulate windows.  There are also a few within the `uC_screen_ctrl.c`
 source file because placing them here would require circular include
 dependencies that I am not a huge fan of.
 
@@ -2942,16 +2965,16 @@ appearance or behavior which this public API function will set.
 
 The flags are as follows...
 
-- uC_WIN_BOXED       The window has a border
-- uC_WIN_LOCKED      The window is scroll locked
-- uC_WIN_FILLED      The window is filled with some character
-- uC_WIN_FOCUS       The window has focus.
+- `uC_WIN_BOXED`       The window has a border
+- `uC_WIN_LOCKED`      The window is scroll locked
+- `uC_WIN_FILLED`      The window is filled with some character
+- `uC_WIN_FOCUS`       The window has focus.
 
 The window having focus selects between one of two different border
 attributes allowing a visual indication of its status.
 
 The fill character can be any UTF-8 code point but defaults to the
-space character (0x20).
+space character (`0x20`).
 
 ```c
 API void uC_win_clr_flag(uC_window_t *win, win_flags_t flag)
@@ -2962,10 +2985,10 @@ appearance or behavior which this public API function will clear.
 
 The flags are as follows...
 
-- uC_WIN_BOXED      The window has a border
-- uC_WIN_LOCKED     The window is scroll locked
-- uC_WIN_FILLED     The window is filled with some character
-- uC_WIN_FOCUS      The window has focus.
+- `uC_WIN_BOXED`      The window has a border
+- `uC_WIN_LOCKED`     The window is scroll locked
+- `uC_WIN_FILLED`     The window is filled with some character
+- `uC_WIN_FOCUS`      The window has focus.
 
 The window having focus selects between one of two different border
 attributes allowing a visual indication of its status.
@@ -2995,8 +3018,8 @@ API void uC_win_set_focus(uC_window_t *win)
 This public API call is used to give a specified window focus.
 The tab selection order for the screen is also updated.
 
-### 6.2. uC_window_attr.c
 
+### 6.2. `uC_window_attr.c`
 This source file contains public API functions to both set and clear the
 various attributes that can be associated with a window or its borders.
 
@@ -3271,8 +3294,8 @@ windows focused border to a 24 bit RGB color.  The next time this
 window is drawn while it has focus its border characters
 background will be drawn in this color.
 
-### 6.3. uC_borders.c
 
+### 6.3. `uC_border.c`
 Window borders are drawn directly into a screen around a window.  They are
 not counted as being physically part of that windows draw field.  This
 means that application developers can, after setting border style and
@@ -3314,7 +3337,7 @@ border_t *const borders[]
 ```
 
 This array holds pointers to each of the above arrays.  The order
-in here is per the uC_border_type_t enumeration.
+in here is per the `uC_border_type_t` enumeration.
 
 ```c
 static void draw_char(uC_window_t *win, int16_t cx, int16_t cy,
@@ -3364,7 +3387,7 @@ This function draws a complete border around a window if, and only
 if that window has been given a border.
 
 ```c
-API void win_draw_box(uC_window_t *win, uint16_t x, uint16_t y,
+API void uC_win_draw_box(uC_window_t *win, uint16_t x, uint16_t y,
 uint16_t width, uint16_t height, uC_border_type_t bdr_type,
 uC_attribs_t box_attrs)
 ```
@@ -3380,8 +3403,8 @@ window so there is no need for these functions to account for
 potential visual glitches.  Boxes also never have 'focus' so only
 one set of attributes are applicable.
 
-### 6.4. uC_window_draw.c
 
+### 6.4. `uC_window_draw.c`
 This source file contains all functions that read or write a window's
 cell buffer directly.  This includes cursor movement, character emission,
 scrolling, panning, and buffer copy.
@@ -3407,7 +3430,7 @@ Copies the entire cell buffer of src into dst.  Both windows must
 have the same dimensions.  This is used to implement layered
 rendering: write into a backing (non-displayed) window, then copy
 to the visible window and stamp any fixed overlays on top.
-The scroll demo (example/scroll.c) demonstrates this pattern.
+The scroll demo (`example/scroll.c`) demonstrates this pattern.
 
 ```c
 API void uC_win_scroll_up(uC_window_t *win)
@@ -3456,7 +3479,7 @@ API cell_t *uC_win_peek(uC_window_t *win)
 ```
 
 Return a pointer to the cell at the specified position or the
-current cursor position.  Returns NULL if out of bounds.
+current cursor position.  Returns `NULL` if out of bounds.
 
 ```c
 API void uC_win_el(uC_window_t *win)
@@ -3465,8 +3488,8 @@ API void uC_win_el(uC_window_t *win)
 Erase from the current cursor position to the end of the current
 line.
 
-## 7. Status windows
 
+## 7. Status windows
 A status window is a one line high window that can be placed at any
 location on the screen but which is usually placed either on the top line
 of the screen within a menu bar, or on the bottom line of the screen,
@@ -3482,8 +3505,8 @@ Status windows are also a build option so they can be excluded entirely
 from the uCurses build if they are not needed.  Removing them from the
 build will save a small amount of space on your target.
 
-### 7.1. uC_status.c
 
+### 7.1. `uC_status.c`
 ```c
 API uC_window_t *uC_add_status(uC_screen_t *scr, uint16_t width,
 uint16_t xco, uint16_t yco)
@@ -3495,7 +3518,7 @@ coordinates if and only if said coordinates do not violate any of
 the uCurses window placement restrictions.
 
 On success this function returns the address of the status windows
-structure.  On failure it returns NULL.
+structure.  On failure it returns `NULL`.
 
 ```c
 API void uC_clr_status(uC_window_t *win)
@@ -3511,10 +3534,10 @@ API void uC_set_status(uC_window_t *win, const char *fmt, ...)
 This public API call is used to write formatted text into the
 specified status window.  It accepts a printf-style format string
 and any associated arguments, formatting them internally via
-uC_win_vprintf().
+`uC_win_vprintf()`.
+
 
 ## 8. Menus
-
 Pull down menus in uCurses are very simple.  The root of the menu system
 is the menu bar.  While you could have more than one defined, only one of
 them can be active and on a screen.
@@ -3612,8 +3635,8 @@ your liking you can always modify them.
 The above "only one flag defined so far" is used to disable and re-enable
 a pulldown menu or a pulldown menu item.
 
-### 8.1. uC_menu_bar.c
 
+### 8.1. `uC_menu_bar.c`
 ```c
 static void pd_set_attr(int16_t i, pulldown_t *pd, uC_attribs_t *p,
 menu_item_t *item)
@@ -3714,10 +3737,10 @@ void scr_update_menus(uC_screen_t *scr)
 
 This function is part of the menu control loop.  It updates the
 display of any active pull down menus.  It is called by the screen
-update loop in uC_screen_draw.c.
+update loop in `uC_screen_draw.c`.
 
-### 8.2. uC_menu_pulldown.c
 
+### 8.2. `uC_menu_pulldown.c`
 ```c
 static pulldown_t *pd_find(uC_screen_t *scr, char *name)
 ```
@@ -3792,8 +3815,8 @@ associated with the specified screen.
 If the allocation fails it will return a result of -1.  If it is
 successful a result of 0 is returned.
 
-### 8.3. uC_menu_item.c
 
+### 8.3. `uC_menu_item.c`
 ```c
 static void init_item(uC_screen_t *scr, pulldown_t *pd,
 menu_item_t *item, const char *name, menu_fp_t fp,
@@ -3841,8 +3864,8 @@ registered shortcut causes this function to fail cleanly.
 On success this function will return a result of zero.  On failure
 it will return a result of -1.
 
-### 8.4. uC_menu_key.c
 
+### 8.4. `uC_menu_key.c`
 ```c
 static void redraw_pulldown(menu_bar_t *bar)
 ```
@@ -3871,7 +3894,7 @@ API void uC_menu_open(uC_screen_t *scr)
 ```
 
 Programmatically opens the menu bar on the supplied screen.  This
-is useful for applications that want to keep F10 or another key in
+is useful for applications that want to keep `F10` or another key in
 their own event loop and explicitly decide when menu navigation
 should take over.
 
@@ -3946,7 +3969,7 @@ execute the currently selected items function vector.  Disabled
 pulldowns and disabled items are ignored.
 
 If the selected function stuffs an application key with
-uC_set_key(), the caller can retrieve that synthetic key after the
+`uC_set_key()`, the caller can retrieve that synthetic key after the
 selection has completed.
 
 ```c
@@ -3961,7 +3984,7 @@ when a pull down menu is activated.
 bool menu_key(uC_screen_t *scr, uint8_t key, uint8_t *out)
 ```
 
-Internal dispatch entry used by uC_key().  F10 opens or closes the
+Internal dispatch entry used by `uC_key()`.  `F10` opens or closes the
 menu.  When a pull down is active, Escape closes it, cursor keys
 navigate it and Enter selects the current item.  Keys that are not
 menu navigation are left for the next layer of the consolidated
@@ -3978,10 +4001,10 @@ API uint8_t uC_menu_run(uC_screen_t *scr)
 Runs the active menu until the pull down is closed or a selected
 menu item executes its function vector.  This is the preferred API
 for applications that want the menu system to own Up, Down, Left,
-Right, Enter and F10 behavior while a menu is active.
+Right, Enter and `F10` behavior while a menu is active.
 
-Menu item functions may stuff an application key with uC_set_key().
-When that happens uC_menu_run returns that key to the application
+Menu item functions may stuff an application key with `uC_set_key()`.
+When that happens `uC_menu_run` returns that key to the application
 after the menu item has been executed.  If the menu is closed
 without selecting an item, it returns zero.
 
@@ -4010,11 +4033,11 @@ API void uC_menu_init_keys(void)
 This public API function initializes the keyboard behavior needed
 by the pull down menu system.  It emits smkx through terminfo so
 cursor keys are reported in the mode the terminfo table expects.
-It also installs the default F10 translation used by uC_key() when
+It also installs the default `F10` translation used by `uC_key()` when
 menus are built in.
 
-## 9. Widgets
 
+## 9. Widgets
 Widgets were a surprisingly complex problem for me to solve.  I wrote the
 code for them numerous times over the course of a few years and I was
 never even slightly happy with what I had produced.  This time, I think I
@@ -4029,10 +4052,10 @@ only scroll in the vertical direction.
 
 uCurses currently supports the following types of widget...
 
-- uC_WIDGET_BUTTON
-- uC_WIDGET_RADIO
-- uC_WIDGET_CHECK
-- uC_WIDGET_TEXTBOX
+- `uC_WIDGET_BUTTON`
+- `uC_WIDGET_RADIO`
+- `uC_WIDGET_CHECK`
+- `uC_WIDGET_TEXTBOX`
 
 Both the radio button and the check box widgets can have one of the
 following styles...
@@ -4071,9 +4094,9 @@ widget.  The view structure contains the following entities...
 
 The following flags are defined for widget views...
 
-- uC_VIEW_BOXED      The view has a border
-- uC_VIEW_NAMED      The view has a name to be displayed in its border
-- uC_VIEW_SCROLL     The view is scrollable
+- `uC_VIEW_BOXED`      The view has a border
+- `uC_VIEW_NAMED`      The view has a name to be displayed in its border
+- `uC_VIEW_SCROLL`     The view is scrollable
 
 A view group is a window just like any other.  It is used as a container
 for associated widget views.  It can contain any number of views of any
@@ -4108,32 +4131,38 @@ itself controls which widget within it actually has focus.
 The focus selection of all other widgets is controlled by the widget
 engine based on the developer defined order.
 
-### 9.1. uC_widgets.c
 
+### 9.1. `uC_widget.c`
 ```c
-uC_widget_t *create_widget(uC_widget_type_t type, char *name,
-uint16_t sequence, uint16_t xco, uint16_t yco, uint16_t width,
-uC_attribs_t attrs, uC_attribs_t focus)
+uC_widget_t *create_widget(uC_widget_type_t type, const char *name,
+uint16_t width, uC_attribs_t attrs, uC_attribs_t focus)
 ```
 
 This function is used to create a new widget.  The widget can be
 one of four types as follows...
 
-- uC_WIDGET_BUTTON
-- uC_WIDGET_RADIO
-- uC_WIDGET_CHECK
-- uC_WIDGET_TEXTBOX
+- `uC_WIDGET_BUTTON`
+- `uC_WIDGET_RADIO`
+- `uC_WIDGET_CHECK`
+- `uC_WIDGET_TEXTBOX`
 
 The name is what would be drawn on the widget itself or in the
-case of a textbox to the left of the edit area.  The sequence
-number is used to select the widgets tab selection order within
-the current display.  The tab selection order is entirely up to
-the application developer.  Sequence values must be unique among
-active widgets, but gaps are allowed.
+case of a textbox to the left of the edit area.  The widget can be
+assigned both a normal set of attributes and a focused set of
+attributes.
 
-The coordinates are relative to the widgets parent view and the
-widget can be assigned both a normal set of attributes and a
-focused set of attributes.
+A widget's tab sequence is assigned when the widget is added to a
+view with `uC_widget_view_add_widget()`.  Its position is assigned
+separately with `uC_widget_set_position()`.
+
+```c
+API void uC_widget_set_position(uC_widget_t *widget,
+uint16_t xco, uint16_t yco)
+```
+
+This public API call positions a widget relative to its parent
+view.  It may be called before or after the widget is added to a
+view, but the widget must still fit within the view when drawn.
 
 ```c
 API void uC_widget_close_widget(uC_widget_t *widget)
@@ -4145,10 +4174,10 @@ any screen-level shortcut owned by that widget is deregistered,
 and focus is cleared if that widget currently owns focus.  The
 widget is then destroyed.
 
-### 9.2. uC_widget_view.c
 
+### 9.2. `uC_widget_view.c`
 ```c
-API uC_widget_view_t *uC_widget_view_create(char *name,
+API uC_widget_view_t *uC_widget_view_create(const char *name,
 uint16_t width, uint16_t height, uint16_t xco, uint16_t yco,
 uC_attribs_t attrs, bool scroll)
 ```
@@ -4183,13 +4212,15 @@ windows.
 
 ```c
 API bool uC_widget_view_add_widget(uC_widget_view_t *view,
-uC_widget_t *widget)
+uC_widget_t *widget, uint16_t sequence)
 ```
 
 This public API call is used to attach a widget to a widget view.
 Any number of widgets can be added to a view as long as they will
 visually fit within the assigned view space and they are all of
-the same type.
+the same type.  The sequence parameter is the widget's tab
+selection order.  Sequence values must be unique among active
+widgets, but they do not need to be contiguous.
 
 If the view is scrollable the limit is 64k (insanity).
 
@@ -4237,10 +4268,10 @@ void widget_scroll_view(uint8_t k)
 This function is used by the widget keyboard handler to scroll a
 view in either direction based on which key was pressed.
 
-### 9.3. uC_widget_view_group.c
 
+### 9.3. `uC_widget_view_group.c`
 ```c
-API uC_widget_vg_t *uC_widget_vg_create(char *name,
+API uC_widget_vg_t *uC_widget_vg_create(const char *name,
 uint16_t width, uint16_t height, uint16_t xco, uint16_t yco,
 uC_attribs_t attrs)
 ```
@@ -4337,7 +4368,7 @@ drawn in the popup phase so it appears above normal widgets and
 windows.
 
 The first available widget tab stop in the popup is selected during
-attach.  Applications may call uC_widget_select_widget() or move a
+attach.  Applications may call `uC_widget_select_widget()` or move a
 scrollable view cursor afterward when they need to restore a
 specific popup row.
 
@@ -4365,8 +4396,8 @@ inside the group.  Boxed and unboxed views must fit completely
 within the view group.  Oversized views are ignored rather than
 being added and later scribbling over unrelated content.
 
-### 9.4. uC_widget_draw.c
 
+### 9.4. `uC_widget_draw.c`
 This file contains functions to draw all widgets within all views within
 all view groups associated with a specified screen.  While the individual
 widget types are actually drawn within their respective source files (see
@@ -4404,10 +4435,10 @@ This static function will draw the specified widget into the
 specified window at the specified location.   The widget can be
 any one of the following types.
 
-- uC_WIDGET_BUTTON
-- uC_WIDGET_RADIO
-- uC_WIDGET_CHECK
-- uC_WIDGET_TEXTBOX
+- `uC_WIDGET_BUTTON`
+- `uC_WIDGET_RADIO`
+- `uC_WIDGET_CHECK`
+- `uC_WIDGET_TEXTBOX`
 
 ```c
 static void draw_view_box(uC_window_t *win, uC_widget_view_t *view)
@@ -4492,8 +4523,8 @@ This function is part of the main screen display update procedure.
 It will draw all view groups into the specified screen with all
 their associated views and widgets.
 
-### 9.5. uC_widget_button.c
 
+### 9.5. `uC_widget_button.c`
 ```c
 static void draw_btn_txt(uC_window_t *win, uint16_t x, uint16_t y,
 uint16_t width, const char *name, char key)
@@ -4562,8 +4593,8 @@ there must be a select parameter specified.  If neither are
 specified then a press of this button will be effectively
 un-selectable.
 
-### 9.6. uC_widget_check.c
 
+### 9.6. `uC_widget_check.c`
 ```c
 void draw_check(uC_window_t *win, uC_widget_t *widget,
 uint16_t x, uint16_t y)
@@ -4594,9 +4625,9 @@ toggled either on or off.
 Any number of bits within *select may be turned on in this way.
 
 ```c
-API uC_widget_t *uC_widget_check_create(uint16_t sequence,
-uint32_t *select, uint16_t bit, char *name, uC_radio_type_t type,
-uint16_t width, uint16_t xco, uint16_t yco,
+API uC_widget_t *uC_widget_check_create(
+uint32_t *select, uint16_t bit, const char *name,
+uC_radio_type_t type, uint16_t width,
 uC_attribs_t attrs, uC_attribs_t focus)
 ```
 
@@ -4609,8 +4640,8 @@ contain the state of up to 32 checkbox widgets.  The specific bit
 within that variable for this widget is specified in the bit
 parameter here.
 
-### 9.7. uC_widget_radio.c
 
+### 9.7. `uC_widget_radio.c`
 Radio buttons are visually very similar to the checkbox widget except
 where there can be any number of set buttons within the checkbox view only
 one widget may be set within a radio button view.
@@ -4652,9 +4683,9 @@ If the bit is toggled to an on state then any other bits within
 *select which are in the on state will be turned off.
 
 ```c
-API uC_widget_t *uC_widget_radio_create(uint16_t sequence,
-uint32_t *select, uint16_t bit, char *name, uC_radio_type_t type,
-uint16_t width, uint16_t xco, uint16_t yco,
+API uC_widget_t *uC_widget_radio_create(
+uint32_t *select, uint16_t bit, const char *name,
+uC_radio_type_t type, uint16_t width,
 uC_attribs_t attrs, uC_attribs_t focus)
 ```
 
@@ -4667,25 +4698,27 @@ contain the state of up to 32 radio button widgets.  The specific
 bit within that variable for this widget is specified in the bit
 parameter here.
 
-### 9.8. uC_widget_textbox.c
 
+### 9.8. `uC_widget_textbox.c`
 A textbox allows the application to accept the input of strings into
 pre-allocated buffers.  The characters of these strings can be filtered on
 one of the following number bases or can be alpha-numeric.
 
-- uC_INPUT_BINARY
-- uC_INPUT_OCTAL
-- uC_INPUT_DECIMAL
-- uC_INPUT_HEX
-- uC_INPUT_ALPHA
+- `uC_INPUT_BINARY`
+- `uC_INPUT_OCTAL`
+- `uC_INPUT_DECIMAL`
+- `uC_INPUT_HEX`
+- `uC_INPUT_ALPHA`
 
 Alpha-numeric input allows for editing of any of the following characters
 or the space
 
+```text
 !@#$%^&*()-=_+[]{}|\"';:`,./?<>
 0123456789
 abcdefghijklmnopqrstuvwxyz
 ABCDEFGHIJKLMNOPQRSTUVWXYZ
+```
 
 The widget editor allows for basic editing of strings including deleting
 characters and moving the cursor within the edit field.
@@ -4795,17 +4828,17 @@ delete, backspace, and valid printable characters.  Enter or Esc
 ends editing.
 
 ```c
-API uC_widget_t *uC_widget_textbox_create(uint16_t sequence,
-char *data, char *name, uint16_t size, uC_textbox_radix_t radix,
-uint16_t width, uint8_t xco, uint8_t yco, uC_attribs_t attrs,
-uC_attribs_t focus)
+API uC_widget_t *uC_widget_textbox_create(
+char *data, const char *name, uint16_t size,
+uC_textbox_radix_t radix, uint16_t width,
+uC_attribs_t attrs, uC_attribs_t focus)
 ```
 
 This public API function is used by application developers to
 create a new textbox widget.  It requires way too many parameters!
 
-### 9.9. uC_widget_scan.c
 
+### 9.9. `uC_widget_scan.c`
 Every widget must have a unique tab select sequence value within the set
 of active widgets.  The values do not need to be contiguous.  The tab
 sequence is utterly independent of which view or view group a widget is
@@ -4905,19 +4938,19 @@ the largest sequence number less than the current one.  If no such
 widget exists, focus wraps to the active widget with the highest
 sequence number.
 
-### 9.10. uC_widget_keys.c
 
+### 9.10. `uC_widget_keys.c`
 This source file contains the keyboard handling glue for the widget
 engine.  Single decoded key presses are passed to the individual handlers
 for each widget type within their own source files.
 
 In normal applications widgets are handled through the consolidated
-uC_key() dispatcher.  uC_key() reads and decodes the terminal key, then
-calls the internal widget_key() helper after screen shortcuts and menu
+`uC_key()` dispatcher.  `uC_key()` reads and decodes the terminal key, then
+calls the internal `widget_key()` helper after screen shortcuts and menu
 navigation have had their chance to consume the key.
 
-The older uC_widget_main() loop is still present for applications that use
-the widget engine directly.  That loop reads through uC_key_raw() so it
+The older `uC_widget_main()` loop is still present for applications that use
+the widget engine directly.  That loop reads through `uC_key_raw()` so it
 does not recursively call the consolidated dispatcher.
 
 The cursor up and cursor down keys are used to move up or down within a
@@ -4951,7 +4984,7 @@ After handling the key press it is also returned to the caller.
 bool widget_text_input_active(uC_screen_t *scr)
 ```
 
-Internal helper used by uC_key() to determine whether the current
+Internal helper used by `uC_key()` to determine whether the current
 focused widget is a textbox that is actively editing.  When true,
 the screen shortcut registry is skipped so printable shortcut keys
 are delivered to the textbox editor.  A focused textbox that is not
@@ -4961,7 +4994,7 @@ editing does not block global shortcuts.
 bool widget_key(uC_screen_t *scr, uint8_t key, uint8_t *out)
 ```
 
-Internal helper used by uC_key() after shortcut and menu handling.
+Internal helper used by `uC_key()` after shortcut and menu handling.
 It checks whether the widget engine is active on the supplied
 screen.  If not, it returns false and the key continues through the
 dispatcher.
@@ -4969,7 +5002,7 @@ dispatcher.
 If widgets are active, Tab and Back-Tab move to the next or
 previous widget, mouse events are routed to the widget mouse
 handler when mouse support is enabled, and all other keys are
-passed to handle_widget_key().  Mouse clicks on key-bearing
+passed to `handle_widget_key()`.  Mouse clicks on key-bearing
 buttons return that button key.  Mouse clicks on keyless
 buttons, radio buttons, and checkboxes run the widget action
 internally.  The resulting key is written to *out and the helper
@@ -4986,7 +5019,7 @@ which case a function is called to move to either the next or the
 previous widget.
 
 If it is neither the tab key or back tab key then which ever key
-was pressed is passed to the above handle_widget_key() function.
+was pressed is passed to the above `handle_widget_key()` function.
 
 If the key pressed was one that returns an escape sequence and is
 registered by the widget handler then that escape sequence will be
@@ -4997,7 +5030,7 @@ here.
 static uint8_t widget_read_key(void)
 ```
 
-This function is a wrapper for the above _widget_key() function.
+This function is a wrapper for the above `_widget_key()` function.
 It repeatedly call said function until there are no more keys left
 in the input buffers to be processed.
 
@@ -5027,9 +5060,9 @@ static void set_widget_key_actions(void)
 
 This function registers each of the above escape sequence handlers
 which translate the key presses into a single character.  This is
-part of the legacy uC_widget_main() path.  The consolidated
-uC_key() dispatcher normally uses the default UC_KEY_* translations
-and gives the menu system first shot at F10.
+part of the legacy `uC_widget_main()` path.  The consolidated
+`uC_key()` dispatcher normally uses the default `UC_KEY_`* translations
+and gives the menu system first shot at `F10`.
 
 ```c
 API char uC_widget_main(void)
@@ -5038,25 +5071,25 @@ API char uC_widget_main(void)
 This public API is the main keyboard handler for the widget
 engine.  It allocates a key actions array for the widget engine
 and then registers the keys needed by it.   It then calls the
-above widget_read_key() function to handle key presses.  When that
+above `widget_read_key()` function to handle key presses.  When that
 function returns the key handler is released and the previous one
 is reinstated.
 
 Which ever key was pressed is returned to the caller.
 
-## 10. Utilities
 
+## 10. Utilities
 This is where I place modules or functions that are somewhat useful to the
 developer or the library itself but which do not belong in any of the
 above documented files.
 
-Some of these are contained within the somewhat boringly named uC_utils.c
+Some of these are contained within the somewhat boringly named `uC_utils.c`
 and others are in their own modules such as the linked list module in
-uC_list.c or the memory allocation trackers in uC_alloc.c.   The purpose
+`uC_list.c` or the memory allocation trackers in `uC_alloc.c`.   The purpose
 of each of these is documented below.
 
-### 10.1. uC_utils.c
 
+### 10.1. `uC_utils.c`
 This source file contains many tiny but useful functions which are
 somewhat difficult to categorize within any of the above modules.  They
 are used extensively by the library itself but are all public API entities
@@ -5070,7 +5103,7 @@ This public API call is the single most useful function in the
 entire library.  It performs absolutely no operation what so ever.
 It can be used to safely neuter a function pointer that is no
 longer contextually appropriate but which should not actually be
-assigned a NULL value.
+assigned a `NULL` value.
 
 ```c
 API void uC_ui_free(void *mem)
@@ -5090,7 +5123,7 @@ it.
 The algorithm used is FNV-1: the hash is first multiplied by the
 FNV prime and then XORed with the next byte.  FNV-1a reverses
 those two operations (XOR then multiply).  The constants used
-(prime 0x01000193, basis 0x811c9dc5) are correct for both
+(prime `0x01000193`, basis `0x811c9dc5`) are correct for both
 variants so the distinction has no practical effect on the
 library.
 
@@ -5132,9 +5165,9 @@ API __attribute__((noreturn)) void uC_abort(const char *msg)
 ```
 
 This public API call is used as a somewhat graceful abort.  If a
-fatal handler has been registered via uC_set_fatal_handler() then
+fatal handler has been registered via `uC_set_fatal_handler()` then
 that handler is called first with the error message, giving the
-application one last chance to log the error or longjmp() to a
+application one last chance to log the error or `longjmp()` to a
 recovery point.  If the handler returns normally the terminal is
 restored to its original state and the application exits.
 
@@ -5143,16 +5176,16 @@ API void uC_set_fatal_handler(void (*fp)(const char *msg))
 ```
 
 This public API call registers a user-supplied callback that will
-be invoked by uC_abort() before the application exits.  The
-callback receives the same error message string that uC_abort()
+be invoked by `uC_abort()` before the application exits.  The
+callback receives the same error message string that `uC_abort()`
 was called with.
 
-The handler may call longjmp() to bypass the exit entirely,
+The handler may call `longjmp()` to bypass the exit entirely,
 allowing the application to attempt recovery.  If the handler
-returns normally then uC_abort() will proceed with terminal
+returns normally then `uC_abort()` will proceed with terminal
 restoration and exit(1).
 
-Pass NULL to deregister a previously registered handler.
+Pass `NULL` to deregister a previously registered handler.
 
 ```c
 API void uC_get_console_size(uint16_t *width, uint16_t *height)
@@ -5174,8 +5207,8 @@ caller.  If the condition is false the library is de-initialized
 and a specified error message is written out to stderr and the
 application is aborted.
 
-### 10.2. uC_alloc.c
 
+### 10.2. `uC_alloc.c`
 This module is not a memory allocator, it is simply an associative memory
 allocation tracker.   This enables the library and user applications to
 compartmentalize memory allocations so that all allocations associated
@@ -5186,14 +5219,14 @@ Associations are based on memory zones.  At the time of writing there are
 currently only eight zones defined.   This is probably overkill but if you
 require more you can always rebuild the library (tm).
 
-- uC_MEM_ZONE_DEFAULT
-- uC_MEM_ZONE_UI
-- uC_MEM_ZONE_JSON
-- uC_MEM_ZONE_USER1
-- uC_MEM_ZONE_USER2
-- uC_MEM_ZONE_USER3
-- uC_MEM_ZONE_USER4
-- uC_MEM_ZONE_USER5
+- `uC_MEM_ZONE_DEFAULT`
+- `uC_MEM_ZONE_UI`
+- `uC_MEM_ZONE_JSON`
+- `uC_MEM_ZONE_USER1`
+- `uC_MEM_ZONE_USER2`
+- `uC_MEM_ZONE_USER3`
+- `uC_MEM_ZONE_USER4`
+- `uC_MEM_ZONE_USER5`
 
 The JSON memory zone is only actively being used when the JSON parser is
 initializing the user interface.   At all other times this memory zone is
@@ -5268,13 +5301,27 @@ API void *uC_alloc(uC_mem_zone_t zone, size_t size)
 
 This public API call is used by applications to allocate memory
 against a specified zone.   All allocations are made using the
-standard C calloc() function.
+standard C `calloc()` function.
 
-Note: On a highly resource constrained embedded system calloc()
+Note: On a highly resource constrained embedded system `calloc()`
 and related function calls are somewhat problematical.  In the
 future I might modify this by adding a more resource friendly
 allocator to the library but this is not something I would look
 forward to and would also increase the size of the library.
+
+```c
+API void *uC_realloc(uC_mem_zone_t zone, void *addr, size_t size)
+```
+
+This public API call resizes a buffer previously allocated against
+the specified memory zone.  If `addr` is `NULL`, the call behaves
+as a zone-tracked allocation.  If `size` is zero, the tracked buffer
+is freed and `NULL` is returned.
+
+The address must already be associated with the specified zone.  If
+the address is not found, this function returns `NULL` without
+modifying the allocation tracker.  If the underlying `realloc()`
+fails, the original buffer remains tracked and valid.
 
 ```c
 API void uC_free(uC_mem_zone_t zone, void *addr)
@@ -5288,20 +5335,19 @@ then this function will silently ignore the error.
 Otherwise the memory is freed and the specified address is removed
 from the array of tracked allocations.
 
-### 10.3. uC_braille.c
 
+### 10.3. `uC_braille.c`
 This module contains functions to allow displaying of graphical entities
-using the UTF-8 Braille character set with UTF-8 Code points from 0x2800
-to 0x28ff as follows.
+using the UTF-8 Braille character set with UTF-8 Code points from `0x2800`
+to `0x28ff` as follows.
 
+```text
 00  ⠁⠂⠃⠄⠅⠆⠇    40 ⡀⡁⡂⡃⡄⡅⡆⡇    08 ⠈⠉⠊⠋⠌⠍⠎⠏    48 ⡈⡉⡊⡋⡌⡍⡎⡏
 10 ⠐⠑⠒⠓⠔⠕⠖⠗    50 ⡐⡑⡒⡓⡔⡕⡖⡗    18 ⠘⠙⠚⠛⠜⠝⠞⠟    58 ⡘⡙⡚⡛⡜⡝⡞⡟
 20 ⠠⠡⠢⠣⠤⠥⠦⠧    60 ⡠⡡⡢⡣⡤⡥⡦⡧    28 ⠨⠩⠪⠫⠬⠭⠮⠯    68 ⡨⡩⡪⡫⡬⡭⡮⡯
 30 ⠰⠱⠲⠳⠴⠵⠶⠷    70 ⡰⡱⡲⡳⡴⡵⡶⡷    38 ⠸⠹⠺⠻⠼⠽⠾⠿    78 ⡸⡹⡺⡻⡼⡽⡾⡿
 80 ⢀⢁⢂⢃⢄⢅⢆⢇    C0 ⣀⣁⣂⣃⣄⣅⣆⣇    88 ⢈⢉⢊⢋⢌⢍⢎⢏    C8 ⣈⣉⣊⣋⣌⣍⣎⣏
 90 ⢐⢑⢒⢓⢔⢕⢖⢗    D0 ⣐⣑⣒⣓⣔⣕⣖⣗    98 ⢘⢙⢚⢛⢜⢝⢞⢟    D8 ⣘⣙⣚⣛⣜⣝⣞⣟
-
-```text
 A0 ⢠⢡⢢⢣⢤⢥⢦⢧    E0 ⣠⣡⣢⣣⣤⣥⣦⣧    A8 ⢨⢩⢪⢫⢬⢭⢮⢯    E8 ⣨⣩⣪⣫⣬⣭⣮⣯
 B0 ⢰⢱⢲⢳⢴⢵⢶⢷    F0 ⣰⣱⣲⣳⣴⣵⣶⣷    B8 ⢸⢹⢺⢻⢼⢽⢾⢿    F8 ⣸⣹⣺⣻⣼⣽⣾⣿
 ```
@@ -5319,8 +5365,8 @@ They also demonstrate a very cheezy super-sampled Mandelbrot viewer.
 API int16_t uC_braille_xlat(uint8_t chr)
 ```
 
-This public API call will translate an 8 bit vale from 0x00 to
-0xff into the UTF-8 code point for one of the above braille
+This public API call will translate an 8 bit vale from `0x00` to
+`0xff` into the UTF-8 code point for one of the above braille
 characters with the same bit pattern.
 
 ```c
@@ -5329,7 +5375,7 @@ uint8_t *map, uint16_t width)
 ```
 
 This public API call will translate a bitmap of a specified size,
-containing 8 bits per pixel into a UTF8 braille character
+containing 8 bits per pixel into a UT`F8` braille character
 representation of that image.
 
 ```c
@@ -5338,7 +5384,7 @@ uint8_t *map, uint16_t width, uint16_t height)
 ```
 
 This public API call will translate a bitmap of a specified size,
-containing 1 bit per pixel into a UTF8 braille character
+containing 1 bit per pixel into a UT`F8` braille character
 representation of that image.
 
 ```c
@@ -5348,24 +5394,24 @@ API void uC_draw_braille(uC_window_t *win, uint16_t *braille_data)
 This public API call will draw a UTF-8 braille character image
 which is equal in size to the specified window into that window.
 
-### 10.4. uC_entry.c
 
+### 10.4. `uC_entry.c`
 This module contains the entry point code for the library.  This includes
 code to be run if the .so file is ever executed directly.  In this case
 the code here will parse and interpret the command line arguments passed
 to it.
 
-#### 10.4.1. Executing the .so directly - the ELF trick
 
+#### 10.4.1. Executing the .so directly - the ELF trick
 Shared libraries are not normally executable.  uCurses uses two standard
-ELF mechanisms to make libuCurses.so directly executable from the shell:
+ELF mechanisms to make `libuCurses.so` directly executable from the shell:
 
 1. A .interp section is embedded in the .so which contains the path
-  to the system dynamic linker (/lib64/ld-linux-x86-64.so.2).  This
+  to the system dynamic linker (`/lib64/ld-linux-x86-64.so`.2).  This
   tells the kernel how to load and run the file as a program.
 
 2. The linker is invoked with -Wl,--entry=entry which causes the
-  entry() function in this module to be used as the ELF entry point
+  `entry()` function in this module to be used as the ELF entry point
   rather than the default _start symbol.
 
 The result is that the library can be run as both a shared library loaded
@@ -5376,13 +5422,13 @@ by client applications and as a standalone program:
 ./build/libuCurses.so my_vectors.txt
 ```
 
-Because this entry point is not main(), the standard argc/argv mechanism
+Because this entry point is not `main()`, the standard argc/argv mechanism
 is not available.  Command line arguments are instead read directly from
 /proc/self/cmdline, whose content is the NUL-separated argv array written
 by the kernel for every running process.
 
-#### 10.4.2. The menu dispatch code generation workflow
 
+#### 10.4.2. The menu dispatch code generation workflow
 JSON-described menus attach a "vector" string to each menu item.  This
 string is the name of the C function that should be called when the item
 is selected.  At runtime the JSON parser needs to resolve that string to
@@ -5431,11 +5477,11 @@ to a source file in your project:
 ```
 
 The generated output contains a switch_t array of {hash, function
-pointer} pairs and a menu_address_cb() callback function that the
+pointer} pairs and a `menu_address_cb()` callback function that the
 JSON parser calls to resolve a vector name to its function pointer.
 
-Step 3 - add menu_dispatch.c to your application build.  The JSON
-parser will call menu_address_cb() automatically during menu
+Step 3 - add `menu_dispatch.c` to your application build.  The JSON
+parser will call `menu_address_cb()` automatically during menu
 construction; no other integration is required.
 
 The --help argument to the library describes this same process.
@@ -5567,14 +5613,14 @@ addresses with the hash values of each string passed in here.
 API void entry(void)
 ```
 
-This function is analogous to main() in a non .so file build.  It
-allows for the libuCurses.so file to be executed directly from the
+This function is analogous to `main()` in a non .so file build.  It
+allows for the `libuCurses.so` file to be executed directly from the
 command line.   It first displays a version string for the library
 and then processes and handles any command line arguments if any
 passed to the library.
 
-### 10.5. uC_eval.c
 
+### 10.5. `uC_eval.c`
 The functions within this file will evaluate a string, interpreting said
 string as a numerical value in some specified radix.  ANY radix can be
 specified and this code will reliably interpret the string and return a
@@ -5612,8 +5658,8 @@ into a numerical value based on the specified radix (anything from
 2 to 36 are valid I believe) and will store the computed numerical
 value of that string in the specified address.
 
-### 10.6. uC_list.c
 
+### 10.6. `uC_list.c`
 These sources provide a very simple but fast linked list engine.  These
 functions have been in almost constant use for at least 20 years and I am
 absolutely 100% positive that they are now absolutely 100% bug free! (tm)!
@@ -5625,14 +5671,14 @@ API uC_list_node_t *uC_list_scan(uC_list_t *list, uC_list_node_t *n1)
 This public API function allows application code (and the library
 itself) to iterate through a list one node at a time.   On each
 call it will return the address of the next node in the list or
-a NULL if there are no further items in the list.
+a `NULL` if there are no further items in the list.
 
 The application must pass in one if two parameters.  On the first
 call it should pass in the address of the list to be scanned and
-a NULL.   It will then return the address of the first node in
+a `NULL`.   It will then return the address of the first node in
 the list if one is present.
 
-On subsequent calls the application should pass in a NULL list
+On subsequent calls the application should pass in a `NULL` list
 address and the address of the node which was returned to it in
 the previous call.
 
@@ -5712,7 +5758,7 @@ There is currently no associated "insert after" function.
 
 Stack and queue macros
 
-uC_list.h provides four macros that let a uC_list_t serve as a
+`uC_list.h` provides four macros that let a `uC_list_t` serve as a
 stack (LIFO) or queue (FIFO) without adding any new API functions
 or increasing the library size.
 
@@ -5728,12 +5774,12 @@ or increasing the library size.
 #define uC_queue_get(list)      uC_list_pop_head(list)
 ```
 
-The same uC_list_t type is used for all three purposes.  The zone
+The same `uC_list_t` type is used for all three purposes.  The zone
 field must be set before first use:
 
-uC_list_t list = { .zone = uC_MEM_ZONE_USER1 };
+`uC_list_t` list = { .zone = `uC_MEM_ZONE_USER1` };
 
-Example output from example/list_demo.c:
+Example output from `example/list_demo.c`:
 
 stack (LIFO):
 third
@@ -5744,8 +5790,8 @@ first
 second
 third
 
-### 10.7. uC_rgb_hsl.c
 
+### 10.7. `uC_rgb_hsl.c`
 The functions in this file are used to compute contrasting foreground and
 background colors.   This code here was snagged somewhere and I forget
 where I found it and utterly neglected to save any attribution.  If this
@@ -5761,8 +5807,8 @@ code in here in place of what is here now (ID10T)
 For this reason, this text here is the only documentation I am prepared
 to write at this time. (junk code should be discarded not documented!)
 
-### 10.8. uC_switch.c
 
+### 10.8. `uC_switch.c`
 If I documented my reasoning for creating this module it would come over
 as a highly toxic rant.  This is because there are certain aspects of the
 C programming language that I have absolutely nothing good to say about
@@ -5774,11 +5820,11 @@ I do still use C's switch mechanisms but I will avoid them where I can.
 API int uC_switch(const uC_switch_t *s, int size, int32_t option)
 ```
 
-The uC_switch_t *s here is an array of uC_switch_t elements with
-size elements.  Each uC_switch_t contains a 32 bit option value
+The `uC_switch_t` *s here is an array of `uC_switch_t` elements with
+size elements.  Each `uC_switch_t` contains a 32 bit option value
 and a pointer to a function.
 
-This call will scan the specified array of uC_switch_t items for
+This call will scan the specified array of `uC_switch_t` items for
 one with an option equal to the one passed in here.  If found then
 that options vector is called.
 
@@ -5791,19 +5837,21 @@ warn you about cases not accounted for.
 Use of this function is not mandated, you can ignore it with
 impunity at your pleasure.
 
-### 10.9. uC_utf8.c
 
+### 10.9. `uC_utf8.c`
 Unicode assigns a unique numerical value called a code point to every
-character in every writing system.  These values range from 0x000000 to
-0x10FFFF.  Your terminal does not receive code points directly; they must
+character in every writing system.  These values range from `0x000000` to
+`0x10FFFF`.  Your terminal does not receive code points directly; they must
 first be encoded into UTF-8 byte sequences.  UTF-8 is a variable length
 encoding that represents code points using one to four bytes depending on
 their value:
 
+```text
 0x000000 - 0x00007F   1 byte    0xxxxxxx
 0x000080 - 0x0007FF   2 bytes   110xxxxx 10xxxxxx
 0x000800 - 0x00FFFF   3 bytes   1110xxxx 10xxxxxx 10xxxxxx
 0x010000 - 0x10FFFF   4 bytes   11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
+```
 
 The high bits of the leading byte encode the sequence length.  Every
 continuation byte begins with 10 which means any byte can be immediately
@@ -5812,15 +5860,15 @@ surrounding context.  This self-synchronizing property is one of UTF-8's
 more useful traits.
 
 uCurses handles the full four-byte range for both encoding and decoding.
-For display purposes, each code point has a column width of either 1 or
-2. This is determined by calling the POSIX wcwidth() function which
+For display purposes, each code point has a column width of either 1 or 2.
+This is determined by calling the POSIX `wcwidth()` function which
 implements the Unicode East Asian Width rules.  Characters such as CJK
 ideographs and wide emoji occupy 2 columns; everything else occupies 1.
 
 A note on what uCurses does not support and will not support:
 
 Zero-width combining characters (diacritical marks and similar) have
-a wcwidth() of 0 meaning they overlay the previous character's cell
+a `wcwidth()` of 0 meaning they overlay the previous character's cell
 without advancing the cursor.  uCurses does not handle these; they
 will be written as though they were ordinary 1-column characters.
 
@@ -5842,7 +5890,7 @@ This internal function encodes a Unicode code point into its
 UTF-8 byte representation and returns a pointer to a static
 utf8_encode_t structure containing the encoded bytes, their
 count and the display column width of the character as returned
-by wcwidth().
+by `wcwidth()`.
 
 ```c
 API int16_t uC_utf8_is_wide(uint32_t cp)
@@ -5853,17 +5901,17 @@ and 0 if it occupies 1.  This is used internally when writing a
 character into a window to determine how many cells to advance the
 cursor and whether the following cell should be marked as dead.
 
-DEADC0DE wide-character sentinel
+`DEADC0DE` wide-character sentinel
 
 uCurses stores window and screen contents as arrays of fixed-width
 cells, but terminals do not draw every Unicode code point in one
 column.  Many CJK characters and emoji occupy two columns.  When a
 wide character is written into a window, the first cell stores the
 actual Unicode code point and the next cell is marked with the
-internal sentinel value DEADC0DE, defined in uCurses.h as
-0xdeadc0de.
+internal sentinel value `DEADC0DE`, defined in `uCurses.h` as
+`0xdeadc0de`.
 
-DEADC0DE does not mean that anything has gone wrong and it is not
+`DEADC0DE` does not mean that anything has gone wrong and it is not
 part of the application's text.  It means "this cell is already
 occupied by the wide character that began in the previous cell".
 The sentinel allows the draw code to keep the terminal's visual
@@ -5876,7 +5924,7 @@ a wide glyph, uCurses must also write a space over the right half
 or the terminal may leave a visual fragment behind.  If a wide
 character overwrites an area whose right-hand cell contains an
 ordinary character, uCurses must force that following cell to be
-redrawn.  The screen drawing code uses the DEADC0DE marker to
+redrawn.  The screen drawing code uses the `DEADC0DE` marker to
 detect and repair both cases.
 
 uCurses does not try to support overlapping wide glyph fragments.
@@ -5892,10 +5940,10 @@ overlays such as borders and pulldown menus, which are drawn into
 the screen rather than into the window that originally owned the
 wide glyph.
 
-Application code should not intentionally write DEADC0DE as a
-character.  It is an implementation detail used by uC_win_emit(),
-uC_scr_draw(), and uC_utf8_emit().  When uC_utf8_emit() receives
-DEADC0DE it emits nothing, because the visible character was
+Application code should not intentionally write `DEADC0DE` as a
+character.  It is an implementation detail used by `uC_win_emit()`,
+`uC_scr_draw()`, and `uC_utf8_emit()`.  When `uC_utf8_emit()` receives
+`DEADC0DE` it emits nothing, because the visible character was
 already emitted from the owning cell to the left.
 
 uCurses currently treats display width as either one or two
@@ -5908,7 +5956,7 @@ API void uC_utf8_emit(uint32_t cp)
 
 Encodes the specified code point and writes its UTF-8 bytes
 directly into the terminfo escape sequence buffer for output to
-the terminal.  If the code point is the sentinel value DEADC0DE
+the terminal.  If the code point is the sentinel value `DEADC0DE`
 this function does nothing.
 
 ```c
@@ -5918,7 +5966,7 @@ API uint8_t utf8_decode(uint32_t *cp, uint8_t *s)
 Decodes one UTF-8 character from the byte string at s, stores
 the resulting code point at the address given by cp and returns
 the number of bytes consumed.  If the byte sequence is malformed
-the replacement character (U+FFFD, encoded as 0xEFBFBD) is
+the replacement character (U+FFFD, encoded as `0xEFBFBD`) is
 stored instead.
 
 ```c
@@ -5953,8 +6001,8 @@ is performed character by character on the encoded byte sequences.
 Returns 0 if the strings are equal up to len characters or a
 non-zero difference value if they are not.
 
-### 10.10. uC_win_printf.c
 
+### 10.10. `uC_win_printf.c`
 This module will probably make purists cringe but it has proved to be one
 of the most useful extensions added to this library.  It greatly
 simplifies the use of a significant part of the uCurses API.
@@ -5964,7 +6012,7 @@ support the standard printf format specifiers but implement a custom set
 thereof.  Some of these use more than one character (after the %) or may
 expect more than one parameter.  Not something that is commonly seen.
 
-Each of these operate on a window passed in to uC_win_printf() itself and
+Each of these operate on a window passed in to `uC_win_printf()` itself and
 this window is saved to a static global variable (for the win!).
 
 Where appropriate, for each of the following functions which is associated
@@ -5992,7 +6040,7 @@ This static function handles the %up format specifier which will
 scroll a window up n lines, erasing the bottom n lines.
 
 This specifier takes a count parameter n and calls
-uC_win_scroll_up_n() internally.  Use n = 1 to scroll by one line.
+`uC_win_scroll_up_n()` internally.  Use n = 1 to scroll by one line.
 
 ```c
 static void dn(void)               %dn(n)
@@ -6002,7 +6050,7 @@ This static function handles the %dn format specifier which will
 scroll a window down n lines, erasing the top n lines.
 
 This specifier takes a count parameter n and calls
-uC_win_scroll_dn_n() internally.  Use n = 1 to scroll by one line.
+`uC_win_scroll_dn_n()` internally.  Use n = 1 to scroll by one line.
 
 ```c
 static void lt(void)               %lt(n)
@@ -6013,7 +6061,7 @@ pan a window left n columns, erasing the n columns on the far
 right.
 
 This specifier takes a count parameter n and calls
-uC_win_scroll_lt_n() internally.  Use n=1 to pan by one column.
+`uC_win_scroll_lt_n()` internally.  Use n=1 to pan by one column.
 
 ```c
 static void rt(void)               %rt(n)
@@ -6024,7 +6072,7 @@ pan a window right n columns, erasing the n columns on the far
 left.
 
 This specifier takes a count parameter n and calls
-uC_win_scroll_rt_n() internally.  Use n=1 to pan by one column.
+`uC_win_scroll_rt_n()` internally.  Use n=1 to pan by one column.
 
 ```c
 static void r(void)                %rf or %rb
@@ -6140,7 +6188,7 @@ static void u_puts(void)           %s
 
 This static function handles the %s specifier which will write
 a string out to the window at its current cursor location.  It is
-simply a wrapper for the above documented uC_win_puts() function.
+simply a wrapper for the above documented `uC_win_puts()` function.
 
 ```c
 static void bold(void)             %B+ or %B-
@@ -6193,7 +6241,7 @@ static void specifier(void)
 ```
 
 This static function executes one of the above handlers based on
-a selection made from a uC_switch_t structure.
+a selection made from a `uC_switch_t` structure.
 
 ```c
 API void uC_win_printf(uC_window_t *win, const char *format, ...)
@@ -6207,12 +6255,12 @@ specified window.
 
 Parameter grouping macros
 
-Three macros are defined in uCurses.h to visually associate
+Three macros are defined in `uCurses.h` to visually associate
 parameters that logically belong together.  Using the C comma
 operator to group them (e.g. (x, y)) would silently discard all
 but the last value, so these macros expand to the correct number
 of separate arguments instead.  They work equally well with
-uC_win_printf format specifiers and with direct API calls.
+`uC_win_printf` format specifiers and with direct API calls.
 
 ```c
 #define UC_XY(x, y)      (x), (y)    // position
@@ -6220,25 +6268,30 @@ uC_win_printf format specifiers and with direct API calls.
 #define UC_RGB(r, g, b)  (r), (g), (b)
 ```
 
-Examples with uC_win_printf:
-
-uC_win_printf(win, "%@%rf",
+Examples with `uC_win_printf`:
 
 ```c
-UC_XY(cx, cy), UC_RGB(255, 0, 128));
+uC_win_printf(win, "%@%rf",
+    UC_XY(cx, cy),
+    UC_RGB(255, 0, 128));
 ```
 
 Examples with direct API calls:
 
+```c
 uC_win_open(UC_WH(80, 24));
 uC_scr_open(UC_WH(width, height));
 uC_win_cup(win, UC_XY(x, y));
 uC_win_set_rgb_fg(win, UC_RGB(255, 0, 128));
-uC_widget_vg_create(name, UC_WH(w, h), UC_XY(x, y), attrs);
+uC_widget_vg_create(name,
+    UC_WH(w, h),
+    UC_XY(x, y),
+    attrs);
+```
 
-### 10.11. uC_winch.c
 
-This module handles the SIGWINCH signal within uCurses.  This signal is
+### 10.11. `uC_winch.c`
+This module handles the `SIGWINCH` signal within uCurses.  This signal is
 sent to a process when the terminal window it is running within is
 resized.  uCurses does not try to magically resize an existing interface.
 Instead it records that a resize happened, allows application code to
@@ -6249,7 +6302,7 @@ the new terminal dimensions.
 static void winch_handler(int sig)
 ```
 
-The signal handler installed by init_winch().  It does the minimum
+The signal handler installed by `init_winch()`.  It does the minimum
 async-signal-safe work required here: ignore the signal argument
 and set the global winch flag.
 
@@ -6257,24 +6310,24 @@ and set the global winch flag.
 void init_winch(void)
 ```
 
-Internal initialization function called by uCurses_init().  It
-saves the previous SIGWINCH action when possible and installs the
+Internal initialization function called by `uCurses_init()`.  It
+saves the previous `SIGWINCH` action when possible and installs the
 uCurses handler unless the previous action explicitly ignored
-SIGWINCH.
+`SIGWINCH`.
 
 ```c
 void de_init_winch(void)
 ```
 
-Internal shutdown function called by uCurses_deInit().  It
-restores the previous SIGWINCH action when one was saved, clears
+Internal shutdown function called by `uCurses_deInit()`.  It
+restores the previous `SIGWINCH` action when one was saved, clears
 the saved-state marker, and clears the pending winch flag.
 
 ```c
 API bool uC_winch_pending(void)
 ```
 
-Returns true when SIGWINCH has been received and not yet
+Returns true when `SIGWINCH` has been received and not yet
 acknowledged.
 
 ```c
@@ -6290,7 +6343,7 @@ the resize stream to go quiet.
 API bool uC_winch_dispatch(void)
 ```
 
-Checks for a pending WINCH event, acknowledges it if present, and
+Checks for a pending `WINCH` event, acknowledges it if present, and
 calls the registered user handler when one exists.  Returns true
 when a pending event was dispatched and false otherwise.
 
@@ -6299,11 +6352,11 @@ API void uC_register_winch(user_winch_t handler)
 API void uC_deregister_winch(user_winch_t handler)
 ```
 
-Register or deregister the optional user WINCH callback used by
-uC_winch_dispatch().  Only one callback is stored.
+Register or deregister the optional user `WINCH` callback used by
+`uC_winch_dispatch()`.  Only one callback is stored.
+
 
 ## 11. JSON
-
 This extension adds a JSON parser allowing application developers to write
 an almost complete description of their user interface in JSON.  These
 sources will parse that description and construct the interface based on
@@ -6315,66 +6368,66 @@ significantly increases the size of the library when it is included in the
 build.  Everything handled herein can be performed programmatically,
 independently of the JSON parser.
 
-### 11.1. json.c
 
+### 11.1. `json.c`
 This source file implements the JSON parsers state machine which uses five
 active states to parse the JSON source file.   There is also one inactive
 state which indicates that the JSON state machine has not yet started
 parsing anything.  These states are as follows...
 
-- JSON_STATE_NONE
-- JSON_STATE_L_BRACE
-- JSON_STATE_KEY
-- JSON_STATE_VALUE
-- JSON_STATE_R_BRACE
-- JSON_STATE_DONE
+- `JSON_STATE_NONE`
+- `JSON_STATE_L_BRACE`
+- `JSON_STATE_KEY`
+- `JSON_STATE_VALUE`
+- `JSON_STATE_R_BRACE`
+- `JSON_STATE_DONE`
 
 As the JSON text is parsed the text does not define the state.  Rather,
 the state defines what the next character must be.  All parsing is done on
 a space delimited token by token basis.
 
-The initial active state is JSON_STATE_L_BRACE which expects the next
+The initial active state is `JSON_STATE_L_BRACE` which expects the next
 token parsed to be the left brace '{' char.  If it is then the state is
-set to JSON_STATE_KEY.   If not... oops!
+set to `JSON_STATE_KEY`.   If not... oops!
 
-The handler for JSON_STATE_KEY expect to see one of several known tokens
-which will either be a 'key' token or an 'object' token.  Only recognized
+The handler for `JSON_STATE_KEY` expect to see one of several known tokens
+which will either be a `key` token or an `object` token.  Only recognized
 tokens are valid, unrecognized tokens will cause the state machine to
 puke.
 
 The following object tokens are valid
 
-- STRUCT_SCREEN       * STRUCT_WINDOW      * STRUCT_BACKDROP
-- STRUCT_MENU_BAR     * STRUCT_PULLDOWN    * STRUCT_MENU_ITEM
-- STRUCT_ATTRIBS      * STRUCT_B_ATTRIBS   * STRUCT_S_ATTRIBS
-- STRUCT_D_ATTRIBS    * STRUCT_F_ATTRIBS   * STRUCT_FLAGS
-- STRUCT_RGB_FG       * STRUCT_RGB_BG      * STRUCT_WINDOWS
-- STRUCT_PULLDOWNS    * STRUCT_MENU_ITEMS
+- `STRUCT_SCREEN`       * `STRUCT_WINDOW`      * `STRUCT_BACKDROP`
+- `STRUCT_MENU_BAR`     * `STRUCT_PULLDOWN`    * `STRUCT_MENU_ITEM`
+- `STRUCT_ATTRIBS`      * `STRUCT_B_ATTRIBS`   * `STRUCT_S_ATTRIBS`
+- `STRUCT_D_ATTRIBS`    * `STRUCT_F_ATTRIBS`   * `STRUCT_FLAGS`
+- `STRUCT_RGB_FG`       * `STRUCT_RGB_BG`      * `STRUCT_WINDOWS`
+- `STRUCT_PULLDOWNS`    * `STRUCT_MENU_ITEMS`
 
 And the following key tokens are valid...
 
-- KEY_FG              * KEY_BG             * KEY_GRAY_BG
-- KEY_GRAY_FG         * KEY_RED            * KEY_GREEN
-- KEY_BLUE            * KEY_XCO            * KEY_YCO
-- KEY_WIDTH           * KEY_HEIGHT         * KEY_NAME
-- KEY_FLAGS           * KEY_BORDER_TYPE    * KEY_VECTOR
-- KEY_SHORTCUT        * KEY_FLAG           * KEY_BLANK
-- KEY_ORDER
+- `KEY_FG`              * `KEY_BG`             * `KEY_GRAY_BG`
+- `KEY_GRAY_FG`         * `KEY_RED`            * `KEY_GREEN`
+- `KEY_BLUE`            * `KEY_XCO`            * `KEY_YCO`
+- `KEY_WIDTH`           * `KEY_HEIGHT`         * `KEY_NAME`
+- `KEY_FLAGS`           * `KEY_BORDER_TYPE`    * `KEY_VECTOR`
+- `KEY_SHORTCUT`        * `KEY_FLAG`           * `KEY_BLANK`
+- `KEY_ORDER`
 
 All tokens are recognized by their 32 bit FNV-1 hash value.  No string
 compare functions are called.
 
 If the parsed token is recognized as a key then that specific key is
-handled (see below) and the next state is set to JSON_STATE_VALUE where we
+handled (see below) and the next state is set to `JSON_STATE_VALUE` where we
 extract the value to be stored in the specified key.
 
 Note: while the ':' character between a key and its associated value
 is required there is no state ':'
 
 If the parsed token is one of the recognized objects the state is reset
-back to JSON_STATE_L_BRACE.
+back to `JSON_STATE_L_BRACE`.
 
-Almost every JSON_STATE_L_BRACE indicates that a new object and thereby
+Almost every `JSON_STATE_L_BRACE` indicates that a new object and thereby
 an associated C structure is being created.
 
 For every object state a new object is allocated for its associated C
@@ -6385,7 +6438,7 @@ onto a state stack.
 
 Any time a new object or key token is parsed we check to see if there is a
 comma on it.  If there is no comma the next state will instead be
-JSON_STATE_R_BRACE which pops the previous state off the stack.
+`JSON_STATE_R_BRACE` which pops the previous state off the stack.
 
 As key values are parsed we immediately set the specified item in their
 parents C structure.  When an object is completed we store the associated
@@ -6393,7 +6446,7 @@ C structure within its parents C structure.  The structure types of both
 specify how and where.
 
 When all states have been popped off the stack we transition into
-JSON_STATE_DONE and the state machine terminates.
+`JSON_STATE_DONE` and the state machine terminates.
 
 This custom JSON parser was implemented rather than using an off the shelf
 parser because it not only builds the user interface but also verifies its
@@ -6451,7 +6504,7 @@ static void json_state_l_brace(void)
 This static function handles the initial state of the JSON parser
 and verifies that the next character parsed out of the sources is
 the left brace '{' character.   If it is the expected character
-then the state is set to JSON_STATE_KEY.  Otherwise it is an error
+then the state is set to `JSON_STATE_KEY`.  Otherwise it is an error
 which is always fatal.
 
 ```c
@@ -6481,25 +6534,27 @@ This function then returns either true (there was a comma) or
 false (there was no comma).   There being no comma is not always
 an error.
 
+```c
 void json_state_r_brace(void)
+```
 
 This function verifies that the most recently parsed space
 delimited token was the right brace '}' character.  Prior to this
 test it must first strip any comma from the token if there was one
 and must recalculate the tokens hash value with the comma removed.
 
-It is assumed that the next state will be JSON_STATE_DONE but if
+It is assumed that the next state will be `JSON_STATE_DONE` but if
 the current structure being populated is not the "one and only"
 screen structure we populate that structures parent (the screen
 has no parent as it is the root structure of the UI).
 
 In this case we must then pop the previous state off the state
-machines stack and if that state is not NULL then we set the new
-state to either JSON_STATE_KEY or to JSON_STATE_R_BRACE depending
+machines stack and if that state is not `NULL` then we set the new
+state to either `JSON_STATE_KEY` or to `JSON_STATE_R_BRACE` depending
 on whether original '}' token had a comma on it or not.
 
 If, after popping the previous state off the stack results in a
-NULL json_state variable then the above assumption is correct and
+`NULL` json_state variable then the above assumption is correct and
 we have successfully parsed the entire JSON source file.
 
 ```c
@@ -6518,7 +6573,7 @@ always treated as a fatal error.
 
 This function will repeat in a loop until the state handler which
 was executed in the most recent iteration sets the state to
-JSON_STATE_DONE.
+`JSON_STATE_DONE`.
 
 ```c
 static void open_json_file(char *path)
@@ -6589,8 +6644,8 @@ of that name string and assigning that association at build time
 it enables the JSON parser to make that association as it builds
 the menu user interface.
 
-### 11.2. json_token.c
 
+### 11.2. `json_token.c`
 The functions in this file are where this parser does its actual parsing.
 Tokens are parsed out of the source JSON file based on white space.  All
 tokens must therefore be space delimited.  This greatly simplified the
@@ -6648,489 +6703,147 @@ the source JSON file.  These tokens are copied into a json_token[]
 array within the json_vars structure.  There is therefore a max
 length of any token.
 
-### 11.3. json_key.c
 
-This source file contains the functions related to the handling of both
-key and object tokens.  Objects are usually associated with C structures
-which define the user interface elements.
+### 11.3. `json_schema.c`
+This source file replaces the older `json_key.c` implementation.  The
+parent / child constraint rules that were previously spread across many
+small object and key handler functions are now encoded in one schema
+array.  The parser still recognizes the same JSON objects and scalar
+keys, but dispatch is table driven instead of function driven.
 
-Keys assign values to the various items within those structures.
+Each parsed JSON key is hashed with the same FNV-1 hash used elsewhere in
+uCurses.  `json_schema.c` then checks that hash against the current parser
+context and either creates the next JSON state structure, consumes a
+special key, or reports a fatal JSON error.
 
-As new object / key tokens are parsed a new state structure is created.
-If the token was an object then a (void *) structure equal in size to the
-user interface item being created is also allocated as part of the new
-state structure.
 
-There are a few object tokens which define pseudo structures and these do
-not define any actual C structures but they still transition the JSON
-state machine to a new objects state.  Any key values defined within these
-pseudo objects are assigned to the pseudo objects parent structure.
-
-#### 11.3.1. Object Structures
-
+#### 11.3.1. Schema entries
 ```c
-static void struct_screen(void)
+typedef struct
+{
+    int32_t  hash;
+    uint32_t valid_parents;
+    uint16_t child_type;
+    uint16_t child_size;
+    uint8_t  flags;
+} json_schema_t;
 ```
 
-This function allocates a new STRUCT_SCREEN object and transitions
-the JSON state machine to the new object state.
+This structure describes one JSON object or scalar key.  The `hash`
+field is the FNV-1 hash of the token name.  `valid_parents` is a
+bitmask of parent `STRUCT_*` values where that key is legal.  A zero
+parent mask means the entry is valid only at the root of the JSON
+document.
 
-There can at present be only one screen object defined for the
-user interface and it must be the first object specified within
-the JSON data.
+`child_type` is the `STRUCT_*` or `KEY_*` state type to create, and
+`child_size` is the number of bytes to allocate for the associated
+structure.  Pseudo objects and scalar keys use a zero child size.
 
-When this object structure is allocated it is set as the
-library-internal active screen.
+`SF_OBJ` marks an entry as an object key.  Object keys transition the parser
+to `JSON_STATE_L_BRACE` after the new state is created.
 
-```c
-static void struct_windows(void)
-```
+`SF_ROOT` marks the root screen entry.  The screen must be the first object
+in the JSON document, only one screen is allowed, and creating it
+also initializes `active_screen` and the screen dimensions.
 
-This function allocates a new STRUCT_WINDOWS pseudo object and
-transitions the JSON state machine to the new object state.
+`SF_SKIP` marks an entry that may be consumed without applying a value in
+specific contexts.  The current use is the `order` key inside a
+backdrop.  A throwaway state is pushed so `json_state_value()` can
+pop the state stack normally.
 
-Window objects are attached to their parent screen in a linked
-list.  This pseudo object allows for a collection of windows to be
-defined within a screen.
-
-A STRUCT_WINDOWS pseudo object must be defined within a
-STRUCT_SCREEN object.
-
-```c
-static void struct_window(void)
-```
-
-This function allocates a new STRUCT_WINDOW object and transitions
-the JSON state machine to a new object state.
-
-A STRUCT_WINDOW object must be defined within a STRUCT_WINDOWS
-pseudo object.
+`SF_BREAK` is a debug helper entry.  It calls `uC_noop()`, creates no new object,
+and consumes the following scalar value.
 
 ```c
-static void struct_backdrop(void)
+static const json_schema_t schema[]
 ```
 
-This function allocates a new STRUCT_WINDOW object and transitions
-the JSON state machine to the new object state.
+This table contains the complete key / object schema.  Object
+entries are listed before scalar entries so ambiguous keys such as
+`flags` can resolve based on the current parent context.
 
-A backdrop window is a special window which will be attached to
-its parent screen.
+The table currently recognizes `screen`, `windows`, `window`, `backdrop`,
+`menu_bar`, `pulldowns`, `pulldown`, `menu_items`, `menu_item`, the
+various attribute containers, RGB color containers, `flags`, color scalar
+keys, geometry keys, `name`, `border_type`, `vector`, `shortcut`, `flag`,
+`order`, `blank`, and the debug breakpoint key.
 
-A STRUCT_WINDOW object must be defined within a STRUCT_SCREEN
-object.
+
+#### 11.3.2. Schema helpers
+```c
+PM(x)
+```
+
+Builds a parent bit for a `STRUCT_*` value.
 
 ```c
-static void struct_m_bar(void)
+PM_ATTRIB_TYPES
+PM_ATTRIB_HOSTS
 ```
 
-This function allocates a new STRUCT_MENU_BAR object and
-transitions the JSON state machine to the new object state.
-
-A STRUCT_MENU_BAR object must be defined within a STRUCT_SCREEN
-object.
+Convenience masks for the groups of attribute container types and
+object types that may contain attributes.
 
 ```c
-static void struct_pulldowns(void)
+static const json_schema_t *find_schema(int32_t hash, uint32_t pmask)
 ```
 
-This function allocates a new STRUCT_PULLDOWNS pseudo object and
-transitions the JSON state machine to the new object state.
-
-A STRUCT_PULLDOWNS object must be defined within a STRUCT_MENU_BAR
-object.
-
-```c
-static void struct_pulldown(void)
-```
-
-This function allocates a new STRUCT_PULLDOWN object and
-transitions the JSON state machine to the new object state.
-
-A STRUCT_PULLDOWN object must be defined within a STRUCT_PULLDOWNS
-object.
-
-```c
-static void struct_m_items(void)
-```
-
-This function allocates a new STRUCT_MENU_ITEMS pseudo object and
-transitions the JSON state machine to the new object state.
-
-A STRUCT_MENU_ITEMS object must be defined within a
-STRUCT_PULLDOWN object.
-
-```c
-static void struct_m_item(void)
-```
-
-This function allocates a new STRUCT_MENU_ITEM object and
-transitions the JSON state machine to the new object state.
-
-A STRUCT_MENU_ITEM object must be defined within a
-STRUCT_MENU_ITEMS object.
-
-```c
-static void struct_attribs(void)
-```
-
-This function allocates a new STRUCT_ATTRIBS object and transitions
-the JSON state machine to the new object state.
-
-A STRUCT_ATTRIBS object may only be defined within one of the
-following object types.
-
-- STRUCT_BACKDROP
-- STRUCT_WINDOW
-- STRUCT_PULLDOWN
-- STRUCT_MENU_BAR
-
-```c
-static void struct_b_attribs(void)
-```
-
-This function allocates a new STRUCT_B_ATTRIBS object and
-transitions the JSON state machine to the new object state.
-
-A STRUCT_B_ATTRIBS object is where border attributes are defined.
-It can therefore only be defined within one of the following
-object types.
-
-- STRUCT_WINDOW
-- STRUCT_BACKDROP
-
-```c
-static void struct_s_attribs(void)
-```
-
-This function allocates a new STRUCT_S_ATTRIBS object and
-transitions the JSON state machine to the new object state.
-
-A STRUCT_S_ATTRIBS object is where selected attributes are defined
-so it may only be defined within one of the following object
-types.
-
-- STRUCT_PULLDOWN
-- STRUCT_MENU_BAR
-
-```c
-static void struct_f_attribs(void)
-```
-
-This function allocates a new STRUCT_F_ATTRIBS object and
-transitions the JSON state machine to the new object state.
-
-A STRUCT_F_ATTRIBS object is where focused attributes are defined
-so it must be defined within a STRUCT_WINDOW object.
-
-```c
-static void struct_d_attribs(void)
-```
-
-This function allocates a new STRUCT_D_ATTRIBS and transitions the
-JSON state machine to the new object state.
-
-A STRUCT_D_ATTRIBS object is where disabled attributes are defined
-so it may only be defined within one of the following object
-structures.
-
-- STRUCT_PULLDOWN
-- STRUCT_MENU_BAR
-
-```c
-static void struct_rgb_fg(void)
-```
-
-This function allocates a new STRUCT_RGB_FG pseudo object and
-transitions the JSON state machine to the new object state.
-
-A STRUCT_RGB_FG object may only be defined within one of the
-following object structures.
-
-- STRUCT_ATTRIBS
-- STRUCT_B_ATTRIBS
-- STRUCT_S_ATTRIBS
-- STRUCT_F_ATTRIBS
-- STRUCT_D_ATTRIBS
-
-```c
-static void struct_rgb_bg(void)
-```
-
-This function allocates a new STRUCT_RGB_BG pseudo object and
-transitions the JSON state machine to the new object state.
-
-A STRUCT_RGB_BG object may only be defined within one of the
-following object structures.
-
-- STRUCT_ATTRIBS
-- STRUCT_B_ATTRIBS
-- STRUCT_S_ATTRIBS
-- STRUCT_F_ATTRIBS
-- STRUCT_D_ATTRIBS
-
-```c
-static void struct_flags(void)
-```
-
-This function allocates a new STRUCT_FLAGS and transitions the
-JSON state machine to the new object state.
-
-A STRUCT_FLAGS object may only be defined within one of the
-following object structures...
-
-- STRUCT_BACKDROP
-- STRUCT_WINDOW
-- STRUCT_PULLDOWN
-- STRUCT_MENU_BAR
-
-#### 11.3.2. Key tokens
-
-Key type tokens do not allocate a new object type structure but they do
-allocate a new state structure of a specific type and will transition the
-JSON parsers state machine to the new state.
-
-```c
-static void key_attr(uint16_t key)
-```
-
-This function allocates a new JSON state structure and will
-transition the JSON state machine to the new state.
-
-The type of the new JSON state structure will be one of the
-following.
-
-- KEY_FG    * KEY_GRAY_FG   * STRUCT_RGB_FG
-- KEY_BG    * KEY_GRAY_BG   * STRUCT_RGB_BG
-
-The STRUCT_RGB_FG and STRUCT_RGB_BG are so named because they are
-associated with a multi byte attribute but they still do not
-allocate any object structures.  They can be thought of as empty
-pseudo structure.
-
-These key types can only be defined within one of the following
-objects structures.
-
-- STRUCT_ATTRIBS
-- STRUCT_B_ATTRIBS
-- STRUCT_S_ATTRIBS
-- STRUCT_F_ATTRIBS
-- STRUCT_D_ATTRIBS
-
-```c
-static void key_rgb(uint16_t key)
-```
-
-This function allocates a new JSON state structure and will
-transition the JSON state machine to the new state.
-
-The type of the new JSON state structure will be one of the
-following.
-
-- KEY_RED   * KEY_GREEN     * KEY_BLUE
-
-These key types can only be assigned to one of the following
-empty pseudo object structures
-
-- STRUCT_RGB_FG
-- STRUCT_RGB_BG
-
-```c
-static void key_blank(void)
-```
-
-This function allocates a new JSON state structure of type
-KEY_BLANK.  It may only be assigned to one of the following
-object structure types.
-
-- STRUCT_BACKDROP
-- STRUCT_WINDOW
-
-```c
-static void key_xywh(uint16_t key)
-```
-
-This function allocates a new JSON state structure and
-transitions the JSON state machine to the new state.
-
-The type of the new JSON state structure will be one of the
-following.
-
-- KEY_XCO        * KEY_YCO
-- KEY_WIDTH      * KEY_HEIGHT
-
-It may therefore only be defined within a STRUCT_WINDOW object.
-
-```c
-static void key_name(void)
-```
-
-This function allocates a new JSON state structure of type
-KEY_NAME and transitions the JSON state machine to the new state.
-
-A KEY_NAME can only be defined as part of one of the following
-object types.
-
-- STRUCT_PULLDOWN
-- STRUCT_MENU_ITEM
-- STRUCT_WINDOW
-
-```c
-static void key_flags(void)
-```
-
-This function allocates a new JSON state structure of type
-KEY_FLAGS and transitions the JSON state machine to the new state.
-
-A KEY_FLAGS can only be defined as part of one of the following
-object types.
-
-- STRUCT_PULLDOWN
-- STRUCT_MENU_ITEM
-- STRUCT_WINDOW
-
-```c
-static void key_border_type(void)
-```
-
-This function allocates a new JSON state structure of type
-KEY_BORDER_TYPE and transitions the JSON state machine to the new
-state.
-
-A KEY_BORDER_TYPE can only be defined as part of one of the
-following object types.
-
-- STRUCT_BACKDROP
-- STRUCT_WINDOW
-
-```c
-static void key_vector(void)
-```
-
-This function allocates a new JSON state structure of type
-KEY_VECTOR and transitions the JSON state machine to the new
-state.
-
-A KEY_VECTOR can only be defined within a STRUCT_MENU_ITEM object.
-
-```c
-static void key_shortcut(void)
-```
-
-This function allocates a new JSON state structure of type
-KEY_SHORTCUT and transitions the state machine to the new state.
-
-A KEY_SHORTCUT may only be defined within a STRUCT_MENU_ITEM
-object.
-
-```c
-static void key_flag(void)
-```
-
-This function allocates a new JSON state structure of type
-KEY_FLAG and transitions the JSON state machine to the new state.
-
-A KEY_FLAG may only be defined within a STRUCT_FLAGS object.
-
-```c
-static void key_order(void)
-```
-
-This function allocates a new JSON state structure of type
-KEY_ORDER and transitions the JSON state machine to the new state.
-
-A KEY_ORDER may only be defined within a STRUCT_WINDOW but may
-not be defined within a STRUCT_BACKDROP as the backdrop windows do
-not have a tab selection order or gain focus.
-
-```c
-static void breakpoint(void)
-```
-
-This key is one of the mechanisms I used to debug the JSON state
-machine.   You should probably ignore it, I may eventually remove
-it.
-
-#### 11.3.3. Key and Object handling
-
-All key and all object token names must be quoted.  Their not being quoted
-is a critical error.  There must also be a ':' character following this
-quoted token.  The ':' being missing is also a critical error.
-
-The following functions are used to select between key tokens and object
-tokens and to execute their respective handlers above.
-
-```c
-static const uC_switch_t object_types[]
-static const uC_switch_t key_types[]
-```
-
-These arrays of uC_switch_t items contain lists of object or key
-token hash values and a function vector to be executed.  After a
-token is parsed and its quotes are stripped its hash value is
-computed and an attempt is made to select from each of the above
-switch_t tables.
-
-If one or other of these tables contains an entry with the
-specified hash value then that entries function vector is called
-and a true result is returned.   Otherwise a false result is
-returned.
+Scans `schema[]` for the first row whose hash matches the parsed key
+and whose valid parent mask accepts the current parser context.
+Root-only entries match only when the parser is at the root.
+`SF_BREAK` entries match regardless of parent.
 
 ```c
 static void must_quote(int16_t len)
 ```
 
-As stated above all tokens for both keys and objects must be
-quoted.  This function asserts that the quotes are present.
-
-```c
-static void is_key(void)
-```
-
-Given a token hash value an attempt is made here to select from
-the uC_switch_t table of keys.  If that selection is successful
-the function associated with that key is executed and the JSON
-state machine is transitioned into the JSON_STATE_VALUE state.
+Verifies that JSON key tokens are wrapped in double quotes.
 
 ```c
 static void check_colon(void)
 ```
 
-This function asserts that there is a ':' token immediately
-following the key / object token.
+Reads the token following a key and verifies that it is the colon
+separator.
+
+
+#### 11.3.3. Key dispatch
+```c
+static void json_schema_dispatch(void)
+```
+
+Converts the current parser context into a parent mask, finds the
+matching schema row, and performs the state transition described by
+that row.
+
+Root entries create and initialize the active screen.  Skipped
+entries create a balanced throwaway state.  Normal object entries
+create a child state and transition to `JSON_STATE_L_BRACE`.  Normal
+scalar key entries create a child state and transition to
+`JSON_STATE_VALUE`.
 
 ```c
 void json_state_key(void)
 ```
 
-This function is called when the JSON state machine is in the
-JSON_STATE_KEY state.  It verifies that the parsed token is
-enclosed within double quote characters and then strips those
-quotes prior to calculating the tokens hash value.
+This function is called when the parser is in `JSON_STATE_KEY`.  It
+handles the special case where a closing brace is read, verifies and
+strips key quotes, dispatches through `schema[]`, and verifies the colon
+following the key token.
 
-An attempt is then made to select from the object_types[]
-uC_switch_t array and if this is successful then the JSON state is
-transitioned to the JSON_STATE_L_BRACE state.
 
-Otherwise an attempt is then made to select from the key_types[]
-uC_switch_t array.
-
-The code then verifies that there is a ':' immediately following
-the key / object token.
-
-### 11.4. json_value.c
-
-After a key token has been successfully parsed and its associated function
-is called the JSON state is transitioned into JSON_STATE_VALUE.  These
-functions handle each key type and sets an appropriate item within their
-associated object structures which is contained within the JSON state
-machines state structure.
+### 11.4. `json_value.c`
+After a scalar key token has been matched by `json_schema.c` the JSON state
+is transitioned into `JSON_STATE_VALUE`.  These functions handle each value
+type and set the appropriate item within the associated object structure
+held by the JSON state machine.
 
 ```c
 static void value_fgbg(void)
 ```
 
 This function is called to set either a foreground or a background
-color within one of the various uC_attribs_t structures.  These
+color within one of the various `uC_attribs_t` structures.  These
 'various' structures are all used to assign attributes to
 different elements within the user interface.
 
@@ -7139,7 +6852,7 @@ static void value_gray_fgbg(void)
 ```
 
 This function is called to set either a gray scale foreground or a
-gray scale background within one of the various uC_attrib_t
+gray scale background within one of the various `uC_attrib_t`
 structures.  These 'various' structures are used to assign
 attributes to different elements within the user interface.
 
@@ -7148,7 +6861,7 @@ static void value_rgb_fg(uC_attribs_t *gstruct)
 ```
 
 This function is called to set one element of a RGB foreground
-color one of the various uC_attribs_t structures. These 'various'
+color one of the various `uC_attribs_t` structures. These 'various'
 structures are used to assign attributes to different elements
 within the user interface.
 
@@ -7156,16 +6869,16 @@ The *gstruct attributes structure passed in here is the keys
 grandparent because its parent is a pseudo structure.  The key
 will be one of the following items,
 
-- KEY_RED
-- KEY_GREEN
-- KEY_BLUE
+- `KEY_RED`
+- `KEY_GREEN`
+- `KEY_BLUE`
 
 ```c
 static void value_rgb_bg(uC_attribs_t *gstruct)
 ```
 
 This function is called to set one element of a RGB background
-color one of the various uC_attribs_t structures. These 'various'
+color one of the various `uC_attribs_t` structures. These 'various'
 structures are used to assign attributes to different elements
 within the user interface.
 
@@ -7173,9 +6886,9 @@ The *gstruct attributes structure passed in here is the keys
 grandparent because its parent is a pseudo structure.  The key
 will be one of the following items,
 
-- KEY_RED
-- KEY_GREEN
-- KEY_BLUE
+- `KEY_RED`
+- `KEY_GREEN`
+- `KEY_BLUE`
 
 ```c
 static void value_rgb(void)
@@ -7210,9 +6923,9 @@ static void value_name(void)
 This function will set the name string of the keys parent object
 structure which will be one of the following object structures.
 
-- STRUCT_WINDOW
-- STRUCT_MENU_ITEM
-- STRUCT_PULLDOWN
+- `STRUCT_WINDOW`
+- `STRUCT_MENU_ITEM`
+- `STRUCT_PULLDOWN`
 
 In the case of a window this function sets both its name and its
 display name.  The name of a window structure is a hash value of
@@ -7223,7 +6936,7 @@ static void val_m_item_flag(menu_item_t *item)
 ```
 
 This function will set the flags element of a menu structure.
-Only one flag type is supported which is uC_MENU_DISABLED.
+Only one flag type is supported which is `uC_MENU_DISABLED`.
 
 ```c
 static void val_pd_flag(pulldown_t *pd)
@@ -7231,14 +6944,14 @@ static void val_pd_flag(pulldown_t *pd)
 
 This function will set the flags element of a pulldown menu
 structure.  Only one flag type is supported which is
-uC_MENU_DISABLED.
+`uC_MENU_DISABLED`.
 
 ```c
 static void val_win_flag(uC_window_t *win)
 ```
 
 This function will set the flags element of a window structure.
-If the flags being set contains a uC_WIN_BOXED then the windows
+If the flags being set contains a `uC_WIN_BOXED` then the windows
 width value is flagged as needing to be adjusted once the JSON
 parser has completed building the user interface.
 
@@ -7249,9 +6962,9 @@ static void value_flag(void)
 This function will set a flags element of the grand parent
 object structure of the key.  The grand parent will be one of
 
-- STRUCT_MENU_ITEM
-- STRUCT_PULLDOWN
-- STRUCT_WINDOW
+- `STRUCT_MENU_ITEM`
+- `STRUCT_PULLDOWN`
+- `STRUCT_WINDOW`
 
 ```c
 static void value_border_type(void)
@@ -7260,9 +6973,9 @@ static void value_border_type(void)
 This function will give a window structure a border which may be
 one of the following border types.
 
-- uC_BDR_SINGLE
-- uC_BDR_DOUBLE
-- uC_BDR_CURVED
+- `uC_BDR_SINGLE`
+- `uC_BDR_DOUBLE`
+- `uC_BDR_CURVED`
 
 ```c
 static void value_blank(void)
@@ -7299,15 +7012,17 @@ address given that functions name hash.
 static void value_shortcut(void)
 ```
 
-One day, this function may very well give a pulldown menu item a
-shortcut key.  This is potentially on the todo list to add to the
-menu engine.
+This function sets a pulldown menu item's shortcut key.  The JSON
+value must be quoted and non-empty; the first character in that
+quoted value is stored as the menu item's shortcut.  The menu item
+creation path later registers that shortcut with the screen-level
+shortcut registry when the item is enabled.
 
 ```c
 static const uC_switch_t value_types[] =
 ```
 
-This uC_switch_t array associates each known key type with one of
+This `uC_switch_t` array associates each known key type with one of
 the key handling functions documented above.
 
 ```c
@@ -7361,17 +7076,17 @@ void json_state_value(void)
 ```
 
 This function is called by the JSON state machine when the current
-JSON state is STATE_VALUE.   It initializes the current key value
+JSON state is `STATE_VALUE`.   It initializes the current key value
 to a special magic "not a number" value and then evaluates the
-JSON data and overrides that NAN with an actual value.
+JSON data and overrides that `NAN` with an actual value.
 
 It first tests to see if the value token is a known named constant
-and if, after doing this the key value is still NAN it will then
+and if, after doing this the key value is still `NAN` it will then
 attempt to interpret the value token as a numerical string.
 
 It must be one or other of these!
 
-It then uC_switch_t selects a function based on the key name so
+It then `uC_switch_t` selects a function based on the key name so
 the function which knows how to set the specified key to the
 specified value will be executed.
 
@@ -7379,15 +7094,15 @@ At this time, if the JSON state stack is not empty the previous
 JSON state is popped off the state stack which will be one of the
 following states.
 
-- JSON_STATE_KEY
-- JSON_STATE_R_BRACE
+- `JSON_STATE_KEY`
+- `JSON_STATE_R_BRACE`
 
 If the JSON state stack was empty here that is an error condition
 that I do not actually believe is possible (but then again, this
 IS C!).
 
-### 11.5. json_populate.c
 
+### 11.5. `json_populate.c`
 As the JSON sources are parsed and the state machine is executed, numerous
 object structures will be created and populated with key values.  However,
 when an object structure is defined as part of some other parent object
@@ -7406,13 +7121,13 @@ static void populate_attribs(void *pstruct, int32_t ptype)
 ```
 
 This function will populate a parent structure with its child
-uC_attribs_t object.  The parent object will be one of the
+`uC_attribs_t` object.  The parent object will be one of the
 following...
 
-- STRUCT_WINDOW
-- STRUCT_BACKDROP
-- STRUCT_PULLDOWN
-- STRUCT_MENU_BAR
+- `STRUCT_WINDOW`
+- `STRUCT_BACKDROP`
+- `STRUCT_PULLDOWN`
+- `STRUCT_MENU_BAR`
 
 When the parent object has been populated with the child object
 the child objects JSON state structure is freed.
@@ -7433,8 +7148,8 @@ This function will populate a parent structures selected
 attributes with its child attributes structure.   The parent
 structure will be one of the following types..
 
-- STRUCT_PULLDOWN
-- STRUCT_MENU_BAR
+- `STRUCT_PULLDOWN`
+- `STRUCT_MENU_BAR`
 
 Once completed the child structures JSON state structure is freed.
 
@@ -7446,8 +7161,8 @@ This function will populate a parent structures disabled
 attributes with its child attributes structure.  The parent
 structure will be one of the following types.
 
-- STRUCT_PULLDOWN
-- STRUCT_MENU_BAR
+- `STRUCT_PULLDOWN`
+- `STRUCT_MENU_BAR`
 
 Once completed the child structures JSON state structure is freed.
 
@@ -7474,7 +7189,7 @@ static void populate_window(json_state_t *parent)
 ```
 
 This function populates the root screen structure with a child
-window structure.   The uC_scr_win_attach() API is called to
+window structure.   The `uC_scr_win_attach()` API is called to
 add the child window to its parent screen.
 
 ```c
@@ -7499,8 +7214,8 @@ For each object structure created by the JSON state machine this
 function is called to add that object structure to its parent
 object structure using one of the above documented functions.
 
-### 11.6. json_build.c
 
+### 11.6. `json_build.c`
 This module will build the applications user interface, allocating various
 structures and fixing values which could not be known while the state
 machine built the user interface objects until all the objects had been
@@ -7535,7 +7250,7 @@ critical error.
 static void fix_win(uC_screen_t *scr, uC_window_t *win)
 ```
 
-Window positional coordinates can be expressed as "uC_WIN_FAR" in the
+Window positional coordinates can be expressed as "`uC_WIN_FAR`" in the
 JSON data.  This means the window is meant to be situated either
 as far right or as far down the screen as it can go and still fit
 within the bounds of that screen.
@@ -7584,7 +7299,7 @@ void json_build_ui(void)
 ```
 
 This function is called as the final operation of the JSON state
-machine, once the JSON_STATE_DONE state is reached.
+machine, once the `JSON_STATE_DONE` state is reached.
 
 It allocates the backing store for the newly created screen
 structure and fixes all the windows and any menu bar attached to
@@ -7594,8 +7309,403 @@ At this time the entire user interface has been defined.
 
 Job complete!
 
-## 12. Final words
 
+## 12. Function coverage appendix
+This appendix covers small helper functions that are not already described
+by name in the main source-file sections above.  It is intentionally short:
+the goal is to identify what each function is for and what important side
+effect it has, not to restate the source code.
+
+
+### `src/json/json.c`
+`json_state_machine()` drives the parser state machine until the JSON
+input is consumed or a terminal parser state is reached.  It dispatches
+token handling according to the current JSON parser state.
+
+
+### `src/json/json_populate.c`
+`copy_attribs_to()` copies the currently parsed attribute values into a
+destination `uC_attribs_t`.  It is the local helper used when a JSON object
+has completed an attribute description.
+
+
+### `src/json/json_value.c`
+`value_attrib()` interprets one attribute value from JSON and stores it in
+the active parser target.
+
+`value_window_dim()` interprets a window dimension value.  It accepts the
+numeric case and the special window-dimension tokens used by the JSON UI
+description.
+
+
+### `src/keys/key_sequence.c`
+`kLFT()` emits the terminal capability for shifted cursor-left.
+
+`kRIT()` emits the terminal capability for shifted cursor-right.
+
+
+### `src/keys/uC_key_table.c`
+`k_sleft()` maps the shifted left-arrow escape sequence onto
+`UC_KEY_SLEFT`.
+
+`k_sright()` maps the shifted right-arrow escape sequence onto
+`UC_KEY_SRIGHT`.
+
+`uC_restore_default_key_action()` restores one default key action only if
+the current slot still contains the expected action.  This keeps feature
+cleanup from trampling a later override.
+
+`uC_restore_key_action()` performs the same guarded restore operation for
+the currently active key handler table.
+
+`key_context()` captures the popup/widget-popup state used by the
+consolidated `uC_key()` dispatcher.
+
+`key_shortcuts_blocked()` reports whether global shortcuts should be
+blocked.  Raw informational popups and active textbox editing both block
+shortcut dispatch.
+
+`key_shortcut_run()` gives the shortcut registry a chance to consume a
+key.  Popup widget groups use the popup-only shortcut path.
+
+`key_menu_handle()` gives the menu system a chance to handle a key when a
+popup is not owning the interface.
+
+`key_widget_handle()` gives the widget system a chance to handle a key
+when widgets are active and no raw-only popup is blocking them.
+
+
+### `src/keys/uC_shortcuts.c`
+`shortcut_key()` extracts the base key from a shortcut value.
+
+`shortcut_alpha()` tests whether a key is alphabetic.
+
+`shortcut_upper()` converts an alphabetic key to upper case.
+
+`shortcut_normalize()` normalizes plain alphabetic shortcuts so upper and
+lower case compare consistently.
+
+`shortcut_plain_match()` compares a plain shortcut key against an input
+key, including the case-folding rule for alphabetic shortcuts.
+
+`shortcut_ctrl_code()` converts a control-key input byte into the matching
+alphabetic key when possible.
+
+`uC_shortcut_matches()` compares a registered shortcut against a key
+returned by the keyboard input path.
+
+
+### `src/terminfo/uC_attribs.c`
+`uC_set_fg()` sets the foreground color field of an attribute object.
+
+`uC_set_bg()` sets the background color field of an attribute object.
+
+`uC_set_gray_fg()` sets a grayscale foreground value.
+
+`uC_set_gray_bg()` sets a grayscale background value.
+
+`uC_set_rgb_fg()` sets a full RGB foreground color.
+
+`uC_set_rgb_bg()` sets a full RGB background color.
+
+
+### `src/terminfo/uC_terminfo.c`
+`ti_set_screen()` binds terminfo output to the active screen.  Terminal
+cursor tracking is screen-relative, so terminfo needs this pointer before
+emitting cursor movement.
+
+
+### `src/terminfo/uC_ti_parse.c`
+`_div()` implements the division operation used by the terminfo format
+string evaluator.
+
+
+### `src/ui/menus/uC_menu_bar.c`
+`pd_label_width()` returns the widest visible label width in a pulldown.
+The menu renderer uses this to align shortcut text.
+
+`draw_item_shortcut()` draws one menu item's shortcut in the aligned
+shortcut column.
+
+
+### `src/ui/menus/uC_menu_item.c`
+`menu_shortcut_action()` is the shortcut registry callback for menu items.
+It invokes the associated menu item's action when the item is still live.
+
+`menu_item_shortcut_register()` registers a menu item shortcut against the
+screen that owns its pulldown.
+
+`menu_item_shortcut_remove()` removes a menu item's registered shortcut.
+
+`menu_pd_shortcuts_register()` registers every shortcut owned by a
+pulldown.
+
+`menu_pd_shortcuts_remove()` removes every shortcut owned by a pulldown.
+
+
+### `src/ui/menus/uC_menu_key.c`
+`menu_set_screen()` stores the screen currently being driven by menu key
+handling.
+
+`pd_enabled()` reports whether a pulldown exists and is not disabled.
+
+`item_enabled()` reports whether a menu item exists and is not disabled.
+
+`menu_key_return()` converts the internal no-key marker into the public
+zero return value expected by menu callers.
+
+`select_enabled_pd()` advances to an enabled pulldown, wrapping as needed
+and skipping disabled pulldowns.
+
+`select_enabled_item()` advances to an enabled item within a pulldown,
+wrapping as needed and skipping disabled menu items.
+
+`menu_normalize_selection()` repairs the selected menu and item after menu
+entries are disabled or enabled.  It also closes an invalid open pulldown.
+
+`menu_action_key()` reads the key produced by an activated menu item and
+normalizes the menu return value.
+
+`menu_key_f10()` injects `UC_KEY_F10` into the key buffer for the menu
+handler.
+
+`uC_menu_deinit_keys()` restores key handlers that were temporarily
+installed by the menu system.
+
+
+### `src/ui/menus/uC_menu_shortcut.c`
+The local `shortcut_key()` extracts the base key from a menu shortcut.
+
+The local `shortcut_upper()` converts a menu shortcut key to upper case
+for display.
+
+`shortcut_base_display()` formats the base key portion of a menu shortcut.
+
+`uC_menu_shortcut_display()` formats a full menu shortcut, including
+supported modifier prefixes.
+
+`uC_menu_shortcut_width()` returns the display width needed for a menu
+shortcut string.
+
+`uC_menu_shortcut_matches()` tests whether a key activates a menu
+shortcut.
+
+
+### `src/ui/uC_border.c`
+`uC_window_clear_box()` clears a rectangular area inside a window.  It is
+used by border and box drawing paths that need to erase an interior before
+redrawing.
+
+
+### `src/ui/uC_screen_draw.c`
+`scr_is_too_small()` reports whether a screen is smaller than its declared
+minimum dimensions.
+
+`too_small_write()` writes clipped text into the automatic "Too small"
+popup without changing the window's permanent attributes.
+
+`text_len_i16()` returns a small signed length for literal UI text used by
+the popup layout code.
+
+`too_small_popup_prepare()` creates or refreshes the automatic "Too small"
+popup window.
+
+`scr_draw_too_small_popup()` draws the automatic size-warning popup or
+tears it down once the screen is large enough again.
+
+`scr_cell_width()` returns the display width of a composed screen cell.
+The `DEADC0DE` sentinel is treated as a continuation cell with zero
+standalone width.
+
+`scr_blank_cell()` replaces a composed screen cell with a space.
+
+`scr_normalize_wide_row()` cleans one composed screen row so wide glyphs
+cannot leave orphaned `DEADC0DE` continuation cells or partial wide
+characters after overlapping windows have been painted.
+
+`monotonic_ns()` returns a monotonic timestamp in nanoseconds for draw
+timing.
+
+`resize_fill_shadow_view()` builds a shadow copy of a screen view during
+resize handling.
+
+`resize_draw_shadow()` draws the resize shadow view used to avoid stale
+terminal contents after a `WINCH`.
+
+
+### `src/ui/uC_window_draw.c`
+`win_cell_width()` returns the display width of one window cell and treats
+`DEADC0DE` as a continuation marker.
+
+`win_blank_cell()` fills a window cell with the window's current blank
+character and attributes.
+
+`win_blank_range()` blanks a half-open range of cells in one row.
+
+`win_wide_owner_at()` finds the owning cell of a wide glyph that covers a
+given column.
+
+`win_clear_wide_overlap()` blanks any existing wide glyph that overlaps a
+new write range.
+
+`win_normalize_wide_row()` removes invalid partial wide glyphs from a
+window row after clipping or horizontal motion.
+
+`win_copy_line()` copies one line of a window backing store to another
+line in the same window.
+
+`uC_win_set_cx()` sets a window's current X cursor position if the value
+is inside the window.
+
+`uC_win_set_cy()` sets a window's current Y cursor position if the value
+is inside the window.
+
+`uC_win_crsr_up()` moves the window cursor up one row when possible.
+
+`uC_win_crsr_dn()` moves the window cursor down one row when possible.
+
+`uC_win_crsr_lt()` moves the window cursor left one column when possible.
+
+`uC_win_crsr_rt()` moves the window cursor right one column when possible.
+
+`uC_win_cr()` performs a carriage return inside a window by moving the
+window cursor to column zero.
+
+
+### `src/ui/widgets/uC_widget.c`
+`auto_sequence()` returns the next automatically assigned widget sequence
+number.
+
+`sync_seq()` advances the automatic sequence counter past an explicitly
+assigned sequence number.
+
+`uC_widget_reset_sequence()` resets automatic widget sequence assignment.
+
+`widget_clear_focus()` removes focus from a widget and clears the global
+widget focus state when that widget was active.
+
+`widget_detach_widget()` removes a widget from its view, unregisters its
+shortcut and clears focus if needed.
+
+
+### `src/ui/widgets/uC_widget_button.c`
+`button_letter_alpha()` tests whether a candidate button shortcut
+character is alphabetic.
+
+`button_letter_upper()` converts a button shortcut character to upper
+case.
+
+`button_letter_from_name()` chooses a usable button shortcut character
+from a requested letter or from the button name.
+
+
+### `src/ui/widgets/uC_widget_draw.c`
+`widget_set_attrs()` selects the attributes used to draw a widget,
+including focus and inactive-view styling.
+
+`draw_widget_view_group()` draws all views and widgets contained in one
+view group window.
+
+`draw_popup_view_group()` draws a popup view group and then paints its
+window onto the screen as the topmost popup layer.
+
+
+### `src/ui/widgets/uC_widget_keys.c`
+`uC_widget_reset_state()` clears the global widget input state and resets
+automatic widget sequencing.
+
+`widget_key_f10()` injects the widget-loop `F10` marker for the legacy
+widget key path.
+
+`uC_widget_current_sequence()` returns the sequence number of the
+currently selected widget.
+
+`widget_input_active()` reports whether a screen currently has an active
+widget context that can receive keys.
+
+
+### `src/ui/widgets/uC_widget_mouse.c`
+`widget_activate_mouse_hit()` activates the widget identified by a mouse
+hit and returns the key/action produced by that activation.
+
+`widget_hit_test()` maps a screen coordinate to a widget hit record when
+the coordinate lies inside an active widget.
+
+`uC_widget_mouse_handle()` handles one decoded mouse event for the widget
+system.
+
+
+### `src/ui/widgets/uC_widget_scan.c`
+`scan_tab_candidate_in_vg()` scans a view group once to find the next or
+previous selectable widget sequence, including the wrap candidate.
+
+`tab_candidate()` chooses the next or previous sequence for tab
+navigation.  Sparse sequence numbers are supported without probing every
+integer in the gap.
+
+
+### `src/ui/widgets/uC_widget_view.c`
+`uC_widget_to_view_index()` moves a scrollable view to a specific item
+index.
+
+`uC_widget_view_set_position()` changes a view's position inside its
+parent view group.
+
+`uC_widget_view_index()` returns the current top item index of a
+scrollable view.
+
+
+### `src/ui/widgets/uC_widget_view_group.c`
+`widget_shortcut_attached_active()` checks whether a widget shortcut still
+belongs to an attached, active widget group.
+
+`widget_shortcut_action()` is the shortcut registry callback for button
+widgets.  It selects the button and injects the button's action key.
+
+`widget_register_shortcuts()` registers button shortcuts for all widgets
+inside a view group.
+
+`widget_remove_shortcuts()` unregisters shortcuts owned by all widgets in
+a view group.
+
+`widget_set_vg_inactive()` sets or clears the inactive flag on a view
+group.
+
+`widget_modal_deactivate_others()` marks non-popup view groups inactive
+while a widget popup owns the interface.
+
+`widget_modal_restore_others()` restores view-group inactive state after
+the widget popup is closed.
+
+`widget_clear_focus_for_vg()` clears global widget focus when the focused
+widget belongs to a specified view group.
+
+`widget_vg_release_window()` releases the backing store owned by a view
+group window.
+
+`widget_view_fits_group()` validates that a view fits completely inside
+its parent view group.
+
+
+### `src/utils/uC_rgb_hsl.c`
+`dmax()` returns the larger of two double-precision values.
+
+`dmin()` returns the smaller of two double-precision values.
+
+`rgb2hsl()` converts normalized RGB components to HSL.
+
+`hue2rgb()` is the hue interpolation helper used by HSL-to-RGB conversion.
+
+`hsl2rgb()` converts normalized HSL components to RGB.
+
+`make_contrast()` adjusts an RGB color to produce a contrasting color.
+
+
+### `src/utils/uC_win_printf.c`
+`do_win_printf()` executes one parsed `uC_win_printf()` format operation.
+
+
+## 13. Final words
 This library has been in semi active development for a number of years.
 It is far from complete, has known issues (with certain terminal types)
 and is significantly larger than I intended it to be (and will probably

@@ -19,6 +19,7 @@ ucurses_test_dep = declare_dependency(
 
 test_specs = [
     ['test_smoke',  ['test_smoke.c'], false],
+    ['test_alloc',  ['test_alloc.c'], false],
     ['test_fnv',    ['test_fnv.c'], false],
     ['test_utf8',   ['test_utf8.c'], false],
     ['test_list',   ['test_list.c'], false],

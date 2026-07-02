@@ -145,6 +145,12 @@ API void uC_console_set_gray_fg(uC_colors_gray_t color);
 API void uC_console_set_gray_bg(uC_colors_gray_t color);
 API void uC_console_set_rgb_fg(uC_color_t r, uC_color_t g, uC_color_t b);
 API void uC_console_set_rgb_bg(uC_color_t r, uC_color_t g, uC_color_t b);
+API void uC_console_set_ul(void);
+API void uC_console_set_rev(void);
+API void uC_console_set_bold(void);
+API void uC_console_clr_ul(void);
+API void uC_console_clr_rev(void);
+API void uC_console_clr_bold(void);
 
 // -----------------------------------------------------------------------
 

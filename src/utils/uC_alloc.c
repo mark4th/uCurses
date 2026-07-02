@@ -133,6 +133,32 @@ static bool check_zone_full(uC_mem_zone_t zone)
 
 // -----------------------------------------------------------------------
 
+static bool find_alloc_index(uC_mem_array_t *z, void *addr, size_t *index)
+{
+    size_t i;
+
+    if ((z == NULL) || (addr == NULL))
+    {
+        return false;
+    }
+
+    for (i = 0; i < z->alloc_count; i++)
+    {
+        if (z->alloc_array[i] == (uint64_t)addr)
+        {
+            if (index != NULL)
+            {
+                *index = i;
+            }
+            return true;
+        }
+    }
+
+    return false;
+}
+
+// -----------------------------------------------------------------------
+
 API void *uC_alloc(uC_mem_zone_t zone, size_t size)
 {
     bool f;
@@ -170,25 +196,58 @@ API void *uC_alloc(uC_mem_zone_t zone, size_t size)
 
 // -----------------------------------------------------------------------
 
+API void *uC_realloc(uC_mem_zone_t zone, void *addr, size_t size)
+{
+    size_t i;
+    void *p;
+    uC_mem_array_t *z;
+
+    if (addr == NULL)
+    {
+        return (size == 0) ? NULL : uC_alloc(zone, size);
+    }
+
+    if (size == 0)
+    {
+        uC_free(zone, addr);
+        return NULL;
+    }
+
+    z = uC_memory[zone];
+    if (!find_alloc_index(z, addr, &i))
+    {
+        return NULL;
+    }
+
+    p = realloc(addr, size);
+    if (p != NULL)
+    {
+        z->alloc_array[i] = (uint64_t)p;
+    }
+
+    return p;
+}
+
+// -----------------------------------------------------------------------
+
 API void uC_free(uC_mem_zone_t zone, void *addr)
 {
     size_t i;
     uC_mem_array_t *z = uC_memory[zone];
 
-    for (i = 0; i < z->alloc_count; i++)
+    if (!find_alloc_index(z, addr, &i))
     {
-        if (z->alloc_array[i] == (uint64_t)addr)
-        {
-            free(addr);
-            z->alloc_count--;
-
-            if (i != z->alloc_count)
-            {
-                z->alloc_array[i] = z->alloc_array[z->alloc_count];
-            }
-            z->alloc_array[z->alloc_count] = 0;
-        }
+        return;
     }
+
+    free(addr);
+    z->alloc_count--;
+
+    if (i != z->alloc_count)
+    {
+        z->alloc_array[i] = z->alloc_array[z->alloc_count];
+    }
+    z->alloc_array[z->alloc_count] = 0;
 }
 
 // =======================================================================

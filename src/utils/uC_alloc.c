@@ -202,16 +202,24 @@ API void *uC_realloc(uC_mem_zone_t zone, void *addr, size_t size)
     void *p;
     uC_mem_array_t *z;
 
+    // a realloc of a currently not allocated buffer is sinlently changed
+    // to an allocation
     if (addr == NULL)
     {
         return (size == 0) ? NULL : uC_alloc(zone, size);
     }
+
+    // if we are reallocating a currently allocated buffer to a size of
+    // zero thats a free
 
     if (size == 0)
     {
         uC_free(zone, addr);
         return NULL;
     }
+
+    // if the memory we are requesting a change on does not exist in the
+    // specified zone that is a mistake
 
     z = uC_memory[zone];
     if (!find_alloc_index(z, addr, &i))

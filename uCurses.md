@@ -30,7 +30,8 @@
 ```text
 
     1..........Introduction
-    1.1............What's documented
+    1.1............Build process
+    1.2............What's documented
 
     2..........Terminfo
     2.1...........uC_ti_parse.c
@@ -95,11 +96,10 @@
     10.4.2.............The menu dispatch code generation workflow
     10.5...........uC_eval.c
     10.6...........uC_list.c
-    10.7...........uC_rgb_hsl.c
-    10.8...........uC_switch.c
-    10.9...........uC_utf8.c
-    10.10..........uC_win_printf.c
-    10.11..........uC_winch.c
+    10.7...........uC_switch.c
+    10.8...........uC_utf8.c
+    10.9...........uC_win_printf.c
+    10.10..........uC_winch.c
 
     11.........JSON
     11.1...........json.c
@@ -150,7 +150,7 @@ At the time of writing, ncurses is a little over 4.3 megabytes in
 size and I may have missed counting a few files.  It also takes a
 little over seven minutes to compile on my laptop.
 
-uCurses on the other hand currently takes up about 87k and
+uCurses on the other hand currently takes up about 77k and
 compiles in about two or three seconds ish depending on planetary
 alignment.  This means that recompiling this on any embedded
 system it is installed on would probably not bog that system down
@@ -204,6 +204,51 @@ The menu system, widgets and JSON parser are all independent build
 options and excluding one or more of them can significantly shrink
 the overall size of the build for your target.
 
+
+### 1.1. Build process
+The top level `Makefile` is a convenience wrapper around Meson and Ninja.
+Running `make` creates the `build/` directory when needed, configures the
+project with Meson, then runs Ninja to build both the shared and static
+libraries.
+
+```sh
+make
+```
+
+The wrapper prefers Clang and LLD when they are available.  GCC is also
+supported by the Meson build, and the build system selects size-oriented
+optimization flags for the compiler in use: `-Oz` for Clang and `-Os` for
+GCC.
+
+The common developer targets are:
+
+```sh
+make              # configure and build the library
+make examples     # build and copy runnable demos into example/
+make tests        # build and run the Meson test suite
+make clean        # remove the build tree and copied example binaries
+make rebuild      # clean, configure, and build from scratch
+make install      # install the library and public headers
+```
+
+The `example/` directory also has a small forwarding makefile, so
+`make -C example` rebuilds the examples from the project root.
+
+Optional features are controlled by Meson options in `meson_options.txt`.
+Menus, JSON, status windows, widgets and popups default to enabled.  Mouse
+support defaults to disabled.
+
+```sh
+meson configure build -Dmouse=true
+meson configure build -Djson=false -Dwidgets=false
+make
+```
+
+If source files are added to or removed from one of the source directories,
+Meson needs to be reconfigured because the file lists are collected during
+configuration.  The simplest option is `make rebuild`; the lighter option
+is `meson setup build --reconfigure` followed by `make`.
+
 NOTE: This library is built with a `-fvisibility=hidden` arg passed to the C
 compiler.  This will cause all symbols that are not marked as public to be
 stripped out of the executable at link time.  All public API entities are
@@ -217,7 +262,7 @@ API macro nor marked as static will have global visibility only within the
 library itself.
 
 
-### 1.1. What's documented (or will be)
+### 1.2. What's documented (or will be)
 The documentation for uCurses will detail every aspect of this library.
 It will show you not only how to use it but how it works and why it does
 the things it does the way it does them.  This specific document is
@@ -242,11 +287,7 @@ in their terminfo databases.  The more I learn the more I come to
 understand that this might not actually be *entirely* their fault but...
 I still rant because...
 
-> I consider terminfo to be a BINDING contract so when (for example)
-> your terminal randomly decides to return either `0x08` or `0x7f` when
-> someone presses the backspace key (based on who compiled it?), when
-> your terminfo explicitly states that it will return `0x08`, then I
-> consider you to be in flagrant, wilful violation of your contract.
+> I consider terminfo to be a BINDING contract so when (for example) your terminal randomly decides to return either `0x08` or `0x7f` when someone presses the backspace key (based on who compiled it?), when your terminfo explicitly states that it will return `0x08`, then I consider you to be in flagrant, wilful violation of your contract.
 
 Things like this force me to add special needs 'duct tape' code to fix
 things that in my mind should not need fixing.  This and other "quirks"
@@ -411,6 +452,23 @@ The above "die horribly (tm)" is because both the stack overflow and
 underflow are considered to be critical errors in this parser.  In the few
 years I have been developing this library I have never actually seen this
 occur and as we all know, the absence of proof is the proof of absence!
+
+```c
+static void fs_reset(void)
+```
+
+Clears the scratch stack used while compiling a single terminfo format
+string.  This is called at the start of `uC_parse_format()` so no
+leftover stack state from one format string can affect the next.
+
+```c
+static void fs_drop_leftovers(void)
+```
+
+Discards any values a terminfo format string left on the scratch stack.
+A leftover value means the format pushed something it did not consume,
+but this is not fatal because the generated escape sequence is already
+complete and the scratch value must not leak into the next parse.
 
 ```c
 static int64_t *get_var_addr(void)
@@ -2713,7 +2771,7 @@ This is because UTF-8 characters can be multi width.
 
 Note: uCurses supports 1-wide and 2-wide characters.
 Zero-width combining characters and bidi text are out of
-scope; see section 10.9 for the rationale.
+scope; see section 10.8 for the rationale.
 
 This code also accounts for conditions where a single width
 character is emitted over the top of one or other half of a double
@@ -5791,24 +5849,7 @@ second
 third
 
 
-### 10.7. `uC_rgb_hsl.c`
-The functions in this file are used to compute contrasting foreground and
-background colors.   This code here was snagged somewhere and I forget
-where I found it and utterly neglected to save any attribution.  If this
-is your code let me know and I will gladly give that attribution.
-
-However, I am not entirely happy with the contrasting colors produced by
-these algorithms and I really need a better replacement for them.  As
-noted in the comments at the top of this file I have previously found a
-much better algorithm but even that was not very good and I have no idea
-wtf I did with that code after I found it.  I obviously did not put that
-code in here in place of what is here now (ID10T)
-
-For this reason, this text here is the only documentation I am prepared
-to write at this time. (junk code should be discarded not documented!)
-
-
-### 10.8. `uC_switch.c`
+### 10.7. `uC_switch.c`
 If I documented my reasoning for creating this module it would come over
 as a highly toxic rant.  This is because there are certain aspects of the
 C programming language that I have absolutely nothing good to say about
@@ -5838,7 +5879,7 @@ Use of this function is not mandated, you can ignore it with
 impunity at your pleasure.
 
 
-### 10.9. `uC_utf8.c`
+### 10.8. `uC_utf8.c`
 Unicode assigns a unique numerical value called a code point to every
 character in every writing system.  These values range from `0x000000` to
 `0x10FFFF`.  Your terminal does not receive code points directly; they must
@@ -6002,7 +6043,7 @@ Returns 0 if the strings are equal up to len characters or a
 non-zero difference value if they are not.
 
 
-### 10.10. `uC_win_printf.c`
+### 10.9. `uC_win_printf.c`
 This module will probably make purists cringe but it has proved to be one
 of the most useful extensions added to this library.  It greatly
 simplifies the use of a significant part of the uCurses API.
@@ -6290,7 +6331,7 @@ uC_widget_vg_create(name,
 ```
 
 
-### 10.11. `uC_winch.c`
+### 10.10. `uC_winch.c`
 This module handles the `SIGWINCH` signal within uCurses.  This signal is
 sent to a process when the terminal window it is running within is
 resized.  uCurses does not try to magically resize an existing interface.
@@ -7419,6 +7460,12 @@ emitting cursor movement.
 `_div()` implements the division operation used by the terminfo format
 string evaluator.
 
+`fs_reset()` clears the scratch format stack before parsing one terminfo
+format string.
+
+`fs_drop_leftovers()` discards unused scratch stack values before returning
+from one terminfo format string.
+
 
 ### `src/ui/menus/uC_menu_bar.c`
 `pd_label_width()` returns the widest visible label width in a pulldown.
@@ -7685,20 +7732,6 @@ group window.
 
 `widget_view_fits_group()` validates that a view fits completely inside
 its parent view group.
-
-
-### `src/utils/uC_rgb_hsl.c`
-`dmax()` returns the larger of two double-precision values.
-
-`dmin()` returns the smaller of two double-precision values.
-
-`rgb2hsl()` converts normalized RGB components to HSL.
-
-`hue2rgb()` is the hue interpolation helper used by HSL-to-RGB conversion.
-
-`hsl2rgb()` converts normalized HSL components to RGB.
-
-`make_contrast()` adjusts an RGB color to produce a contrasting color.
 
 
 ### `src/utils/uC_win_printf.c`

@@ -509,11 +509,15 @@ API void uC_menu_cursor_up(uC_screen_t *scr)
     menu_up();
 }
 
+// -----------------------------------------------------------------------
+
 API void uC_menu_cursor_down(uC_screen_t *scr)
 {
     menu_set_screen(scr);
     menu_down();
 }
+
+// -----------------------------------------------------------------------
 
 API void uC_menu_cursor_left(uC_screen_t *scr)
 {
@@ -521,11 +525,15 @@ API void uC_menu_cursor_left(uC_screen_t *scr)
     menu_left();
 }
 
+// -----------------------------------------------------------------------
+
 API void uC_menu_cursor_right(uC_screen_t *scr)
 {
     menu_set_screen(scr);
     menu_right();
 }
+
+// -----------------------------------------------------------------------
 
 API void uC_menu_select(uC_screen_t *scr)
 {
@@ -566,29 +574,11 @@ bool menu_key(uC_screen_t *scr, uint8_t key, uint8_t *out)
 
     switch (key)
     {
-        case UC_KEY_ESC:
-            uC_menu_close(scr);
-            return true;
-
-        case UC_KEY_UP:
-            menu_up();
-            uC_scr_draw_screen(scr);
-            return true;
-
-        case UC_KEY_DOWN:
-            menu_down();
-            uC_scr_draw_screen(scr);
-            return true;
-
-        case UC_KEY_LEFT:
-            menu_left();
-            uC_scr_draw_screen(scr);
-            return true;
-
-        case UC_KEY_RIGHT:
-            menu_right();
-            uC_scr_draw_screen(scr);
-            return true;
+        case UC_KEY_ESC:   uC_menu_close(scr);  return true;
+        case UC_KEY_UP:    menu_up();           return true;
+        case UC_KEY_DOWN:  menu_down();         return true;
+        case UC_KEY_LEFT:  menu_left();         return true;
+        case UC_KEY_RIGHT: menu_right();        return true;
 
         case '\r':
         case UC_KEY_ENTER:

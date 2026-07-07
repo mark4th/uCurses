@@ -55,7 +55,6 @@ typedef struct
 API uC_screen_t *uCurses_init(char *file, json_mem_t *json, fp_finder_t fp);
 API void uCurses_deInit(void);
 API void entry(void);
-API void make_contrast(uint8_t *r, uint8_t *g, uint8_t *b);
 API bool uC_winch_pending(void);
 API bool uC_winch_dispatch(void);
 API void uC_winch_ack(void);

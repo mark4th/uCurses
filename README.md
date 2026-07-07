@@ -6,11 +6,10 @@ for developers who need a capable TUI on systems where size matters, such
 as embedded Linux targets.
 
 At the time of writing, the full library builds in about two seconds and
-weighs in around 87 kB.  ncurses is roughly 4.3 MB and takes several
+weighs in around 77 kB.  ncurses is roughly 4.3 MB and takes several
 minutes to compile.  On a resource-constrained target the difference is
 significant.
 
----
 
 ## Features
 
@@ -37,7 +36,6 @@ significant.
   independent build options.  Stripping any of them reduces binary size for
   applications that don't need them.
 
----
 
 ## Building
 
@@ -50,7 +48,6 @@ uses Meson/Ninja under the hood — the Makefile is a thin wrapper.  Menus,
 widgets, and the JSON parser each have their own build flags in
 `meson.build` and can be stripped from the build independently.
 
----
 
 ## Concepts
 
@@ -95,7 +92,6 @@ if (uC_test_keys())
 Escape sequences are matched against the terminfo database at runtime, so
 the same binary works correctly across terminal emulators.
 
----
 
 ## Quick start
 
@@ -108,7 +104,6 @@ writing a real application with the library, see
 [`USING-uCurses.md`](USING-uCurses.md).  The large `uCurses.md` file remains
 the reference/manual material for what the library contains and how it works.
 
----
 
 ## Menu dispatch code generator
 
@@ -172,7 +167,6 @@ pre-built dispatch table.  The strings never appear in the final binary.
 
 Lines beginning with `/` are treated as comments and skipped.
 
----
 
 ## Documentation
 
@@ -180,7 +174,6 @@ Full documentation — including the terminfo parser internals, attribute
 system, keyboard matching, screen/window architecture, menu system, widget
 system, and JSON format — is in [`uCurses.md`](uCurses.md).
 
----
 
 ## License
 

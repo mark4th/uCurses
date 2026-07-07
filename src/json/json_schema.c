@@ -55,7 +55,7 @@ extern const int32_t  json_syntax[3];
 
 typedef struct
 {
-    int32_t  hash;           // FNV-1a hash of the JSON key string
+    int32_t  hash;           // FNV-1 hash of the JSON key string
     uint32_t valid_parents;  // parent bitmask (0 = root / no parent)
     uint16_t child_type;     // json_type_t assigned to the new state
     uint16_t child_size;     // sizeof the C struct to allocate (0 = none)
@@ -79,10 +79,13 @@ static const json_schema_t schema[] =
 
     {
         0x1025ba8c, PM(STRUCT_SCREEN), STRUCT_WINDOWS,
-        0, SF_OBJ           },
+        0, SF_OBJ
+    },
 
-    { 0x8ae7f465, PM(STRUCT_WINDOWS),
-      STRUCT_WINDOW,    sizeof(uC_window_t),   SF_OBJ           },
+    {
+        0x8ae7f465, PM(STRUCT_WINDOWS),
+          STRUCT_WINDOW,    sizeof(uC_window_t),   SF_OBJ
+    },
 
     { 0x3bacc0d7, PM(STRUCT_SCREEN),
       STRUCT_BACKDROP,  sizeof(uC_window_t),   SF_OBJ           },

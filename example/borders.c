@@ -91,46 +91,11 @@ static void build_demo(void)
 
 // -----------------------------------------------------------------------
 
-static void exit_prog(void)
-{
-    uC_set_key(0x1b);
-}
-
-// -----------------------------------------------------------------------
-
-static uC_switch_t menu_vectors[] =
-{
-    { 0x8d9c616c, exit_prog }
-};
-
-#define VCOUNT sizeof(menu_vectors) / sizeof(menu_vectors[0])
-
-// -----------------------------------------------------------------------
-
-opt_t menu_address_cb(int32_t hash)
-{
-    size_t i;
-    uC_switch_t *s = menu_vectors;
-
-    for (i = 0; i < VCOUNT; i++)
-    {
-        if (hash == s->option)
-        {
-            return s->vector;
-        }
-        s++;
-    }
-
-    return NULL;
-}
-
-// -----------------------------------------------------------------------
-
 int main(void)
 {
     uint8_t k;
 
-    scr = uCurses_init("json/borders.json", NULL, menu_address_cb);
+    scr = uCurses_init("json/borders.json", NULL, NULL);
 
     build_demo();
     uC_scr_draw_screen(scr);

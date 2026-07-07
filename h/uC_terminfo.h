@@ -25,6 +25,8 @@ typedef struct
     int16_t *ti_numbers;        // pointer to terminfo numbers
     int16_t *ti_strings;
     char    *ti_table;
+    uint16_t ti_string_count;
+    uint16_t ti_table_size;
 
     int8_t wide;                // numbers item size size shift factor
 } ti_file_t;

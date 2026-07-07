@@ -23,6 +23,23 @@ uC_attribs_t attrs =
 uC_attribs_t old_attrs;
 
 // -----------------------------------------------------------------------
+// Reports whether a terminfo string-offset entry exists for this terminal.
+
+static bool ti_string_defined(uint16_t index)
+{
+    uint16_t offset;
+
+    if (index >= ti_vars->ti_file.ti_string_count)
+    {
+        return false;
+    }
+
+    offset = (uint16_t)ti_vars->ti_file.ti_strings[index];
+
+    return offset != UINT16_MAX && offset < ti_vars->ti_file.ti_table_size;
+}
+
+// -----------------------------------------------------------------------
 // normal attribs for menus and widgets (maybe)
 
 API uC_attribs_t uC_attrs_normal =
@@ -151,7 +168,7 @@ static void apply_fg(void)
     // format string for setaf.  if it is 0xffff we need to use setf
     // instead
 
-    (ti_vars->ti_file.ti_strings[359] != -1)
+    ti_string_defined(359)
         ? ti_setaf()
         : ti_setf();
 }
@@ -183,7 +200,7 @@ static void apply_bg(void)
     // there any terminals that support both satab and setb and if so
     // which one should be called?
 
-    (ti_vars->ti_file.ti_strings[360] != -1)
+    ti_string_defined(360)
         ? ti_setab()
         : ti_setb();
 }

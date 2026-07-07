@@ -25,7 +25,7 @@
 // A0 ⢠⢡⢢⢣⢤⢥⢦⢧    E0 ⣠⣡⣢⣣⣤⣥⣦⣧    A8 ⢨⢩⢪⢫⢬⢭⢮⢯    E8 ⣨⣩⣪⣫⣬⣭⣮⣯
 // B0 ⢰⢱⢲⢳⢴⢵⢶⢷    F0 ⣰⣱⣲⣳⣴⣵⣶⣷    B8 ⢸⢹⢺⢻⢼⢽⢾⢿    F8 ⣸⣹⣺⣻⣼⣽⣾⣿
 
-static uint8_t skew[] =
+static const uint8_t skew[] =
 {
     0x00, 0x40, 0x08, 0x48, 0x10, 0x50, 0x18, 0x58,
     0x20, 0x60, 0x28, 0x68, 0x30, 0x70, 0x38, 0x78,
@@ -51,13 +51,55 @@ API int16_t uC_braille_xlat(uint8_t chr)
 // -----------------------------------------------------------------------
 // braille encode map that contains 8 bits per byte of data
 
+static uint8_t braille_8_pack_cell(uint8_t d1, uint8_t d2, uint8_t d3,
+    uint8_t d4, uint8_t bit)
+{
+    // the high nibble of the return data will be the current bit from
+    // each of d1 d2 d3 d4 and the low nibble will be the next lower order
+    // bit from them.
+
+    return (uint8_t)(
+        (((d1 >> bit) & 1) << 0) |
+        (((d2 >> bit) & 1) << 1) |
+        (((d3 >> bit) & 1) << 2) |
+        (((d4 >> bit) & 1) << 3) |
+        (((d1 >> (bit - 1)) & 1) << 4) |
+        (((d2 >> (bit - 1)) & 1) << 5) |
+        (((d3 >> (bit - 1)) & 1) << 6) |
+        (((d4 >> (bit - 1)) & 1) << 7));
+}
+
+// -----------------------------------------------------------------------
+
+static void braille_8_emit_cells(uC_window_t *win, uint16_t *braille_data,
+    uint16_t wx, uint16_t wy, uint8_t d1, uint8_t d2, uint8_t d3,
+    uint8_t d4)
+{
+    uint8_t z;
+    uint8_t d0;
+    uint8_t bit = 7;
+
+    for (z = 0; z < 4; z++)
+    {
+        d0 = braille_8_pack_cell(d1, d2, d3, d4, bit);
+
+        if ((wx < win->width) && (wy < win->height))
+        {
+            braille_data[(wy * win->width) + wx] = uC_braille_xlat(d0);
+        }
+        wx++;
+        bit -= 2;
+    }
+}
+
+// -----------------------------------------------------------------------
+
 API void uC_braille_8(uC_window_t *win, uint16_t *braille_data,
     uint8_t *map, uint16_t width)
 {
-    uint8_t x, y, z;
-    uint8_t d0, d1, d2, d3, d4;
+    uint16_t x, y;
+    uint8_t d1, d2, d3, d4;
     uint8_t *p0;
-    uint16_t wx = 0, wy = 0;
 
     p0 = map;
 
@@ -70,75 +112,65 @@ API void uC_braille_8(uC_window_t *win, uint16_t *braille_data,
             d3 = p0[width * 2];
             d4 = p0[width * 3];
 
-            for (z = 0; z < 4; z++)
-            {
-                // move one bit out of each of d1/d2/d3 and d4 into d0
-                d0 = 0;
-
-                d0 >>= 1;     d0 |= d1 & 0x80;     d1 <<= 1;
-                d0 >>= 1;     d0 |= d2 & 0x80;     d2 <<= 1;
-                d0 >>= 1;     d0 |= d3 & 0x80;     d3 <<= 1;
-                d0 >>= 1;     d0 |= d4 & 0x80;     d4 <<= 1;
-
-                // move another bit out of each of d1/d2/d3 and d4 into d0
-
-                d0 >>= 1;     d0 |= d1 & 0x80;     d1 <<= 1;
-                d0 >>= 1;     d0 |= d2 & 0x80;     d2 <<= 1;
-                d0 >>= 1;     d0 |= d3 & 0x80;     d3 <<= 1;
-                d0 >>= 1;     d0 |= d4 & 0x80;     d4 <<= 1;
-
-                // thats 8 bits copied into d0
-
-                if ((wx < win->width) && (wy < win->height))
-                {
-                    braille_data[(wy * win->width) + wx] =
-                        uC_braille_xlat(d0);
-                }
-                wx++;
-            }
+            braille_8_emit_cells(win, braille_data, x * 4, y, d1, d2, d3,
+                d4);
             p0++;
         }
         p0 += (width * 3);
-        wx = 0;
-        wy++;
     }
 }
 
 // -----------------------------------------------------------------------
 // braille encode map that contains 1 bits per byte of data
 
+static uint8_t braille_1_pack_cell(const uint8_t *p0, const uint8_t *p1,
+    const uint8_t *p2, const uint8_t *p3, uint16_t x)
+{
+    uint16_t x1 = x + 1;
+
+    return (uint8_t)(
+        ((p0[x] & 1) << 0) |
+        ((p1[x] & 1) << 1) |
+        ((p2[x] & 1) << 2) |
+        ((p3[x] & 1) << 3) |
+        ((p0[x1] & 1) << 4) |
+        ((p1[x1] & 1) << 5) |
+        ((p2[x1] & 1) << 6) |
+        ((p3[x1] & 1) << 7));
+}
+
+// -----------------------------------------------------------------------
+
+static void braille_1_emit_cell(uC_window_t *win, uint16_t *braille_data,
+    uint16_t x, uint16_t y, uint8_t d0)
+{
+    if ((x < win->width) && (y < win->height))
+    {
+        braille_data[(y * win->width) + x] = uC_braille_xlat(d0);
+    }
+}
+
+// -----------------------------------------------------------------------
+
 API void uC_braille_1(uC_window_t *win, uint16_t *braille_data,
     uint8_t *map, uint16_t width, uint16_t height)
 {
-    uint8_t x, y;
+    uint16_t x, y;
     uint8_t *p0, *p1, *p2, *p3;
     uint8_t d0;
 
-    p0 = map;
-
     for (y = 0; y < height / 4; y++)
     {
+        p0 = map + (y * 4 * width);
         p1 = p0 + width;
         p2 = p1 + width;
         p3 = p2 + width;
 
         for (x = 0; x < width / 2; x++)
         {
-            d0 = 0;     d0 |= (*p0++ << 7);
-            d0 >>= 1;   d0 |= (*p1++ << 7);
-            d0 >>= 1;   d0 |= (*p2++ << 7);
-            d0 >>= 1;   d0 |= (*p3++ << 7);
-            d0 >>= 1;   d0 |= (*p0++ << 7);
-            d0 >>= 1;   d0 |= (*p1++ << 7);
-            d0 >>= 1;   d0 |= (*p2++ << 7);
-            d0 >>= 1;   d0 |= (*p3++ << 7);
-
-            if ((x < win->width) && (y < win->height))
-            {
-                braille_data[(y * win->width) + x] = uC_braille_xlat(d0);
-            }
+            d0 = braille_1_pack_cell(p0, p1, p2, p3, x * 2);
+            braille_1_emit_cell(win, braille_data, x, y, d0);
         }
-        p0 += (width * 3);
     }
 }
 

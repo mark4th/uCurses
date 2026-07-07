@@ -19,7 +19,7 @@
 // -----------------------------------------------------------------------
 
 #define ESC_SIZE (65535)    // size of escape buffer, probably overkill
-#define TI_NULL  (-1)       // null terminfo file string section entry
+#define TI_NULL  (UINT16_MAX) // null terminfo string-offset entry
 
 // -----------------------------------------------------------------------
 // pointer to variables
@@ -99,6 +99,29 @@ static int64_t fs_pop(void)
     ti_vars->fsp--;
 
     return ti_vars->fstack[ti_vars->fsp];
+}
+
+// -----------------------------------------------------------------------
+// clear the scratch stack used while compiling one format string
+
+static void fs_reset(void)
+{
+    ti_vars->fsp = 0;
+}
+
+// -----------------------------------------------------------------------
+// discard values left unused by one format string
+
+// if any format strings for any terminals leave any values on the format
+// string stack this ensures that they do not poison subsequent parseing
+// of other format strings.   I am not sure if ncurses terminfor compiler
+// validates the strings to ensure this does not happen and Im not sure
+// i trust terminal applicaiton developers to sanitze their own format
+// strings either.
+
+static void fs_drop_leftovers(void)
+{
+    ti_vars->fsp = 0;
 }
 
 // -----------------------------------------------------------------------
@@ -613,6 +636,7 @@ API void uC_parse_format(const uint8_t *f)
     char c1;
 
     ti_vars->f_str = f;
+    fs_reset();
 
     while (*ti_vars->f_str != '\0')
     {
@@ -625,19 +649,35 @@ API void uC_parse_format(const uint8_t *f)
             ? specifier(next_c())
             : c_emit(c1);
     }
+
+    fs_drop_leftovers();
 }
 
 // -----------------------------------------------------------------------
-// parse a terminfo format string from the terminfo files strings section
+// parse a terminfo format string through the terminfo string-offset table
 
 void uC_format(int16_t i)
 {
-    i = ti_vars->ti_file.ti_strings[i];
+    uint16_t index;
+    uint16_t offset;
+
+    if (i < 0)
+    {
+        return;
+    }
+
+    index  = (uint16_t)i;
+    if (index >= ti_vars->ti_file.ti_string_count)
+    {
+        return;
+    }
+
+    offset = (uint16_t)ti_vars->ti_file.ti_strings[index];
 
     // it is not an error for a format string to be blank
-    if (i != TI_NULL)
+    if (offset != TI_NULL && offset < ti_vars->ti_file.ti_table_size)
     {
-        uC_parse_format((uint8_t *)&ti_vars->ti_file.ti_table[i]);
+        uC_parse_format((uint8_t *)&ti_vars->ti_file.ti_table[offset]);
     }
 }
 

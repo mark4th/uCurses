@@ -20,8 +20,6 @@
 #include "json.h"
 
 // -----------------------------------------------------------------------
-// todo add a linter as a built in checker for application developers
-// -----------------------------------------------------------------------
 
 #ifdef UC_JSON
 
@@ -263,7 +261,7 @@ static void open_json_file(char *path)
         if (fd != -1)
         {
             json_vars->json_len  = st.st_size;
-            json_vars->json_data = uC_alloc(uC_MEM_ZONE_DEFAULT,
+            json_vars->json_data = uC_alloc(uC_MEM_ZONE_JSON,
                 st.st_size);
             uC_ASSERT(json_vars->json_data != NULL, "Out Of Memory!");
 
@@ -276,7 +274,7 @@ static void open_json_file(char *path)
             }
         }
 
-        uC_free(uC_MEM_ZONE_DEFAULT, json_vars->json_data);
+        uC_free(uC_MEM_ZONE_JSON, json_vars->json_data);
     }
     json_vars->json_len  = 0;
     json_vars->json_data = 0;
@@ -312,7 +310,7 @@ void json_file_create_ui(char *path, fp_finder_t fp)
 
     json_vars = uC_alloc(uC_MEM_ZONE_JSON, sizeof(*json_vars));
 
-    json_vars->json_stack.zone = uC_MEM_ZONE_UI;
+    json_vars->json_stack.zone = uC_MEM_ZONE_JSON;
 
     uC_get_console_size(&json_vars->console_width,
         &json_vars->console_height);
@@ -326,7 +324,7 @@ void json_file_create_ui(char *path, fp_finder_t fp)
 
     parse_json_data();
 
-    uC_free(uC_MEM_ZONE_DEFAULT, json_vars->json_data);
+    uC_free(uC_MEM_ZONE_JSON, json_vars->json_data);
     json_vars->json_data = 0;
 
     uC_free(uC_MEM_ZONE_JSON, json_vars);
@@ -347,8 +345,7 @@ void json_mem_create_ui(char *json_data, int len, fp_finder_t fp)
     json_vars->json_data       = json_data;
     json_vars->json_len        = len;
     json_vars->fp_finder       = fp;
-    json_vars->json_stack.zone = uC_MEM_ZONE_UI;
-    json_vars->json_stack.zone = uC_MEM_ZONE_UI;
+    json_vars->json_stack.zone = uC_MEM_ZONE_JSON;
 
     parse_json_data();
 

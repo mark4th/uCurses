@@ -352,46 +352,11 @@ void lion(void)
 
 // -----------------------------------------------------------------------
 
-static void exit_prog(void)
-{
-    uC_set_key(0x1b);
-}
-
-// -----------------------------------------------------------------------
-
-static uC_switch_t menu_vectors[] =
-{
-    { 0x8d9c616c, exit_prog }
-};
-
-#define VCOUNT sizeof(menu_vectors) / sizeof(menu_vectors[0])
-
-// -----------------------------------------------------------------------
-
-opt_t menu_address_cb(int32_t hash)
-{
-    int16_t i;
-    uC_switch_t *s = menu_vectors;
-
-    for(i = 0; i < VCOUNT; i++)
-    {
-        if(hash == s->option)
-        {
-            return s->vector;
-        }
-        s++;
-    }
-
-    return NULL;
-}
-
-// -----------------------------------------------------------------------
-
 int main(void)
 {
     uC_list_node_t *n;
 
-    scr = uCurses_init("json/dots.json", NULL, menu_address_cb);
+    scr = uCurses_init("json/dots.json", NULL, NULL);
     n   = scr->windows.head;
     win = n->payload;
 

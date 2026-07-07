@@ -83,54 +83,6 @@
                    "flag" : "uC_WIN_BOXED"
                 }
             }
-        },
-        "menu-bar" :
-        {
-            "attribs" :
-            {
-                "fg"      : "uC_COLOR_BROWN",
-                "gray-bg" : 5
-            },
-            "selected-attribs" :
-            {
-                "fg"      : "uC_COLOR_CYAN",
-                "gray-bg" : 8
-            },
-            "disabled-attribs" :
-            {
-                "gray-fg" : 8,
-                "gray-bg" : 4
-            },
-            "pulldowns" :
-            {
-                "pulldown" :
-                {
-                    "name"    : "Demos",
-                    "attribs" :
-                    {
-                        "fg"      : "uC_COLOR_BROWN",
-                        "gray-bg" : 5
-                    },
-                    "selected-attribs" :
-                    {
-                        "fg"      : "uC_COLOR_CYAN",
-                        "gray-bg" : 8
-                    },
-                    "disabled-attribs" :
-                    {
-                        "gray-fg" : 8,
-                        "gray-bg" : 4
-                    },
-                    "menu-items" :
-                    {
-                        "menu-item" :
-                        {
-                            "name"   : "Exit",
-                            "vector" : "exit_prog"
-                        }
-                    }
-                }
-            }
         }
     }
 }

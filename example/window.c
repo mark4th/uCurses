@@ -53,6 +53,15 @@ static uint8_t sinewave(uint8_t i)
 
 // -----------------------------------------------------------------------
 
+static void lorem_make_contrast(uint8_t *r, uint8_t *g, uint8_t *b)
+{
+    *r = (uint8_t)(UINT8_MAX - *r);
+    *g = (uint8_t)(UINT8_MAX - *g);
+    *b = (uint8_t)(UINT8_MAX - *b);
+}
+
+// -----------------------------------------------------------------------
+
 char *lorem[] =
 {
     "Lorem ", "ipsum ", "dolor ", "sit ", "amet, ", "consectetur ",
@@ -89,41 +98,6 @@ char *chinese[] =
 
 // -----------------------------------------------------------------------
 
-static void exit_prog(void)
-{
-    uC_set_key(0x1b);
-}
-
-// -----------------------------------------------------------------------
-
-static uC_switch_t menu_vectors[] =
-{
-    { 0x8d9c616c, exit_prog }
-};
-
-#define VCOUNT sizeof(menu_vectors) / sizeof(menu_vectors[0])
-
-// -----------------------------------------------------------------------
-
-opt_t menu_address_cb(int32_t hash)
-{
-    int16_t i;
-    uC_switch_t *s = menu_vectors;
-
-    for (i = 0; i < VCOUNT; i++)
-    {
-        if(hash == s->option)
-        {
-            return s->vector;
-        }
-        s++;
-    }
-
-    return NULL;
-}
-
-// -----------------------------------------------------------------------
-
 void print_lorem(uC_window_t *win)
 {
     int16_t len;
@@ -147,7 +121,7 @@ void print_lorem(uC_window_t *win)
 
         uC_win_el(win);     // this also does a win_cr()
         uC_win_set_rgb_bg(win, r2, g2, b2);
-        make_contrast(&r2, &g2, &b2);
+        lorem_make_contrast(&r2, &g2, &b2);
         uC_win_set_rgb_fg(win, r2, g2, b2);
 
         r1+= 4; g1 += 3; b1 += 2;
@@ -320,7 +294,7 @@ int main(void)
     uC_list_node_t *n;
     uC_window_t *win;
 
-    active_screen = uCurses_init("json/window.json", NULL, menu_address_cb);
+    active_screen = uCurses_init("json/window.json", NULL, NULL);
 
     scr = active_screen;
 

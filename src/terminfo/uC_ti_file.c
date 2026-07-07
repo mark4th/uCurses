@@ -155,6 +155,8 @@ void alloc_info(void)
     offset = sizeof(ti_hdr_t);
 
     p = (ti_hdr_t *)ti_vars->ti_file.ti_map;
+    ti_vars->ti_file.ti_string_count = p->ti_strings;
+    ti_vars->ti_file.ti_table_size = p->ti_stsize;
 
     // set pointer to names section
     ti_vars->ti_file.ti_names = (char *)&ti_vars->ti_file.ti_map[offset];
@@ -169,7 +171,7 @@ void alloc_info(void)
     ti_vars->ti_file.ti_numbers = (int16_t *)&ti_vars->ti_file.ti_map[offset];
     offset += (p->ti_numbers << ti_vars->ti_file.wide);
 
-    // set pointer to strings section which is an array of 16 bit offstts
+    // set pointer to strings section which is an array of 16 bit offsets
     // into the table section (below)
     ti_vars->ti_file.ti_strings = (int16_t *)&ti_vars->ti_file.ti_map[offset];
     offset += (p->ti_strings << 1);

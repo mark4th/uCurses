@@ -369,10 +369,10 @@ API void uC_scr_win_attach(uC_screen_t *scr, uC_window_t *win)
     }
 }
 
-#ifdef UC_POPUPS
 // -----------------------------------------------------------------------
 // attach a popup window to a screen
 
+#ifdef UC_POPUPS
 API void uC_scr_popup_attach(uC_screen_t *scr, uC_window_t *win)
 {
     int16_t rv;
@@ -427,7 +427,7 @@ API void uC_scr_popup_cancel(uC_screen_t *scr)
     }
 #endif
 }
-#endif
+#endif  // UC_POPUPS
 
 // -----------------------------------------------------------------------
 

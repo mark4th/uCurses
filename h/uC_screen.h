@@ -44,6 +44,8 @@ typedef struct uC_screen_s
 int16_t scr_alloc(uC_screen_t *scr);
 void init_backdrop(uC_screen_t *scr, uC_window_t *win);
 void scr_draw_win(uC_window_t *win);
+void scr_normalize_wide_buffer(uC_screen_t *scr);
+void scr_outer_update(uC_screen_t *scr);
 int16_t win_chk_pos(uC_window_t *win, uC_screen_t *scr,
     int16_t xco, int16_t yco);
 

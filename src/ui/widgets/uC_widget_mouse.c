@@ -56,14 +56,9 @@ static uint8_t widget_activate_mouse_hit(widget_hit_t *hit)
 
     switch (hit->widget->type)
     {
-        case uC_WIDGET_BUTTON:
-            return handle_button(UC_KEY_ENTER);
-
-        case uC_WIDGET_RADIO:
-            return handle_radio(0x20);
-
-        case uC_WIDGET_CHECK:
-            return handle_check(0x20);
+        case uC_WIDGET_BUTTON:   return handle_button(UC_KEY_ENTER);
+        case uC_WIDGET_RADIO:    return handle_radio(0x20);
+        case uC_WIDGET_CHECK:    return handle_check(0x20);
 
         case uC_WIDGET_TEXTBOX:
         case uC_WIDGET_NONE:

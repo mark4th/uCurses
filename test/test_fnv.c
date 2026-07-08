@@ -1,4 +1,4 @@
-// test_fnv.c  - tests for fnv_hash() and eval()
+// test_fnv.c  - tests for uC_fnv_hash() and eval()
 // -----------------------------------------------------------------------
 
 #include "unity/unity.h"
@@ -9,39 +9,39 @@ void setUp(void)    {}
 void tearDown(void) {}
 
 // -----------------------------------------------------------------------
-// fnv_hash
+// uC_fnv_hash
 
 void test_fnv_null_returns_zero(void)
 {
-    TEST_ASSERT_EQUAL_INT32(0, fnv_hash(NULL));
+    TEST_ASSERT_EQUAL_INT32(0, uC_fnv_hash(NULL));
 }
 
 void test_fnv_consistent(void)
 {
     TEST_ASSERT_EQUAL_INT32(
-        fnv_hash((uint8_t *)"hello"),
-        fnv_hash((uint8_t *)"hello"));
+        uC_fnv_hash((uint8_t *)"hello"),
+        uC_fnv_hash((uint8_t *)"hello"));
 }
 
 void test_fnv_different_strings_differ(void)
 {
     TEST_ASSERT_NOT_EQUAL(
-        fnv_hash((uint8_t *)"hello"),
-        fnv_hash((uint8_t *)"world"));
+        uC_fnv_hash((uint8_t *)"hello"),
+        uC_fnv_hash((uint8_t *)"world"));
 }
 
 void test_fnv_case_sensitive(void)
 {
     TEST_ASSERT_NOT_EQUAL(
-        fnv_hash((uint8_t *)"Hello"),
-        fnv_hash((uint8_t *)"hello"));
+        uC_fnv_hash((uint8_t *)"Hello"),
+        uC_fnv_hash((uint8_t *)"hello"));
 }
 
 void test_fnv_single_char(void)
 {
     TEST_ASSERT_NOT_EQUAL(
-        fnv_hash((uint8_t *)"a"),
-        fnv_hash((uint8_t *)"b"));
+        uC_fnv_hash((uint8_t *)"a"),
+        uC_fnv_hash((uint8_t *)"b"));
 }
 
 // -----------------------------------------------------------------------

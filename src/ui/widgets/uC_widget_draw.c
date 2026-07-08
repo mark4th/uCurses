@@ -118,7 +118,7 @@ bool widget_emit_clipped(uC_window_t *win, uint32_t codepoint,
         return false;
     }
 
-    encoded = utf8_encode((int32_t)codepoint);
+    encoded = uC_utf8_encode((int32_t)codepoint);
     width = encoded->width;
     if (width <= 0)
     {
@@ -152,7 +152,7 @@ void widget_puts_clipped(uC_window_t *win, const char *text,
 
     while ((*text != '\0') && (*remaining != 0))
     {
-        len = utf8_decode(&codepoint, (uint8_t *)text);
+        len = uC_utf8_decode(&codepoint, (uint8_t *)text);
         if ((len == 0) || (len > 4))
         {
             break;

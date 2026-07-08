@@ -103,7 +103,7 @@ static void print_switch(uint8_t *path)
     while ((s = next_arg()) != NULL)
     {
         if (*s == '/') { continue; }
-        hash = fnv_hash(s);
+        hash = uC_fnv_hash(s);
         printf("    { 0x%08x, %s }\n", hash, s);
     }
 
@@ -304,7 +304,7 @@ static void process_args(void)
 
     while ((s = next_arg()) != NULL)
     {
-        hash = fnv_hash(s);
+        hash = uC_fnv_hash(s);
 
         (hash == 0x24a78f02) ? help() : hash_file(s);
     }

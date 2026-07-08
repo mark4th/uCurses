@@ -136,7 +136,7 @@ static void value_name(void)
 
     if (ptype == STRUCT_WINDOW)
     {
-        ((uC_window_t *)structure)->name = fnv_hash((uint8_t *)name);
+        ((uC_window_t *)structure)->name = uC_fnv_hash((uint8_t *)name);
         ((uC_window_t *)structure)->display_name = name;
         return;
     }

@@ -77,7 +77,7 @@ API void uC_win_puts(uC_window_t *win, const char *p)
 
     while (*p != '\0')
     {
-        skip = utf8_decode(&codepoint, (uint8_t *)p);
+        skip = uC_utf8_decode(&codepoint, (uint8_t *)p);
         uC_win_emit(win, codepoint);
         p += skip;
     }
@@ -406,7 +406,7 @@ static void do_win_printf(void)
     {
         while ((*p != '%') && (*p != '\0'))
         {
-            skip = utf8_decode(&codepoint, (uint8_t *)p);
+            skip = uC_utf8_decode(&codepoint, (uint8_t *)p);
             uC_win_emit(w, codepoint);
             p += skip;
         }

@@ -230,7 +230,7 @@ static void must_quote(int16_t len)
 static void check_colon(void)
 {
     token();
-    json_vars->json_hash = fnv_hash(json_vars->json_token);
+    json_vars->json_hash = uC_fnv_hash(json_vars->json_token);
 
     if (json_vars->json_hash != json_syntax[JSON_COLON])
     {

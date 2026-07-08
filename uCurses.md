@@ -5173,7 +5173,7 @@ enough to warrant this special wrapper function which would
 otherwise be somewhat wasteful to implement.
 
 ```c
-API int32_t fnv_hash(uint8_t *s)
+API int32_t uC_fnv_hash(uint8_t *s)
 ```
 
 This public API call computes a FNV hash on the string passed to
@@ -5924,10 +5924,10 @@ is therefore out of scope.
 The following functions are contained within this source file.
 
 ```c
-utf8_encode_t *utf8_encode(int32_t cp)
+API utf8_encode_t *uC_utf8_encode(int32_t cp)
 ```
 
-This internal function encodes a Unicode code point into its
+This public API function encodes a Unicode code point into its
 UTF-8 byte representation and returns a pointer to a static
 utf8_encode_t structure containing the encoded bytes, their
 count and the display column width of the character as returned
@@ -6001,7 +6001,7 @@ the terminal.  If the code point is the sentinel value `DEADC0DE`
 this function does nothing.
 
 ```c
-API uint8_t utf8_decode(uint32_t *cp, uint8_t *s)
+API uint8_t uC_utf8_decode(uint32_t *cp, uint8_t *s)
 ```
 
 Decodes one UTF-8 character from the byte string at s, stores

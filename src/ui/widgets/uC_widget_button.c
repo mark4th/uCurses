@@ -99,7 +99,7 @@ static void draw_btn_txt(uC_window_t *win, uint16_t x, uint16_t y,
 
     while ((*name != '\0') && (remaining != 0))
     {
-        len = utf8_decode(&codepoint, (uint8_t *)name);
+        len = uC_utf8_decode(&codepoint, (uint8_t *)name);
         if ((len == 0) || (len > 4))
         {
             break;

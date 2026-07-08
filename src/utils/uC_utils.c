@@ -38,7 +38,7 @@ API void uC_ui_free(void *mem)
 // -----------------------------------------------------------------------
 // FNV-1 on utf8 strings
 
-API int32_t fnv_hash(uint8_t *s)
+API int32_t uC_fnv_hash(uint8_t *s)
 {
     uint32_t hash = FNV_BASIS;
 

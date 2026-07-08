@@ -16,7 +16,7 @@
 // -----------------------------------------------------------------------
 // Public helpers used by the library and available to applications.
 
-API int32_t fnv_hash(uint8_t *s);
+API int32_t uC_fnv_hash(uint8_t *s);
 API void uC_assert(bool f, const char *file, int line, const char *msg);
 API void uC_ui_free(void *mem);
 

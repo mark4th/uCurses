@@ -33,7 +33,7 @@ void strip_quotes(int16_t len)
 
     json_vars->json_token[i] = '\0';
 
-    json_vars->json_hash = fnv_hash(json_vars->json_token);
+    json_vars->json_hash = uC_fnv_hash(json_vars->json_token);
 }
 
 // -----------------------------------------------------------------------

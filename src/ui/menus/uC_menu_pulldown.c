@@ -36,7 +36,7 @@ static pulldown_t *pd_find(uC_screen_t *scr, const char *name)
     }
 
     bar = scr->menu_bar;
-    name_hash = fnv_hash((uint8_t *)name);
+    name_hash = uC_fnv_hash((uint8_t *)name);
 
     for (i = 0; i < bar->count; i++)
     {
@@ -44,7 +44,7 @@ static pulldown_t *pd_find(uC_screen_t *scr, const char *name)
 
         if (pd)
         {
-            hash = fnv_hash((uint8_t *)pd->name);
+            hash = uC_fnv_hash((uint8_t *)pd->name);
             if (hash == name_hash)
             {
                 break;
@@ -71,7 +71,7 @@ static menu_item_t *item_find(pulldown_t *pd, const char *name)
         return NULL;
     }
 
-    name_hash = fnv_hash((uint8_t *)name);
+    name_hash = uC_fnv_hash((uint8_t *)name);
 
     for (i = 0; i < pd->count; i++)
     {
@@ -79,7 +79,7 @@ static menu_item_t *item_find(pulldown_t *pd, const char *name)
 
         if (item)
         {
-            hash = fnv_hash((uint8_t *)item->name);
+            hash = uC_fnv_hash((uint8_t *)item->name);
             if (hash == name_hash)
             {
                 break;

@@ -149,7 +149,7 @@ static bool check_comma(void)
     if (json_vars->json_token[end] == ',')
     {
         json_vars->json_token[end] = '\0';
-        json_vars->json_hash = fnv_hash(json_vars->json_token);
+        json_vars->json_hash = uC_fnv_hash(json_vars->json_token);
         rv = true;
     }
 
@@ -211,7 +211,7 @@ static void run_state_machine(void)
 
         // compute fnv-1a hash for this token
 
-        json_vars->json_hash = fnv_hash(json_vars->json_token);
+        json_vars->json_hash = uC_fnv_hash(json_vars->json_token);
 
         // the token does not define what the state is
         // the state defines what the token must be

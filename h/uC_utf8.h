@@ -22,15 +22,10 @@ typedef struct
 } utf8_encode_t;
 
 // --------------------------------------------------------------------------
-// visibility hidden
-
-utf8_encode_t *utf8_encode(int32_t cp);
-
-// --------------------------------------------------------------------------
-
 API int16_t uC_utf8_is_wide(uint32_t code);
+API utf8_encode_t *uC_utf8_encode(int32_t cp);
 API void uC_utf8_emit(uint32_t cp);
-API uint8_t utf8_decode(uint32_t *cp, uint8_t *s);
+API uint8_t uC_utf8_decode(uint32_t *cp, uint8_t *s);
 API uint8_t uC_utf8_char_length(uint8_t *s);
 API int16_t uC_utf8_width(uint8_t *s);
 API int16_t uC_utf8_strlen(uint8_t *s);

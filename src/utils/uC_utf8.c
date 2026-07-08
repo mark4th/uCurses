@@ -15,7 +15,7 @@
 // -----------------------------------------------------------------------
 // encode a utf code point into utf-8 characters for printing
 
-utf8_encode_t *utf8_encode(int32_t cp)
+API utf8_encode_t *uC_utf8_encode(int32_t cp)
 {
     static utf8_encode_t encoded;
 
@@ -81,7 +81,7 @@ API void uC_utf8_emit(uint32_t cp)
 
     if (cp != (uint32_t)DEADC0DE)
     {
-        encoded = utf8_encode(cp);
+        encoded = uC_utf8_encode(cp);
 
         for (i = 0; i < encoded->len; i++)
         {
@@ -96,7 +96,7 @@ API void uC_utf8_emit(uint32_t cp)
 // -----------------------------------------------------------------------
 // extract utf8 codepoint from string of chars and return cp length
 
-API uint8_t utf8_decode(uint32_t *cp, uint8_t *s)
+API uint8_t uC_utf8_decode(uint32_t *cp, uint8_t *s)
 {
     // 0xxxxxxx
     if ((uint8_t)s[0] < 0x80)
@@ -173,7 +173,7 @@ API int16_t uC_utf8_width(uint8_t *s)
 
     while (*s != '\0')
     {
-        n = utf8_decode(&cp, s);
+        n = uC_utf8_decode(&cp, s);
         s += n;
         width += wcwidth((wchar_t)cp);
     }
@@ -210,8 +210,8 @@ API int16_t uC_utf8_strncmp(uint8_t *s1, uint8_t *s2, int16_t len)
 
     while ((*s1 != '\0') && (len != 0))
     {
-        n1 = utf8_decode(&cp1, s1);
-        n2 = utf8_decode(&cp2, s2);
+        n1 = uC_utf8_decode(&cp1, s1);
+        n2 = uC_utf8_decode(&cp2, s2);
 
         if (cp1 != cp2)
             return (int16_t)((int32_t)cp1 - (int32_t)cp2);

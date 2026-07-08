@@ -35,12 +35,12 @@ void test_char_length_4byte(void)
 }
 
 // -----------------------------------------------------------------------
-// utf8_decode
+// uC_utf8_decode
 
 void test_decode_ascii(void)
 {
     uint32_t cp;
-    TEST_ASSERT_EQUAL_UINT8(1, utf8_decode(&cp, (uint8_t *)"A"));
+    TEST_ASSERT_EQUAL_UINT8(1, uC_utf8_decode(&cp, (uint8_t *)"A"));
     TEST_ASSERT_EQUAL_UINT32('A', cp);
 }
 
@@ -48,7 +48,7 @@ void test_decode_2byte(void)
 {
     uint32_t cp;
     uint8_t s[] = { 0xc3, 0xa9, 0 };   // é  U+00E9
-    TEST_ASSERT_EQUAL_UINT8(2, utf8_decode(&cp, s));
+    TEST_ASSERT_EQUAL_UINT8(2, uC_utf8_decode(&cp, s));
     TEST_ASSERT_EQUAL_UINT32(0x00e9, cp);
 }
 
@@ -56,7 +56,7 @@ void test_decode_3byte(void)
 {
     uint32_t cp;
     uint8_t s[] = { 0xe2, 0x82, 0xac, 0 };   // €  U+20AC
-    TEST_ASSERT_EQUAL_UINT8(3, utf8_decode(&cp, s));
+    TEST_ASSERT_EQUAL_UINT8(3, uC_utf8_decode(&cp, s));
     TEST_ASSERT_EQUAL_UINT32(0x20ac, cp);
 }
 
@@ -64,7 +64,7 @@ void test_decode_4byte(void)
 {
     uint32_t cp;
     uint8_t s[] = { 0xf0, 0x9d, 0x84, 0x9e, 0 };   // 𝄞  U+1D11E
-    TEST_ASSERT_EQUAL_UINT8(4, utf8_decode(&cp, s));
+    TEST_ASSERT_EQUAL_UINT8(4, uC_utf8_decode(&cp, s));
     TEST_ASSERT_EQUAL_UINT32(0x1d11e, cp);
 }
 

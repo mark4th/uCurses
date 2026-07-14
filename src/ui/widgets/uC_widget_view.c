@@ -228,31 +228,68 @@ void widget_scroll_view(uint8_t k)
 
 API void uC_widget_to_view_index(uC_widget_view_t *view, uint16_t index)
 {
-    int i;
+    uint16_t i;
+    uint16_t visible;
+    uint16_t max_top;
+    uC_list_node_t *node;
 
     // call is only valid if view is scrollable
 
-    if (!(view->flags & (1 << uC_VIEW_SCROLL)))
+    if (!view || !(view->flags & (1 << uC_VIEW_SCROLL)))
     {
         return;
     }
 
-    if (!view->widgets.head)
+    if (!view->widgets.head || !view->height)
     {
         return;
     }
 
-    view->top             = 0;
-    view->cy              = 0;
-    view->view_node       = view->widgets.head;
-
-    widget_state.widget   = view->view_node->payload;
-    widget_state.view     = view;
-    widget_state.sequence = widget_state.widget->sequence;
-
-    for (i = 0; i != index ; i++)
+    if (index >= view->widgets.count)
     {
-        widget_scroll_view(WIDGET_KEY_DOWN);
+        index = view->widgets.count - 1;
+    }
+
+    visible = (view->height < view->widgets.count)
+        ? view->height
+        : view->widgets.count;
+    max_top = view->widgets.count - visible;
+
+    if (view->top > max_top)
+    {
+        view->top = max_top;
+    }
+
+    // Keep the current viewport when the target is already visible.
+    // Otherwise scroll only far enough to reveal it at the nearest edge.
+
+    if (index < view->top)
+    {
+        view->top = index;
+        view->cy  = 0;
+    }
+    else if (index >= view->top + visible)
+    {
+        view->top = index - visible + 1;
+        view->cy  = visible - 1;
+    }
+    else
+    {
+        view->cy = index - view->top;
+    }
+
+    node = view->widgets.head;
+    for (i = 0; (i < index) && node; i++)
+    {
+        node = node->next;
+    }
+
+    if (node)
+    {
+        view->view_node       = node;
+        widget_state.widget   = node->payload;
+        widget_state.view     = view;
+        widget_state.sequence = widget_state.widget->sequence;
     }
 }
 

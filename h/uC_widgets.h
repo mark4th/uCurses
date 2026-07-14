@@ -167,6 +167,7 @@ typedef struct
 
     bool insert;
     bool editing;
+    bool advance_cursor;    // move right after a successful character write
     uint8_t size;           // character capacity; data buffer must be size+1 bytes
     uint8_t count;          // how many chars are in the edit buffer
     uint8_t cx;             // cursor position within edit buffer
@@ -367,6 +368,8 @@ API uC_widget_t *uC_widget_textbox_create(
     char *data, const char *name,
     uint16_t size, uC_textbox_radix_t radix,
     uint16_t width, uC_attribs_t attrs, uC_attribs_t focus);
+API void uC_widget_textbox_set_cursor_advance(uC_widget_t *widget,
+    bool enabled);
 
 // -----------------------------------------------------------------------
 

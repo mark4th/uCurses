@@ -225,6 +225,8 @@ static uint8_t write_char(uC_widget_textbox_t *t, uint8_t k)
 {
     bool f;
     int q;
+    uint8_t saved_cx;
+    uint8_t saved_offset;
 
     f = test_char(t, k);
 
@@ -234,6 +236,8 @@ static uint8_t write_char(uC_widget_textbox_t *t, uint8_t k)
     }
 
     q = (t->offset + t->cx);
+    saved_cx = t->cx;
+    saved_offset = t->offset;
 
     if (q != t->size)
     {
@@ -250,7 +254,15 @@ static uint8_t write_char(uC_widget_textbox_t *t, uint8_t k)
                 t->count++;
             }
         }
-        rt(t);
+        if (t->advance_cursor)
+        {
+            rt(t);
+        }
+        else
+        {
+            t->cx = saved_cx;
+            t->offset = saved_offset;
+        }
     }
 
     return 0;
@@ -306,6 +318,21 @@ static void home(uC_widget_textbox_t *t)
 
 static void end(uC_widget_textbox_t *t)
 {
+    if (!t->advance_cursor && t->count != 0)
+    {
+        if (t->count >= widget_state.widget->width)
+        {
+            t->cx = widget_state.widget->width - 1;
+            t->offset = t->count - widget_state.widget->width;
+        }
+        else
+        {
+            t->cx = t->count - 1;
+            t->offset = 0;
+        }
+        return;
+    }
+
     if (t->count >= widget_state.widget->width)
     {
         t->cx     = widget_state.widget->width - 1;
@@ -382,6 +409,7 @@ API uC_widget_t *uC_widget_textbox_create(
         widget->textbox.radix  = radix;
         widget->textbox.insert = true;
         widget->textbox.editing = false;
+        widget->textbox.advance_cursor = true;
 
         while ((count < capacity) && (data[count] != '\0'))
         {
@@ -391,6 +419,18 @@ API uC_widget_t *uC_widget_textbox_create(
     }
 
     return widget;
+}
+
+// -----------------------------------------------------------------------
+// Controls whether a successful character write advances the edit cursor.
+
+API void uC_widget_textbox_set_cursor_advance(uC_widget_t *widget,
+    bool enabled)
+{
+    if (widget != NULL && widget->type == uC_WIDGET_TEXTBOX)
+    {
+        widget->textbox.advance_cursor = enabled;
+    }
 }
 
 // -----------------------------------------------------------------------

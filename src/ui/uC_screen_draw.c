@@ -5,7 +5,9 @@
 
 #include <inttypes.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 #include <wchar.h>
 #include <locale.h>
 
@@ -163,37 +165,10 @@ static void scr_draw_windows(uC_list_t *list)
 
 // -----------------------------------------------------------------------
 
-#ifdef UC_POPUPS
 static bool scr_is_too_small(uC_screen_t *scr)
 {
     return ((scr->min_width > 0) && (scr->width < scr->min_width)) ||
         ((scr->min_height > 0) && (scr->height < scr->min_height));
-}
-
-// -----------------------------------------------------------------------
-
-static void too_small_write(uC_window_t *win, int16_t x, int16_t y,
-    const char *text, uC_attribs_t attrs)
-{
-    int16_t i;
-    uC_attribs_t save;
-
-    if (!win || !text || x < 0 || y < 0 ||
-        x >= win->width || y >= win->height)
-    {
-        return;
-    }
-
-    save = win->attrs;
-    win->attrs = attrs;
-    uC_win_cup(win, x, y);
-
-    for (i = 0; text[i] && (x + i) < win->width; i++)
-    {
-        uC_win_emit(win, (uint8_t)text[i]);
-    }
-
-    win->attrs = save;
 }
 
 // -----------------------------------------------------------------------
@@ -212,70 +187,64 @@ static int16_t text_len_i16(const char *text)
 
 // -----------------------------------------------------------------------
 
-static bool too_small_popup_prepare(uC_screen_t *scr)
+static void scr_force_full_redraw(uC_screen_t *scr)
 {
-    const char *message = "Too small";
-    int16_t width = 14;
-    int16_t height = 3;
-    int16_t x;
-    uC_window_t *win;
+    size_t size;
 
-    if (scr->width < width + 2 || scr->height < height + 2)
+    if ((scr != NULL) && (scr->buffer2 != NULL))
     {
-        return false;
+        size = (scr->width * scr->height) * sizeof(*scr->buffer2);
+        memset(scr->buffer2, 0, size);
     }
-
-    win = scr->too_small_popup;
-    if ((win != NULL) && ((win->width != width) || (win->height != height)))
-    {
-        uC_win_close(win);
-        win = NULL;
-        scr->too_small_popup = NULL;
-    }
-
-    if (win == NULL)
-    {
-        win = uC_win_open(width, height);
-        if (win == NULL)
-        {
-            return false;
-        }
-
-        win->xco = (scr->width - width) / 2;
-        win->yco = (scr->height - height) / 2;
-        win->flags = uC_WIN_LOCKED;
-        win->blank = 0x20;
-        win->attrs = uC_attrs_normal;
-        uC_win_set_border(win, uC_BDR_CURVED, uC_attrs_selected,
-            uC_attrs_selected);
-        win->screen = scr;
-        scr->too_small_popup = win;
-    }
-
-    uC_win_clear(win);
-    x = (width - text_len_i16(message)) / 2;
-    too_small_write(win, x, 1, message, uC_attrs_selected);
-
-    return true;
 }
 
 // -----------------------------------------------------------------------
 
-static void scr_draw_too_small_popup(uC_screen_t *scr)
+static void scr_draw_too_small_direct(uC_screen_t *scr)
 {
-    if (!scr_is_too_small(scr))
+    char message[64];
+    const char *text = "Too Small!";
+    int16_t len;
+    int16_t write_len;
+    int16_t x;
+    int16_t y;
+    ssize_t unused;
+
+    if (scr->too_small_active &&
+        scr->too_small_width == scr->width &&
+        scr->too_small_height == scr->height)
     {
-        uC_win_close(scr->too_small_popup);
-        scr->too_small_popup = NULL;
         return;
     }
 
-    if (too_small_popup_prepare(scr))
+    if (scr->width >= 28)
     {
-        scr_draw_win(scr->too_small_popup);
+        snprintf(message, sizeof(message), "Too Small! %dx%d required",
+            scr->min_width, scr->min_height);
+        text = message;
+    }
+
+    scr->too_small_active = true;
+    scr->too_small_width = scr->width;
+    scr->too_small_height = scr->height;
+    scr_force_full_redraw(scr);
+
+    ti_sgr0();
+    uC_clear();
+    if (scr->width > 0 && scr->height > 0)
+    {
+        len = text_len_i16(text);
+        write_len = (scr->width > len) ? len : scr->width;
+        x = (scr->width > write_len)
+            ? (int16_t)((scr->width - write_len) / 2)
+            : 0;
+        y = scr->height / 2;
+        uC_cup((uint16_t)x, (uint16_t)y);
+        uC_terminfo_flush();
+        unused = write(STDOUT_FILENO, text, (size_t)write_len);
+        (void)unused;
     }
 }
-#endif // UC_POPUPS
 
 // -----------------------------------------------------------------------
 // set terminal cursor location to same location as screens cursor
@@ -585,6 +554,21 @@ API void uC_scr_draw_screen(uC_screen_t *scr)
         active_screen = scr;
         ti_set_screen(scr);
 
+        if (scr_is_too_small(scr))
+        {
+#ifdef UC_POPUPS
+            uC_scr_popup_cancel(scr);
+#endif
+            scr_draw_too_small_direct(scr);
+            return;
+        }
+
+        if (scr->too_small_active)
+        {
+            scr->too_small_active = false;
+            uC_clear();
+        }
+
         // the backdrop if it exists is always the first window
         // to be drawn into the screen. its main purpose is to
         // allow for moveable windows which would leave trails
@@ -625,7 +609,6 @@ API void uC_scr_draw_screen(uC_screen_t *scr)
 #ifdef UC_WIDGETS
         draw_popup_view_group((uC_widget_vg_t *)scr->popup_vg);
 #endif
-        scr_draw_too_small_popup(scr);
 #endif
 
         // at this point everything that should be displayed has been

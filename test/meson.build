@@ -26,6 +26,7 @@ test_specs = [
     ['test_list',   ['test_list.c'], false],
     ['test_window_wide', ['test_window_wide.c'], false],
     ['test_widget_layout', ['test_widget_layout.c'], not widgets_enabled],
+    ['test_widget_horizontal', ['test_widget_horizontal.c'], not widgets_enabled],
 ]
 
 foreach t : test_specs

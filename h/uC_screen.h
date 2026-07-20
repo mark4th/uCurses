@@ -22,7 +22,6 @@ typedef struct uC_screen_s
     void *backdrop;         // uC_window_t always drawn first
     uC_window_t *popup;     // uC_window_t always drawn last
     void *popup_vg;         // uC_widget_vg_t modal popup widget group
-    uC_window_t *too_small_popup;
     uC_window_t *selected;
 
     int16_t tab_order;      // current windows tab selection order
@@ -30,9 +29,12 @@ typedef struct uC_screen_s
     int16_t height;
     int16_t min_width;      // optional minimum usable dimensions
     int16_t min_height;
+    int16_t too_small_width;
+    int16_t too_small_height;
     int16_t cx;             // cursor corrdinates within screen
     int16_t cy;
     bool shortcuts_enabled;
+    bool too_small_active;
 
     cell_t *buffer1;        // screen buffer 1 and 2
     cell_t *buffer2;

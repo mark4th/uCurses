@@ -192,6 +192,14 @@ uC_widget_vg_attach(screen, vg);
 uC_widget_select_widget(1);
 ```
 
+Each widget also has a `void *user` field for application-owned context.
+uCurses initializes it to `NULL` and never interprets, owns, or frees the
+pointer.
+
+```c
+widget->user = document_section;
+```
+
 For scrollable views, the view owns the row cursor and scroll offset.  The
 application should query the current view index instead of maintaining a
 separate row cursor.
@@ -200,6 +208,33 @@ separate row cursor.
 uint16_t index = uC_widget_view_index(view);
 uC_widget_to_view_index(view, index + 1);
 ```
+
+Scrollable views are vertical by default.  A horizontal view lays out
+equal-width, single-line widgets from left to right and scrolls with the left
+and right arrow keys.  This is useful for tab strips and other compact
+selectors.
+
+```c
+view = uC_widget_view_create(NULL, 36, 1, 0, 0, attrs, true);
+if (!uC_widget_view_set_orientation(view, uC_VIEW_HORIZONTAL))
+{
+    /* invalid dimensions or a non-scrollable view */
+}
+
+widget = uC_widget_button_create(NULL, "Document", '\0',
+    12, attrs, focus_attrs);
+uC_widget_view_add_widget(view, widget, 0);
+
+widget = uC_widget_button_create(NULL, "Summary", '\0',
+    12, attrs, focus_attrs);
+uC_widget_view_add_widget(view, widget, 0);
+```
+
+All widgets in a horizontal view must have the same nonzero width, fit within
+the view width, and have a height of one.  Editable text boxes are rejected
+because their own left/right editing keys conflict with view navigation.
+The view remains one tab stop; query `uC_widget_view_index()` to identify the
+focused item when Enter is pressed.
 
 Checkbox and radio widgets store their state in bit masks.  If a logical
 list has more than 32 entries, use more than one mask word and point each

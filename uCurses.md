@@ -4243,7 +4243,8 @@ uC_attribs_t attrs, bool scroll)
 This public API call is the application developers means of
 creating a new widget view.  A widget view is a container for a
 group of related widgets of the same type and may be defined as
-scrollable but scrolling only happens in the vertical direction.
+scrollable.  Scrollable views are vertical by default and can be
+changed to horizontal orientation.
 
 When creating a new view you can also give it an optional name but
 this name will only be displayed if the view is later given a
@@ -4269,6 +4270,19 @@ The border may be any of the border types that can be given to
 windows.
 
 ```c
+API bool uC_widget_view_set_orientation(uC_widget_view_t *view,
+uC_view_orientation_t orientation)
+```
+
+This public API call changes a scrollable view between
+`uC_VIEW_VERTICAL` and `uC_VIEW_HORIZONTAL`.  Horizontal views use
+left/right navigation and arrange equal-width, single-line widgets
+from left to right.  Editable text boxes are rejected because their
+editing controls already consume the left and right arrow keys.  The
+call returns false when the requested orientation or existing widget
+layout is incompatible with horizontal scrolling.
+
+```c
 API bool uC_widget_view_add_widget(uC_widget_view_t *view,
 uC_widget_t *widget, uint16_t sequence)
 ```
@@ -4281,6 +4295,8 @@ selection order.  Sequence values must be unique among active
 widgets, but they do not need to be contiguous.
 
 If the view is scrollable the limit is 64k (insanity).
+Horizontal views additionally require every widget to have the same
+nonzero width and fit completely within the view.
 
 ```c
 API void uC_widget_view_remove_widget(uC_widget_view_t *view,
@@ -4302,29 +4318,27 @@ specified view.  If there are any widgets associated with this
 view then they are also destroyed.
 
 ```c
-static void view_up(void)
+static void view_previous(void)
 ```
 
-For a scrollable view this function will move the focus up one
-line within the view and will scroll the view if necessary.
-The selection will not wrap within the view if it is at the top
-thereof.
+For a scrollable view this function moves focus to the previous
+widget along the view's orientation and scrolls if necessary.  The
+selection does not wrap at the beginning.
 
 ```c
-static void view_down(void)
+static void view_next(void)
 ```
 
-For a scrollable view this function will move the focus down one
-line within the view and will scroll the view if necessary. The
-selection will not wrap within the view if it is at the bottom
-thereof.
+For a scrollable view this function moves focus to the next widget
+along the view's orientation and scrolls if necessary.  The selection
+does not wrap at the end.
 
 ```c
 void widget_scroll_view(uint8_t k)
 ```
 
 This function is used by the widget keyboard handler to scroll a
-view in either direction based on which key was pressed.
+vertical view with up/down or a horizontal view with left/right.
 
 
 ### 9.3. `uC_widget_view_group.c`
@@ -7548,17 +7562,15 @@ redrawing.
 `scr_is_too_small()` reports whether a screen is smaller than its declared
 minimum dimensions.
 
-`too_small_write()` writes clipped text into the automatic "Too small"
-popup without changing the window's permanent attributes.
-
 `text_len_i16()` returns a small signed length for literal UI text used by
-the popup layout code.
+the direct too-small message placement code.
 
-`too_small_popup_prepare()` creates or refreshes the automatic "Too small"
-popup window.
+`scr_force_full_redraw()` clears the previous-frame buffer so the next full
+screen draw cannot be skipped after direct terminal output.
 
-`scr_draw_too_small_popup()` draws the automatic size-warning popup or
-tears it down once the screen is large enough again.
+`scr_draw_too_small_direct()` clears the terminal and writes a compact
+minimum-size warning directly, bypassing normal screen/window rendering while
+the terminal is too small.
 
 `scr_cell_width()` returns the display width of a composed screen cell.
 The `DEADC0DE` sentinel is treated as a continuation cell with zero
@@ -7692,13 +7704,16 @@ integer in the gap.
 
 
 ### `src/ui/widgets/uC_widget_view.c`
+`uC_widget_view_set_orientation()` changes a scrollable view between
+vertical and horizontal layout while preserving its selected index.
+
 `uC_widget_to_view_index()` moves a scrollable view to a specific item
 index.
 
 `uC_widget_view_set_position()` changes a view's position inside its
 parent view group.
 
-`uC_widget_view_index()` returns the current top item index of a
+`uC_widget_view_index()` returns the currently selected item index of a
 scrollable view.
 
 

@@ -30,7 +30,7 @@ void uC_widget_reset_state(void)
 }
 
 // ----------------------------------------------------------------
-// if current view is scrollable and k is a cursor up or dowwn...
+// Handle the navigation keys owned by the current scrollable view.
 
 static bool check_scrollable(uint8_t k)
 {
@@ -38,7 +38,10 @@ static bool check_scrollable(uint8_t k)
 
     if (widget_state.view->flags & (1 << uC_VIEW_SCROLL))
     {
-        if ((k == WIDGET_KEY_UP) || (k == WIDGET_KEY_DOWN))
+        if (((widget_state.view->orientation == uC_VIEW_VERTICAL) &&
+             ((k == WIDGET_KEY_UP) || (k == WIDGET_KEY_DOWN))) ||
+            ((widget_state.view->orientation == uC_VIEW_HORIZONTAL) &&
+             ((k == WIDGET_KEY_LEFT) || (k == WIDGET_KEY_RIGHT))))
         {
             widget_scroll_view(k);
             return true;
@@ -58,8 +61,7 @@ static uint8_t handle_widget_key(uint8_t k)
         return k;
     }
 
-    // handle case where the current view is scrollable and
-    // either cursor up or cursor down have been pressed
+    // A scrollable view owns the arrow keys along its orientation.
 
     if (widget_state.view)
     {
@@ -70,9 +72,7 @@ static uint8_t handle_widget_key(uint8_t k)
         }
     }
 
-    // other than cursor up / down within a scrollable view (wich can
-    // contain any widget type) each widget type module contains its
-    // own keyboard handler
+    // Other keys are delegated to the focused widget type.
 
     switch (widget_state.widget->type)
     {

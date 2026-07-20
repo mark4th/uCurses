@@ -24,6 +24,7 @@ typedef struct
     uC_widget_view_t *view;
     uC_widget_t *widget;
     uC_list_node_t *widget_node;
+    uint16_t widget_index;
 } widget_hit_t;
 
 // -----------------------------------------------------------------------
@@ -47,7 +48,18 @@ static uint8_t widget_activate_mouse_hit(widget_hit_t *hit)
     hit->vg->window.flags |= uC_WIN_FOCUS;
     hit->widget->focused = true;
     hit->view->view_node = hit->widget_node;
-    hit->view->cy = hit->widget->yco - hit->view->top;
+
+    if (hit->view->flags & (1 << uC_VIEW_SCROLL))
+    {
+        if (hit->view->orientation == uC_VIEW_HORIZONTAL)
+        {
+            hit->view->cy = hit->widget_index - hit->view->top;
+        }
+        else
+        {
+            hit->view->cy = hit->widget_index - hit->view->top;
+        }
+    }
 
     widget_state.vg = hit->vg;
     widget_state.view = hit->view;
@@ -83,9 +95,11 @@ static bool widget_hit_test(int16_t sx, int16_t sy, widget_hit_t *hit)
     int16_t vg_inner_y;
     int16_t view_inner_x;
     int16_t view_inner_y;
-    int16_t view_inner_h;
     int16_t wx, wy;
-    int16_t boxed;
+    uint16_t index;
+    uint16_t visible;
+    uint16_t widget_width;
+    bool widget_visible;
 
     if (hit == NULL)
     {
@@ -116,36 +130,66 @@ static bool widget_hit_test(int16_t sx, int16_t sy, widget_hit_t *hit)
         while (n2)
         {
             view  = (uC_widget_view_t *)n2->payload;
-            boxed = (view->flags & (1 << uC_VIEW_BOXED)) ? 1 : 0;
-
-            view_inner_x = vg_inner_x + view->xco + boxed;
-            view_inner_y = vg_inner_y + view->yco + boxed;
-            view_inner_h = view->height - (boxed ? 2 : 0);
+            view_inner_x = vg_inner_x + view->xco;
+            view_inner_y = vg_inner_y + view->yco;
 
             n3 = uC_list_scan(&view->widgets, NULL);
+            index = 0;
 
             while (n3)
             {
                 widget = (uC_widget_t *)n3->payload;
+                widget_visible = false;
 
-                if (!widget->disabled &&
-                    widget->yco >= view->top &&
-                    widget->yco < view->top + view_inner_h)
+                if (view->flags & (1 << uC_VIEW_SCROLL))
+                {
+                    if (view->orientation == uC_VIEW_HORIZONTAL)
+                    {
+                        widget_width = widget->width;
+                        visible = (widget_width != 0)
+                            ? view->width / widget_width : 0;
+
+                        if ((index >= view->top) &&
+                            (index < view->top + visible))
+                        {
+                            wx = view_inner_x +
+                                ((int16_t)(index - view->top) *
+                                 (int16_t)widget_width);
+                            wy = view_inner_y;
+                            widget_visible = true;
+                        }
+                    }
+                    else if ((index >= view->top) &&
+                             (index < view->top + view->height))
+                    {
+                        wx = view_inner_x;
+                        wy = view_inner_y +
+                            (int16_t)(index - view->top);
+                        widget_visible = true;
+                    }
+                }
+                else
                 {
                     wx = view_inner_x + (int16_t)widget->xco;
-                    wy = view_inner_y + (int16_t)widget->yco - (int16_t)view->top;
+                    wy = view_inner_y + (int16_t)widget->yco;
+                    widget_visible = true;
+                }
 
+                if (!widget->disabled && widget_visible)
+                {
                     if (sy == wy && sx >= wx && sx < wx + (int16_t)widget->width)
                     {
                         hit->vg = vg;
                         hit->view = view;
                         hit->widget = widget;
                         hit->widget_node = n3;
+                        hit->widget_index = index;
                         return true;
                     }
                 }
 
                 n3 = uC_list_scan(NULL, n3);
+                index++;
             }
 
             n2 = uC_list_scan(NULL, n2);

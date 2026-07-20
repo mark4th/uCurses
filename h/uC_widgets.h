@@ -58,6 +58,14 @@ typedef enum
 } __attribute__((__packed__)) uC_view_flags_t;
 
 // -----------------------------------------------------------------------
+
+typedef enum
+{
+    uC_VIEW_VERTICAL,
+    uC_VIEW_HORIZONTAL,
+} __attribute__((__packed__)) uC_view_orientation_t;
+
+// -----------------------------------------------------------------------
 // visual chars for radio buttons and checkbox's
 
 typedef enum
@@ -106,6 +114,7 @@ typedef struct
 typedef struct
 {
     uC_view_flags_t flags;
+    uC_view_orientation_t orientation;
     uC_list_t widgets;      // list of widgets attached to this view
 
 
@@ -116,13 +125,12 @@ typedef struct
     uint16_t xco;           // view x/y coords within parent window
     uint16_t yco;
 
-    // if there are more widgets associated with this view than can fit in
-    // the vertical space defined above then that view can be scrollable,
-    // views can only scroll up and down not left or right
+    // Scrollable views arrange widgets along one axis. Vertical is the
+    // default; horizontal views require equal-width, single-line widgets.
 
     uint16_t sequence;      // whole view gets same sequence number
-    uint16_t top;           // index to widget at top of view
-    uint16_t cy;            // view cursor y position to widget with focus
+    uint16_t top;           // first visible widget index (top or left)
+    uint16_t cy;            // focused offset along the scrolling axis
 
     uC_list_node_t *view_node;
 
@@ -192,6 +200,7 @@ typedef struct
     uC_attribs_t focus_attrs;
 
     uint8_t user_flags;
+    void *user;
 
     const char *name;       // display name for widget
 
@@ -337,6 +346,9 @@ API uC_widget_view_t *uC_widget_view_create(const char *name,
 
 API void uC_widget_view_add_border(uC_widget_view_t *view,
     uC_border_type_t bdr_type, uC_attribs_t bdr_attrs);
+
+API bool uC_widget_view_set_orientation(uC_widget_view_t *view,
+    uC_view_orientation_t orientation);
 
 API bool uC_widget_view_add_widget(uC_widget_view_t *view,
     uC_widget_t *w, uint16_t sequence);

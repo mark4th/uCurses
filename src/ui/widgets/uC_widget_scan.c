@@ -80,8 +80,17 @@ static void scan_tab_candidate_in_vg(uC_widget_vg_t *vg, uint16_t current,
 
 static bool scan_view(uC_widget_view_t *view, uint16_t sequence)
 {
+    bool scrollable;
+    uint16_t index = 0;
+    uint16_t selected = 0;
     uC_list_node_t *n1;
     uC_widget_t *widget;
+
+    scrollable = (view->flags & (1 << uC_VIEW_SCROLL)) != 0;
+    if (scrollable)
+    {
+        selected = uC_widget_view_index(view);
+    }
 
     n1 = uC_list_scan(&view->widgets, NULL);
 
@@ -89,7 +98,8 @@ static bool scan_view(uC_widget_view_t *view, uint16_t sequence)
     {
         widget = (uC_widget_t *)n1->payload;
 
-        if (widget->sequence == sequence)
+        if ((widget->sequence == sequence) &&
+            (!scrollable || (index == selected)))
         {
             if (widget->disabled)
             {
@@ -107,6 +117,7 @@ static bool scan_view(uC_widget_view_t *view, uint16_t sequence)
         }
 
         n1 = uC_list_scan(NULL, n1);
+        index++;
     }
 
     return false;

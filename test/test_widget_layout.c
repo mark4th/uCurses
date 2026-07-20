@@ -23,6 +23,26 @@ static uC_attribs_t test_attrs(void)
 
 // -----------------------------------------------------------------------
 
+void test_widget_user_pointer_round_trip(void)
+{
+    uC_attribs_t attrs = test_attrs();
+    uC_widget_t *widget;
+    uint32_t payload = 0x12345678;
+
+    widget = uC_widget_button_create(NULL, "item", '\0', 10,
+        attrs, attrs);
+    TEST_ASSERT_NOT_NULL(widget);
+    TEST_ASSERT_NULL(widget->user);
+
+    widget->user = &payload;
+    TEST_ASSERT_EQUAL_PTR(&payload, widget->user);
+    TEST_ASSERT_EQUAL_HEX32(payload, *(uint32_t *)widget->user);
+
+    uC_widget_close_widget(widget);
+}
+
+// -----------------------------------------------------------------------
+
 void test_view_group_rejects_oversized_view(void)
 {
     uC_attribs_t attrs = test_attrs();
@@ -66,7 +86,7 @@ void test_view_group_attach_rejects_offscreen_group(void)
 
 // -----------------------------------------------------------------------
 
-void test_selecting_visible_widget_preserves_scroll_position(void)
+void test_view_index_no_scroll(void)
 {
     uC_attribs_t attrs = test_attrs();
     uint32_t selected = 0;
@@ -108,9 +128,10 @@ void test_selecting_visible_widget_preserves_scroll_position(void)
 int main(void)
 {
     UNITY_BEGIN();
+    RUN_TEST(test_widget_user_pointer_round_trip);
     RUN_TEST(test_view_group_rejects_oversized_view);
     RUN_TEST(test_view_group_attach_rejects_offscreen_group);
-    RUN_TEST(test_selecting_visible_widget_preserves_scroll_position);
+    RUN_TEST(test_view_index_no_scroll);
     return UNITY_END();
 }
 

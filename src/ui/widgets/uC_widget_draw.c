@@ -61,8 +61,8 @@ void widget_set_attrs(uC_window_t *win, uC_widget_t *widget)
 
         if (view != widget_state.view)
         {
-            uC_set_gray_fg(&attr, uC_GRAY_07);
-            uC_set_gray_bg(&attr, uC_GRAY_05);
+            uC_set_gray_fg(&attr, uC_GRAY_23);
+            uC_set_gray_bg(&attr, uC_GRAY_06);
         }
     }
 
@@ -222,7 +222,8 @@ static void draw_view_box(uC_window_t *win, uC_widget_view_t *view)
 
 // -----------------------------------------------------------------------
 
-static void draw_scrollable(uC_window_t *win, uC_widget_view_t *view)
+static void draw_scrollable_vertical(uC_window_t *win,
+    uC_widget_view_t *view)
 {
     int i;
     uC_list_node_t *n1;
@@ -257,6 +258,72 @@ static void draw_scrollable(uC_window_t *win, uC_widget_view_t *view)
     }
 
     justify = false;
+}
+
+// -----------------------------------------------------------------------
+
+static void draw_scrollable_horizontal(uC_window_t *win,
+    uC_widget_view_t *view)
+{
+    uint16_t i;
+    uint16_t visible;
+    uint16_t widget_width;
+    uC_list_node_t *node;
+    uC_widget_t *widget;
+
+    node = uC_list_scan(&view->widgets, NULL);
+    if (node == NULL)
+    {
+        return;
+    }
+
+    widget = (uC_widget_t *)node->payload;
+    widget_width = widget->width;
+    if (widget_width == 0)
+    {
+        return;
+    }
+
+    visible = view->width / widget_width;
+
+    for (i = 0; (i < view->top) && node; i++)
+    {
+        node = uC_list_scan(NULL, node);
+    }
+
+    win->attrs = view->attrs;
+    widget_clear_width(win, view->xco, view->yco, view->width);
+
+    justify = false;
+    for (i = 0; (i < visible) && node; i++)
+    {
+        widget = (uC_widget_t *)node->payload;
+        widget->focused = (i == view->cy);
+
+        // Horizontal views own widget placement just as vertical views do.
+
+        widget->xco = 0;
+        widget->yco = 0;
+
+        draw_widget(win, widget, view->xco + (i * widget_width),
+            view->yco);
+
+        node = uC_list_scan(NULL, node);
+    }
+}
+
+// -----------------------------------------------------------------------
+
+static void draw_scrollable(uC_window_t *win, uC_widget_view_t *view)
+{
+    if (view->orientation == uC_VIEW_HORIZONTAL)
+    {
+        draw_scrollable_horizontal(win, view);
+    }
+    else
+    {
+        draw_scrollable_vertical(win, view);
+    }
 }
 
 // -----------------------------------------------------------------------

@@ -161,8 +161,6 @@ API void uC_scr_close(uC_screen_t *scr)
 #ifdef UC_POPUPS
         uC_win_close(scr->popup);
         scr->popup = NULL;
-        uC_win_close(scr->too_small_popup);
-        scr->too_small_popup = NULL;
 #endif
 
 #ifdef UC_WIDGETS
@@ -326,10 +324,6 @@ API void uC_scr_win_detach(uC_window_t *win)
             if (scr->popup == win)
             {
                 scr->popup = NULL;
-            }
-            if (scr->too_small_popup == win)
-            {
-                scr->too_small_popup = NULL;
             }
 #endif
             win->screen = NULL;

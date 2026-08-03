@@ -59,10 +59,25 @@ void widget_set_attrs(uC_window_t *win, uC_widget_t *widget)
     {
         attr = widget->focus_attrs;
 
-        if (view != widget_state.view)
+        // a selected widget in a vertical LIST view that does NOT have input
+        // focus is "ghosted": its bar is only a hair lighter than the view
+        // background and its text only a hair lighter than that bar, so the
+        // cursor is still visible but obviously does not have focus.  derived
+        // from the widget's own (unfocused) background so it tracks the theme.
+        // horizontal views (tab bars / toolbars) are exempt - their current
+        // selection stays fully lit even when another view has focus
+        if ((view != widget_state.view) &&
+            (view->orientation != uC_VIEW_HORIZONTAL))
         {
-            uC_set_gray_fg(&attr, uC_GRAY_23);
-            uC_set_gray_bg(&attr, uC_GRAY_06);
+            int base = widget->attrs.bg_gray;   // the view's normal bg
+            int gbg  = base + 1;                 // ghost bar: a hair lighter
+            int gfg  = gbg  + 2;                 // ghost text: a hair lighter
+
+            if (gbg > uC_GRAY_23) { gbg = uC_GRAY_23; }
+            if (gfg > uC_GRAY_23) { gfg = uC_GRAY_23; }
+
+            uC_set_gray_fg(&attr, gfg);
+            uC_set_gray_bg(&attr, gbg);
         }
     }
 

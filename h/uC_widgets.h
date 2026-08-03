@@ -204,6 +204,9 @@ typedef struct
 
     const char *name;       // display name for widget
 
+    const char *tag;        // optional 2nd label segment, drawn before name
+    uC_attribs_t tag_attrs; // the tag's colour (only its fg is used)
+
     uC_widget_type_t type;  // one of the following
 
     uC_widget_view_t *view;

@@ -34,6 +34,21 @@ void draw_check(uC_window_t *win, uC_widget_t *widget,
     widget_set_attrs(win, widget);
 
     remaining = widget_clear_width(win, x, y, widget->width);
+
+    // optional tag segment, drawn BEFORE the checkbox in its own fg colour
+    // (its bg is left as-is so it shares the focus / field background)
+    if (widget->tag != NULL)
+    {
+        uC_attribs_t save = win->attrs;
+
+        (widget->tag_attrs.flags.bits & uC_ATTR_FLAG_GRAY_FG)
+            ? uC_win_set_gray_fg(win, widget->tag_attrs.fg_gray)
+            : uC_win_set_fg(win, widget->tag_attrs.fg);
+
+        widget_puts_clipped(win, widget->tag, &remaining);
+        win->attrs = save;
+    }
+
     if (widget_emit_clipped(win, c, &remaining))
     {
         widget_emit_clipped(win, 0x20, &remaining);

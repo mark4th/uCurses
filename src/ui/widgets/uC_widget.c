@@ -54,6 +54,7 @@ uC_widget_t *create_widget(uC_widget_type_t type, const char *name,
     {
         widget->type        = type;
         widget->name        = name;
+        widget->tag         = NULL;     // no 2nd segment unless set later
         widget->attrs       = attrs;
         widget->focus_attrs = focus;
         widget->width       = width;

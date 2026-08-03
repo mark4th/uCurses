@@ -29,6 +29,20 @@ extern void (*k_table[])(void);
 extern uC_screen_t *active_screen;
 
 // -----------------------------------------------------------------------
+// whether the most recently returned key was pressed with Alt held.  set
+// by uC_key_raw when an ESC-prefixed printable arrives (Alt+char), cleared
+// for every other key.  the public contract (uC_key returns the base key,
+// uC_alt reports the modifier) is permanent; only the detection below is
+// provisional and will be replaced by the keyboard state machine.
+
+static bool key_alt;
+
+API bool uC_alt(void)
+{
+    return key_alt;
+}
+
+// -----------------------------------------------------------------------
 
 API void uC_set_key(uint8_t c)
 {
@@ -174,6 +188,8 @@ API uint8_t uC_key_raw(void)
 {
     int16_t c;
 
+    key_alt = false;        // default; the Alt+char branch below sets it
+
     while (ti_vars->num_k != 1)
     {
         memset(ti_vars->keybuff, 0, KEY_BUFF_SZ);
@@ -218,6 +234,16 @@ API uint8_t uC_key_raw(void)
             break;
         }
 #endif
+        else if (ti_vars->num_k == 2)
+        {
+            // ESC + one unmatched printable byte = Alt+char.  hand the app
+            // the base key with the alt flag set (queried via uC_alt).
+            // provisional: the keyboard state machine will supersede this
+            key_alt = true;
+            ti_vars->keybuff[0] = ti_vars->keybuff[1];
+            ti_vars->num_k = 1;
+            break;
+        }
     }
 
     // no matter what value your terminal returns for a press of the

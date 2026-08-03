@@ -133,6 +133,11 @@ API uC_key_handler_t *uC_set_key_action(key_index_t index,
 bool uC_restore_key_action(key_index_t index,
     uC_key_handler_t *expected, uC_key_handler_t *action);
 API uint8_t uC_key(void);
+
+// whether the most recently returned key was pressed with Alt held.  valid
+// immediately after uC_key() / uC_key_raw() returns; cleared for non-Alt keys
+API bool uC_alt(void);
+
 API void uC_set_key(uint8_t c);
 API void uC_flush_keys(void);
 void init_key_handlers(void);

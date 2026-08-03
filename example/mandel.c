@@ -1,7 +1,9 @@
 
 #include <inttypes.h>
 #include <math.h>
+#include <pthread.h>
 #include <stdio.h>
+#include <unistd.h>
 
 #include "uCurses.h"
 #include "uC_window.h"
@@ -17,6 +19,7 @@
 // -----------------------------------------------------------------------
 
 #define IMAX 1000
+#define MANDEL_MAX_THREADS 32
 
 
 uC_window_t *status_win = NULL;
@@ -25,19 +28,19 @@ uC_window_t *win        = NULL;
 
 // -----------------------------------------------------------------------
 
-long double MinRe = -3.0;
-long double MaxRe =  4.0;
-long double MinIm = -2.2;
+long double MinRe = -3.0L;
+long double MaxRe =  4.0L;
+long double MinIm = -2.2L;
 
 long double MaxIm;
 long double Re_factor;
 long double Im_factor;
 
-long double x_off = 2.5;
-long double y_off = -2;
-long double z_off = 1.0;
+long double x_off = 2.5L;
+long double y_off = -2.0L;
+long double z_off = 1.0L;
 
-long double scale_factor = 0;
+long double scale_factor = 0.0L;
 
 // -----------------------------------------------------------------------
 
@@ -58,11 +61,11 @@ static void make_palette(void)
 {
     int i;
     long double q;
-    long double PI = 3.1415;
+    const long double pi = 3.141592653589793238462643383279502884197L;
 
     for (i = 0; i < IMAX; i++)
     {
-        q = PI * (i + 10);
+        q = pi * (i + 10);
 
         r = (uint16_t)(128.0L + 127.0L * sinl(q / 16.0L));
         g = (uint16_t)(128.0L + 127.0L * sinl(q / 19.0L));
@@ -146,8 +149,6 @@ static void draw_braille(uC_window_t *win, rgb *buffer,
     uint8_t c = 0;
     uint16_t cc;
 
-    rgb fg;
-
     for (y = 0; y < height; y += 4)
     {
         for (x = 0; x < width; x += 2)
@@ -170,68 +171,97 @@ static void draw_braille(uC_window_t *win, rgb *buffer,
 
 // -----------------------------------------------------------------------
 
-static void mandel(uC_window_t *win, long double x_off,
-    long double y_off,
-    long double z_off)
+typedef struct
 {
-    int width  = win->width  * 2;
-    int height = win->height * 4;
+    rgb *buffer;
+    int width;
+    int first_row;
+    int last_row;
+    long double h2;
+    long double w2;
+    long double x_offset;
+    long double y_offset;
+} mandel_worker_t;
 
-    long double h2 = height / 2;
-    long double w2 = width  / 2;
+static void *render_mandel_rows(void *argument)
+{
+    mandel_worker_t *worker = argument;
 
-    int r, c, n;
-
-    long double c_re;
-    long double c_im;
-    long double Z_re;
-    long double Z_im;
-    long double Z_re2;
-    long double Z_im2;
-
-    bool isInside;
-
-    Re_factor = (MaxRe - MinRe) / (width  - 1) * z_off;
-    Im_factor = (MaxIm - MinIm) / (height - 1) * z_off;
-
-    MaxIm = MinIm + (MaxRe - MinRe) * height / width;
-
-    rgb *buffer = uC_alloc(uC_MEM_ZONE_DEFAULT,
-        width * height * sizeof(rgb));
-
-    for (r = 0; r < height; r++)
+    for (int row = worker->first_row; row < worker->last_row; row++)
     {
-        c_im = MaxIm - ((r + -h2) * Im_factor) + y_off;
+        long double c_im = MaxIm - ((row - worker->h2) * Im_factor) + worker->y_offset;
 
-        for (c = 0; c < width; c++)
+        for (int column = 0; column < worker->width; column++)
         {
-            c_re = MinRe + ((c + -w2) * Re_factor) + x_off;
+            long double c_re = MinRe + ((column - worker->w2) * Re_factor) + worker->x_offset;
+            long double z_re = c_re;
+            long double z_im = c_im;
+            int iteration;
 
-            Z_re = c_re;
-            Z_im = c_im;
-
-            isInside = true;
-
-            for (n = 0; n < IMAX; n++)
+            for (iteration = 0; iteration < IMAX; iteration++)
             {
-                Z_re2 = Z_re * Z_re;
-                Z_im2 = Z_im * Z_im;
+                const long double z_re2 = z_re * z_re;
+                const long double z_im2 = z_im * z_im;
 
-                if (Z_re2 + Z_im2 > 4)
+                if (z_re2 + z_im2 > 4.0L)
                 {
-                    isInside = false;
                     break;
                 }
-                Z_im = (2 * Z_re * Z_im) + c_im;
-                Z_re = Z_re2 - Z_im2 + c_re;
+                z_im = (2.0L * z_re * z_im) + c_im;
+                z_re = z_re2 - z_im2 + c_re;
             }
 
-            if (!isInside)
+            if (iteration < IMAX)
             {
-                buffer[c + (r * width)] = palette[n];
+                worker->buffer[column + (row * worker->width)] = palette[iteration];
             }
         }
     }
+
+    return NULL;
+}
+
+static void mandel(uC_window_t *win, long double x_offset,
+    long double y_offset,
+    long double zoom)
+{
+    const int width = win->width * 2;
+    const int height = win->height * 4;
+    const long double h2 = (long double)height / 2.0L;
+    const long double w2 = (long double)width / 2.0L;
+    long available_threads = sysconf(_SC_NPROCESSORS_ONLN);
+    int thread_count = (available_threads > 0) ? (int)available_threads : 1;
+
+    if (thread_count > MANDEL_MAX_THREADS)
+        thread_count = MANDEL_MAX_THREADS;
+    if (thread_count > height)
+        thread_count = height;
+
+    MaxIm = MinIm + (MaxRe - MinRe) * (long double)height / (long double)width;
+    Re_factor = (MaxRe - MinRe) / (long double)(width - 1) * zoom;
+    Im_factor = (MaxIm - MinIm) / (long double)(height - 1) * zoom;
+
+    rgb *buffer = uC_alloc(uC_MEM_ZONE_DEFAULT, width * height * sizeof(*buffer));
+    pthread_t threads[MANDEL_MAX_THREADS];
+    mandel_worker_t workers[MANDEL_MAX_THREADS];
+
+    for (int thread = 0; thread < thread_count; thread++)
+    {
+        workers[thread] = (mandel_worker_t){
+            .buffer = buffer,
+            .width = width,
+            .first_row = (height * thread) / thread_count,
+            .last_row = (height * (thread + 1)) / thread_count,
+            .h2 = h2,
+            .w2 = w2,
+            .x_offset = x_offset,
+            .y_offset = y_offset,
+        };
+        pthread_create(&threads[thread], NULL, render_mandel_rows, &workers[thread]);
+    }
+
+    for (int thread = 0; thread < thread_count; thread++)
+        pthread_join(threads[thread], NULL);
 
     draw_braille(win, buffer, width, height);
     uC_free(uC_MEM_ZONE_DEFAULT, buffer);
@@ -241,35 +271,35 @@ static void mandel(uC_window_t *win, long double x_off,
 
 static void lt(void)
 {
-    x_off += 1 / powl(2, scale_factor) * 0.02;
+    x_off += 1.0L / powl(2.0L, scale_factor) * 0.02L;
 }
 
 static void rt(void)
 {
-    x_off -= 1 / powl(2, scale_factor) * 0.02;
+    x_off -= 1.0L / powl(2.0L, scale_factor) * 0.02L;
 }
 
 static void up(void)
 {
-    y_off += 1 / powl(2, scale_factor) * 0.02;
+    y_off += 1.0L / powl(2.0L, scale_factor) * 0.02L;
 }
 
 static void dn(void)
 {
-    y_off -= 1 / powl(2, scale_factor) * 0.02;
+    y_off -= 1.0L / powl(2.0L, scale_factor) * 0.02L;
 }
 
 static void zi(void)
 {
-    scale_factor += 0.02;
+    scale_factor += 0.02L;
     if (scale_factor > 54.0L) { scale_factor = 54.0L; }
-    z_off = 1 / powl(2, scale_factor);
+    z_off = 1.0L / powl(2.0L, scale_factor);
 }
 
 static void zo(void)
 {
-    scale_factor -= 0.02;
-    z_off = 1 / powl(2, scale_factor);
+    scale_factor -= 0.02L;
+    z_off = 1.0L / powl(2.0L, scale_factor);
 }
 
 // -----------------------------------------------------------------------
@@ -288,7 +318,7 @@ static void update_status(void)
     char z[16];
 
     snprintf(xy, sizeof(xy), "X:%1.8Lf  Y:%1.8Lf  ", x_off, y_off);
-    snprintf(z,  sizeof(z),  "Z:%3.2Lf", scale_factor);
+    snprintf(z, sizeof(z), "Z:%3.2Lf", scale_factor);
 
     if (scale_factor >= 54.0L)
     {

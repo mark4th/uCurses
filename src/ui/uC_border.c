@@ -277,4 +277,33 @@ API void uC_win_draw_box(uC_window_t *win,
         bdr[BDR_BOTTOM_RIGHT]);
 }
 
+API void uC_win_draw_grid(uC_window_t *win,
+    uint16_t x, uint16_t y, uint16_t width, uint16_t height,
+    const uint16_t *verticals, size_t vertical_count,
+    const uint16_t *horizontals, size_t horizontal_count,
+    uC_border_type_t type, uC_attribs_t attrs)
+{
+    border_t *bdr;
+    size_t i;
+
+    if ((win == NULL) || (type == uC_BDR_NONE)) return;
+    bdr = borders[type];
+    uC_win_draw_box(win, x, y, width, height, type, attrs);
+    win->attrs = attrs;
+    for (i = 0; i < vertical_count; i++)
+    {
+        uint16_t vx = x + verticals[i];
+        uC_win_printf(win, "%@%8", UC_XY(vx, y), bdr[BDR_TOP_T]);
+        uC_win_printf(win, "%@%8", UC_XY(vx, y + height), bdr[BDR_BOTTOM_T]);
+        uC_win_printf(win, "%@%*", UC_XY(vx, y + 1), height - 1, bdr[BDR_VERTICAL]);
+    }
+    for (i = 0; i < horizontal_count; i++)
+    {
+        uint16_t hy = y + horizontals[i];
+        uC_win_printf(win, "%@%8%*%8", UC_XY(x, hy), bdr[BDR_LEFT_T], width, bdr[BDR_HORIZONTAL], bdr[BDR_RIGHT_T]);
+        for (size_t j = 0; j < vertical_count; j++)
+            uC_win_printf(win, "%@%8", UC_XY(x + verticals[j], hy), bdr[BDR_CROSS]);
+    }
+}
+
 // =======================================================================

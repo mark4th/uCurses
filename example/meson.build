@@ -2,7 +2,8 @@
 # not built by default; use 'ninja examples' or 'make examples'
 # -----------------------------------------------------------------------
 
-m_dep   = compiler.find_library('m', required : false)
+m_dep       = compiler.find_library('m', required : false)
+threads_dep = dependency('threads')
 ex_inc  = include_directories('../h', '.')
 ex_rpath = '$ORIGIN/../build'
 ex_args = [
@@ -95,7 +96,7 @@ ex_dots = executable('dots',
 
 ex_mandel = executable('mandel',
     'mandel.c',
-    dependencies     : [ucurses_dep, m_dep],
+    dependencies     : [ucurses_dep, m_dep, threads_dep],
     c_args           : ex_args,
     build_rpath      : ex_rpath,
     build_by_default : false,

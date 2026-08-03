@@ -642,6 +642,16 @@ API void uC_menu_init_keys(void)
         menu_saved_current_f10 = uC_set_key_action(K_F10, menu_key_f10);
         menu_keys_initialized = true;
     }
+    else
+    {
+        // UI teardown/rebuild paths can replace or restore the active key
+        // table while the menu subsystem itself remains initialized.  F10
+        // belongs to an attached menu bar, so reassert its translation each
+        // time menu input is initialized instead of trusting stale table
+        // state.
+        (void)uC_set_default_key_action(K_F10, menu_key_f10);
+        (void)uC_set_key_action(K_F10, menu_key_f10);
+    }
 }
 
 // -----------------------------------------------------------------------

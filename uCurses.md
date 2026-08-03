@@ -2852,6 +2852,15 @@ for the new terminal dimensions.  The popup objects themselves are
 not destroyed.
 
 ```c
+API bool uC_scr_resize_to_terminal(uC_screen_t *scr)
+```
+
+Call this after `uC_scr_resize_hold()` and before rebuilding application
+windows. It updates the screen dimensions and replaces its retained buffers.
+Existing windows are not resized; the application must rebuild them for the
+new geometry. It returns false if the terminal size or buffer allocation fails.
+
+```c
 API void uC_scr_draw_screen(uC_screen_t *scr)
 ```
 

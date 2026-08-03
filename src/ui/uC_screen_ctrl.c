@@ -80,6 +80,40 @@ API uC_screen_t *uC_scr_open(int16_t width, int16_t height)
 }
 
 // -----------------------------------------------------------------------
+// Resize the retained screen buffers to the terminal's current dimensions.
+
+API bool uC_scr_resize_to_terminal(uC_screen_t *scr)
+{
+    uint16_t width;
+    uint16_t height;
+
+    if (scr == NULL)
+    {
+        return false;
+    }
+    uC_get_console_size(&width, &height);
+    if ((width == 0) || (height == 0) ||
+        (width > INT16_MAX) || (height > INT16_MAX))
+    {
+        return false;
+    }
+    if ((scr->width == (int16_t)width) && (scr->height == (int16_t)height))
+    {
+        return true;
+    }
+
+    uC_ui_free(scr->buffer1);
+    uC_ui_free(scr->buffer2);
+    scr->buffer1 = NULL;
+    scr->buffer2 = NULL;
+    scr->width = (int16_t)width;
+    scr->height = (int16_t)height;
+    scr->cx = -1;
+    scr->cy = -1;
+    return scr_alloc(scr) == 0;
+}
+
+// -----------------------------------------------------------------------
 
 API void uC_scr_enable_shortcuts(uC_screen_t *scr)
 {

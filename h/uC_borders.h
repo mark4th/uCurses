@@ -56,6 +56,13 @@ API void uC_win_draw_box(uC_window_t *win,
     uC_border_type_t bdr_type,
     uC_attribs_t box_attrs);
 
+// Draw one uniform-style box grid. Divider coordinates are relative to xco/yco.
+API void uC_win_draw_grid(uC_window_t *win,
+    uint16_t xco, uint16_t yco, uint16_t width, uint16_t height,
+    const uint16_t *verticals, size_t vertical_count,
+    const uint16_t *horizontals, size_t horizontal_count,
+    uC_border_type_t bdr_type, uC_attribs_t attrs);
+
 // -----------------------------------------------------------------------
 
 #endif // UC_BORDERS_H

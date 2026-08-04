@@ -110,7 +110,6 @@ enum
 void uC_read_keys(void);        // legacy greedy whole-sequence read (unused)
 uint8_t uC_read_key(void);      // streaming: read one byte into keybuff[0]
 int uC_key_fd_source(void *ctx, int timeout_ms);   // sm_run() tty byte source
-int16_t match_key(void);
 
 // -----------------------------------------------------------------------
 // keyboard state machine (uC_key_sm.c): sm_parse() decodes the ESC-initiated

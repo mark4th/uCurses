@@ -202,10 +202,19 @@ Watch-outs:
   PgUp/PgDn, Del/Ins, F-keys, ENTER/BS/TAB, bare ESC (no hang ~25 ms),
   Alt-b, Ctrl/Shift+arrow, and a mouse click/drag (mouse parser still fed).
 
-### Stage 3 — retire `match_key`/`key_sequence.c`; optional Alt+UTF-8
+### Stage 3 — retire `match_key`/`key_sequence.c` ✅ DONE (committed local, unpushed); Alt+UTF-8 still open
 
-After Stage 2 proves out, delete the now-unused `match_key()` +
-`key_sequence.c` (grep for other users of `k_table`/`match_key` first).
+Deleted `src/keys/key_sequence.c` (held `match_key`, `k_table`, and the
+`ti_k*` sequence generators — all only ever fed `match_key`). Removed the
+`match_key` decl from `uC_keys.h` and the stale `extern k_table` from
+`uC_key_table.c`. Build globs `src/keys/*.c` so the file just drops out.
+Behaviour-neutral: `match_key` had no callers since Stage 0 replaced it with
+the SM, so this can't affect the pending live test — committed as its own
+commit, left UNPUSHED so it can be held/dropped independently. Builds clean,
+11/11 tests pass. (`uC_read_keys()` is also unused now but kept as a labelled
+legacy reference; drop it too if wanted.)
+
+Alt+UTF-8 remains:
 Alt+UTF-8: extend the `sm_run` `default:` branch to, on `b` being a UTF-8 lead
 byte, pull its continuation bytes as one Alt+char — but the return path is a
 single `uint8_t` (`keybuff[0]`), so a >255 codepoint needs an API decision

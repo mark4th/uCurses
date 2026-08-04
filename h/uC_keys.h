@@ -132,6 +132,12 @@ enum
 };
 
 extern uint8_t key_mods;        // internal: live modifier mask, uC_key_mods()
+
+// the SM pulls the post-ESC bytes from a source: next raw byte, or -1 when
+// none arrives within timeout_ms.  sm_parse() runs it over the buffered
+// keybuff; a streaming reader can run sm_run() over an fd-backed source.
+typedef int (*sm_source_t)(void *ctx, int timeout_ms);
+int16_t sm_run(sm_source_t src, void *ctx);
 int16_t sm_parse(void);
 bool uC_shortcut_register(uC_screen_t *scr,
     uC_shortcut_t shortcut, uC_shortcut_action_t *action, void *context,

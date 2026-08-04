@@ -159,6 +159,66 @@ void test_sgr_mouse_is_unhandled(void)
 }
 
 // =======================================================================
+// drive sm_run() through an independent array source (bytes one at a time,
+// -1 when exhausted) — the streaming pull path, decoupled from keybuff.  the
+// sequences here are the bytes AFTER the leading ESC (already "consumed").
+
+typedef struct
+{
+    const uint8_t *p;
+    uint8_t        len;
+    uint8_t        i;
+} arr_src_t;
+
+static int arr_source(void *ctx, int timeout_ms)
+{
+    arr_src_t *s = ctx;
+
+    (void)timeout_ms;
+    return (s->i < s->len) ? s->p[s->i++] : -1;
+}
+
+static int16_t run_arr(const char *post_esc, uint8_t len)
+{
+    arr_src_t s = { (const uint8_t *)post_esc, len, 0 };
+
+    tv.keybuff[0] = 0x1b;               // as if the ESC was already read
+    tv.num_k      = 1;
+    return sm_run(arr_source, &s);
+}
+
+void test_stream_up(void)
+{
+    TEST_ASSERT_EQUAL_INT16(K_CUU1, run_arr("[A", 2));
+    TEST_ASSERT_EQUAL_UINT8(0, key_mods);
+}
+
+void test_stream_ctrl_right(void)
+{
+    TEST_ASSERT_EQUAL_INT16(K_CUF1, run_arr("[1;5C", 5));
+    TEST_ASSERT_EQUAL_UINT8(KMOD_CTRL, key_mods);
+}
+
+void test_stream_bare_esc_source_empty(void)
+{
+    // source yields nothing after ESC -> bare ESC (the timeout branch)
+    TEST_ASSERT_EQUAL_INT16(SM_DIRECT, run_arr("", 0));
+}
+
+void test_stream_incomplete_csi(void)
+{
+    // digit then the stream ends mid-sequence -> incomplete, not UB
+    TEST_ASSERT_EQUAL_INT16(SM_UNHANDLED, run_arr("[3", 2));
+}
+
+void test_stream_alt_char(void)
+{
+    TEST_ASSERT_EQUAL_INT16(SM_DIRECT, run_arr("b", 1));
+    TEST_ASSERT_EQUAL_UINT8(KMOD_ALT, key_mods);
+    TEST_ASSERT_EQUAL_UINT8('b', tv.keybuff[0]);
+}
+
+// =======================================================================
 
 int main(void)
 {
@@ -180,6 +240,11 @@ int main(void)
     RUN_TEST(test_alt_char);
     RUN_TEST(test_x10_mouse_is_unhandled);
     RUN_TEST(test_sgr_mouse_is_unhandled);
+    RUN_TEST(test_stream_up);
+    RUN_TEST(test_stream_ctrl_right);
+    RUN_TEST(test_stream_bare_esc_source_empty);
+    RUN_TEST(test_stream_incomplete_csi);
+    RUN_TEST(test_stream_alt_char);
     return UNITY_END();
 }
 

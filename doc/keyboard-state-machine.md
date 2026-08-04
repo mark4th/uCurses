@@ -117,6 +117,82 @@ compile-check the library here.
       **Alt-b** launches the bp browser, **F10** quits. Alt+char + CSI ~-form F-key
       paths good. Still to spot-check: arrows, Home/End/PgUp/PgDn, Del/Ins, bare
       ESC (no hang), Ctrl/Shift+arrow.
-- [ ] Optional: `uC_key_mods()` accessor to expose Ctrl/Shift to apps.
-- [ ] Optional: retire `match_key`/`key_sequence.c`; streaming read.
-- [ ] Not committed yet (WIP on branch).
+- [x] Committed b9c761b (first cut) + bbd72ab (Codex review: param-overflow
+      clamp, `uC_key_mods()` accessor, `test/test_key_sm.c`). Pushed.
+- [x] `uC_key_mods()` accessor (full KMOD mask) — DONE (bbd72ab).
+- [ ] Streaming read — Stage 1 DONE (see below); Stage 2/3 pending.
+- [ ] Optional: retire `match_key`/`key_sequence.c` (Stage 3).
+
+## Streaming reader — staged plan (2026-08-04)
+
+Goal: replace the fragile *whole-sequence* 25 ms poll (`uC_read_keys()` reads
+greedily into `keybuff`, then `sm_parse()` scans it) with a **byte-at-a-time**
+read where the SM pulls each post-ESC byte on its own 25 ms window. Robust to
+slow links / split sequences, and the natural home for Alt+UTF-8 grouping.
+
+Staged so each commit is green and low-risk; the risky I/O flip (Stage 2)
+is isolated and TUI-test-gated (only Mark can drive the live terminal).
+
+### Stage 1 — pull-based SM behind a byte-source seam ✅ DONE (this session, uncommitted→commit next)
+
+`sm_parse()` no longer indexes `keybuff` directly. The SM pulls bytes through
+a source: `typedef int (*sm_source_t)(void *ctx, int timeout_ms)` returning the
+next raw byte or -1 ("none within window"). New entry `sm_run(src, ctx)` drives
+GROUND/CSI/SS3 by pulling; `sm_parse()` is now a thin wrapper that runs it over
+a **buffer source** (`buf_source` walks the already-filled `keybuff` from [1]).
+Behaviour is byte-identical — proven by the existing 17 asserts passing
+unchanged. Added 5 more asserts driving `sm_run()` through an independent array
+source (`test/test_key_sm.c`), incl. bare-ESC-via-empty-source and incomplete
+CSI. All in `src/keys/uC_key_sm.c` + `h/uC_keys.h` (seam decls). No change to
+`uC_key_raw` or the read path yet → zero runtime regression risk.
+
+### Stage 2 — live fd source + one-byte read (behavior change, TUI-test-gated)
+
+The only new code is a source that reads the tty. Sketch, in
+`src/keys/uC_key_read.c` (it already owns `pfd` + `read_key()`):
+
+```c
+// returns next stdin byte within timeout_ms, or -1; appends it to keybuff so
+// the mouse parser (reads keybuff/num_k) and SM_DIRECT still see the bytes.
+int uC_key_fd_source(void *ctx, int timeout_ms)
+{
+    (void)ctx;
+    if (poll(&pfd, 1, timeout_ms) <= 0) return -1;   // no byte in window
+    if (ti_vars->num_k >= KEY_BUFF_SZ)  return -1;    // overflow guard
+    uint8_t b;
+    if (read(0, &b, 1) != 1)            return -1;
+    ti_vars->keybuff[ti_vars->num_k++] = b;
+    return b;
+}
+```
+
+Then `uC_key_raw()` (uC_key_table.c): read ONE byte (blocking, honoring
+`stuffed`); if it isn't 0x1b it's a complete key (`num_k=1`, done); if it is
+0x1b, set `keybuff[0]=0x1b; num_k=1;` and call
+`c = sm_run(uC_key_fd_source, NULL);` instead of `uC_read_keys(); sm_parse();`.
+The rest of `uC_key_raw` (handler dispatch, SM_DIRECT, mouse fall-through,
+0x7f→0x08) is unchanged: on SM_UNHANDLED the mouse bytes are already appended
+to keybuff by the source (the `sm_csi` mouse-drain loop pulls them), so
+`uC_mouse_parse()` works as before.
+
+Watch-outs:
+- `num_esc`/`stuffed` and `uC_set_key()` stuffing path — keep working (a
+  stuffed key must still return without touching the tty).
+- Mouse drain currently ends on a 25 ms gap; that matches today's whole-buffer
+  poll, so no worse. SGR/X10 both handled by the `'M'`/`'<'` branch.
+- `uC_read_keys()` becomes unused by `uC_key_raw` — leave it (or delete once
+  nothing else calls it; grep first).
+- CANNOT unit-test the fd source here (needs a real fd); CANNOT TUI-test
+  (Mark drives it). So Stage 2 must be validated live: arrows, Home/End,
+  PgUp/PgDn, Del/Ins, F-keys, ENTER/BS/TAB, bare ESC (no hang ~25 ms),
+  Alt-b, Ctrl/Shift+arrow, and a mouse click/drag (mouse parser still fed).
+
+### Stage 3 — retire `match_key`/`key_sequence.c`; optional Alt+UTF-8
+
+After Stage 2 proves out, delete the now-unused `match_key()` +
+`key_sequence.c` (grep for other users of `k_table`/`match_key` first).
+Alt+UTF-8: extend the `sm_run` `default:` branch to, on `b` being a UTF-8 lead
+byte, pull its continuation bytes as one Alt+char — but the return path is a
+single `uint8_t` (`keybuff[0]`), so a >255 codepoint needs an API decision
+first (widen the key carrier or expose the codepoint via a side-channel). Not
+started; design call, not a mechanical change.

@@ -8,7 +8,7 @@
 // (ESC [ 1 ; 5 A) or an ESC prefix (ESC b = Alt-b).
 //
 // sm_parse() is called by uC_key_raw() ONLY when keybuff[0] == 0x1b (a plain
-// printable is returned before we get here).  It sets uC_key_mods and returns:
+// printable is returned before we get here).  It sets key_mods and returns:
 //   >= 0          a key_index_t   -> caller runs user_key_actions[r]
 //   SM_DIRECT     keycode already left in keybuff[0] (bare ESC, Alt+char)
 //   SM_UNHANDLED  not a key sequence (mouse / unknown) -> caller falls through
@@ -25,9 +25,9 @@
 extern ti_vars_t *ti_vars;
 
 // modifier mask (KMOD_*) of the most recently decoded key.  uC_alt() reads
-// its Alt bit; a future uC_key_mods() accessor can expose Ctrl/Shift.
+// its Alt bit; key_mods() exposes the whole mask (Ctrl/Shift/Alt).
 
-uint8_t uC_key_mods;
+uint8_t key_mods;
 
 // -----------------------------------------------------------------------
 // map a CSI/SS3 final letter (A B C D H F) to its key_index_t.  shift+left
@@ -116,7 +116,12 @@ static int16_t decode_csi(void)
 
         if ((c >= '0') && (c <= '9'))
         {
-            if (np < 2)
+            // clamp before the multiply: real params are tiny (tilde keys
+            // <= 24, modifier <= 8), so a long digit run is a malformed or
+            // malicious sequence.  capping below 100000 keeps param[] well
+            // clear of int32 overflow (UB) while still overshooting every
+            // valid value, so tilde_number()/final_letter() reject it.
+            if ((np < 2) && (param[np] < 100000))
             {
                 param[np] = (param[np] * 10) + (c - '0');
             }
@@ -132,13 +137,13 @@ static int16_t decode_csi(void)
         // any other byte is the final byte of the sequence
         if (have_digit || (np > 0)) { np++; }   // count the trailing param
 
-        uC_key_mods = (np >= 2) ? (uint8_t)((param[1] - 1) & 0x07) : 0;
+        key_mods = (np >= 2) ? (uint8_t)((param[1] - 1) & 0x07) : 0;
 
         if (c == '~')
         {
             return tilde_number(param[0]);
         }
-        return final_letter(c, uC_key_mods);
+        return final_letter(c, key_mods);
     }
 
     return SM_UNHANDLED;                 // ran out of bytes: incomplete
@@ -150,7 +155,7 @@ static int16_t decode_csi(void)
 
 int16_t sm_parse(void)
 {
-    uC_key_mods = 0;
+    key_mods = 0;
 
     // bare ESC — nothing followed it within the poll window
     if (ti_vars->num_k == 1)
@@ -175,7 +180,7 @@ int16_t sm_parse(void)
         default:                        // ESC <printable> = Alt+char
             if (ti_vars->num_k == 2)
             {
-                uC_key_mods         = KMOD_ALT;
+                key_mods         = KMOD_ALT;
                 ti_vars->keybuff[0] = ti_vars->keybuff[1];
                 ti_vars->num_k      = 1;
                 return SM_DIRECT;

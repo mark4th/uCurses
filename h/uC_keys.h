@@ -114,8 +114,9 @@ int16_t match_key(void);
 // keyboard state machine (uC_key_sm.c): sm_parse() decodes the ESC-initiated
 // sequence buffered in ti_vars->keybuff into either a key_index_t (caller runs
 // the handler), a direct keycode (already left in keybuff[0]), or "unhandled"
-// (caller falls through to the mouse parser).  uC_key_mods holds the modifier
-// mask of the key just decoded; uC_alt() reports its Alt bit.
+// (caller falls through to the mouse parser).  key_mods holds the modifier
+// mask of the key just decoded; uC_alt() reports its Alt bit and the public
+// uC_key_mods() accessor (below) exposes the whole mask.
 
 enum
 {
@@ -130,7 +131,7 @@ enum
     SM_DIRECT    = -2,      // keybuff[0] holds the final keycode; return it
 };
 
-extern uint8_t uC_key_mods;
+extern uint8_t key_mods;        // internal: live modifier mask, uC_key_mods()
 int16_t sm_parse(void);
 bool uC_shortcut_register(uC_screen_t *scr,
     uC_shortcut_t shortcut, uC_shortcut_action_t *action, void *context,
@@ -160,6 +161,10 @@ API uint8_t uC_key(void);
 // whether the most recently returned key was pressed with Alt held.  valid
 // immediately after uC_key() / uC_key_raw() returns; cleared for non-Alt keys
 API bool uC_alt(void);
+
+// full modifier mask (KMOD_SHIFT / KMOD_ALT / KMOD_CTRL) of the most recently
+// returned key.  same validity window as uC_alt(); uC_alt() is its Alt shorthand
+API uint8_t uC_key_mods(void);
 
 API void uC_set_key(uint8_t c);
 API void uC_flush_keys(void);

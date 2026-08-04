@@ -31,12 +31,22 @@ extern uC_screen_t *active_screen;
 // -----------------------------------------------------------------------
 // whether the most recently returned key was pressed with Alt held.  the
 // modifier mask is produced by the keyboard state machine (uC_key_sm.c) and
-// stored in uC_key_mods; uC_alt reports its Alt bit.  the public contract
+// stored in key_mods; uC_alt reports its Alt bit.  the public contract
 // (uC_key returns the base key, uC_alt reports the modifier) is permanent.
 
 API bool uC_alt(void)
 {
-    return (uC_key_mods & KMOD_ALT) != 0;
+    return (key_mods & KMOD_ALT) != 0;
+}
+
+// -----------------------------------------------------------------------
+// full modifier mask (KMOD_SHIFT / KMOD_ALT / KMOD_CTRL) of the most
+// recently returned key.  valid immediately after uC_key() / uC_key_raw();
+// uC_alt() is the Alt-bit shorthand over this.
+
+API uint8_t uC_key_mods(void)
+{
+    return key_mods;
 }
 
 // -----------------------------------------------------------------------
@@ -185,7 +195,7 @@ API uint8_t uC_key_raw(void)
 {
     int16_t c;
 
-    uC_key_mods = 0;        // cleared per key; sm_parse sets it for ESC seqs
+    key_mods = 0;           // cleared per key; sm_parse sets it for ESC seqs
 
     while (ti_vars->num_k != 1)
     {
@@ -205,7 +215,7 @@ API uint8_t uC_key_raw(void)
         }
 
         // decode the ESC-initiated sequence through the state machine.  it
-        // sets uC_key_mods and returns a key_index_t (>= 0), SM_DIRECT (the
+        // sets key_mods and returns a key_index_t (>= 0), SM_DIRECT (the
         // final keycode is already in keybuff[0] — bare ESC or Alt+char), or
         // SM_UNHANDLED (fall through to the mouse parser).
 

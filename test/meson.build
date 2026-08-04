@@ -38,3 +38,17 @@ foreach t : test_specs
     )
     test(t[0], exe, should_fail : t[2])
 endforeach
+
+# -----------------------------------------------------------------------
+# uC_key_sm.c is a hidden symbol, so it cannot be reached through the shared
+# library.  compile it straight into this test and let the test supply its
+# own ti_vars.
+
+test_key_sm = executable('test_key_sm',
+    ['test_key_sm.c', '../src/keys/uC_key_sm.c', unity_src],
+    include_directories : test_inc,
+    c_args              : test_args,
+    build_by_default    : false,
+    install             : false,
+)
+test('test_key_sm', test_key_sm)

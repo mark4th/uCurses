@@ -109,6 +109,29 @@ enum
 
 void uC_read_keys(void);
 int16_t match_key(void);
+
+// -----------------------------------------------------------------------
+// keyboard state machine (uC_key_sm.c): sm_parse() decodes the ESC-initiated
+// sequence buffered in ti_vars->keybuff into either a key_index_t (caller runs
+// the handler), a direct keycode (already left in keybuff[0]), or "unhandled"
+// (caller falls through to the mouse parser).  uC_key_mods holds the modifier
+// mask of the key just decoded; uC_alt() reports its Alt bit.
+
+enum
+{
+    KMOD_SHIFT = 0x01,      // xterm modifier bitmask (param value - 1)
+    KMOD_ALT   = 0x02,      // Alt / Meta
+    KMOD_CTRL  = 0x04,
+};
+
+enum
+{
+    SM_UNHANDLED = -1,      // not a key sequence — try mouse etc.
+    SM_DIRECT    = -2,      // keybuff[0] holds the final keycode; return it
+};
+
+extern uint8_t uC_key_mods;
+int16_t sm_parse(void);
 bool uC_shortcut_register(uC_screen_t *scr,
     uC_shortcut_t shortcut, uC_shortcut_action_t *action, void *context,
     void *owner);

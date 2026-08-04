@@ -29,17 +29,14 @@ extern void (*k_table[])(void);
 extern uC_screen_t *active_screen;
 
 // -----------------------------------------------------------------------
-// whether the most recently returned key was pressed with Alt held.  set
-// by uC_key_raw when an ESC-prefixed printable arrives (Alt+char), cleared
-// for every other key.  the public contract (uC_key returns the base key,
-// uC_alt reports the modifier) is permanent; only the detection below is
-// provisional and will be replaced by the keyboard state machine.
-
-static bool key_alt;
+// whether the most recently returned key was pressed with Alt held.  the
+// modifier mask is produced by the keyboard state machine (uC_key_sm.c) and
+// stored in uC_key_mods; uC_alt reports its Alt bit.  the public contract
+// (uC_key returns the base key, uC_alt reports the modifier) is permanent.
 
 API bool uC_alt(void)
 {
-    return key_alt;
+    return (uC_key_mods & KMOD_ALT) != 0;
 }
 
 // -----------------------------------------------------------------------
@@ -188,7 +185,7 @@ API uint8_t uC_key_raw(void)
 {
     int16_t c;
 
-    key_alt = false;        // default; the Alt+char branch below sets it
+    uC_key_mods = 0;        // cleared per key; sm_parse sets it for ESC seqs
 
     while (ti_vars->num_k != 1)
     {
@@ -207,19 +204,19 @@ API uint8_t uC_key_raw(void)
             break;
         }
 
-        c = match_key();    // compare input with all handled escapes
+        // decode the ESC-initiated sequence through the state machine.  it
+        // sets uC_key_mods and returns a key_index_t (>= 0), SM_DIRECT (the
+        // final keycode is already in keybuff[0] — bare ESC or Alt+char), or
+        // SM_UNHANDLED (fall through to the mouse parser).
 
-        if (c != -1)        // if escape sequence is one we handle
-        {                   // internally
-            // flush the escape buffer
+        c = sm_parse();
+
+        if (c >= 0)         // a recognized special key -> run its handler
+        {
             ti_vars->num_esc = 0;
 
-            // execute handler for keypress
+            // the handler may stuff a custom key value for this key press
             user_key_actions[c]();
-
-            // the above call to the user_key_actions() function
-            // can return a custom key press value for any of
-            // the key sequence keys.
 
             if (ti_vars->num_k == 1)
             {
@@ -228,22 +225,18 @@ API uint8_t uC_key_raw(void)
             ti_vars->num_k = 0;
             return 0;
         }
+
+        if (c == SM_DIRECT) // bare ESC / Alt+char already in keybuff[0]
+        {
+            break;
+        }
 #ifdef UC_MOUSE
-        else if (uC_mouse_parse())
+        if (uC_mouse_parse())   // SM_UNHANDLED: maybe a mouse report
         {
             break;
         }
 #endif
-        else if (ti_vars->num_k == 2)
-        {
-            // ESC + one unmatched printable byte = Alt+char.  hand the app
-            // the base key with the alt flag set (queried via uC_alt).
-            // provisional: the keyboard state machine will supersede this
-            key_alt = true;
-            ti_vars->keybuff[0] = ti_vars->keybuff[1];
-            ti_vars->num_k = 1;
-            break;
-        }
+        // unhandled and not a mouse report: drop it and read again
     }
 
     // no matter what value your terminal returns for a press of the

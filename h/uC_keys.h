@@ -107,7 +107,9 @@ enum
 // -----------------------------------------------------------------------
 // visibility hidden
 
-void uC_read_keys(void);
+void uC_read_keys(void);        // legacy greedy whole-sequence read (unused)
+uint8_t uC_read_key(void);      // streaming: read one byte into keybuff[0]
+int uC_key_fd_source(void *ctx, int timeout_ms);   // sm_run() tty byte source
 int16_t match_key(void);
 
 // -----------------------------------------------------------------------

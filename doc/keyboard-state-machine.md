@@ -146,7 +146,22 @@ source (`test/test_key_sm.c`), incl. bare-ESC-via-empty-source and incomplete
 CSI. All in `src/keys/uC_key_sm.c` + `h/uC_keys.h` (seam decls). No change to
 `uC_key_raw` or the read path yet → zero runtime regression risk.
 
-### Stage 2 — live fd source + one-byte read (behavior change, TUI-test-gated)
+### Stage 2 — live fd source + one-byte read ✅ DONE (this session)
+
+Implemented as specced below. `uC_key_fd_source()` + `uC_read_key()` in
+`uC_key_read.c`; `uC_key_raw()` now reads one byte (`uC_read_key`) and, on ESC,
+calls `sm_run(uC_key_fd_source, NULL)` instead of `uC_read_keys()`+`sm_parse()`.
+`uC_read_keys()` is left in place, now unused. NEW integration test
+`test/test_key_stream.c` drives the REAL fd path over a pipe (read end duped to
+fds 0/1): arrows, ctrl+right, tilde-del, SS3-F1, **bare-ESC-via-25ms-timeout**,
+**Alt-b-via-timeout**, and X10-mouse-drain (verifies keybuff is filled from
+index 3 for `uC_mouse_parse`). All green. Unity reports on fd 2 (`unity_putc`)
+since 0/1 are the pipe. STILL NEEDS Mark's live TUI pass (dispatch/stuffed/
+shortcut re-entrancy/real mouse aren't covered by the pipe test): arrows,
+Home/End, PgUp/PgDn, Del/Ins, F-keys, ENTER/BS/TAB, bare ESC (no hang), Alt-b,
+Ctrl/Shift+arrow, a mouse click/drag.
+
+Original spec (as implemented):
 
 The only new code is a source that reads the tty. Sketch, in
 `src/keys/uC_key_read.c` (it already owns `pfd` + `read_key()`):

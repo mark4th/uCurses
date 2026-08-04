@@ -52,3 +52,21 @@ test_key_sm = executable('test_key_sm',
     install             : false,
 )
 test('test_key_sm', test_key_sm)
+
+# streaming read path: fd source + sm_run over a pipe (fds 0/1).  compiles
+# the read layer and the SM straight in and supplies its own ti_vars.
+
+test_key_stream = executable('test_key_stream',
+    ['test_key_stream.c', '../src/keys/uC_key_read.c',
+     '../src/keys/uC_key_sm.c', unity_src],
+    include_directories : test_inc,
+    # fds 0/1 are duped onto the pipe for the fake tty, so Unity must report
+    # on fd 2 (via unity_putc) or its output would be swallowed by the pipe.
+    c_args              : test_args + [
+        '-DUNITY_OUTPUT_CHAR(a)=unity_putc(a)',
+        '-DUNITY_OUTPUT_CHAR_HEADER_DECLARATION=unity_putc(int c)',
+    ],
+    build_by_default    : false,
+    install             : false,
+)
+test('test_key_stream', test_key_stream)

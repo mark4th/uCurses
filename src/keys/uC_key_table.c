@@ -200,18 +200,15 @@ API uint8_t uC_key_raw(void)
     while (ti_vars->num_k != 1)
     {
         memset(ti_vars->keybuff, 0, KEY_BUFF_SZ);
-        uC_read_keys();     // read key or sequence into keyboard buff
 
-        // if the first byte is a regular character (not 0x1b) then we
-        // have a normal keypress that may have arrived alongside mouse
-        // event bytes (all-motion mouse generates bytes continuously).
-        // truncate to one byte and return it immediately rather than
-        // looping, which would memset the buffer and lose the keypress.
+        // read one byte.  a non-ESC byte is already a complete keypress; an
+        // ESC starts a sequence whose remaining bytes the state machine pulls
+        // from the tty one at a time (uC_key_fd_source), each on its own ~25ms
+        // window — instead of pre-buffering the whole sequence on one poll.
 
-        if (ti_vars->keybuff[0] != 0x1b)
+        if (uC_read_key() != 0x1b)
         {
-            ti_vars->num_k = 1;
-            break;
+            break;                      // normal, complete keypress (num_k==1)
         }
 
         // decode the ESC-initiated sequence through the state machine.  it
@@ -219,7 +216,7 @@ API uint8_t uC_key_raw(void)
         // final keycode is already in keybuff[0] — bare ESC or Alt+char), or
         // SM_UNHANDLED (fall through to the mouse parser).
 
-        c = sm_parse();
+        c = sm_run(uC_key_fd_source, NULL);
 
         if (c >= 0)         // a recognized special key -> run its handler
         {

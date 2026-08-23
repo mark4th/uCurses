@@ -58,6 +58,15 @@ ex_shell = executable('shell',
     install          : false,
 )
 
+ex_keys = executable('keys',
+    'keys.c',
+    dependencies     : ucurses_dep,
+    c_args           : ex_args,
+    build_rpath      : ex_rpath,
+    build_by_default : false,
+    install          : false,
+)
+
 ex_widgets = executable('widgets',
     'widgets.c',
     dependencies     : ucurses_dep,
@@ -134,12 +143,12 @@ ex_list_demo = executable('list_demo',
 
 if mouse_enabled
     alias_target('examples',
-        ex_demo, ex_scroll, ex_console, ex_shell, ex_widgets, ex_window,
+        ex_demo, ex_scroll, ex_console, ex_keys, ex_shell, ex_widgets, ex_window,
         ex_raycast, ex_dots, ex_mandel, ex_borders, ex_lion, ex_list_demo,
     )
 else
     alias_target('examples',
-        ex_demo, ex_console, ex_shell, ex_widgets, ex_window,
+        ex_demo, ex_console, ex_keys, ex_shell, ex_widgets, ex_window,
         ex_raycast, ex_dots, ex_mandel, ex_borders, ex_lion, ex_list_demo,
     )
 endif

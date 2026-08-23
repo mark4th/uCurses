@@ -2,7 +2,7 @@ include generic.makefile
 
 project = uCurses
 shared_object=lib$(project).so
-example_bins = demo scroll console widgets window raycast dots mandel borders lion list_demo
+example_bins = demo scroll console keys widgets window raycast dots mandel borders lion list_demo
 
 .PHONY: clean-examples examples tests help
 

@@ -77,6 +77,29 @@ minimum: arrows, Home/End/PgUp/PgDn, Del/Ins, F-keys, ENTER/BS/TAB, bare ESC
 (no hang, ~25ms), **Alt-b** (sim51 trigger), Ctrl/Shift+arrow. I only
 compile-check the library here.
 
+`example/keys.c` is the bench for that pass (`make examples`, then
+`example/keys`).  It echoes every keypress as the library resolves it — the
+`UC_KEY_*` code `uC_key()` returns plus the `uC_key_mods()` mask and
+`uC_alt()` — and keeps a checklist of the 33 keys/classes under test, so the
+pass is one sitting: press until every entry is green.  **Ctrl-X quits**, and
+nothing else does, because every other candidate is a key under test (ESC
+especially — its job is to arrive on its own after the ~25ms window without
+hanging).
+
+Two things it has to do that a normal app does not:
+
+- the 12 F-key slots all default to `uC_noop`, so `uC_key()` returns
+  `UC_KEY_NONE` for every one of them and the SM's work is invisible.  the
+  bench installs its own table (`uC_alloc_kh` + `uC_set_key_action`) whose
+  handlers stuff private codes `0xe0`..`0xeb`, which also exercises the
+  handler-dispatch and key-stuffing path the pipe test cannot reach.
+- the mouse is a **build option, default off** (`meson_options.txt`).  the
+  Mouse checklist entry and the click/drag test only exist under
+  `-Dmouse=true`; a stock build tests 33 entries, not 34.
+
+Still not covered by the bench: menu/widget/shortcut re-entrancy (that path is
+mdv's and sim51's to exercise) and Alt+UTF-8 (unimplemented, see below).
+
 ## Open decisions (update as we go)
 
 1. Ctrl/Shift reporting: side-channel `uC_key_mods()` vs fold into shortcut
@@ -105,6 +128,64 @@ compile-check the library here.
   in place (terminfo fallback, retire later per decision 2).
 - Shift+Left/Right map to the existing `K_SLFT`/`K_SRIT` slots; other cursor
   keys report the base index + mods.
+- **Modifiers exist only on the CSI path.** `key_mods` is assembled from CSI
+  param #1 in `sm_csi()`; the only other write is the hardcoded `KMOD_ALT` in
+  the ESC-prefix branch.  So for *letters* there is no modifier mask at all:
+  Shift+x is the uppercase byte, Ctrl+x is a control byte 0x01-0x1a — neither
+  reaches the SM (no ESC, GROUND emits them) — and `uC_key_mods()` reports 0
+  for both.  Ctrl-ness lives in the byte VALUE, not the mask.  Meta is Alt;
+  there is no `KMOD_META` (only the shortcut system has `UC_SHORTCUT_MOD_META`).
+  Ctrl+Alt+x is ESC + control byte: `KMOD_ALT`, Ctrl still in the byte.
+  ★ this is why the test matrix is NOT modifiers x 26 letters — 24 of the 26
+  are the same two lines of code.  The cross-product only means something on
+  the CSI keys (arrows/F-keys/Home/End), which is what the bench checklists.
+- **Alt+O and Alt+[ are the two exceptions** (fixed 2026-08-22).  `O` and `[`
+  are the SM's own introducers, so those two Alt forms arrive as a sequence
+  head whose body never comes.  Before: Alt+O fell out of `case 'O'` as
+  `SM_DIRECT` with `keybuff[0]` still 0x1b — **a bare ESC** — and Alt+[ fell
+  out of `sm_csi()` as `SM_UNHANDLED`, so `uC_key_raw()` **dropped it** and
+  blocked for another key.  Both now route through the new `sm_alt_char()`
+  helper, which the `default:` branch shares: the poll window closing is
+  already proof the sequence ended, and that is exactly the Alt+char
+  condition.  A body that DOES arrive still wins (`ESC O P` = F1,
+  `ESC [ A` = Up) — locked in by four unit tests plus two streaming ones.
+  ⚠ the trade-off: over a slow enough link a real `ESC O P` whose `P` misses
+  the window now degrades to **Alt+O** rather than to a bare ESC — a plausible
+  keystroke instead of an obviously-wrong one.  `SM_INTRA_MS` is the lever
+  (open decision 3).
+- **Modified F1–F4 were dropped** (fixed 2026-08-22).  F1–F4 have no `~` form:
+  unmodified they arrive as SS3 `ESC O P..S`, and SS3 cannot carry a
+  parameter — so the *modified* forms arrive as CSI `ESC [ 1 ; <m> P..S` and
+  fell out of `final_letter()` as `SM_UNHANDLED`.  Ctrl+F1 and Shift+F1
+  vanished exactly the way Alt+[ did.  F5–F12 were never affected: they go
+  through `tilde_number()`, which is modifier-agnostic.  New `csi_fkey()`
+  maps P/Q/R/S.
+  ⚠⚠ **it is gated on `param[0] == 1`, and that gate is load-bearing.**  CSI
+  `R` is *also* the cursor position report — the reply to the `ESC [ 6 n`
+  that `uC_get_console_size()` (`uC_utils.c:150`) writes, and that runs from
+  `uC_screen_resize.c:134`, i.e. **during the key loop, on SIGWINCH**.  An
+  ungated `R` → F3 makes a window resize look like an F3 keypress.  The probe
+  parks the cursor on the bottom row (`ESC [ 9999 d`) before asking, so a
+  report's `param[0]` is the last row and never 1, while a modified F key's
+  `param[0]` always is.  `test_cursor_position_report_is_not_f3` pins it.
+- **The whole numeric keypad was dead** (fixed 2026-08-22, found live).
+  `uC_smkx()` sends terminfo's smkx, which on xterm is `\E[?1h\E=` — DECCKM
+  *and* **DECKPAM**.  In application keypad mode the keypad stops sending
+  plain characters and sends SS3: `ESC O o` = `/`, `ESC O j` = `*`,
+  `ESC O k/m/n` = `+ - .`, `ESC O p`..`y` = `0`..`9`, `ESC O M` = keypad
+  Enter.  `decode_ss3()` knew only `P/Q/R/S` and fell through to
+  `final_letter()`, so every one of them was `SM_UNHANDLED` and dropped.
+  New `keypad_char()` maps them; they are **emitted as the plain character**
+  (`sm_emit(c, 0)`) rather than given table slots, because the character is
+  what the app would have received with the mode off.  Keypad Enter returns
+  `K_ENT` so it stuffs `UC_KEY_ENTER` like the main one.
+  ★ note `mods` is 0, not `KMOD_ALT` — these arrive via SS3, not the ESC
+  prefix, and a keypad `*` must be indistinguishable from a typed `*`.
+  (With NumLock **off** the pad sends the CSI navigation forms instead,
+  which `final_letter()`/`tilde_number()` already handled — which is why
+  this went unnoticed.)
+- `sm_alt_char()` generalised to `sm_emit(b, mods)` and lifted above
+  `decode_ss3()` so both the Alt path and the keypad path share it.
 
 ## Status
 
@@ -211,8 +292,12 @@ Deleted `src/keys/key_sequence.c` (held `match_key`, `k_table`, and the
 Behaviour-neutral: `match_key` had no callers since Stage 0 replaced it with
 the SM, so this can't affect the pending live test — committed as its own
 commit, left UNPUSHED so it can be held/dropped independently. Builds clean,
-11/11 tests pass. (`uC_read_keys()` is also unused now but kept as a labelled
-legacy reference; drop it too if wanted.)
+11/11 tests pass.
+
+`uC_read_keys()` — the greedy whole-sequence reader Stage 2 replaced — is now
+gone too (2026-08-22), along with its `ESC_SEQUENCE_POLL_MS`; the only poll
+window left is `SM_INTRA_MS` in `uC_key_sm.c`, which is the one the streaming
+reader actually uses.  Nothing called it.
 
 Alt+UTF-8 remains:
 Alt+UTF-8: extend the `sm_run` `default:` branch to, on `b` being a UTF-8 lead

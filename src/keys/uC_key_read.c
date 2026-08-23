@@ -22,8 +22,6 @@ static struct pollfd pfd =
     0
 };
 
-#define ESC_SEQUENCE_POLL_MS (25)
-
 // -----------------------------------------------------------------------
 // returns 0 = no keys available, greater than zero = keys available
 
@@ -65,36 +63,10 @@ static int8_t read_key(void)
 }
 
 // -----------------------------------------------------------------------
-// read escape sequence or singke keypress character
-
-void uC_read_keys(void)
-{
-    bool read_more = true;
-
-    ti_vars->num_k = 0;
-
-    do
-    {
-        int poll_rc;
-
-        if (ti_vars->num_k == KEY_BUFF_SZ)
-        {
-            break;
-        }
-        ti_vars->keybuff[ti_vars->num_k++] = read_key();
-
-        poll_rc = poll(&pfd, 1,
-            (ti_vars->keybuff[0] == 0x1b) ? ESC_SEQUENCE_POLL_MS : 0);
-        read_more = poll_rc != 0;
-    } while (read_more);
-}
-
-// -----------------------------------------------------------------------
 // read the first byte of a keypress (blocking) into keybuff[0].  a non-ESC
 // byte is already a complete keypress; an ESC (0x1b) starts a sequence whose
 // remaining bytes the state machine pulls one at a time via the source below.
-// this is the streaming replacement for uC_read_keys()' greedy whole-sequence
-// buffering: it reads exactly one byte and lets the SM decide what follows.
+// it reads exactly one byte and lets the SM decide what follows.
 
 uint8_t uC_read_key(void)
 {

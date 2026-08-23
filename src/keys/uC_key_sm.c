@@ -30,6 +30,24 @@ extern ti_vars_t *ti_vars;
 uint8_t key_mods;
 
 // -----------------------------------------------------------------------
+// emit a decoded sequence as a plain character key.  num_k is reset to 1
+// because the source appended the sequence's bytes from keybuff[1] on: the
+// caller returns keybuff[0], so the decoded key has to land there.
+//
+// used for Alt+<char> (mods = KMOD_ALT) and for the application-keypad keys
+// (mods = 0), both of which are ordinary characters that happened to arrive
+// wrapped in an escape sequence.
+
+static int16_t sm_emit(uint8_t b, uint8_t mods)
+{
+    key_mods            = mods;
+    ti_vars->keybuff[0] = b;
+    ti_vars->num_k      = 1;
+
+    return SM_DIRECT;
+}
+
+// -----------------------------------------------------------------------
 // map a CSI/SS3 final letter (A B C D H F) to its key_index_t.  shift+left
 // and shift+right have dedicated table slots (K_SLFT / K_SRIT); everything
 // else returns the base cursor/home/end index with mods reported separately.
@@ -45,6 +63,24 @@ static int16_t final_letter(uint8_t f, uint8_t mods)
         case 'H': return K_HOME;
         case 'F': return K_END;
         case 'Z': return K_BT;                              // shift-tab
+        default:  return SM_UNHANDLED;
+    }
+}
+
+// -----------------------------------------------------------------------
+// F1..F4 have no "~" form: unmodified they arrive as SS3 (ESC O P..S), and
+// SS3 cannot carry a parameter, so the MODIFIED forms arrive as CSI instead
+// (ESC [ 1 ; <m> P..S).  without this they fell through final_letter() as
+// SM_UNHANDLED and Ctrl+F1 / Shift+F1 were dropped on the floor.
+
+static int16_t csi_fkey(uint8_t f)
+{
+    switch (f)
+    {
+        case 'P': return K_F1;
+        case 'Q': return K_F2;
+        case 'R': return K_F3;
+        case 'S': return K_F4;
         default:  return SM_UNHANDLED;
     }
 }
@@ -75,18 +111,63 @@ static int16_t tilde_number(int32_t n)
 }
 
 // -----------------------------------------------------------------------
-// SS3: ESC O <final>.  application-cursor-mode arrows plus F1..F4.
+// APPLICATION KEYPAD (DECKPAM).  uC_smkx() sends terminfo's smkx, which on
+// xterm is \E[?1h\E= - DECCKM *and* DECKPAM.  in application keypad mode the
+// keypad stops sending plain characters and sends SS3 instead, so without
+// this map the whole keypad decodes to nothing: ESC O o fell through
+// final_letter() as SM_UNHANDLED and uC_key_raw() dropped it.
+//
+// the app wants the character it would have got with the mode off, so these
+// are emitted directly rather than given table indices of their own.
+//
+// (with NumLock OFF the keypad sends the navigation forms instead - CSI
+// arrows/Home/End - which final_letter() and tilde_number() already handle.)
 
-static int16_t decode_ss3(uint8_t f)
+static uint8_t keypad_char(uint8_t f)
 {
+    switch (f)
+    {
+        case 'j': return '*';
+        case 'k': return '+';
+        case 'l': return ',';
+        case 'm': return '-';
+        case 'n': return '.';
+        case 'o': return '/';
+        case 'X': return '=';
+
+        case 'p': case 'q': case 'r': case 's': case 't':
+        case 'u': case 'v': case 'w': case 'x': case 'y':
+            return (uint8_t)('0' + (f - 'p'));      // keypad 0..9
+
+        default:  return 0;                          // not a keypad key
+    }
+}
+
+// -----------------------------------------------------------------------
+// SS3: ESC O <final>.  application-cursor-mode arrows, F1..F4, keypad.
+
+static int16_t decode_ss3(uint8_t f, uint8_t mods)
+{
+    uint8_t kp;
+
     switch (f)
     {
         case 'P': return K_F1;
         case 'Q': return K_F2;
         case 'R': return K_F3;
         case 'S': return K_F4;
-        default:  return final_letter(f, 0);   // O-prefixed cursor keys
+        case 'M': return K_ENT;                 // keypad Enter
+        default:  break;
     }
+
+    kp = keypad_char(f);
+
+    if (kp != 0)
+    {
+        return sm_emit(kp, mods);
+    }
+
+    return final_letter(f, mods);               // O-prefixed cursor keys
 }
 
 // -----------------------------------------------------------------------
@@ -110,6 +191,63 @@ static int sm_pull(int timeout_ms)
 }
 
 // -----------------------------------------------------------------------
+// SS3 with a parameter: ESC O <params> <final>.
+//
+// ⚠⚠ SS3 was assumed to be exactly one byte after the O.  it is not: a
+// MODIFIED keypad key arrives as ESC O <m> <letter> (and some terminals use
+// the ESC O 1 ; <m> <letter> form).  reading one byte ate the modifier digit
+// and left the final letter in the stream, where uC_key_raw() then read it
+// as a fresh keypress - which is why Ctrl+keypad-/ produced a bare 'o'.
+//
+// the grammar is CSI's, so this is sm_csi()'s loop with SS3's decode on the
+// end.  no SS3 final is a digit, so collecting [0-9;] can never swallow one.
+// the modifier is the LAST parameter, which covers both forms.
+
+static int16_t sm_ss3(void)
+{
+    int32_t param[2] = { 0, 0 };
+    uint8_t np = 0;
+    bool have_digit = false;
+
+    int c = sm_pull(SM_INTRA_MS);       // first byte after 'O'
+
+    if (c < 0)                          // nothing followed the 'O' : Alt+O
+    {
+        return sm_emit('O', KMOD_ALT);
+    }
+
+    while (c >= 0)
+    {
+        if ((c >= '0') && (c <= '9'))
+        {
+            if ((np < 2) && (param[np] < 100000))   // clamp, as in sm_csi
+            {
+                param[np] = (param[np] * 10) + (c - '0');
+            }
+            have_digit = true;
+        }
+        else if (c == ';')
+        {
+            if (np < 2) { np++; }
+            have_digit = false;
+        }
+        else                            // any other byte is the final byte
+        {
+            if (have_digit || (np > 0)) { np++; }
+
+            key_mods = (np >= 1)
+                ? (uint8_t)((param[np - 1] - 1) & 0x07)
+                : 0;
+
+            return decode_ss3((uint8_t)c, key_mods);
+        }
+        c = sm_pull(SM_INTRA_MS);
+    }
+
+    return SM_UNHANDLED;                // ran out of bytes: incomplete
+}
+
+// -----------------------------------------------------------------------
 // CSI: ESC [ <params> <final>.  params are decimal numbers separated by ';';
 // param[0] selects "~" keys, param[1] (when present) is the modifier code
 // (bitmask = value - 1: bit0 shift, bit1 alt, bit2 ctrl).  Returns the
@@ -123,6 +261,11 @@ static int16_t sm_csi(void)
     bool have_digit = false;
 
     int c = sm_pull(SM_INTRA_MS);       // first byte after '['
+
+    if (c < 0)                          // nothing followed the '[' : Alt+[
+    {
+        return sm_emit('[', KMOD_ALT);
+    }
 
     // ESC [ M (X10 mouse) and ESC [ < (SGR mouse) are not keys.  drain the
     // rest of the report so the mouse parser (which reads keybuff/num_k)
@@ -166,6 +309,25 @@ static int16_t sm_csi(void)
             {
                 return tilde_number(param[0]);
             }
+
+            // ⚠⚠ CSI R is ALSO the cursor position report - the reply to
+            // the ESC [ 6 n that uC_get_console_size() writes, and that
+            // runs from the RESIZE path, mid key loop.  so P..S may only
+            // be read as F1..F4 when param[0] is 1, which is what a
+            // modified F key always sends.  a position report's param[0]
+            // is the cursor's row, and the probe parks it on the BOTTOM
+            // row (ESC [ 9999 d) before asking - so it is never 1.
+
+            if (param[0] == 1)
+            {
+                int16_t fk = csi_fkey((uint8_t)c);
+
+                if (fk != SM_UNHANDLED)
+                {
+                    return fk;
+                }
+            }
+
             return final_letter((uint8_t)c, key_mods);
         }
         c = sm_pull(SM_INTRA_MS);
@@ -199,12 +361,8 @@ int16_t sm_run(sm_source_t src, void *ctx)
         case '[':                       // CSI
             return sm_csi();
 
-        case 'O':                       // SS3
-        {
-            int f = sm_pull(SM_INTRA_MS);
-            return (f >= 0) ? decode_ss3((uint8_t)f)
-                            : SM_DIRECT;        // lone ESC O — ESC as bare
-        }
+        case 'O':                       // SS3 (may carry a modifier param)
+            return sm_ss3();
 
         case 0x1b:                      // ESC ESC -> report a bare ESC
             ti_vars->num_k = 1;
@@ -213,12 +371,10 @@ int16_t sm_run(sm_source_t src, void *ctx)
         default:                        // ESC <byte> = Alt+char, iff alone
         {
             int b2 = sm_pull(SM_INTRA_MS);
+
             if (b2 < 0)
             {
-                key_mods            = KMOD_ALT;
-                ti_vars->keybuff[0] = (uint8_t)b;
-                ti_vars->num_k      = 1;
-                return SM_DIRECT;
+                return sm_emit((uint8_t)b, KMOD_ALT);
             }
             return SM_UNHANDLED;        // ESC + more bytes: not a simple Alt
         }

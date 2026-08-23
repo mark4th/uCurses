@@ -461,6 +461,13 @@ API void uC_cr(void);
 API void uC_smkx(void);
 API void uC_rmkx(void);
 
+// alternate screen, opt in.  call uC_altscreen_on() immediately after
+// uCurses_init(); uC_restore_terminal() turns it back off for you, so an
+// app only needs the one call.  a terminal without smcup stays put.
+
+API void uC_altscreen_on(void);
+API void uC_altscreen_off(void);
+
 // -----------------------------------------------------------------------
 
 #endif // UC_TERMINFO_H

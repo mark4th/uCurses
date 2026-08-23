@@ -343,4 +343,50 @@ API void uC_rmkx(void)
     ti_rmkx();
 }
 
+// -----------------------------------------------------------------------
+// alternate screen.  OPT IN: an app calls uC_altscreen_on() right after
+// uCurses_init() if it wants one.  it is not a default because a TUI that
+// takes over the whole terminal is not the only kind of program built with
+// this library - one that scrolls output into the session's history wants
+// the primary screen it is already on.
+//
+// what it buys the apps that do want it: the user's shell scrollback is
+// preserved and handed back untouched on exit instead of being scribbled
+// over, and the mouse WHEEL reaches the application - on the primary screen
+// the terminal has its own scrollback to scroll and consumes the event
+// itself.
+//
+// nothing needs to check whether the terminal supports it.  smcup/rmcup are
+// terminfo strings and an absent one is stored as TI_NULL (0xffff), which
+// uC_format() skips - so this degrades to staying on the primary screen.
+// going through terminfo rather than hardcoding ESC[?1049h also picks up
+// the older ESC 7 ESC[?47h form on terminals that use it.
+
+static bool altscreen = false;
+
+API void uC_altscreen_on(void)
+{
+    if (!altscreen)
+    {
+        ti_smcup();
+        uC_terminfo_flush();
+        altscreen = true;
+    }
+}
+
+// -----------------------------------------------------------------------
+// called by uC_restore_terminal() as well as by the app, so an assert or a
+// fatal signal still puts the user back on their own screen.  guarded, so
+// calling it twice - or without a matching on() - does nothing.
+
+API void uC_altscreen_off(void)
+{
+    if (altscreen)
+    {
+        ti_rmcup();
+        uC_terminfo_flush();
+        altscreen = false;
+    }
+}
+
 // =======================================================================

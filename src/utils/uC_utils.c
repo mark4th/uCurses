@@ -99,6 +99,7 @@ API void uC_restore_terminal(void)
     uC_mouse_disable();
 #endif
     uC_rmkx();
+    uC_altscreen_off();         // no-op unless the app opted in
     tcsetattr(STDIN_FILENO, TCSANOW, &term_save);
     uC_curon();
     uC_terminfo_flush();

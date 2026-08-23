@@ -16,8 +16,25 @@ API uC_mouse_event_t uC_mouse_event;
 
 // -----------------------------------------------------------------------
 
-static const char mouse_enable[]  = "\033[?1000h\033[?1006h\033[?1003h";
-static const char mouse_disable[] = "\033[?1003l\033[?1006l\033[?1000l";
+// 1000 = press/release tracking, 1006 = SGR coordinates (no 223 column
+// limit).  POSITION IS REPORTED ON A CLICK, and on nothing else.
+//
+// ⚠ deliberately NOT 1002 (motion while a button is held) and emphatically
+// not 1003 (any-event: every motion, button or no button).  Under 1003 -
+// which is what this used to send, from uCurses_init, unconditionally -
+// simply moving the mouse across the screen floods the input with reports
+// that uC_key_raw / sm_run / uC_mouse_parse each have to read, decode and
+// throw away.  A terminal has no "where is the mouse?" query to replace it
+// with, so the answer is to ask for less: a press gives a position and a
+// release gives a position, which is a drag's two endpoints.
+//
+// the cost of stopping at 1000 is that there is no live feedback DURING a
+// drag - no motion reports arrive between the two, so a selection cannot be
+// highlighted as it is swept.  1002 is the one line to change if that is
+// ever wanted.
+
+static const char mouse_enable[]  = "\033[?1000h\033[?1006h";
+static const char mouse_disable[] = "\033[?1006l\033[?1000l";
 
 // -----------------------------------------------------------------------
 

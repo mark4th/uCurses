@@ -22,9 +22,21 @@ typedef struct
 
 // -----------------------------------------------------------------------
 
+// uC_mouse_event.button is the raw SGR button code, unmasked.  a motion
+// report ORs UC_MOUSE_DRAG into the button being held, so a left drag is
+// UC_MOUSE_DRAG | UC_MOUSE_LEFT - and UC_MOUSE_MOVE is just the same bit
+// with "no button" (3) in it.
+//
+// ⚠ neither UC_MOUSE_DRAG nor UC_MOUSE_MOVE can arrive under the tracking
+// mode uCurses enables (1000, press/release only) - they are here to
+// document the encoding, and would start arriving if uC_mouse.c ever asked
+// for 1002 or 1003.  a drag under 1000 is the press position and the
+// release position, with nothing in between.
+
 #define UC_MOUSE_LEFT      0
 #define UC_MOUSE_MIDDLE    1
 #define UC_MOUSE_RIGHT     2
+#define UC_MOUSE_DRAG      32
 #define UC_MOUSE_MOVE      35
 #define UC_MOUSE_WHEEL_UP  64
 #define UC_MOUSE_WHEEL_DN  65

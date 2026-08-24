@@ -91,7 +91,7 @@ static void draw_char(uC_window_t *win, int16_t cx, int16_t cy,
 {
     uC_screen_t *scr = win->screen;
 
-    int16_t index = (cy * scr->width) + cx;
+    int32_t index = ((int32_t)cy * (int32_t)scr->width) + cx;
 
     cell_t *p1 = &scr->buffer1[index];
     cell_t *p2 = &scr->buffer2[index];

@@ -20,7 +20,11 @@
 
 static cell_t *win_line_addr(uC_window_t *win, int16_t line)
 {
-    int16_t index = (win->width) * line;
+    // ⚠ int32_t AND NOT int16_t.  the dimensions are int16_t but their
+    // PRODUCT is not - a window of more than 32767 cells wrapped this
+    // negative and every line address it returned was wild.
+
+    int32_t index = (int32_t)win->width * (int32_t)line;
     return &win->buffer[index];
 }
 
@@ -249,7 +253,7 @@ API void uC_win_copy_win(uC_window_t *dst, uC_window_t *src)
         return;
     }
 
-    size = src->width * src->height * sizeof(cell_t);
+    size = (size_t)src->width * (size_t)src->height * sizeof(cell_t);
     memcpy(dst->buffer, src->buffer, size);
 }
 

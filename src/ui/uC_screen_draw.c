@@ -49,7 +49,8 @@ static void draw_win_name(uC_window_t *win)
     border_t *b;
     uC_screen_t *scr;
     cell_t cell;
-    uint16_t index, x, y;
+    int32_t index;
+    uint16_t x, y;
 
     scr = win->screen;
 
@@ -58,7 +59,7 @@ static void draw_win_name(uC_window_t *win)
     x = win->xco;
     y = win->yco - 1;
 
-    index = (y * scr->width) + x;
+    index = ((int32_t)y * (int32_t)scr->width) + x;
 
     p1 = win->display_name;
     if (!p1)
@@ -102,8 +103,8 @@ static void draw_win_name(uC_window_t *win)
 void scr_draw_win(uC_window_t *win)
 {
     int16_t i;
-    int16_t width;
-    int16_t index;
+    size_t  width;
+    int32_t index;
 
     cell_t *src, *dst;
     uC_screen_t *scr;
@@ -127,12 +128,15 @@ void scr_draw_win(uC_window_t *win)
             }
         }
 
-        index = (scr->width * win->yco);
+        index = (int32_t)scr->width * (int32_t)win->yco;
         dst = &scr->buffer1[index];
         dst += win->xco;
         src = win->buffer;
 
-        width = (win->width * sizeof(cell_t));
+        // ⚠ a BYTE count, so int16_t overflowed at a width of 4096
+        // and not at 32767 like the indices
+
+        width = (size_t)win->width * sizeof(cell_t);
 
         for (i = 0; i < win->height; i++)
         {
@@ -193,7 +197,8 @@ static void scr_force_full_redraw(uC_screen_t *scr)
 
     if ((scr != NULL) && (scr->buffer2 != NULL))
     {
-        size = (scr->width * scr->height) * sizeof(*scr->buffer2);
+        size = (size_t)scr->width * (size_t)scr->height *
+            sizeof(*scr->buffer2);
         memset(scr->buffer2, 0, size);
     }
 }
@@ -268,7 +273,7 @@ static void scr_cup(uC_screen_t *scr, int16_t x, int16_t y)
 // -----------------------------------------------------------------------
 // return true if cell at specified index needs to be redrawn
 
-static bool scr_is_modified(uC_screen_t *scr, uint16_t index)
+static bool scr_is_modified(uC_screen_t *scr, int32_t index)
 {
     cell_t *p1 = &scr->buffer1[index];
     cell_t *p2 = &scr->buffer2[index];
@@ -390,7 +395,7 @@ void scr_normalize_wide_buffer(uC_screen_t *scr)
 
 // -----------------------------------------------------------------------
 
-static void _scr_emit(uC_screen_t *scr, int16_t index,
+static void _scr_emit(uC_screen_t *scr, int32_t index,
     cell_t *p1, cell_t *p2)
 {
     int16_t x, y;
@@ -399,7 +404,7 @@ static void _scr_emit(uC_screen_t *scr, int16_t index,
 
     force = 0;
 
-    if (index != (scr->width * scr->height) - 1)
+    if (index != ((int32_t)scr->width * (int32_t)scr->height) - 1)
     {
         wide = wcwidth(p1->code);
 
@@ -463,7 +468,7 @@ static void _scr_emit(uC_screen_t *scr, int16_t index,
 // -----------------------------------------------------------------------
 // emits charcter from screen buffer1 to the escape buffer
 
-void scr_emit(uC_screen_t *scr, int16_t index)
+void scr_emit(uC_screen_t *scr, int32_t index)
 {
     cell_t *p1, *p2;
 
@@ -493,8 +498,8 @@ void scr_emit(uC_screen_t *scr, int16_t index)
 
 void scr_outer_update(uC_screen_t *scr)
 {
-    int16_t index;
-    int16_t end;
+    int32_t index;
+    int32_t end;
     bool have_attrs = false;
     cell_t *cell;
     uC_attribs_t active_attrs;
@@ -504,7 +509,7 @@ void scr_outer_update(uC_screen_t *scr)
         return;
     }
 
-    end   = (scr->width * scr->height);
+    end   = (int32_t)scr->width * (int32_t)scr->height;
     index = 0;
 
     scr->cx = scr->cy = -1; // force a screen cursor position update

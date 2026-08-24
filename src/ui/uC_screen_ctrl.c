@@ -27,7 +27,7 @@ int16_t scr_alloc(uC_screen_t *scr)
         return -1;
     }
 
-    size = (scr->width * scr->height) * sizeof(*p1);
+    size = (size_t)scr->width * (size_t)scr->height * sizeof(*p1);
 
     // allocate buffers 1 and 2 for screen
 

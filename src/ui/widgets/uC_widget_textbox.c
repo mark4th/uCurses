@@ -46,27 +46,55 @@ void draw_textbox(uC_window_t *win, uC_widget_t *widget,
 
     uC_widget_textbox_t *t;
 
-    // display widget name using windows current attributes
+    t = &widget->textbox;
+
+    // ⚠ the name used to be drawn with the WINDOW's attributes, before
+    // widget_set_attrs() had run, so it never showed focus at all.  it now
+    // gets exactly what a button gets - see draw_button() - which makes a
+    // focused textbox read the same way as every other focused widget.
+    //
+    // the SELECTED / EDITING distinction is carried by the cursor below
+    // rather than by the name, so the two states differ without the name
+    // having to shout.
+
+    widget_set_attrs(win, widget);
+
+    // ★ A POINTER, not an ornament: it says "this is where you will be
+    // editing", aimed at the box immediately to its right.  that is the
+    // whole reason it reads correctly where a greyed cursor did not - grey
+    // says disabled, an arrow says go here.
+    //
+    // ⚠ the cell is always RESERVED but only drawn when focused - a blank
+    // otherwise.  reserving it is what stops the name and the edit box
+    // shifting sideways every time focus moves, and hiding the first
+    // character is why putting the marker inside the box was abandoned.
+    // drawing an off glyph as well, the way radio and check widgets do,
+    // would put a column of arrows down a form full of textboxes and say
+    // nothing - only one of them can be the one you are about to edit.
+    //
+    //   (blank)  not focused        ▸  focused - selected or editing
+    //
+    // whether you are live is carried by the cursor in the box, so the two
+    // signals stay independent and each means exactly one thing.
+
+    uC_win_printf(win, "%@%8", UC_XY(x, y),
+        (widget->focused) ? 0x25b8 : 0x20);
 
     // %@ set cursor x / y location in window
     // %s write string
 
-    uC_win_printf(win, "%@%s", UC_XY(x, y), widget->name);
-
-    widget_set_attrs(win, widget);
+    uC_win_printf(win, "%@%s", UC_XY(x + 1, y), widget->name);
 
     // win->attrs = (widget->focused == true)
     //     ? widget->focus_attrs
     //     : widget->attrs;
-
-    t = &widget->textbox;
 
     // this places the widgets edit box to the right of its name
     // should I add code here to allow exit box below name?
 
     // x2 = x coordinate one space beyond the end of the name string
 
-    x2 = x + strlen(widget->name);
+    x2 = x + 1 + strlen(widget->name);   // + 1 for the pointer cell
 
     // erase widgets edit box area
 
@@ -90,6 +118,11 @@ void draw_textbox(uC_window_t *win, uC_widget_t *widget,
         // the character that is currently under the cursor then
         // draw it in either reverse video or underlined (based
         // on insert or overwrite status)
+
+        // the cursor appears only while editing - the pointer above has
+        // already said which widget is selected, so a ghosted cursor would
+        // be saying it a second time, and greyed reads as disabled rather
+        // than as ready.
 
         if ((widget->focused) && t->editing && (i == t->cx))
         {

@@ -354,6 +354,22 @@ API void uC_scr_win_detach(uC_window_t *win)
         {
             uC_list_remove_node(&scr->windows, win);
             uC_list_remove_node(&scr->status, win);
+
+            // ⚠ the screen holds a POINTER to the selected window, and
+            // uC_scr_win_tab_next() dereferences it to clear the focus
+            // flag.  detaching the selected window - which is exactly what
+            // uC_scr_popup_attach() does first - would leave that pointer
+            // at a window no longer on the screen, and at a freed one if
+            // the caller then closes it.
+            //
+            // ★ tab_order is deliberately LEFT ALONE, so tabbing resumes
+            // from where it was rather than jumping back to the start
+            // every time a popup opens over the current window.
+
+            if (scr->selected == win)
+            {
+                scr->selected = NULL;
+            }
 #ifdef UC_POPUPS
             if (scr->popup == win)
             {
@@ -463,21 +479,28 @@ API void uC_scr_win_tab_next(uC_screen_t *scr)
 {
     uC_list_node_t *n1;
     uC_window_t *win;
-    int16_t order;
+    uC_window_t *next  = NULL;   // lowest order greater than the current
+    uC_window_t *first = NULL;   // lowest order of all, to wrap onto
+    int16_t current;
 
     if (scr == NULL)
     {
         return;
     }
 
-    order = scr->tab_order + 1;
+    current = scr->tab_order;
 
-    // remove focus from current window if there is one
-    if (scr->selected != NULL)
-    {
-        scr->selected->flags &= ~uC_WIN_FOCUS;
-        scr->tab_order = 0;
-    }
+    // ⚠ this used to look for EXACTLY current + 1, so any hole in the
+    // sequence killed the cycle - it left the old window unfocused, found
+    // nothing to replace it with, and stopped.  a hole is not exotic: you
+    // get one the moment a window is commented out of the json, or a
+    // window is detached at run time.
+    //
+    // so scan instead for the lowest order above the current one, and
+    // remember the lowest overall to wrap onto.  gaps are now harmless and
+    // the orders no longer have to be contiguous.
+    //
+    // tab_order 0 means the window takes no part in the tab order.
 
     n1 = uC_list_scan(&scr->windows, NULL);
 
@@ -485,14 +508,43 @@ API void uC_scr_win_tab_next(uC_screen_t *scr)
     {
         win = n1->payload;
 
-        if (win->tab_order == order)
+        if (win->tab_order > 0)
         {
-            scr->selected   = win;
-            scr->tab_order  = order;
-            win->flags     |= uC_WIN_FOCUS;
-            break;
+            if ((win->tab_order > current) &&
+                ((next == NULL) || (win->tab_order < next->tab_order)))
+            {
+                next = win;
+            }
+
+            if ((first == NULL) || (win->tab_order < first->tab_order))
+            {
+                first = win;
+            }
         }
         n1 = uC_list_scan(NULL, n1);
+    }
+
+    // ran off the end - wrap.  with one window in the order this reselects
+    // the same one, which is correct rather than dropping focus entirely.
+
+    if (next == NULL)
+    {
+        next = first;
+    }
+
+    // ⚠ nothing is unfocused until there is something to focus instead,
+    // so a screen with no tabbable windows is left exactly as it was
+
+    if (next != NULL)
+    {
+        if (scr->selected != NULL)
+        {
+            scr->selected->flags &= ~uC_WIN_FOCUS;
+        }
+
+        scr->selected   = next;
+        scr->tab_order  = next->tab_order;
+        next->flags    |= uC_WIN_FOCUS;
     }
 }
 

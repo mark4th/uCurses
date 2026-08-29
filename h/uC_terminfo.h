@@ -444,6 +444,10 @@ API void uC_curoff(void);
 API void uC_curon(void);
 API void uC_clear(void);
 API void uC_hpa(uint16_t x);
+// ⚠ (x, y) - COLUMN FIRST.  terminfo's own cup is row first and everyone
+// writes it that way from memory, so both bme and mdv had their exit
+// sequence reversed and indented the shell prompt on every run.
+
 API void uC_cup(uint16_t x, uint16_t y);
 API void uC_cud1(void);
 API void uC_home(void);

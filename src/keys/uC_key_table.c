@@ -131,10 +131,27 @@ API uC_kh_t uC_alloc_kh(void)
 
 // -----------------------------------------------------------------------
 
+// ⚠⚠ TWO WAYS THIS USED TO BE WRONG, and both of them crashed.
+//
+// user_key_actions starts as default_key_actions - a STATIC array, not
+// heap - so an unpaired release freed static storage.
+//
+// And uC_release_kh(NULL) set the table to NULL.  uC_key() dispatches
+// through user_key_actions[c]() with no guard, so the next navigation
+// key segv'd: only key_index_t keys go through that line, which is why
+// it was always an arrow and never a letter.
+//
+// ★ NULL means "back to the defaults", which is what every caller
+// passing it intended - not "no table at all".
+
 API void uC_release_kh(uC_kh_t saved)
 {
-    uC_ui_free(user_key_actions);
-    user_key_actions = saved;
+    if (user_key_actions != default_key_actions)
+    {
+        uC_ui_free(user_key_actions);
+    }
+
+    user_key_actions = (saved != NULL) ? saved : default_key_actions;
 }
 
 // -----------------------------------------------------------------------

@@ -72,6 +72,23 @@ static uint8_t handle_widget_key(uint8_t k)
         }
     }
 
+    // ★ NOT scrollable, so nothing above claimed them: up and down move
+    // between widgets, the same two steps backtab and tab take.  a
+    // single line textbox has no use for them and neither has a button,
+    // a check or a radio, so nothing below is losing a key it wanted.
+    //
+    // ⚠ up and down ONLY.  left and right belong to the textbox cursor.
+
+    if (k == WIDGET_KEY_UP)
+    {
+        return tab_prev_widget();
+    }
+
+    if (k == WIDGET_KEY_DOWN)
+    {
+        return tab_next_widget();
+    }
+
     // Other keys are delegated to the focused widget type.
 
     switch (widget_state.widget->type)

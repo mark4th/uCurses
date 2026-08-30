@@ -151,6 +151,10 @@ API void uC_scr_close_view_groups(uC_screen_t *scr)
 
     if (scr != NULL)
     {
+        // ⚠ before the list is drained - see uC_widget_clear_focus()
+
+        uC_widget_clear_focus(scr);
+
         if (scr->popup_vg != NULL)
         {
             vg = (uC_widget_vg_t *)scr->popup_vg;

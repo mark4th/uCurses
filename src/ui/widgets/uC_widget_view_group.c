@@ -299,6 +299,52 @@ static void widget_set_vg_inactive(uC_widget_vg_t *vg, bool inactive)
 }
 
 // -----------------------------------------------------------------------
+// ⚠⚠ CLOSING EVERY VIEW GROUP IS NOT THE SAME AS DETACHING ONE.
+// uC_widget_vg_detach() hands focus to another group when it takes it
+// from one, which is right for a single detach and fatal for a mass
+// close: the group it picks is freed by the next turn of the caller's
+// loop, and widget_state is left pointing into freed memory.  the next
+// key to reach handle_widget_key() dereferences it, which is a segv and
+// a drop to the console with nothing on screen to say why.
+//
+// uC_scr_close_view_groups() calls this BEFORE it drains the list, so
+// no close in that loop is the one holding focus and no re-select ever
+// happens.
+
+API void uC_widget_clear_focus(uC_screen_t *scr)
+{
+    if ((scr != NULL) && (widget_state.screen != scr))
+    {
+        return;
+    }
+
+    if (widget_state.vg != NULL)
+    {
+        widget_state.vg->window.flags &= ~uC_WIN_FOCUS;
+    }
+
+    if (widget_state.widget != NULL)
+    {
+        if (widget_state.widget->type == uC_WIDGET_TEXTBOX)
+        {
+            widget_state.widget->textbox.editing = false;
+        }
+        widget_state.widget->focused = false;
+    }
+
+    if (widget_state.view != NULL)
+    {
+        widget_state.view->view_node = NULL;
+    }
+
+    widget_state.vg       = NULL;
+    widget_state.view     = NULL;
+    widget_state.widget   = NULL;
+    widget_state.screen   = NULL;
+    widget_state.sequence = 0;
+}
+
+// -----------------------------------------------------------------------
 // the public form.  ★ POSITIVE SENSE at the call site - set_active(vg,
 // false) reads as what the caller wants; the flag it sets is negative
 // because a zeroed structure has to come up active.

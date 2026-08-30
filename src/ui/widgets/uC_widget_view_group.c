@@ -299,6 +299,28 @@ static void widget_set_vg_inactive(uC_widget_vg_t *vg, bool inactive)
 }
 
 // -----------------------------------------------------------------------
+// the public form.  ★ POSITIVE SENSE at the call site - set_active(vg,
+// false) reads as what the caller wants; the flag it sets is negative
+// because a zeroed structure has to come up active.
+//
+// ⚠ this is for ORDINARY view groups.  a popup does not need it -
+// uC_widget_popup_attach() deactivates the others itself and restores
+// them on detach, and while one is attached shortcuts are scanned from
+// the popup alone, so a button in it answers from any view it contains.
+
+void uC_widget_vg_set_active(uC_widget_vg_t *vg, bool active)
+{
+    widget_set_vg_inactive(vg, !active);
+}
+
+// -----------------------------------------------------------------------
+
+bool uC_widget_vg_is_active(uC_widget_vg_t *vg)
+{
+    return (vg != NULL) && ((vg->flags & uC_vg_flag_inactive) == 0);
+}
+
+// -----------------------------------------------------------------------
 
 static void widget_modal_deactivate_others(uC_screen_t *scr,
     uC_widget_vg_t *popup)

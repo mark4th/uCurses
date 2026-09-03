@@ -77,6 +77,41 @@ API void uC_widget_set_position(uC_widget_t *widget,
 }
 
 // -----------------------------------------------------------------------
+// drop the focus the widget_state currently holds, and drop it FROM THE
+// WIDGET as well.
+//
+// ⚠⚠ the widget's own `focused` flag is what the draw reads, and nothing
+// but this clears it - so any code that repoints widget_state at a new
+// widget without coming through here STRANDS the old one lit.  two
+// widgets then draw with their focus attributes at once and the display
+// stops saying where the cursor is.
+//
+// ★ a textbox also stops editing.  it holds `editing` until something
+// takes focus off it, and focus is being taken off it right now.
+
+void widget_release_focus(void)
+{
+    if (widget_state.vg != NULL)
+    {
+        widget_state.vg->window.flags &= ~uC_WIN_FOCUS;
+    }
+
+    if (widget_state.widget != NULL)
+    {
+        if (widget_state.widget->type == uC_WIDGET_TEXTBOX)
+        {
+            widget_state.widget->textbox.editing = false;
+        }
+        widget_state.widget->focused = false;
+    }
+
+    if (widget_state.view != NULL)
+    {
+        widget_state.view->view_node = NULL;
+    }
+}
+
+// -----------------------------------------------------------------------
 
 static void widget_clear_focus(uC_widget_t *widget)
 {

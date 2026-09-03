@@ -454,6 +454,17 @@ API void uC_widget_to_view_index(uC_widget_view_t *view, uint16_t index)
 
     if (node)
     {
+        // ⚠⚠ TAKE THE FOCUS OFF THE OLD WIDGET FIRST.  this used to
+        // repoint widget_state straight at the new one, which left the
+        // widget it was pointing at with focused == true and nothing
+        // able to clear it: uC_widget_select_widget() only ever clears
+        // whatever widget_state currently names, and that is no longer
+        // it.  the mob editor's Ok button stayed lit for the rest of the
+        // session, so cursoring onto any other button showed TWO
+        // widgets in their focus attributes.
+
+        widget_release_focus();
+
         view->view_node       = node;
         widget_state.widget   = node->payload;
         widget_state.view     = view;

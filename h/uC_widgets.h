@@ -288,6 +288,7 @@ uint8_t handle_textbox(uint8_t k);
 bool widget_key(uC_screen_t *scr, uint8_t key, uint8_t *out);
 bool widget_text_input_active(uC_screen_t *scr);
 
+void widget_release_focus(void);
 void widget_close_view(uC_widget_view_t *view);
 void widget_scroll_view(uint8_t k);
 uint8_t tab_next_widget(void);

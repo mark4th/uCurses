@@ -389,6 +389,7 @@ API uC_widget_t *uC_widget_textbox_create(
     uint16_t width, uC_attribs_t attrs, uC_attribs_t focus);
 API void uC_widget_textbox_set_cursor_advance(uC_widget_t *widget,
     bool enabled);
+API void uC_widget_textbox_sync(uC_widget_t *widget);
 
 // -----------------------------------------------------------------------
 

@@ -455,6 +455,49 @@ API uC_widget_t *uC_widget_textbox_create(
 }
 
 // -----------------------------------------------------------------------
+// RE-READ THE BUFFER.  the widget caches the string length in count and
+// the cursor in cx / offset, and uC_widget_textbox_create() is the only
+// other thing that fills count in - so an application that writes the
+// buffer itself leaves every one of them describing the PREVIOUS text.
+//
+// ⚠⚠ and a stale count is not cosmetic.  rt() refuses to move past
+// count, del() and bs() work against it and write_char() extends from
+// it: a box showing "10" with a count of 0 could not be cursored right
+// at all, and overwriting the 1 with a 0 gave "00" - the new character
+// landed at index 0, count went 0 -> 1, and the old second character was
+// still sitting in the buffer for the draw to find.
+//
+// ★ so any code that assigns to the buffer behind the widget calls this
+// straight afterwards.  the cursor goes home; handle_textbox() runs
+// end() when editing actually starts.
+
+API void uC_widget_textbox_sync(uC_widget_t *widget)
+{
+    uint16_t count = 0;
+    uC_widget_textbox_t *t;
+
+    if ((widget == NULL) || (widget->type != uC_WIDGET_TEXTBOX))
+    {
+        return;
+    }
+
+    t = &widget->textbox;
+
+    if (t->data != NULL)
+    {
+        while ((count < t->size) && (t->data[count] != '\0'))
+        {
+            count++;
+        }
+    }
+
+    t->count   = (uint8_t)count;
+    t->cx      = 0;
+    t->offset  = 0;
+    t->editing = false;
+}
+
+// -----------------------------------------------------------------------
 // Controls whether a successful character write advances the edit cursor.
 
 API void uC_widget_textbox_set_cursor_advance(uC_widget_t *widget,

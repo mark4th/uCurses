@@ -56,6 +56,21 @@ test('test_key_sm', test_key_sm)
 # streaming read path: fd source + sm_run over a pipe (fds 0/1).  compiles
 # the read layer and the SM straight in and supplies its own ti_vars.
 
+# openpty(): the test gives itself a tty on fd 0 so uC_init_terminal() has
+# something to configure whatever the suite was launched from.
+
+test_ctrl_c = executable('test_ctrl_c',
+    ['test_ctrl_c.c', unity_src],
+    dependencies        : ucurses_test_dep,
+    c_args              : test_args,
+    link_args           : ['-lutil'],
+    build_by_default    : false,
+    install             : false,
+)
+test('test_ctrl_c', test_ctrl_c)
+
+# -----------------------------------------------------------------------
+
 test_key_stream = executable('test_key_stream',
     ['test_key_stream.c', '../src/keys/uC_key_read.c',
      '../src/keys/uC_key_sm.c', unity_src],

@@ -23,6 +23,12 @@
 static struct termios term;
 static struct termios term_save;
 
+// the terminal's own interrupt character, learned at init, and whether the
+// application has asked us to disable it.  see uC_ctrl_c_off() below
+static cc_t intr_char = 0x03;
+static bool intr_disabled;
+static bool term_ready;
+
 // -----------------------------------------------------------------------
 // do nothing and do it well
 
@@ -86,9 +92,73 @@ API void uC_clock_sleep(int32_t whence)
 API void uC_init_terminal(void)
 {
     tcgetattr(STDIN_FILENO, &term_save);
+
+    // an app that shells out re-inits without restoring first, which would
+    // otherwise learn the DISABLED character and leave nothing to put back
+    if (term_save.c_cc[VINTR] != _POSIX_VDISABLE)
+    {
+        intr_char = term_save.c_cc[VINTR];
+    }
+    else
+    {
+        term_save.c_cc[VINTR] = intr_char;
+    }
+
     term = term_save;
     term.c_lflag &= ~(ECHO | ICANON);
+
+    if (intr_disabled)
+    {
+        term.c_cc[VINTR] = _POSIX_VDISABLE;
+    }
+
     tcsetattr(STDIN_FILENO, TCSANOW, &term);
+    term_ready = true;
+}
+
+// -----------------------------------------------------------------------
+// Ctrl-C, OPT OUT.  by default the terminal keeps its interrupt character
+// and Ctrl-C raises SIGINT, so it never reaches uC_key().  an application
+// that wants Ctrl-C as a KEY - one binding ^X / ^C / ^V, or any editor
+// where a stray keypress must not discard unsaved work - calls
+// uC_ctrl_c_off() and then reads 0x03 like any other byte.
+// UC_SHORTCUT_CTRL('C') already maps to 0x03 and is unreachable without it.
+//
+// only the INTR character is disabled, NOT the whole ISIG flag, so both
+// Ctrl-\ (SIGQUIT) and Ctrl-Z (SIGTSTP) keep working and the user still
+// has a way out of a wedged application.
+//
+// it is safe to call before uC_init_terminal(): the choice is recorded and
+// applied when the terminal is configured.  uC_restore_terminal() puts the
+// original character back with the rest of the saved termios, so a program
+// that exits without calling uC_ctrl_c_on() still hands back a working
+// terminal.
+
+static void set_intr(bool disabled)
+{
+    intr_disabled = disabled;
+
+    if (term_ready)
+    {
+        term.c_cc[VINTR] = (disabled) ? _POSIX_VDISABLE : intr_char;
+        tcsetattr(STDIN_FILENO, TCSANOW, &term);
+    }
+}
+
+// -----------------------------------------------------------------------
+// Ctrl-C becomes key 0x03
+
+API void uC_ctrl_c_off(void)
+{
+    set_intr(true);
+}
+
+// -----------------------------------------------------------------------
+// Ctrl-C raises SIGINT again
+
+API void uC_ctrl_c_on(void)
+{
+    set_intr(false);
 }
 
 // -----------------------------------------------------------------------

@@ -5242,6 +5242,40 @@ their saved state.  It is used as part of the libraries exit
 procedure so the terminal is not left in a squirly state.
 
 ```c
+API void uC_ctrl_c_off(void)
+API void uC_ctrl_c_on(void)
+```
+
+These two public API calls control whether Ctrl-C is a signal or a
+key, and the choice belongs to the application.
+
+By default the terminal keeps its own interrupt character, so
+Ctrl-C raises `SIGINT` and never reaches `uC_key()`.  That is the
+right default for a program which should be interruptible from the
+keyboard the way any other command line program is.
+
+An application that wants Ctrl-C as a KEY calls `uC_ctrl_c_off()`,
+usually right after `uCurses_init()`, and then reads `0x03` like
+any other byte.  This is what `UC_SHORTCUT_CTRL('C')` has always
+mapped to, so the shortcut becomes reachable.  Two kinds of
+application want this: one binding an editing clipboard to
+`^X` / `^C` / `^V`, and one holding unsaved state that a stray
+keypress must not throw away.  `uC_ctrl_c_on()` puts it back.
+
+Only the terminal's INTR character is disabled - the `ISIG` flag
+itself is left alone, so Ctrl-\\ (`SIGQUIT`) and Ctrl-Z
+(`SIGTSTP`) keep working and the user still has a way out of an
+application that wedges.  Clearing `ISIG`, which is the more usual
+way to do this, would take all three away at once.
+
+Either call may be made before `uC_init_terminal()`; the choice is
+recorded and applied when the terminal is configured.
+`uC_restore_terminal()` restores the original interrupt character
+along with the rest of the saved terminal state, so an application
+which exits without calling `uC_ctrl_c_on()` still hands the user
+back a terminal they can interrupt.
+
+```c
 API __attribute__((noreturn)) void uC_abort(const char *msg)
 ```
 

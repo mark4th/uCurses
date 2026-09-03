@@ -167,6 +167,20 @@ API bool uC_widget_select_widget(uint16_t sequence)
     uC_list_node_t *n1;
     uC_widget_vg_t *vg;
 
+    // ⚠⚠ NO SCREEN, NOTHING TO SCAN.  the walk below reads
+    // widget_state.screen->view_groups with no test, and
+    // uC_widget_clear_focus() sets that pointer to NULL - so any caller
+    // that cleared focus and then selected again dereferenced NULL.
+    //
+    // ⓘ it survived for as long as the only user of clear_focus was the
+    // exit prompt, which never selects anything afterwards because the
+    // program is leaving.  a popup that RETURNS to its caller does.
+
+    if (widget_state.screen == NULL)
+    {
+        return false;
+    }
+
     // remove focus from currently focussed view group window etc.
 
     if (widget_state.vg)

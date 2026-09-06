@@ -397,8 +397,30 @@ uint8_t handle_textbox(uint8_t k)
 
     switch (k)
     {
+        // ★★★ ENTER ENDS THE EDIT *AND* BUBBLES UP.  a panel's accept is
+        // "the GM finished the last field", and swallowing the key left
+        // every textbox-only panel with no reachable accept at all -
+        // bme's geo zone editor could only be left with ESC, which its
+        // caller then read as "carry on anyway".
+        //
+        // ⓘ this is the contract that existed before 23681a1 gave the
+        // textbox an edit MODE: `case 0x0a: break;` fell through and
+        // returned the key.  the mode is worth keeping; eating the key
+        // was not.
+        //
+        // ⚠ CR is normalised to LF so the caller has one value to test.
+
         case 0x0a:
         case 0x0d:
+            t->editing = false;
+            k = 0x0a;
+            break;
+
+        // ⚠ ESC IS NOT THE SAME ANSWER.  it means "leave this field",
+        // not "accept the panel" - so it stays swallowed, and a SECOND
+        // esc, with nothing being edited, is the one the panel sees and
+        // closes on.
+
         case 0x1b:
             t->editing = false;
             k = 0;

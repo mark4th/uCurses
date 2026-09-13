@@ -329,9 +329,88 @@ static void draw_scrollable_horizontal(uC_window_t *win,
 
 // -----------------------------------------------------------------------
 
+// -----------------------------------------------------------------------
+// ★★★ THE LATTICE.  the top left visible item is drawn at the view's
+// origin and every other at its own multiple of the pitch - and an item
+// is drawn ONLY IF IT FULLY FITS, so a view that is not a whole number
+// of pitches wide simply leaves a margin.
+//
+// ⓘ that clipping rule is also why there is no half-drawn item and no
+// fractional scrolling: the scroll unit is necessarily the ITEM, because
+// scrolling changes WHICH item is top left and never where it is drawn.
+
+static void draw_scrollable_grid(uC_window_t *win, uC_widget_view_t *view)
+{
+    uint16_t cols;
+    uint16_t vis_cols;
+    uint16_t vis_rows;
+    uint16_t pitch_x;
+    uint16_t pitch_y;
+    uint16_t i;
+    uint16_t row;
+    uint16_t col;
+    uC_list_node_t *node;
+    uC_widget_t *widget;
+
+    cols     = view_grid_cols(view);
+    vis_cols = view_grid_visible_cols(view);
+    vis_rows = view_grid_visible_rows(view);
+    pitch_x  = view_grid_pitch_x(view);
+    pitch_y  = view_grid_pitch_y(view);
+
+    if ((vis_cols == 0) || (vis_rows == 0))
+    {
+        return;
+    }
+
+    justify = true;
+
+    // ⓘ scan to the first visible item.  ★ `top` is an INDEX exactly as
+    // it is for a list - the grid changes the step size, not the meaning
+
+    node = uC_list_scan(&view->widgets, NULL);
+
+    for (i = 0; (i < view->top) && (node != NULL); i++)
+    {
+        node = uC_list_scan(NULL, node);
+    }
+
+    for (i = 0; (i < (uint16_t)(vis_rows * vis_cols)) && (node != NULL); i++)
+    {
+        row = (uint16_t)(i / cols);
+        col = (uint16_t)(i % cols);
+
+        // ⚠ a lattice wider than the window: the columns past the right
+        // edge are skipped, not wrapped
+
+        if (col < vis_cols)
+        {
+            widget = (uC_widget_t *)node->payload;
+
+            widget->focused = (i == view->cy);
+            widget->xco = 0;
+            widget->yco = 0;
+
+            draw_widget(win, widget,
+                (uint16_t)(view->xco + (col * pitch_x)),
+                (uint16_t)(view->yco + (row * pitch_y)));
+        }
+
+        node = uC_list_scan(NULL, node);
+    }
+
+    justify = false;
+}
+
+// -----------------------------------------------------------------------
+
 static void draw_scrollable(uC_window_t *win, uC_widget_view_t *view)
 {
-    if (view->orientation == uC_VIEW_HORIZONTAL)
+    if (view->orientation == uC_VIEW_GRID)
+    {
+        draw_scrollable_grid(win, view);
+    }
+    else if (view->orientation == uC_VIEW_HORIZONTAL)
     {
         draw_scrollable_horizontal(win, view);
     }

@@ -42,6 +42,54 @@ static uint16_t view_widget_width(uC_widget_view_t *view)
 
 // -----------------------------------------------------------------------
 
+// -----------------------------------------------------------------------
+// ★ a grid's width in items, never 0 - a lattice one item wide is a
+// vertical list, which is the right answer rather than an error.
+
+uint16_t view_grid_cols(uC_widget_view_t *view)
+{
+    return (view->cols > 1) ? view->cols : 1;
+}
+
+// -----------------------------------------------------------------------
+// ⓘ THE UNIT OF LAYOUT IS THE PITCH, not the item width: a 5 wide button
+// with a 1 cell gap costs 6.  ★ a view whose width is not a multiple of
+// the pitch simply shows fewer columns and leaves a margin - "only what
+// fully fits" is the whole clipping rule.
+
+uint16_t view_grid_pitch_x(uC_widget_view_t *view)
+{
+    return (uint16_t)(view_widget_width(view) + view->gap_x);
+}
+
+uint16_t view_grid_pitch_y(uC_widget_view_t *view)
+{
+    return (uint16_t)(1 + view->gap_y);
+}
+
+// -----------------------------------------------------------------------
+
+uint16_t view_grid_visible_cols(uC_widget_view_t *view)
+{
+    uint16_t pitch = view_grid_pitch_x(view);
+    uint16_t fits  = (pitch != 0) ? (uint16_t)(view->width / pitch) : 0;
+    uint16_t cols  = view_grid_cols(view);
+
+    // ⚠ never more than the lattice is wide - a view wider than its
+    // content shows the content, not empty columns beyond it
+
+    return (fits > cols) ? cols : fits;
+}
+
+uint16_t view_grid_visible_rows(uC_widget_view_t *view)
+{
+    uint16_t pitch = view_grid_pitch_y(view);
+
+    return (pitch != 0) ? (uint16_t)(view->height / pitch) : 0;
+}
+
+// -----------------------------------------------------------------------
+
 static uint16_t view_visible_widgets(uC_widget_view_t *view)
 {
     uint16_t visible;
@@ -52,7 +100,16 @@ static uint16_t view_visible_widgets(uC_widget_view_t *view)
         return 0;
     }
 
-    if (view->orientation == uC_VIEW_HORIZONTAL)
+    // ★ a grid's window is a RECTANGLE of the lattice, so the count of
+    // visible items is rows x columns.  ⓘ everything else in the
+    // scrolling code works on that count exactly as it does for a list.
+
+    if (view->orientation == uC_VIEW_GRID)
+    {
+        visible = (uint16_t)(view_grid_visible_rows(view)
+            * view_grid_visible_cols(view));
+    }
+    else if (view->orientation == uC_VIEW_HORIZONTAL)
     {
         width = view_widget_width(view);
         visible = (width != 0) ? (view->width / width) : 0;
@@ -362,7 +419,44 @@ void widget_scroll_view(uint8_t k)
         return;
     }
 
-    if (view->orientation == uC_VIEW_HORIZONTAL)
+    // ★★★ A GRID MOVES BY 1 ACROSS AND BY `cols` DOWN, and both are the
+    // list steps the 1D code already takes - so a grid is the same
+    // scrolling machinery with a different step size, not a second one.
+    //
+    // ⓘ LEFT / RIGHT walk the SEQUENCE, so RIGHT at the end of a row
+    // lands on the start of the next.  ★ that is reading order, which is
+    // what a player expects, and it also means every item is reachable
+    // with one key.
+
+    if (view->orientation == uC_VIEW_GRID)
+    {
+        uint16_t cols = view_grid_cols(view);
+        uint16_t i;
+
+        if (k == WIDGET_KEY_LEFT)
+        {
+            view_previous();
+        }
+        else if (k == WIDGET_KEY_RIGHT)
+        {
+            view_next();
+        }
+        else if (k == WIDGET_KEY_UP)
+        {
+            for (i = 0; i != cols; i++)
+            {
+                view_previous();
+            }
+        }
+        else if (k == WIDGET_KEY_DOWN)
+        {
+            for (i = 0; i != cols; i++)
+            {
+                view_next();
+            }
+        }
+    }
+    else if (view->orientation == uC_VIEW_HORIZONTAL)
     {
         if (k == WIDGET_KEY_LEFT)
         {
@@ -509,5 +603,45 @@ API uint16_t uC_widget_view_index(uC_widget_view_t *view)
 // -----------------------------------------------------------------------
 
 #endif // UC_WIDGETS
+
+// -----------------------------------------------------------------------
+// ★ make a scrollable view a lattice.  ⓘ this is the only call a caller
+// needs - it sets the orientation itself, so there is no way to end up
+// with grid geometry on a view that is not a grid.
+
+API bool uC_widget_view_set_grid(uC_widget_view_t *view,
+    uint16_t cols, uint16_t gap_x, uint16_t gap_y)
+{
+    if (view == NULL)
+    {
+        return false;
+    }
+
+    view->orientation = uC_VIEW_GRID;
+    view->cols  = (cols > 1) ? cols : 1;
+    view->gap_x = gap_x;
+    view->gap_y = gap_y;
+
+    return true;
+}
+
+// -----------------------------------------------------------------------
+// ★★★ WHICH ITEM IS SELECTED.  ⚠ uC_widget_current_sequence() cannot
+// answer this - a scrollable view gives every widget in it the VIEW's
+// sequence, so it returns the same number for all of them.
+//
+// ⓘ the index was always reachable as `top + cy`; it was simply never
+// exposed, and it is what an application needs to act on the focused
+// item when a key it did not consume comes back to it.
+
+API uint16_t uC_widget_view_current_index(uC_widget_view_t *view)
+{
+    if ((view == NULL) || !(view->flags & (1 << uC_VIEW_SCROLL)))
+    {
+        return 0;
+    }
+
+    return (uint16_t)(view->top + view->cy);
+}
 
 // =======================================================================

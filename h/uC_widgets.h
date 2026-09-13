@@ -63,6 +63,20 @@ typedef enum
 {
     uC_VIEW_VERTICAL,
     uC_VIEW_HORIZONTAL,
+
+    // ★★★ A LATTICE - `cols` items across, wrapping downwards, scrolled
+    // vertically.  ⓘ a vertical view is the cols == 1 case and a
+    // horizontal one is a single row, so this is the general form of
+    // both rather than a third thing beside them.
+    //
+    // ⚠ ITEMS MUST BE THE SAME WIDTH, which a horizontal view already
+    // enforces and a grid enforces the same way.  ★ position is LIST
+    // ORDER: the sequence argument to uC_widget_view_add_widget() is
+    // overwritten for a scrollable view, so cell N is the Nth widget
+    // added.  an empty cell is a PLACEHOLDER WIDGET, not an absent one -
+    // which is what a bag wants anyway, because an empty slot you can
+    // focus is an empty slot you can drop into.
+    uC_VIEW_GRID,
 } __attribute__((__packed__)) uC_view_orientation_t;
 
 // -----------------------------------------------------------------------
@@ -131,6 +145,25 @@ typedef struct
     uint16_t sequence;      // whole view gets same sequence number
     uint16_t top;           // first visible widget index (top or left)
     uint16_t cy;            // focused offset along the scrolling axis
+
+    // ★★★★★ A GRID's WIDTH IN ITEMS, and the ONLY new number it needs.
+    // ⓘ `top` and `cy` keep their meanings exactly - the focused item is
+    // still `top + cy` - so nothing else about scrolling or focus moves.
+    // a row is `cy / cols` and a column is `cy % cols`.
+    //
+    // ⚠ 0 or 1 means "not a lattice"; it is only read when the
+    // orientation is uC_VIEW_GRID.
+    uint16_t cols;
+
+    // ⓘ CELLS BETWEEN ITEMS.  the unit of layout is the PITCH - an
+    // item's width plus gap_x - so a 5 wide button with a 1 cell gap
+    // wants a view width that is a multiple of 6.
+    //
+    // ★ 0 IS AN ORDINARY VALUE: buttons may sit flush and be told apart
+    // by ALTERNATING ATTRIBUTES instead, which costs no cells and needs
+    // nothing from this library - a widget carries its own attrs.
+    uint16_t gap_x;
+    uint16_t gap_y;
 
     uC_list_node_t *view_node;
 
@@ -291,6 +324,14 @@ bool widget_text_input_active(uC_screen_t *scr);
 void widget_release_focus(void);
 void widget_close_view(uC_widget_view_t *view);
 void widget_scroll_view(uint8_t k);
+
+// ⓘ grid geometry, shared between the view and the draw.  ★ not API:
+// they are the library's own arithmetic, not a caller's.
+uint16_t view_grid_cols(uC_widget_view_t *view);
+uint16_t view_grid_pitch_x(uC_widget_view_t *view);
+uint16_t view_grid_pitch_y(uC_widget_view_t *view);
+uint16_t view_grid_visible_cols(uC_widget_view_t *view);
+uint16_t view_grid_visible_rows(uC_widget_view_t *view);
 uint8_t tab_next_widget(void);
 uint8_t tab_prev_widget(void);
 #ifdef UC_MOUSE
@@ -356,6 +397,28 @@ API void uC_widget_view_add_border(uC_widget_view_t *view,
 
 API bool uC_widget_view_set_orientation(uC_widget_view_t *view,
     uC_view_orientation_t orientation);
+
+// ★ make a scrollable view a LATTICE of `cols` items with `gap_x` cells
+// between columns and `gap_y` between rows.  ⓘ sets the orientation to
+// uC_VIEW_GRID itself, so it is the only call a caller needs.
+//
+// ⚠ cols of 0 is taken as 1.  a grid one item wide is a vertical list
+// and behaves as one, which is the right answer rather than an error.
+API bool uC_widget_view_set_grid(uC_widget_view_t *view,
+    uint16_t cols, uint16_t gap_x, uint16_t gap_y);
+
+// -----------------------------------------------------------------------
+// ★★★★★ WHICH ITEM IS SELECTED - the accessor "press Z on the focused
+// item" actually needs.
+//
+// ⚠⚠ uC_widget_current_sequence() CANNOT ANSWER THIS: a scrollable view
+// gives every widget in it THE VIEW'S sequence, so that call returns the
+// same number for all of them.  ⓘ the index is `top + cy`, and it was
+// reachable but never exposed.
+//
+// ⓘ returns 0 for a view that is not scrollable or has nothing in it -
+// ★ so check the view, not the answer: index 0 is a real item.
+API uint16_t uC_widget_view_current_index(uC_widget_view_t *view);
 
 API bool uC_widget_view_add_widget(uC_widget_view_t *view,
     uC_widget_t *w, uint16_t sequence);

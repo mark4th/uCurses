@@ -38,7 +38,13 @@ static bool check_scrollable(uint8_t k)
 
     if (widget_state.view->flags & (1 << uC_VIEW_SCROLL))
     {
-        if (((widget_state.view->orientation == uC_VIEW_VERTICAL) &&
+        // ★ A GRID OWNS ALL FOUR - it is two dimensional, so there is no
+        // axis left over for anything else to claim.  ⚠ which is also why
+        // a grid of TEXTBOXES needs the cursor to escape at the ends of
+        // its text: left and right belong to the cell until then.
+
+        if ((widget_state.view->orientation == uC_VIEW_GRID) ||
+            ((widget_state.view->orientation == uC_VIEW_VERTICAL) &&
              ((k == WIDGET_KEY_UP) || (k == WIDGET_KEY_DOWN))) ||
             ((widget_state.view->orientation == uC_VIEW_HORIZONTAL) &&
              ((k == WIDGET_KEY_LEFT) || (k == WIDGET_KEY_RIGHT))))

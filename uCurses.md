@@ -4292,6 +4292,57 @@ call returns false when the requested orientation or existing widget
 layout is incompatible with horizontal scrolling.
 
 ```c
+API bool uC_widget_view_set_grid(uC_widget_view_t *view,
+uint16_t cols, uint16_t gap_x, uint16_t gap_y)
+```
+
+This public API call makes a scrollable view a lattice of `cols` items
+across, wrapping downwards and scrolling vertically.  It sets the
+orientation to `uC_VIEW_GRID` itself, so there is no way to end up with
+grid geometry on a view that is not a grid.  A `cols` of zero is taken
+as one, because a lattice one item wide is a vertical list and behaves
+as one.
+
+`gap_x` and `gap_y` are the cells left between columns and between rows.
+The unit of layout is the pitch - an item's width plus `gap_x` - so a
+five wide button with a one cell gap wants a view width that is a
+multiple of six.  A gap of zero is an ordinary value: buttons may sit
+flush against one another and be told apart by alternating attributes
+instead, which costs no cells and needs nothing from this library.
+
+A grid draws its top left visible item at the view's origin and every
+other at its own multiple of the pitch, and it draws an item only if
+that item fits entirely within the view.  A view that is not a whole
+number of pitches wide therefore shows fewer columns and leaves a
+margin, rather than clipping an item in half.
+
+Items in a grid must all be the same width, which is the same rule a
+horizontal view already applies.  Cell order is the order widgets were
+added: the `sequence` argument to `uC_widget_view_add_widget()` is
+overwritten for a scrollable view, so cell N is the Nth widget added.
+An empty cell is a placeholder widget rather than an absent one.
+
+Left and right move by one item and wrap between rows, so every item is
+reachable with one key and in reading order.  Up and down move by
+`cols`.
+
+```c
+API uint16_t uC_widget_view_current_index(uC_widget_view_t *view)
+```
+
+This public API call returns the index of the item that currently has
+focus within a scrollable view.
+
+`uC_widget_current_sequence()` cannot answer this question: a scrollable
+view gives every widget within it the view's own sequence number, so
+that call returns the same value for all of them.  This one returns the
+position, which is what an application needs in order to act on the
+focused item when a key it did not consume is returned to it.
+
+It returns zero for a view that is not scrollable or that holds nothing,
+so test the view rather than the answer - index zero is a real item.
+
+```c
 API bool uC_widget_view_add_widget(uC_widget_view_t *view,
 uC_widget_t *widget, uint16_t sequence)
 ```
@@ -7779,6 +7830,17 @@ integer in the gap.
 ### `src/ui/widgets/uC_widget_view.c`
 `uC_widget_view_set_orientation()` changes a scrollable view between
 vertical and horizontal layout while preserving its selected index.
+
+`uC_widget_view_set_grid()` makes a scrollable view a lattice of `cols`
+items across with the given gaps, and sets its orientation to
+`uC_VIEW_GRID`.
+
+`uC_widget_view_current_index()` returns the index of the focused item
+within a scrollable view.
+
+`view_grid_cols()`, `view_grid_pitch_x()`, `view_grid_pitch_y()`,
+`view_grid_visible_cols()` and `view_grid_visible_rows()` are the grid's
+arithmetic, shared between the view and the draw.  They are internal.
 
 `uC_widget_to_view_index()` moves a scrollable view to a specific item
 index.

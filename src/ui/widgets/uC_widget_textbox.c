@@ -217,6 +217,26 @@ bool widget_textbox_at_edge(uC_widget_t *widget, uint8_t k)
 {
     uC_widget_textbox_t *t;
 
+    // ⚠⚠ ONLY LEFT AND RIGHT HAVE AN EDGE, and asking about any other
+    // key is a question with no answer - so the answer is NO.
+    //
+    // ★★★★★ THIS GUARD IS LOAD BEARING AND ITS ABSENCE WAS A REGRESSION.
+    // check_scrollable() asks this for EVERY key over a widget in a
+    // grid; without the test below, a BUTTON answered "yes, at the edge"
+    // to Enter, to Tab and to everything else, so the grid swallowed the
+    // lot and reported them consumed.  ⓘ the symptoms were buttons that
+    // did nothing while their hot keys worked, and a tab that could not
+    // leave the view.
+    //
+    // ⚠ the old condition carried `type != uC_WIDGET_TEXTBOX` as a term
+    // BESIDE the explicit key tests; folding it into this helper lost
+    // the half that said which keys the question applied to.
+
+    if ((k != WIDGET_KEY_LEFT) && (k != WIDGET_KEY_RIGHT))
+    {
+        return false;
+    }
+
     if ((widget == NULL) || (widget->type != uC_WIDGET_TEXTBOX))
     {
         return true;        // ⓘ not a textbox: it was never its key

@@ -1856,10 +1856,10 @@ infinite loop (tm).
 On success, this function returns the character read.
 
 ```c
-void uC_read_keys(void)
+int uC_key_fd_source(void *ctx, int timeout_ms)
 ```
 
-This call which is only internally visible to the library, will
+This call, which is only internally visible to the library, will
 repeatedly read the terminals standard input file descriptor until
 there are no more characters left to read or the buffer becomes
 full.  All characters are saved to the keyboard buffer array and
@@ -4781,6 +4781,16 @@ parameter here.
 
 
 ### 9.8. `uC_widget_textbox.c`
+`uC_widget_textbox_sync()` re-reads the buffer a textbox was created over,
+for when the application has written to it behind the widgets back.  The
+widget caches what it drew, so without this the display and the buffer
+disagree until the next edit.
+
+`uC_widget_textbox_set_cursor_advance()` chooses whether typing a
+character advances the cursor.  With it off the cursor stays put, which is
+what a fixed width field wants - a hex byte, a coordinate - so that
+overtyping replaces rather than inserts.
+
 A textbox allows the application to accept the input of strings into
 pre-allocated buffers.  The characters of these strings can be filtered on
 one of the following number bases or can be alpha-numeric.
@@ -6950,7 +6960,7 @@ static void value_gray_fgbg(void)
 ```
 
 This function is called to set either a gray scale foreground or a
-gray scale background within one of the various `uC_attrib_t`
+gray scale background within one of the various `uC_attribs_t`
 structures.  These 'various' structures are used to assign
 attributes to different elements within the user interface.
 
@@ -7443,6 +7453,13 @@ description.
 
 
 ### `src/keys/uC_key_table.c`
+`uC_alt()` reports whether the most recently returned key carried the Alt
+modifier.  It is the Alt-bit shorthand over `uC_key_mods()`.
+
+`uC_key_mods()` returns the full modifier mask - `KMOD_SHIFT`, `KMOD_ALT`
+and `KMOD_CTRL` - of the most recently returned key.  It is valid
+immediately after `uC_key()` or `uC_key_raw()` and until the next one.
+
 `k_sleft()` maps the shifted left-arrow escape sequence onto
 `UC_KEY_SLEFT`.
 
@@ -7508,6 +7525,13 @@ returned by the keyboard input path.
 
 
 ### `src/terminfo/uC_terminfo.c`
+`uC_altscreen_on()` switches the terminal to its alternate screen, if it
+is not on it already.  The guard makes the call idempotent.
+
+`uC_altscreen_off()` switches back to the users own screen.  It is called
+by `uC_restore_terminal()` as well as by the application, so an assert or
+a fatal signal still leaves the user looking at their own scrollback.
+
 `ti_set_screen()` binds terminfo output to the active screen.  Terminal
 cursor tracking is screen-relative, so terminfo needs this pointer before
 emitting cursor movement.
@@ -7596,6 +7620,12 @@ shortcut.
 
 
 ### `src/ui/uC_border.c`
+`uC_win_draw_grid()` draws a box and then rules it: `verticals` and
+`horizontals` are arrays of offsets within the box at which to draw
+interior lines, and the correct tee and cross glyphs are chosen from the
+border set for every junction.  It draws lines between cells; it has
+nothing to do with a grid widget view.
+
 `uC_window_clear_box()` clears a rectangular area inside a window.  It is
 used by border and box drawing paths that need to erase an interior before
 redrawing.
@@ -7761,6 +7791,19 @@ scrollable view.
 
 
 ### `src/ui/widgets/uC_widget_view_group.c`
+`uC_widget_clear_focus()` removes the focus highlight from the current
+view group and widget on a given screen, without moving the focus
+anywhere.  It does nothing if that screen is not the one currently
+holding focus.
+
+`uC_widget_vg_set_active()` marks a view group active or inactive.  An
+inactive group is skipped by the tab traversal and its widgets' keyboard
+shortcuts stop firing, so a dialog can disable a whole panel without
+unbuilding it.
+
+`uC_widget_vg_is_active()` reports that state.  A NULL group is not
+active.
+
 `widget_shortcut_attached_active()` checks whether a widget shortcut still
 belongs to an attached, active widget group.
 

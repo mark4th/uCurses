@@ -39,11 +39,23 @@ static bool check_scrollable(uint8_t k)
     if (widget_state.view->flags & (1 << uC_VIEW_SCROLL))
     {
         // ★ A GRID OWNS ALL FOUR - it is two dimensional, so there is no
-        // axis left over for anything else to claim.  ⚠ which is also why
-        // a grid of TEXTBOXES needs the cursor to escape at the ends of
-        // its text: left and right belong to the cell until then.
+        // axis left over for anything else to claim.
+        //
+        // ⚠⚠ EXCEPT OVER A TEXTBOX, WHICH OWNS LEFT AND RIGHT FOR ITS
+        // CURSOR.  taking them would make a grid of textboxes uneditable,
+        // so the grid yields them and keeps up/down.
+        //
+        // ▶ WHICH LEAVES A GRID OF TEXTBOXES WITH NO WAY TO CHANGE
+        // COLUMN, and that is the open question this design has: the
+        // answer is EDGE ESCAPE - left at the start of the text moves to
+        // the previous cell - and it is a change to the textbox handler,
+        // not to this one.  ⓘ until then a textbox grid should be one
+        // column wide.
 
-        if ((widget_state.view->orientation == uC_VIEW_GRID) ||
+        if (((widget_state.view->orientation == uC_VIEW_GRID) &&
+             ((widget_state.widget == NULL) ||
+              (widget_state.widget->type != uC_WIDGET_TEXTBOX) ||
+              (k == WIDGET_KEY_UP) || (k == WIDGET_KEY_DOWN))) ||
             ((widget_state.view->orientation == uC_VIEW_VERTICAL) &&
              ((k == WIDGET_KEY_UP) || (k == WIDGET_KEY_DOWN))) ||
             ((widget_state.view->orientation == uC_VIEW_HORIZONTAL) &&

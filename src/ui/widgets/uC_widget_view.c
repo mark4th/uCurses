@@ -72,8 +72,22 @@ uint16_t view_grid_pitch_y(uC_widget_view_t *view)
 uint16_t view_grid_visible_cols(uC_widget_view_t *view)
 {
     uint16_t pitch = view_grid_pitch_x(view);
-    uint16_t fits  = (pitch != 0) ? (uint16_t)(view->width / pitch) : 0;
+    uint16_t fits;
     uint16_t cols  = view_grid_cols(view);
+
+    // ⚠⚠ THE GAPS GO *BETWEEN* ITEMS, so N of them need
+    // N*width + (N-1)*gap cells - which rearranges to the +gap below.
+    //
+    // ★ THE FIRST REAL CALLER FOUND THIS: bme's mob editor puts three 8
+    // wide buttons at x 0, 9 and 18 in a 26 wide view.  8+1+8+1+8 is
+    // exactly 26, and dividing by the pitch of 9 says TWO columns fit.
+    // ⓘ I had argued the two conventions agree at the widths a designer
+    // would pick; the first width a designer had picked is one where
+    // they do not.
+
+    fits = (pitch != 0)
+        ? (uint16_t)((view->width + view->gap_x) / pitch)
+        : 0;
 
     // ⚠ never more than the lattice is wide - a view wider than its
     // content shows the content, not empty columns beyond it

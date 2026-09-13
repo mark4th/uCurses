@@ -330,7 +330,11 @@ static void draw_scrollable_horizontal(uC_window_t *win,
 // -----------------------------------------------------------------------
 
 // -----------------------------------------------------------------------
-// ★★★ THE LATTICE.  the top left visible item is drawn at the view's
+// ★★★ THE LATTICE - and it is NOT part of the scrollable path.  a grid
+// that fits has `top` 0 and the same arithmetic; scrolling only moves
+// where the walk starts.
+//
+// ⓘ the top left visible item is drawn at the view's
 // origin and every other at its own multiple of the pitch - and an item
 // is drawn ONLY IF IT FULLY FITS, so a view that is not a whole number
 // of pitches wide simply leaves a margin.
@@ -339,7 +343,7 @@ static void draw_scrollable_horizontal(uC_window_t *win,
 // fractional scrolling: the scroll unit is necessarily the ITEM, because
 // scrolling changes WHICH item is top left and never where it is drawn.
 
-static void draw_scrollable_grid(uC_window_t *win, uC_widget_view_t *view)
+static void draw_grid(uC_window_t *win, uC_widget_view_t *view)
 {
     uint16_t cols;
     uint16_t vis_cols;
@@ -408,7 +412,7 @@ static void draw_scrollable(uC_window_t *win, uC_widget_view_t *view)
 {
     if (view->orientation == uC_VIEW_GRID)
     {
-        draw_scrollable_grid(win, view);
+        draw_grid(win, view);
     }
     else if (view->orientation == uC_VIEW_HORIZONTAL)
     {
@@ -448,9 +452,32 @@ static void draw_view(uC_window_t *win, uC_widget_view_t *view)
         draw_view_box(win, view);
     }
 
-    (view->flags & (1 << uC_VIEW_SCROLL))
-        ? draw_scrollable(win, view)
-        : draw_nonscrollable(win, view);
+    // ★★★★★ A GRID IS A LAYOUT, AND SCROLLING IS A SEPARATE PROPERTY.
+    //
+    // ⚠ this was `scroll ? scrollable : nonscrollable`, which put the
+    // grid entirely inside the scrollable path - so a grid that FITS
+    // would have needed a pointless scroll flag, and taking that flag
+    // would have changed its tab behaviour as a side effect.
+    //
+    // ⓘ mark: *"right it wont need to be scrollable"* - five buttons in
+    // two rows fit, and a five button dialog that scrolls is a lie.
+    //
+    // ★ so the grid draws the same way either way: scrolling only means
+    // `top` may be non zero, and for a grid that fits it is 0 and the
+    // arithmetic is identical.
+
+    if (view->orientation == uC_VIEW_GRID)
+    {
+        draw_grid(win, view);
+    }
+    else if (view->flags & (1 << uC_VIEW_SCROLL))
+    {
+        draw_scrollable(win, view);
+    }
+    else
+    {
+        draw_nonscrollable(win, view);
+    }
 }
 
 // -----------------------------------------------------------------------

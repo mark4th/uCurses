@@ -327,6 +327,10 @@ void widget_scroll_view(uint8_t k);
 
 // ⓘ grid geometry, shared between the view and the draw.  ★ not API:
 // they are the library's own arithmetic, not a caller's.
+// ⓘ would this arrow do nothing in this textbox?  ★ what lets a grid
+// take left/right at the ends of the text and move to the next CELL.
+bool widget_textbox_at_edge(uC_widget_t *widget, uint8_t k);
+
 uint16_t view_grid_cols(uC_widget_view_t *view);
 uint16_t view_grid_pitch_x(uC_widget_view_t *view);
 uint16_t view_grid_pitch_y(uC_widget_view_t *view);
@@ -416,8 +420,9 @@ API bool uC_widget_view_set_grid(uC_widget_view_t *view,
 // same number for all of them.  ⓘ the index is `top + cy`, and it was
 // reachable but never exposed.
 //
-// ⓘ returns 0 for a view that is not scrollable or has nothing in it -
-// ★ so check the view, not the answer: index 0 is a real item.
+// ⓘ returns 0 for a view that is neither scrollable nor a grid, or that
+// has nothing in it - ★ so check the view, not the answer: index 0 is a
+// real item.
 API uint16_t uC_widget_view_current_index(uC_widget_view_t *view);
 
 API bool uC_widget_view_add_widget(uC_widget_view_t *view,

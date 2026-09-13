@@ -201,6 +201,44 @@ static void lt(uC_widget_textbox_t *t)
 
 // -----------------------------------------------------------------------
 
+// -----------------------------------------------------------------------
+// ★★★★★ WOULD THIS ARROW DO NOTHING?  ⓘ lt() and rt() already no-op at
+// the ends of the text, so a grid may take the key there and move to the
+// next CELL - and the behaviour only changes where nothing happened.
+//
+// ★ THAT IS WHAT MAKES EDGE ESCAPE SAFE TO ADD: it cannot take a key
+// away from an edit, because at the edge the edit was not using it.
+//
+// ⚠ AND IT IS WHY A GRID OF TEXTBOXES WORKS AT ALL.  the cell owns left
+// and right for its cursor, so without this a textbox grid has no way to
+// change column and every column but one is unreachable.
+
+bool widget_textbox_at_edge(uC_widget_t *widget, uint8_t k)
+{
+    uC_widget_textbox_t *t;
+
+    if ((widget == NULL) || (widget->type != uC_WIDGET_TEXTBOX))
+    {
+        return true;        // ⓘ not a textbox: it was never its key
+    }
+
+    t = &widget->textbox;
+
+    if (k == WIDGET_KEY_LEFT)
+    {
+        return (t->cx == 0) && (t->offset == 0);
+    }
+
+    if (k == WIDGET_KEY_RIGHT)
+    {
+        return ((int)(t->cx + t->offset) >= t->count);
+    }
+
+    return false;
+}
+
+// -----------------------------------------------------------------------
+
 static void rt(uC_widget_textbox_t *t)
 {
     int16_t half = widget_state.widget->width / 2;

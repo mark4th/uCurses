@@ -132,8 +132,8 @@ who is the current (long time) maintainer of ncurses has extensive
 knowledge of the domain that I currently lack.  He also produces a library
 that has two things going for it that uCurses does not and may never have!
 
-1. Consistent Reliability
-2. Reliable Consistency
+  1. Consistent Reliability
+  2. Reliable Consistency
 
 There is a very *very* good reason why ncurses is ubiquitous in the *nix
 universe - How could an ID10T like me compete with that? <3

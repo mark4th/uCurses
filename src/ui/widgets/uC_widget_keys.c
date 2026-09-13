@@ -36,7 +36,13 @@ static bool check_scrollable(uint8_t k)
 {
     // view is a known non null here
 
-    if (widget_state.view->flags & (1 << uC_VIEW_SCROLL))
+    // ★★★★★ A GRID OWNS ITS ARROWS WHETHER OR NOT IT SCROLLS.  ⓘ the
+    // navigation is a property of the LAYOUT - moving by one across and
+    // by `cols` down - and a grid that happens to fit needs it just as
+    // much as one that does not.
+
+    if ((widget_state.view->orientation == uC_VIEW_GRID) ||
+        (widget_state.view->flags & (1 << uC_VIEW_SCROLL)))
     {
         // ★ A GRID OWNS ALL FOUR - it is two dimensional, so there is no
         // axis left over for anything else to claim.
@@ -52,10 +58,19 @@ static bool check_scrollable(uint8_t k)
         // not to this one.  ⓘ until then a textbox grid should be one
         // column wide.
 
+        // ★★★★★ OVER A TEXTBOX, THE GRID TAKES LEFT AND RIGHT ONLY AT
+        // THE EDGES OF THE TEXT - which is EDGE ESCAPE, and it is what
+        // makes a grid of textboxes usable at all.
+        //
+        // ⓘ the cell owns the cursor until the cursor has nowhere left
+        // to go; at that point lt() and rt() already did nothing, so the
+        // grid is taking a DEAD key rather than one the edit wanted.
+        // ★ which is why this was safe to add to a live library: the
+        // behaviour only changes where no behaviour existed.
+
         if (((widget_state.view->orientation == uC_VIEW_GRID) &&
-             ((widget_state.widget == NULL) ||
-              (widget_state.widget->type != uC_WIDGET_TEXTBOX) ||
-              (k == WIDGET_KEY_UP) || (k == WIDGET_KEY_DOWN))) ||
+             ((k == WIDGET_KEY_UP) || (k == WIDGET_KEY_DOWN) ||
+              widget_textbox_at_edge(widget_state.widget, k))) ||
             ((widget_state.view->orientation == uC_VIEW_VERTICAL) &&
              ((k == WIDGET_KEY_UP) || (k == WIDGET_KEY_DOWN))) ||
             ((widget_state.view->orientation == uC_VIEW_HORIZONTAL) &&

@@ -506,9 +506,11 @@ API void uC_widget_to_view_index(uC_widget_view_t *view, uint16_t index)
     uint16_t max_top;
     uC_list_node_t *node;
 
-    // call is only valid if view is scrollable
+    // ⓘ valid for a scrollable view OR a grid - a grid that fits has a
+    // focused index just the same, it simply never moves `top`
 
-    if (!view || !(view->flags & (1 << uC_VIEW_SCROLL)))
+    if (!view || (!(view->flags & (1 << uC_VIEW_SCROLL)) &&
+        (view->orientation != uC_VIEW_GRID)))
     {
         return;
     }
@@ -650,7 +652,9 @@ API bool uC_widget_view_set_grid(uC_widget_view_t *view,
 
 API uint16_t uC_widget_view_current_index(uC_widget_view_t *view)
 {
-    if ((view == NULL) || !(view->flags & (1 << uC_VIEW_SCROLL)))
+    if ((view == NULL) ||
+        (!(view->flags & (1 << uC_VIEW_SCROLL)) &&
+         (view->orientation != uC_VIEW_GRID)))
     {
         return 0;
     }

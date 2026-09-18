@@ -25,6 +25,7 @@ void uC_alloc_init(uC_mem_zone_t zone);
 void init_winch(void);
 void de_init_winch(void);
 void menu_set_screen(uC_screen_t *scr);
+void ti_set_screen(uC_screen_t *scr);
 #ifdef UC_WIDGETS
 void uC_widget_reset_state(void);
 #endif
@@ -101,6 +102,9 @@ API void uCurses_deInit(void)
     uC_restore_terminal();
     de_init_winch();
 
+    ti_set_screen(NULL);
+    active_screen = NULL;
+
     uC_mem_purge(uC_MEM_ZONE_JSON);
     uC_mem_purge(uC_MEM_ZONE_UI);
     uC_mem_purge(uC_MEM_ZONE_DEFAULT);
@@ -108,7 +112,6 @@ API void uCurses_deInit(void)
 #ifdef UC_WIDGETS
     uC_widget_reset_state();
 #endif
-    active_screen = NULL;
 }
 
 // =======================================================================

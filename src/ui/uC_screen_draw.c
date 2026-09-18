@@ -489,15 +489,58 @@ void scr_emit(uC_screen_t *scr, int16_t index)
 }
 
 // -----------------------------------------------------------------------
+// inner loop of screen update.  Write every modified character which
+// shares the attributes of the character at index.
+
+static int16_t inner_update(uC_screen_t *scr, int16_t index, int16_t end)
+{
+    cell_t *p1;
+    int16_t next;
+    uC_attribs_t a;
+
+    next = 0;
+
+    // Select these attributes once, then bounce the cursor to every
+    // modified character which shares them.  On slow connections this is
+    // considerably cheaper than repeatedly changing terminal attributes.
+
+    p1     = &scr->buffer1[index];
+    a.blob = p1->attrs.blob;
+
+    new_attrs(a);
+
+    do
+    {
+        if (scr_is_modified(scr, index))
+        {
+            if (a.blob == p1->attrs.blob)
+            {
+                scr_emit(scr, index);
+            }
+            else if (next == 0)
+            {
+                // Remember the first modified character with different
+                // attributes.  The outer loop can resume there rather
+                // than rescanning all the unmodified characters.
+
+                next = index;
+            }
+        }
+
+        index++;
+        p1++;
+    } while (index != end);
+
+    return next;
+}
+
+// -----------------------------------------------------------------------
 // outer loop of screen update
 
 void scr_outer_update(uC_screen_t *scr)
 {
     int16_t index;
     int16_t end;
-    bool have_attrs = false;
-    cell_t *cell;
-    uC_attribs_t active_attrs;
 
     if (scr == NULL)
     {
@@ -511,26 +554,24 @@ void scr_outer_update(uC_screen_t *scr)
 
     do
     {
-        // if char at index is modified then output every char in the
-        // order the composed screen describes.  Updating by attribute
-        // bucket is faster but can make overlays visibly blink because
-        // blanking cells and text cells may be emitted in separate passes.
+        // If this character is modified, emit it and every other modified
+        // character which shares its attributes.
 
         if (scr_is_modified(scr, index))
         {
-            cell = &scr->buffer1[index];
+            index = inner_update(scr, index, end);
 
-            if (!have_attrs || (active_attrs.blob != cell->attrs.blob))
+            // Zero means that inner_update() reached the end without
+            // finding another modified attribute group.
+
+            if (index == 0)
             {
-                active_attrs = cell->attrs;
-                new_attrs(active_attrs);
-                have_attrs = true;
+                break;
             }
 
-            scr_emit(scr, index);
+            continue;
         }
 
-        // would splitting this into two separate loops make it faster?
         index++;
     } while (index != end);
 }

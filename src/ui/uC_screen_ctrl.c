@@ -14,6 +14,7 @@
 #endif // UC_WIDGETS
 
 extern uC_screen_t *active_screen;
+void ti_set_screen(uC_screen_t *scr);
 
 // -----------------------------------------------------------------------
 
@@ -75,6 +76,7 @@ API uC_screen_t *uC_scr_open(int16_t width, int16_t height)
     }
 
     active_screen = scr;
+    ti_set_screen(scr);
 
     return scr;
 }
@@ -179,6 +181,12 @@ API void uC_scr_close(uC_screen_t *scr)
 {
     uC_window_t *win;
 
+    if (scr == active_screen)
+    {
+        active_screen = NULL;
+        ti_set_screen(NULL);
+    }
+
     if (scr != NULL)
     {
         uC_ui_free(scr->buffer1);
@@ -224,10 +232,6 @@ API void uC_scr_close(uC_screen_t *scr)
     // some kind of list push when opening a new one and a list pop here
     // todo?
 
-    if (scr == active_screen)
-    {
-        active_screen = NULL;
-    }
 }
 
 // -----------------------------------------------------------------------

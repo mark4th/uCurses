@@ -24,6 +24,7 @@ test_specs = [
     ['test_fnv',    ['test_fnv.c'], false],
     ['test_utf8',   ['test_utf8.c'], false],
     ['test_list',   ['test_list.c'], false],
+    ['test_border', ['test_border.c'], false],
     ['test_window_wide', ['test_window_wide.c'], false],
     ['test_widget_layout', ['test_widget_layout.c'], not widgets_enabled],
     ['test_widget_horizontal', ['test_widget_horizontal.c'], not widgets_enabled],

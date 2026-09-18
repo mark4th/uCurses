@@ -3794,15 +3794,11 @@ border_t bdr_double[]    ╔╗╚╝═║╠╣╦╩╬
 border_t bdr_curved[]    ╭╮╰╯─│├┤┬┴┼
 ```
 
-Horizontal and vertical separators have not been implemented for
-window borders and probably never will be because borders are
-outside the windows draw field.
-
-The intent is to eventually add the code to draw them within boxes
-which are described below.  While this is on the todo and would be
-quite trivial to implement I am somewhat reluctant to add the code
-to the library because it is already significantly larger than I
-ever wanted it to be.
+Window borders do not have separators because they are outside the
+windows draw field.  Horizontal and vertical separators within boxes
+are supported by `uC_win_draw_grid()` which is described below.  The
+additional characters in each border array are used to join these
+separators to the box and to each other.
 
 ```c
 border_t *const borders[]
@@ -3883,6 +3879,27 @@ There is no concept of one item overlapping another inside a
 window so there is no need for these functions to account for
 potential visual glitches.  Boxes also never have 'focus' so only
 one set of attributes are applicable.
+
+
+<!-- mdview:api-end -->
+<!-- mdview:api-begin -->
+```c
+API void uC_win_draw_grid(uC_window_t *win, uint16_t x, uint16_t y,
+uint16_t width, uint16_t height, const uint16_t *verticals,
+size_t vertical_count, const uint16_t *horizontals,
+size_t horizontal_count, uC_border_type_t bdr_type,
+uC_attribs_t attrs)
+```
+
+This public API function draws a box containing horizontal and
+vertical separators.  The entries in `verticals` are X offsets and
+the entries in `horizontals` are Y offsets relative to the boxes
+location.  Their associated count parameters specify the number of
+entries in each array.
+
+The separators use the same border type and attributes as the outer
+box.  T junctions join them to the box and cross characters are drawn
+where horizontal and vertical separators meet.
 
 
 <!-- mdview:api-end -->

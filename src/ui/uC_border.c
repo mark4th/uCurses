@@ -285,6 +285,7 @@ API void uC_win_draw_grid(uC_window_t *win,
 {
     border_t *bdr;
     size_t i;
+    uint16_t row;
 
     if ((win == NULL) || (type == uC_BDR_NONE)) return;
     bdr = borders[type];
@@ -294,8 +295,13 @@ API void uC_win_draw_grid(uC_window_t *win,
     {
         uint16_t vx = x + verticals[i];
         uC_win_printf(win, "%@%8", UC_XY(vx, y), bdr[BDR_TOP_T]);
-        uC_win_printf(win, "%@%8", UC_XY(vx, y + height), bdr[BDR_BOTTOM_T]);
-        uC_win_printf(win, "%@%*", UC_XY(vx, y + 1), height - 1, bdr[BDR_VERTICAL]);
+        uC_win_printf(win, "%@%8", UC_XY(vx, y + height + 1), bdr[BDR_BOTTOM_T]);
+
+        for (row = 1; row <= height; row++)
+        {
+            uC_win_printf(win, "%@%8",
+                UC_XY(vx, y + row), bdr[BDR_VERTICAL]);
+        }
     }
     for (i = 0; i < horizontal_count; i++)
     {

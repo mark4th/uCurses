@@ -86,14 +86,17 @@ API void uC_cup(uint16_t x, uint16_t y)
 
 API void uC_cud1(void)
 {
-    if (ti_screen != NULL)
+    if (ti_screen == NULL)
     {
-        if (ti_screen->cy != ti_screen->height - 1)
-        {
-            ti_screen->cy++;
-        }
+        ti_cud1();
+        return;
     }
-    ti_cud1();
+
+    if (ti_screen->cy != ti_screen->height - 1)
+    {
+        ti_screen->cy++;
+    }
+    uC_cup(ti_screen->cx, ti_screen->cy);
 }
 
 // -----------------------------------------------------------------------
@@ -134,17 +137,20 @@ API void uC_cub1(void)
 
 API void uC_cuf1(void)
 {
-    if (ti_screen != NULL)
+    if (ti_screen == NULL)
     {
-        if (ti_screen->cx != ti_screen->width - 1)
-        {
-            ti_screen->cx++;
-        }
-        else if (ti_screen->cy != ti_screen->height - 1)
-        {
-            ti_screen->cx = 0;
-            ti_screen->cy++;
-        }
+        ti_cuf1();
+        return;
+    }
+
+    if (ti_screen->cx != ti_screen->width - 1)
+    {
+        ti_screen->cx++;
+    }
+    else if (ti_screen->cy != ti_screen->height - 1)
+    {
+        ti_screen->cx = 0;
+        ti_screen->cy++;
     }
     uC_cup(ti_screen->cx, ti_screen->cy);
 }
@@ -184,19 +190,6 @@ API void uC_dch1(void)
 
 API void uC_cud(uint16_t n1)
 {
-    int i;
-
-    if (ti_screen != NULL)
-    {
-        for (i = 0; i != n1; i++)
-        {
-            if (ti_screen->cy == ti_screen->height - 1)
-            {
-                break;
-            }
-            ti_screen->cy++;
-        }
-    }
     while (n1)
     {
         uC_cud1();
@@ -241,29 +234,6 @@ API void uC_cub(uint16_t n1)
 
 API void uC_cuf(uint16_t n1)
 {
-    int i;
-
-    if (ti_screen != NULL)
-    {
-        for (i = 0; i != n1; i++)
-        {
-            if (ti_screen->cx != ti_screen->width - 1)
-            {
-                ti_screen->cx++;
-            }
-            else
-            {
-
-                if (ti_screen->cy == ti_screen->height - 1)
-                {
-                    break;
-                }
-                ti_screen->cy++;
-                ti_screen->cx = 0;
-            }
-        }
-    }
-
     while (n1)
     {
         uC_cuf1();
@@ -312,20 +282,22 @@ API void uC_cr(void)
     char *cr = "\r\n";
     size_t n;
 
-    if (ti_screen != NULL)
+    if (ti_screen == NULL)
     {
-        ti_screen->cx = 0;
-        if (ti_screen->cy != ti_screen->height)
+        n = write(1, cr, 2);
+        if (n != 2)
         {
-            ti_screen->cy++;
+            ;
         }
+        return;
     }
 
-    n = write(1, cr, 2);
-    if (n != 2)
+    ti_screen->cx = 0;
+    if (ti_screen->cy != ti_screen->height - 1)
     {
-        ;
+        ti_screen->cy++;
     }
+    uC_cup(ti_screen->cx, ti_screen->cy);
 }
 
 // -----------------------------------------------------------------------

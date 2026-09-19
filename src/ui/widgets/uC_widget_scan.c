@@ -80,14 +80,34 @@ static void scan_tab_candidate_in_vg(uC_widget_vg_t *vg, uint16_t current,
 
 static bool scan_view(uC_widget_view_t *view, uint16_t sequence)
 {
-    bool scrollable;
+    bool indexed;
     uint16_t index = 0;
     uint16_t selected = 0;
     uC_list_node_t *n1;
     uC_widget_t *widget;
 
-    scrollable = (view->flags & (1 << uC_VIEW_SCROLL)) != 0;
-    if (scrollable)
+    // ★★★★ A GRID HAS A FOCUSED CELL EVEN WHEN IT DOES NOT SCROLL, and
+    // testing only the SCROLL flag here is what put two cursors on the
+    // screen at once.
+    //
+    // ⚠⚠⚠ THE SYMPTOM WAS A BUTTON THAT DID THE WRONG THING.  a
+    // non-scrolling grid took scrollable == false, so this matched the
+    // FIRST widget carrying the sequence and pointed view_node and
+    // widget_state.widget at it - view->cy was never consulted.
+    // meanwhile draw_grid() lights `i == view->cy`.  the highlight and
+    // the target were two different cells, so activating the one you
+    // could see ran the one you could not.
+    //
+    // ⓘ THE SAME TEST uC_widget_view_current_index() ALREADY MAKES -
+    // *"valid for a scrollable view OR a grid - a grid that fits has a
+    // focused index just the same, it simply never moves `top`"*.  ★ the
+    // third site of this class: 77ac5fe moved grids out of the
+    // scrollable-only path and left the places that ASK behind.
+
+    indexed = ((view->flags & (1 << uC_VIEW_SCROLL)) != 0)
+           || (view->orientation == uC_VIEW_GRID);
+
+    if (indexed)
     {
         selected = uC_widget_view_index(view);
     }
@@ -99,7 +119,7 @@ static bool scan_view(uC_widget_view_t *view, uint16_t sequence)
         widget = (uC_widget_t *)n1->payload;
 
         if ((widget->sequence == sequence) &&
-            (!scrollable || (index == selected)))
+            (!indexed || (index == selected)))
         {
             if (widget->disabled)
             {

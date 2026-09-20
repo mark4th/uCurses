@@ -170,6 +170,28 @@ typedef struct
     uC_attribs_t attrs;
     uC_attribs_t box_attrs; // attribs for border
     uC_border_type_t box_type;
+
+    // ★★★★★ HOW MANY OF THIS VIEW'S CHECKBOXES MAY BE ON AT ONCE.
+    // ⓘ 0 IS UNLIMITED, which is what every view already reads as, so
+    // this is additive and no existing caller changes.
+    //
+    // ⚠⚠ AT THE END ON PURPOSE.  a view is allocated INSIDE the
+    // library and read by name outside it, so appending leaves every
+    // existing field at the offset a program already built against this
+    // header expects.  a field added in the middle would silently move
+    // `view_node` and the attribs under anything linking the .so that
+    // was not rebuilt.
+    //
+    // ⚠⚠ IT IS A CAP, NOT A COUNTER.  the count is derived by reading
+    // the bits the checkboxes already point at - see
+    // uC_widget_view_checks_used() - so there is no second fact to keep
+    // in step with the first, and an application that writes *select
+    // itself is still counted correctly.
+    //
+    // ⚠ IT IS PRESENTATION, NEVER AN INVARIANT.  it decides which
+    // boxes MAY BE TICKED; whatever the application is bounding by it
+    // has to check for itself, on the side that owns the rule.
+    uint16_t check_max;
 } uC_widget_view_t;
 
 // -----------------------------------------------------------------------
@@ -410,6 +432,37 @@ API bool uC_widget_view_set_orientation(uC_widget_view_t *view,
 // and behaves as one, which is the right answer rather than an error.
 API bool uC_widget_view_set_grid(uC_widget_view_t *view,
     uint16_t cols, uint16_t gap_x, uint16_t gap_y);
+
+// -----------------------------------------------------------------------
+// ★★★★★ A BOUNDED CHECKBOX LIST - at most `max` of this view's boxes
+// may be ticked, and the rest GHOST OUT until one is unticked.
+//
+// ⓘ 0 turns the bound off, which is where every view starts.
+//
+// ⚠ A GHOSTED BOX IS STILL FOCUSABLE, deliberately: the whole point of
+// the list is deciding what to leave, and a row you cannot land on is a
+// row you cannot read.  ★ it is dimmed rather than `disabled`, which
+// would take it out of the tab order.
+//
+// ⚠⚠ THE LIBRARY BOUNDS WHAT IS TICKABLE, NOT WHAT IS TRUE.  a
+// caller whose bound means something - an inventory that cannot hold
+// more - still has to enforce it where it is owned.
+API bool uC_widget_view_set_check_max(uC_widget_view_t *view,
+    uint16_t max);
+
+// ⓘ how many of this view's checkboxes are ticked, counted from the
+// bits themselves.  ★ a caller rendering "3 of 3" wants this rather
+// than a tally of its own - the bits are the state, and a second copy of
+// them is a second thing to keep right.
+API uint16_t uC_widget_view_checks_used(uC_widget_view_t *view);
+
+// ⓘ would ticking THIS box be refused right now - the same question
+// the draw and the key handler ask, so nothing a caller draws beside it
+// can disagree with the box itself.
+//
+// ★ false for anything that is not a checkbox, for a view with no cap,
+// and for a box that is already ON.
+API bool uC_widget_check_refused(uC_widget_t *widget);
 
 // -----------------------------------------------------------------------
 // ★★★★★ WHICH ITEM IS SELECTED - the accessor "press Z on the focused

@@ -4906,6 +4906,32 @@ nonzero width and fit completely within the view.
 <!-- mdview:api-end -->
 <!-- mdview:api-begin -->
 ```c
+API bool uC_widget_view_set_check_max(uC_widget_view_t *view,
+uint16_t max)
+```
+
+This public API call bounds how many of a view's checkbox widgets may be
+ticked at once.  At that maximum the boxes that are not ticked ghost out
+until one of the ticked ones is cleared.  A maximum of zero turns the
+bound off, which is where every view starts, so a view that never makes
+this call is unaffected by it.
+
+A ghosted box is still focusable.  That is deliberate: the point of a
+bounded list is deciding what to leave, and a row that cannot be landed
+on is a row that cannot be read.  It is dimmed rather than marked
+`disabled`, which would take it out of the tab order altogether.
+
+The library bounds what may be ticked, not what is true.  An application
+whose bound means something - an inventory that cannot hold more - still
+has to enforce that where the rule is owned.  The count itself is
+`uC_widget_view_checks_used()` and the per box answer is
+`uC_widget_check_refused()`.
+
+The call returns false for a NULL view.
+
+<!-- mdview:api-end -->
+<!-- mdview:api-begin -->
+```c
 API void uC_widget_view_remove_widget(uC_widget_view_t *view,
 uC_widget_t *widget)
 ```
@@ -5347,6 +5373,12 @@ by the *select element within the widget structure.  The widget
 also contains a variable giving which bit within the select is
 associated with this checkbox.
 
+A box that `uC_widget_check_refused()` reports as refused is drawn
+ghosted: its foreground is moved halfway towards its background, so it
+dims on a light theme as readily as on a dark one.  Only the ink changes
+- the row keeps its place in the tab order and keeps its focus bar, so a
+box that cannot be ticked can still be landed on and read.
+
 <!-- mdview:api-end -->
 <!-- mdview:api-begin -->
 ```c
@@ -5359,7 +5391,12 @@ pressed was the space key then the bit within the *select element
 of the widget given in the bit element of that structure will be
 toggled either on or off.
 
-Any number of bits within *select may be turned on in this way.
+Any number of bits within *select may be turned on in this way, unless
+the view has been given a maximum by `uC_widget_view_set_check_max()`.
+At that maximum a press on an unticked box is refused and nothing is
+written; a press on a ticked one still turns it off.  A mouse click on a
+checkbox arrives through this same call, so both ways of pressing a box
+are bounded by the one test.
 
 <!-- mdview:api-end -->
 <!-- mdview:api-begin -->
@@ -5379,6 +5416,40 @@ contain the state of up to 32 checkbox widgets.  The specific bit
 within that variable for this widget is specified in the bit
 parameter here.
 
+
+<!-- mdview:api-end -->
+<!-- mdview:api-begin -->
+```c
+API uint16_t uC_widget_view_checks_used(uC_widget_view_t *view)
+```
+
+This public API call reports how many of a view's checkbox widgets are
+currently ticked.  The answer is counted from the bits the checkboxes
+point at rather than from a tally kept inside the library, so an
+application that writes those bits itself - loading a form from a record
+is exactly that - is still counted correctly.
+
+A caller rendering "3 of 3" beside a bounded list wants this rather than
+a count of its own, for the same reason: the bits are the state, and a
+second copy of them is a second thing to keep right.
+
+A NULL view holds nothing and answers zero.
+
+<!-- mdview:api-end -->
+<!-- mdview:api-begin -->
+```c
+API bool uC_widget_check_refused(uC_widget_t *widget)
+```
+
+This public API call reports whether ticking a given checkbox would be
+refused right now.  It is the one question the draw and the key handler
+both ask, so what a box looks like and what it does when pressed cannot
+disagree, and an application drawing a hint beside a row cannot disagree
+with either.
+
+It answers false for anything that is not a checkbox, for a view that
+has no maximum set, and for a box that is already ticked - a full list
+you cannot untick would be a trap rather than a bound.
 
 <!-- mdview:api-end -->
 ### 9.7. `uC_widget_radio.c`
@@ -8781,6 +8852,15 @@ the coordinate lies inside an active widget.
 system.
 
 
+### `src/ui/widgets/uC_widget_check.c`
+`view_checks_used()` counts how many of a view's checkboxes are ticked,
+reading the bits themselves rather than any tally.  It is internal;
+`uC_widget_view_checks_used()` is the public call over it.
+
+`check_ghost()` dims the current drawing attributes halfway towards the
+background, which is how a refused checkbox is drawn.  It is internal.
+
+
 ### `src/ui/widgets/uC_widget_scan.c`
 `scan_tab_candidate_in_vg()` scans a view group once to find the next or
 previous selectable widget sequence, including the wrap candidate.
@@ -8797,6 +8877,9 @@ vertical and horizontal layout while preserving its selected index.
 `uC_widget_view_set_grid()` makes a scrollable view a lattice of `cols`
 items across with the given gaps, and sets its orientation to
 `uC_VIEW_GRID`.
+
+`uC_widget_view_set_check_max()` bounds how many of a view's checkboxes
+may be ticked at once.
 
 `uC_widget_view_current_index()` returns the index of the focused item
 within a scrollable view.

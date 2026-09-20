@@ -642,6 +642,28 @@ API bool uC_widget_view_set_grid(uC_widget_view_t *view,
 }
 
 // -----------------------------------------------------------------------
+// ★ BOUND HOW MANY OF THIS VIEW'S CHECKBOXES MAY BE ON.  ⓘ it lives
+// beside set_grid() for the same reason: both are properties OF THE
+// VIEW that a caller sets once, where the behaviour they buy belongs to
+// the widget - see uC_widget_check.c.
+//
+// ⚠ 0 TURNS IT OFF and is where every view starts, so nothing that
+// never calls this can be affected by it.
+
+API bool uC_widget_view_set_check_max(uC_widget_view_t *view,
+    uint16_t max)
+{
+    if (view == NULL)
+    {
+        return false;
+    }
+
+    view->check_max = max;
+
+    return true;
+}
+
+// -----------------------------------------------------------------------
 // ★★★ WHICH ITEM IS SELECTED.  ⚠ uC_widget_current_sequence() cannot
 // answer this - a scrollable view gives every widget in it the VIEW's
 // sequence, so it returns the same number for all of them.

@@ -1,8 +1,10 @@
 // uC_key_read.c
 // -----------------------------------------------------------------------
 
-#include <poll.h>
+#include <errno.h>
 #include <inttypes.h>
+#include <poll.h>
+#include <stdbool.h>
 #include <unistd.h>
 
 #include "uCurses.h"
@@ -15,9 +17,13 @@ extern ti_vars_t *ti_vars;
 
 // -----------------------------------------------------------------------
 
+static bool input_closed;
+
+// -----------------------------------------------------------------------
+
 static struct pollfd pfd =
 {
-    0,                      // stdin
+    STDIN_FILENO,
     POLLIN,                 // want to know when data is available
     0
 };
@@ -27,7 +33,7 @@ static struct pollfd pfd =
 
 API int8_t uC_test_keys(void)
 {
-    int8_t k;
+    int k;
 
     if (ti_vars->stuffed == true)
     {
@@ -35,29 +41,49 @@ API int8_t uC_test_keys(void)
         return ti_vars->num_k;
     }
 
-    k = poll(&pfd, 1, 0);
-
-    if (k < 0)
+    if (input_closed)
     {
-        k = 0;              // no keys pressed
+        return 0;
     }
 
-    return k;
+    pfd.revents = 0;
+    k = poll(&pfd, 1, 0);
+
+    if ((k <= 0) || ((pfd.revents & POLLIN) == 0))
+    {
+        return 0;           // no input; HUP/ERR is not a keypress
+    }
+
+    return 1;
 }
 
 // -----------------------------------------------------------------------
 // read single keypress
 
-static int8_t read_key(void)
+static int read_key(void)
 {
-    int n;
+    ssize_t n;
     uint8_t k;
 
     do
     {
-        n = read(1, &k, 1);
-        // todo this might be bad :)
-    } while (n == -1);
+        n = read(STDIN_FILENO, &k, 1);
+    } while ((n < 0) && (errno == EINTR));
+
+    if (n == 0)
+    {
+        input_closed = true;
+        return -1;          // end of file
+    }
+
+    if (n < 0)
+    {
+        if ((errno != EAGAIN) && (errno != EWOULDBLOCK))
+        {
+            input_closed = true;
+        }
+        return -1;          // no byte or a permanent input error
+    }
 
     return k;
 }
@@ -70,7 +96,18 @@ static int8_t read_key(void)
 
 uint8_t uC_read_key(void)
 {
-    ti_vars->keybuff[0] = read_key();
+    int key;
+
+    key = read_key();
+
+    if (key < 0)
+    {
+        ti_vars->keybuff[0] = UC_KEY_NONE;
+        ti_vars->num_k = 0;
+        return UC_KEY_NONE;
+    }
+
+    ti_vars->keybuff[0] = (uint8_t)key;
     ti_vars->num_k      = 1;
 
     return ti_vars->keybuff[0];
@@ -85,9 +122,19 @@ uint8_t uC_read_key(void)
 
 int uC_key_fd_source(void *ctx, int timeout_ms)
 {
+    int key;
+
     (void)ctx;
 
-    if (poll(&pfd, 1, timeout_ms) <= 0)
+    if (input_closed)
+    {
+        return -1;
+    }
+
+    pfd.revents = 0;
+
+    if ((poll(&pfd, 1, timeout_ms) <= 0) ||
+        ((pfd.revents & POLLIN) == 0))
     {
         return -1;                      // no byte within the window
     }
@@ -96,7 +143,14 @@ int uC_key_fd_source(void *ctx, int timeout_ms)
         return -1;                      // buffer full — stop pulling
     }
 
-    ti_vars->keybuff[ti_vars->num_k++] = read_key();
+    key = read_key();
+
+    if (key < 0)
+    {
+        return -1;
+    }
+
+    ti_vars->keybuff[ti_vars->num_k++] = (uint8_t)key;
 
     return ti_vars->keybuff[ti_vars->num_k - 1];
 }

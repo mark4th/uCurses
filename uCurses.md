@@ -2065,20 +2065,23 @@ API int8_t uC_test_keys(void)
 This function will return a result of zero if there are no
 characters ready to read from the terminals standard input file
 descriptor.  If there are any characters ready to read then this
-function will return a non zero result.
+function will return a non zero result.  An end-of-file, hangup, or
+file descriptor error is not reported as a key press once it has been
+observed by the input reader.
 
 <!-- mdview:api-end -->
 <!-- mdview:api-begin -->
 ```c
-static int8_t read_key(void)
+static int read_key(void)
 ```
 
-This helper function will repeatedly read the terminals standard
-input file descriptor until a valid character is returned.  This
-is somewhat janky (no pun intended) because it could result in an
-infinite loop (tm).
+This helper reads one character from the terminals standard input
+file descriptor.  An interrupted system call is retried.  An
+end-of-file or any other read error terminates the read instead of
+spinning forever.
 
-On success, this function returns the character read.
+On success, this function returns the character read.  On failure,
+it returns `-1`.
 
 <!-- mdview:api-end -->
 <!-- mdview:api-begin -->

@@ -3,12 +3,13 @@
 // Exercises the real fd byte source (uC_key_fd_source) driving sm_run():
 // poll() for the next byte, read() it, append to keybuff, and the ~25ms
 // end-of-sequence timeout that terminates a sequence.  A pipe stands in for
-// the tty — its read end is duped onto fd 0 (polled) and fd 1 (read by
-// read_key()), matching how the library polls stdin and reads stdout's tty.
+// the tty — its read end is duped onto stdin.  stdout deliberately remains
+// separate so the test catches any attempt to read keyboard input from it.
 //
 // uC_key_read.c + uC_key_sm.c are compiled straight in (both hold hidden
 // symbols); we supply our own ti_vars.
 
+#include <fcntl.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -26,7 +27,7 @@ extern uint8_t key_mods;
 
 static int pipe_wr = -1;        // write end — feed bytes "from the terminal"
 
-// Unity reports through this (fds 0/1 are the pipe): write to fd 2 instead
+// Unity reports through this: write to fd 2 instead of the fake stdin.
 void unity_putc(int c)
 {
     char b = (char)c;
@@ -112,6 +113,37 @@ void test_stream_x10_mouse_drained(void)
     TEST_ASSERT_EQUAL_INT16(6, tv.num_k);   // ESC [ M + 3 report bytes
 }
 
+// A hung-up pipe is not a keypress.
+void test_hung_up_input_does_not_report_a_key(void)
+{
+    TEST_ASSERT_EQUAL_INT(0, close(pipe_wr));
+    pipe_wr = -1;
+
+    TEST_ASSERT_EQUAL_INT8(0, uC_test_keys());
+}
+
+// /dev/null polls as readable forever but every read returns EOF.  Once that
+// EOF is observed, the reader must remember it or an application's outer key
+// loop will run at 100% CPU.  This test must remain last because stdin stays
+// attached to /dev/null.
+void test_eof_does_not_leave_input_readable(void)
+{
+    int null_fd;
+
+    null_fd = open("/dev/null", O_RDONLY);
+    TEST_ASSERT_GREATER_OR_EQUAL_INT(0, null_fd);
+    if (null_fd != STDIN_FILENO)
+    {
+        TEST_ASSERT_GREATER_OR_EQUAL_INT(0, dup2(null_fd, STDIN_FILENO));
+        TEST_ASSERT_EQUAL_INT(0, close(null_fd));
+    }
+
+    TEST_ASSERT_EQUAL_INT8(1, uC_test_keys());
+    TEST_ASSERT_EQUAL_UINT8(UC_KEY_NONE, uC_read_key());
+    TEST_ASSERT_EQUAL_INT16(0, tv.num_k);
+    TEST_ASSERT_EQUAL_INT8(0, uC_test_keys());
+}
+
 // -----------------------------------------------------------------------
 
 int main(void)
@@ -122,9 +154,16 @@ int main(void)
     {
         return 1;
     }
-    // read end feeds both the poll fd (0) and the read fd (1)
-    dup2(fds[0], 0);
-    dup2(fds[0], 1);
+    // Keyboard input belongs to stdin.  Leave stdout alone intentionally.
+    if ((fds[0] != STDIN_FILENO) &&
+        (dup2(fds[0], STDIN_FILENO) < 0))
+    {
+        return 1;
+    }
+    if (fds[0] != STDIN_FILENO)
+    {
+        close(fds[0]);
+    }
     pipe_wr = fds[1];
 
     UNITY_BEGIN();
@@ -135,6 +174,8 @@ int main(void)
     RUN_TEST(test_stream_bare_esc_times_out);
     RUN_TEST(test_stream_alt_b);
     RUN_TEST(test_stream_x10_mouse_drained);
+    RUN_TEST(test_hung_up_input_does_not_report_a_key);
+    RUN_TEST(test_eof_does_not_leave_input_readable);
     return UNITY_END();
 }
 

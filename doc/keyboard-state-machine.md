@@ -234,10 +234,11 @@ Implemented as specced below. `uC_key_fd_source()` + `uC_read_key()` in
 calls `sm_run(uC_key_fd_source, NULL)` instead of `uC_read_keys()`+`sm_parse()`.
 `uC_read_keys()` is left in place, now unused. NEW integration test
 `test/test_key_stream.c` drives the REAL fd path over a pipe (read end duped to
-fds 0/1): arrows, ctrl+right, tilde-del, SS3-F1, **bare-ESC-via-25ms-timeout**,
+stdin): arrows, ctrl+right, tilde-del, SS3-F1, **bare-ESC-via-25ms-timeout**,
 **Alt-b-via-timeout**, and X10-mouse-drain (verifies keybuff is filled from
 index 3 for `uC_mouse_parse`). All green. Unity reports on fd 2 (`unity_putc`)
-since 0/1 are the pipe. STILL NEEDS Mark's live TUI pass (dispatch/stuffed/
+so its output is separate from the fake stdin. STILL NEEDS Mark's live TUI
+pass (dispatch/stuffed/
 shortcut re-entrancy/real mouse aren't covered by the pipe test): arrows,
 Home/End, PgUp/PgDn, Del/Ins, F-keys, ENTER/BS/TAB, bare ESC (no hang), Alt-b,
 Ctrl/Shift+arrow, a mouse click/drag.

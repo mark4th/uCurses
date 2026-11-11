@@ -18,6 +18,7 @@
 void flush(void);
 void c_emit(char c1);
 void uC_format(int16_t i);
+bool uC_ti_has(int16_t i);
 void alloc_parse(void);
 void uC_format(int16_t i);
 

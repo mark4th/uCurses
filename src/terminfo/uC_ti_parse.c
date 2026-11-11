@@ -40,9 +40,24 @@ void alloc_parse(void)
 
 // -----------------------------------------------------------------------
 
+// escape bytes written to the terminal, for the UC_STATS report
+
+uint64_t uC_stat_bytes;
+uint64_t uC_stat_flushes;
+uint64_t uC_stat_peak;          // fullest the escape buffer got at a flush
+uint64_t uC_stat_full;          // flushes forced by a full buffer
+
 API void uC_terminfo_flush(void)
 {
     ssize_t n;
+
+    uC_stat_bytes   += ti_vars->num_esc;
+    uC_stat_flushes += (ti_vars->num_esc != 0);
+
+    if (ti_vars->num_esc > uC_stat_peak)
+    {
+        uC_stat_peak = ti_vars->num_esc;
+    }
 
     n = write(1, ti_vars->esc_buff, ti_vars->num_esc);
 
@@ -74,6 +89,7 @@ void c_emit(char c1)
 
     if (ti_vars->num_esc == ESC_SIZE)
     {
+        uC_stat_full++;
         uC_terminfo_flush();
     }
 
@@ -651,6 +667,23 @@ API void uC_parse_format(const uint8_t *f)
     }
 
     fs_drop_leftovers();
+}
+
+// -----------------------------------------------------------------------
+// true if this terminal has a format string for terminfo string index i
+
+bool uC_ti_has(int16_t i)
+{
+    uint16_t offset;
+
+    if ((i < 0) || ((uint16_t)i >= ti_vars->ti_file.ti_string_count))
+    {
+        return false;
+    }
+
+    offset = (uint16_t)ti_vars->ti_file.ti_strings[i];
+
+    return (offset != TI_NULL) && (offset < ti_vars->ti_file.ti_table_size);
 }
 
 // -----------------------------------------------------------------------
